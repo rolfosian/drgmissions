@@ -342,7 +342,7 @@ function UnpackDeepDiveMission(mission, master, t) -- Considering adding logic h
         {pattern = 'WRN_Plague', result = 'Lithophage Outbreak'},
         {pattern = 'LethalEnemies', result = 'Lethal Enemies'},
         {pattern = 'Swarmagedon', result = 'Swarmageddon'},
-        {pattern = 'MacteraCave', result = 'Mactera Swarm'},
+        {pattern = 'MacteraCave', result = 'Mactera Plague'},
         {pattern = 'NoOxygen', result = 'Low Oxygen'},
         {pattern = 'CaveLeechDen', result = 'Cave Leech Cluster'},
         {pattern = 'RivalIncursion', result = 'Rival Presence'},
