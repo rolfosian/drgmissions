@@ -1,1 +1,1 @@
-Readme is at the top of main.lua in /missiondatafetcher
+Readme is at the top of main.lua in /missiondatafetcher/Scripts
