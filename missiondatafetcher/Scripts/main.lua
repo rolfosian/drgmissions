@@ -14,7 +14,7 @@
 -- Main loop script to actually launch the game and then run the rendering script after the json is generated in the first place (Personally waiting for sale to pick up another copy of the game for this)
 -- Because the Missions are all generated based on the system clock, theoretically (after finding the functions for getting the new missions), you could modify the system clock in 30 minute 
 -- increments as many times as you want to ingame and compile a whole season's worth of mission data with timestamps in just a few seconds. But that would not include the DD data, of course. 
--- DD Data comes from GSG servers, so you would have to refactor that back into the hash map once a week using this method. There's also no knowing when the season will actually end so it would have to be a rough estimate and require maintenance down the line.
+-- DD Data comes from GSG servers, so you would have to refactor that back into the hash map once a week. There's also no knowing when the season will actually end so it would have to be a rough estimate and require maintenance down the line.
 
 local json = require("./mods/missiondatafetcher/Scripts/dkjson")
 function TableToString(table, indent)
