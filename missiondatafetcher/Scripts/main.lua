@@ -1,6 +1,5 @@
 -- DEEP ROCK GALACTIC LUA SCRIPT FOR USE IN CONJUNCTION WITH RE-UE4SS LUA API (https://github.com/UE4SS-RE/RE-UE4SS/releases) TO FETCH CURRENT MISSION AND DEEP DIVE DATA
--- The older version of this script uses the mission terminal itself, but requires the terminal to be activated manually as it's only half finished and I wasn't about to go digging for the function to open it, but that method could be used if you want to just 
--- leave the game open and loop inside it rather than launching the game every time as this one is designed for. I opted for this method to keep the game closed as much as possible as it'll be running on my home server in a vm with steamcmd. 
+-- The older version of this script uses the mission terminal itself, but requires the terminal to be activated manually as it's only half finished and I wasn't about to go digging for the function to open it. I opted for this method to keep the game closed as much as possible as it'll be running on my home server in a vm with steamcmd. 
 
 -- TO RUN DRG HEADLESS, USE COMMAND LINE ARG -nullrhi WHEN RUNNING THE GAME
 -- CONSIDER STEAMCMD FOR EVEN LESS OVERHEAD AND EASIER AUTOMATION FOR UPDATES ETC
@@ -13,7 +12,7 @@
 -- Contingencies for if the game doesn't terminate gracefully on 'organic' exit
 -- Contingencies for if the game crashes
 -- Main loop script to actually launch the game and then run the rendering script after the json is generated in the first place (Personally waiting for sale to pick up another copy of the game for this)
--- Because the Missions are all generated based on the system clock, theoretically by using the old method with the terminal (after finding the functions for opening and closing it), you could modify the system clock in 30 minute 
+-- Because the Missions are all generated based on the system clock, theoretically (after finding the functions for getting the new missions), you could modify the system clock in 30 minute 
 -- increments as many times as you want to ingame and compile a whole season's worth of mission data with timestamps in just a few seconds. But that would not include the DD data, of course. 
 -- DD Data comes from GSG servers, so you would have to refactor that back into the hash map once a week using this method. There's also no knowing when the season will actually end so it would have to be a rough estimate and require maintenance down the line.
 
