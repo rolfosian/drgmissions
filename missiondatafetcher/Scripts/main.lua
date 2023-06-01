@@ -1,5 +1,5 @@
 -- DEEP ROCK GALACTIC LUA SCRIPT FOR USE IN CONJUNCTION WITH RE-UE4SS LUA API (https://github.com/UE4SS-RE/RE-UE4SS/releases) TO FETCH CURRENT MISSION AND DEEP DIVE DATA
--- The older version of this script uses the mission terminal itself, but requires the terminal to be activated manually as it's only half finished and I wasn't about to go digging for the function to open it. I opted for this method to keep the game closed as much as possible as it'll be running on my home server in a vm with steamcmd. 
+-- The older version of this script uses the mission terminal itself, but requires the terminal to be activated manually as it's only half finished and I wasn't about to go digging for the function to open it when this way is much cleaner.
 
 -- TO RUN DRG HEADLESS, USE COMMAND LINE ARG -nullrhi WHEN RUNNING THE GAME
 -- CONSIDER STEAMCMD FOR EVEN LESS OVERHEAD AND EASIER AUTOMATION FOR UPDATES ETC
