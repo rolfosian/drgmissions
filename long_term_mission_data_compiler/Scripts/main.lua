@@ -452,14 +452,14 @@ function Main()
             god[timestamp] = master
 
             --Get 'current' time
-            currytime = os.date("!%Y-%m-%d %H:%M:%S")
+            local currytime = os.date("%Y-%m-%d %H:%M:%S")
             local year, month, day, hour, minute, second = currytime:match("(%d+)-(%d+)-(%d+) (%d+):(%d+):(%d+)")
             minute = tonumber(minute)
             -- Round down to the nearest half-hour
             if minute >= 30 then
-              minute = 30
+                minute = 30
             else
-              minute = 0
+                minute = 0
             end
             -- Set the second to 1
             second = 1
@@ -470,6 +470,7 @@ function Main()
             -- Remove ReverseDateFormat function and just use newtime[1] if your system date format is YY-MM-DD
             local command = 'date '..ReverseDateFormat(newtime[1])..' & time '..newtime[2]
             -- Set time forward 30 minutes
+            print(command..'\n')
             os.execute(command)
         end
     end
