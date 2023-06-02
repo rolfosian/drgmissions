@@ -13,7 +13,7 @@
 -- Main loop script to actually launch the game and then run the rendering script after the json is generated in the first place (Personally waiting for sale to pick up another copy of the game for this)
 -- DD Data comes from GSG servers, so you would have to refactor that back into the hash map once a week using this method. There's also no knowing when the season will actually end so it would have to be a rough estimate and require maintenance down the line.
 
-local json = require("./mods/long_term_mission_compiler/Scripts/dkjson")
+local json = require("./mods/long_term_mission_data_compiler/Scripts/dkjson")
 function ReverseDateFormat(inputDate)
     local year = inputDate:sub(1, 2)
     local month = inputDate:sub(4, 5)
@@ -489,65 +489,6 @@ function GetCodeName(str) -- Extract CodeName from string of FText value
     local name = firstname .. " " .. lastname
     return name
 end
-function GetDeepDiveCodename(t) -- Get DD Codename terminal label widget assets
-    local fsdlabelwidgets = FindAllOf('FSDLabelWidget')
-    local text = nil
-    local name
-    if fsdlabelwidgets then
-        for index, fsdlabelwidget in pairs(fsdlabelwidgets) do
-            local fullname = string.format("%s",fsdlabelwidget:GetFullName())
-            if string.find(fullname, 'Data_CodeName') and string.find(fullname, 'Normal') and t == 'Deep Dive Normal' then
-                text = fsdlabelwidget:GetPropertyValue('text')
-                text = text:ToString()
-                name = GetCodeName(text)
-                break
-            elseif string.find(fullname, 'Data_CodeName') and string.find(fullname, 'Hard') and t == 'Deep Dive Elite' then
-                text = fsdlabelwidget:GetPropertyValue('text')
-                text = text:ToString()
-                name = GetCodeName(text)
-                break
-            end
-        end
-        return name
-    end
-end
--- function GetDailyDrink() -- DOESNT MATTER -- BEER IS RANDOM, THE WIKI LIED TO ME AND I WASTED ALL THAT FUCKING TIME STARING AT THE DAMN LIVE VIEW
---     local drinks = FindAllOf("UI_Bar_BackgroundMenu_ItemSpecialBig_C")
---     local special = nil
---     if drinks then
---         for index, drink in pairs(drinks) do
---             local drink_fullname = string.format("%s",drink:GetFullName())
---             if drink_fullname == "UI_Bar_BackgroundMenu_ItemSpecialBig_C /Game/GameElements/Bar/UI/UI_Bar_BackgroundMenu.UI_Bar_BackgroundMenu_C:WidgetTree.UI_Bar_BackgroundMenu_ItemSpecialBig" then goto continue end
---             special = drink
---             ::continue::
---             end
---         end
---         if special then
---             local drink = special:GetPropertyValue("Drinkable")
---             drink = string.format("%s",drink:GetFullName())
---             local drinks = {
---                 {pattern = 'TunnelRat', result = 'Tunnel Rat'},
---                 {pattern = 'Backbreaker', result = 'Backbreaker Stout'},
---                 {pattern = 'DarkMorkite', result = 'Dark Morkite'},
---                 {pattern = 'PotsOGold', result = "Pots O' Gold"},
---                 {pattern = 'RedRockBlaster', result = 'Red Rock Blaster'},
---                 {pattern = 'RockyMountain', result = 'Rocky Mountain'},
---                 {pattern = 'SkullCrusherAle', result = 'Skull Crusher Ale'},
---                 {pattern = 'SlayerStout', result = 'Slayer Stout'}
---             }
---             for _, obj in ipairs(drinks) do
---                 if string.find(drink, obj.pattern) then
---                     drink = obj.result
---                     break
---                 end
---             end
---             if drink then
---                 return drink
---             else
---                 return nil
---             end
---         end
---     end
 function Main()
     local startmenus = nil
     local currytime = nil
@@ -580,12 +521,25 @@ function Main()
             end
         end
     end
-    local current_time = os.time()
-    --SET TARGET DATE TO END LOOP
+    local currytime = os.date("!%Y-%m-%d %H:%M:%S")
+    local year, month, day, hour, minute, second = currytime:match("(%d+)-(%d+)-(%d+) (%d+):(%d+):(%d+)")
+    currytime = string.format("%02d-%02d-%02d %02d:%02d:%02d", year %100, month, day, hour, minute, second)
+    currytime = Split(currytime, ' ')
+    -- Remove ReverseDateFormat function and just use currytime[1] if your system date format is YY-MM-DD
+    local command = 'date '..ReverseDateFormat(currytime[1])..' & time '..currytime[2]
+    -- Set time to current UTC
+    os.execute(command)
+    --Linux format:
+    -- local command = 'date -s "'..currytime[1]..' '..currytime[2]..'"'
+    -- os.execute(command)
+
+    -- Get current UTC Time
+    local firstdate = os.date("!*t")
+    local current_time = os.time(firstdate)
+    --Set target date
     local target_date = os.time{year=2023, month=6, day=14, hour=0, min=0, sec=0}
-    -- Calculate the difference in seconds between the current time and the target date
+    -- Calculate the difference in seconds between the current UTC time and the target date
     local diff_seconds = os.difftime(target_date, current_time)
-    local current_timestring = ''
     -- Calculate total amount of 30 minute increments between current time and the target date
     local total_increments = math.floor(diff_seconds / 1800)
     -- Initialize Table
@@ -595,8 +549,6 @@ function Main()
         local master = {}
         master['Biomes'] = {}
         -- Get GeneratedMission UObjects
-        local MissionStructure = nil
-        local t = nil
         local b = nil
         local missions = {}
         local MissionGenerationManagers = FindAllOf('MissionGenerationManager')
@@ -605,7 +557,6 @@ function Main()
                 local fullname = string.format("%s",manager:GetFullName())
                 if fullname == 'MissionGenerationManager /Script/FSD.Default__MissionGenerationManager' then goto continue end
                 local remotemissions = manager:GetAvailableMissions()
-                local count = 0
                 for index, remotemission in pairs(remotemissions) do
                     local mission = remotemission:get()
                     table.insert(missions, mission)
@@ -628,17 +579,27 @@ function Main()
             -- local master_str = TableToString(master, indent)
             -- print(master_str)
 
-            -- Press X to json
-            local options = {
-                indent = "  ",
-                keyorder = {"timestamp", "Biomes"}
-            }
-            -- master = json.encode(master, options)
             god[timestamp] = master
-            currytime = os.date("%Y-%m-%d %H:%M:%S")
+
+            --Get 'current' time
+            currytime = os.date("!%Y-%m-%d %H:%M:%S")
+            local year, month, day, hour, minute, second = currytime:match("(%d+)-(%d+)-(%d+) (%d+):(%d+):(%d+)")
+            minute = tonumber(minute)
+            -- Round down to the nearest half-hour
+            if minute >= 30 then
+              minute = 30
+            else
+              minute = 0
+            end
+            -- Set the second to 1
+            second = 1
+            currytime = string.format("%04d-%02d-%02d %02d:%02d:%02d", year, month, day, hour, minute, second)
+            -- Increment currytime forward by 30 minutes
             local newtime = IncrementDatetime(currytime)
             newtime = Split(newtime, ' ')
+            -- Remove ReverseDateFormat function and just use newtime[1] if your system date format is YY-MM-DD
             local command = 'date '..ReverseDateFormat(newtime[1])..' & time '..newtime[2]
+            -- Set time forward 30 minutes
             os.execute(command)
         end
     end
@@ -666,4 +627,4 @@ function Main()
         end
     end
 end
-Main()
+-- Main()
