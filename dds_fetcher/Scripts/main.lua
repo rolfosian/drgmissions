@@ -308,7 +308,7 @@ function Main()
             indent = "  ",
           }
         master = json.encode(master, options)        
-        local file = io.open('drgmissions.json', 'w')
+        local file = io.open(currentDateTime..'.json', 'w')
         if file then
             file:write(master)
             file:close()
