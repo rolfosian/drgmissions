@@ -256,6 +256,7 @@ function Main()
         end
     end
     local currentDateTime = os.date("!%Y-%m-%dT%H:%M:%SZ")
+    currentDateTime = 'DD_'..currentDateTime
     -- Initialize Table
     local master = {}
     master[currentDateTime] = {}

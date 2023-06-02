@@ -493,7 +493,6 @@ function Main()
     local startmenus = nil
     local currytime = nil
     -- Wait for start menu to load
-    local timecheck = io.open('timecheck.txt', 'w')
     while true do
         startmenus = FindAllOf('Bp_StartMenu_PlayerController_C')
         if startmenus then
@@ -627,4 +626,4 @@ function Main()
         end
     end
 end
--- Main()
+Main()
