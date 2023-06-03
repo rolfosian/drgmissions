@@ -418,6 +418,18 @@ function Main()
     local god = {}
     -- Loop for the increments
     for i = 1, total_increments do
+        local playercontrollers = FindAllOf('BP_PlayerController_SpaceRig_C')
+        if playercontrollers then
+            for index, playercontroller in pairs(playercontrollers) do
+                ---@type ABP_PlayerController_SpaceRig_C
+                playercontroller = playercontroller
+                local fullname = string.format("%s",playercontroller:GetFullName())
+                if fullname == 'BP_PlayerController_SpaceRig_C /Game/Game/SpaceRig/BP_PlayerController_SpaceRig.Default__BP_PlayerController_SpaceRig_C' then goto continue end
+                playercontroller:ShowMissionSelect()
+                break
+                ::continue::
+            end
+        end
         local master = {}
         master['Biomes'] = {}
         -- Get GeneratedMission UObjects
@@ -474,7 +486,18 @@ function Main()
             -- Set time forward 30 minutes
             print(command..'\n')
             os.execute(command)
-            socket.sleep(1)
+            local mk3s = FindAllOf('_SCREEN_MissionSelectionMK3_C')
+            if mk3s then
+                for index, mk3 in pairs(mk3s) do
+                    mk3 = mk3
+                    local fullname = string.format("%s",mk3:GetFullName())
+                    if fullname == '_SCREEN_MissionSelectionMK3_C /Game/UI/Menu_MissionSelectionMK3/_SCREEN_MissionSelectionMK3.Default___SCREEN_MissionSelectionMK3_C' then goto continue end
+                    mk3:CloseThisWindow() 
+                    break
+                    ::continue::
+                end
+            end
+            socket.sleep(0.1)
         end
     end
     local options = {
@@ -501,4 +524,4 @@ function Main()
         end
     end
 end
--- Main()
+Main()
