@@ -14,6 +14,8 @@
 -- DD Data comes from GSG servers, so you would have to refactor that back into the hash map once a week using this method. There's also no knowing when the season will actually end so it would have to be a rough estimate and require maintenance down the line.
 
 local json = require("./mods/long_term_mission_data_compiler/Scripts/dkjson")
+local socket = require('./mods/long_term_mission_data_compiler/Scripts/x64/socket')
+
 function ReverseDateFormat(inputDate)
     local year = inputDate:sub(1, 2)
     local month = inputDate:sub(4, 5)
@@ -407,7 +409,7 @@ function Main()
     local firstdate = os.date("!*t")
     local current_time = os.time(firstdate)
     --Set target date
-    local target_date = os.time{year=2023, month=6, day=14, hour=0, min=0, sec=0}
+    local target_date = os.time{year=2023, month=6, day=8, hour=0, min=0, sec=0}
     -- Calculate the difference in seconds between the current UTC time and the target date
     local diff_seconds = os.difftime(target_date, current_time)
     -- Calculate total amount of 30 minute increments between current time and the target date
@@ -472,6 +474,7 @@ function Main()
             -- Set time forward 30 minutes
             print(command..'\n')
             os.execute(command)
+            socket.sleep(0.2)
         end
     end
     local options = {
@@ -498,4 +501,4 @@ function Main()
         end
     end
 end
-Main()
+-- Main()
