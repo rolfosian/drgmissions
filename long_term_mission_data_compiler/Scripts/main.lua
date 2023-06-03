@@ -454,7 +454,7 @@ function Main()
             god[timestamp] = master
 
             --Get 'current' time
-            local currytime = os.date("!%Y-%m-%d %H:%M:%S")
+            local currytime = os.date("%Y-%m-%d %H:%M:%S")
             local year, month, day, hour, minute, second = currytime:match("(%d+)-(%d+)-(%d+) (%d+):(%d+):(%d+)")
             minute = tonumber(minute)
             -- Round down to the nearest half-hour
