@@ -1,0 +1,5 @@
+long_term_mission_data_compiler : 0
+dds_fetcher : 0
+
+; Built-in keybinds, do not move up!
+Keybinds : 1

@@ -12,8 +12,7 @@ from dateutil import parser
 from flask import Flask, render_template, render_template_string, request, send_from_directory, jsonify
 import queue
 import threading
-import signal
-import sys
+import glob
 
 def sort_dictionary(dictionary, custom_order):
     sorted_dict = {}
@@ -52,7 +51,7 @@ def rotate_timestamp(DRG, tstamp_Queue):
             tstamp_Queue.get()
         sleep(1)
 
-def rotate_biomes(DRG, tstamp_Queue, biomes_Queue):
+def rotate_biomes(DRG, tstamp_Queue):
     order = ['Crystalline Caverns', 'Glacial Strata', 'Magma Core', 'Salt Pits', 'Azure Weald', 'Sandblasted Corridors', 'Radioactive Exclusion Zone', 'Fungus Bogs', 'Hollow Bough', 'Denze Biozone']
     def array_biomes(Biomes, timestamp):
         biomes = [
@@ -73,13 +72,13 @@ def rotate_biomes(DRG, tstamp_Queue, biomes_Queue):
         img_count = 0
         for biome in Biomes.keys():
             folder_name = biome.replace(' ', '_')
-            if os.path.exists(f'./{folder_name}'):
-                shutil.rmtree(f'./{folder_name}')
-            os.mkdir(f'./{folder_name}')
+            if os.path.exists(f'./files/{folder_name}'):
+                shutil.rmtree(f'./files/{folder_name}')
+            os.mkdir(f'./files/{folder_name}')
             for mission in Biomes[biome]:
                 img_count += 1
                 fname = str(img_count)
-                mission['rendered_mission'].save(f'./{folder_name}/{fname}.png')
+                mission['rendered_mission'].save(f'./files/{folder_name}/{fname}.png')
         return timestamp
     while tstamp_Queue.qsize() == 0:
         continue
@@ -97,6 +96,48 @@ def rotate_biomes(DRG, tstamp_Queue, biomes_Queue):
             Biomes = render_biomes(Biomes)
             Biomes = sort_dictionary(Biomes, order)
             timestamp = array_biomes(Biomes, applicable_timestamp)
+        sleep(1)
+
+def rotate_DDs(DDs):
+    def sort_dd_json_list_by_timestamp(json_pattern):
+        json_list = glob.glob(json_pattern)
+        sorted_json_list = sorted(json_list, key=lambda x: datetime.strptime(x.split('_')[1].split('.')[0], "%Y-%m-%dT%H-%M-%SZ"))
+        return sorted_json_list
+    json_pattern = './DD_*.json'
+    current_json = None
+    while True:
+        json_list = sort_dd_json_list_by_timestamp(json_pattern)
+        if current_json != json_list[0]:
+            current_json = json_list[0]
+            with open(f'{json_list[0]}', 'r') as f:
+                dds = json.load(f)
+            if DDs.empty():
+                DDs.put(dds)
+            else:
+                DDs.put(dds)
+                DDS.get()
+            dds = dds['Deep Dives']
+            dds = render_deepdives(dds)
+            dd_str = 'Deep Dive Normal'
+            img_count = 0
+            folder_name = dd_str.replace(' ', '_')
+            if os.path.exists(f'./files/{folder_name}'):
+                shutil.rmtree(f'./files/{folder_name}')
+            os.mkdir(f'./files/{folder_name}')
+            for mission in dds[dd_str]['Stages']:
+                img_count += 1
+                fname = str(img_count)
+                mission.save(f'./files/{folder_name}/{fname}.png')
+            dd_str = 'Deep Dive Elite'
+            img_count = 0
+            folder_name = dd_str.replace(' ', '_')
+            if os.path.exists(f'./files/{folder_name}'):
+                shutil.rmtree(f'./files/{folder_name}')
+            os.mkdir(f'./files/{folder_name}')
+            for mission in dds[dd_str]['Stages']:
+                img_count += 1
+                fname = str(img_count)
+                mission.save(f'./files/{folder_name}/{fname}.png')
         sleep(1)
 
 def scale_image(image, i):
@@ -379,13 +420,24 @@ def render_deepdives(DeepDives):
         rendered_deepdives[t]['Biome'] = DeepDives[t]['Biome']
         rendered_deepdives[t]['Stages'] = []
         rendered_deepdives[t]['CodeName'] = DeepDives[t]['CodeName']
+        has_id_999 = False
+        has_id_0 = False
+        for stage in deepdive['Stages']:
+            if stage['id'] == 999:
+                has_id_999 = True
+            if stage['id'] == 0:
+                has_id_0 = True
+        for stage in deepdive['Stages']:
+            if has_id_999 and has_id_0:
+                if stage['id'] == 999:
+                    stage['id'] = -1
         sorted_stages = sorted(deepdive['Stages'], key=lambda x: x['id'], reverse=True)
         for stage in sorted_stages:
             stage_png = render_dd_stage(stage)
             rendered_deepdives[t]['Stages'].append(stage_png)
     return rendered_deepdives
 
-def render_index(DRG):
+def render_index(DRG, DDs):
     def scanners(html):
         html += '          <br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
         return html
@@ -396,40 +448,34 @@ def render_index(DRG):
             img_count += 1
             fname = str(img_count)
             
-            html += f'         <img class="mission" src="/{folder_name}/{fname}.png"></img>\n'
+            html += f'         <img class="mission" src="/files/{folder_name}/{fname}.png"></img>\n'
         return html, img_count
-    def array_dd_missions(dds, dd_str, img_count, html):
-        if 'Crystalline Caverns' == dds[dd_str]['Biome']:
-            html += '         <img class="image-container" src="/DeepDive_MissionBar_CrystalCaves.png"></img>\n'
-        elif 'Glacial Strata' == dds[dd_str]['Biome']:
-            html += '         <img class="image-container" src="/DeepDive_MissionBar_GlacialStrata.png"></img>\n'
-        elif 'Radioactive Exclusion Zone' == dds[dd_str]['Biome']:
-            html += '         <img class="image-container" src="/DeepDive_MissionBar_Radioactive.png"></img>\n'
-        elif 'Fungus Bogs' == dds[dd_str]['Biome']:
-            html += '         <img class="image-container" src="/DeepDive_MissionBar_FungusBogs.png"></img>\n'
-        elif 'Dense Biozone' == dds[dd_str]['Biome']:
-            html += '         <img class="image-container" src="/DeepDive_MissionBar_LushDownpour.png"></img>\n'
-        elif 'Salt Pits' == dds[dd_str]['Biome']:
-            html += '         <img class="image-container" src="/DeepDive_MissionBar_SaltPits.png"></img>\n'
-        elif 'Sandblasted Corridors' == dds[dd_str]['Biome']:
-            html += '         <img class="image-container" src="/DeepDive_MissionBar_Sandblasted.png"></img>\n'
-        elif 'Magma Core' == dds[dd_str]['Biome']:
-            html += '         <img class="image-container" src="/DeepDive_MissionBar_MagmaCore.png"></img>\n'
-        elif 'Azure Weald' == dds[dd_str]['Biome']:
-            html += '         <img class="image-container" src="/DeepDive_MissionBar_SaltPits.png"></img>\n'
-        elif 'Hollow Bough' == dds[dd_str]['Biome']:
-            html += '         <img class="image-container" src="/DeepDive_MissionBar_FungusBogs.png"></img>\n'
+    def array_dd_missions(dds, dd_str, stg_count, html):
+        biomes = {
+            'Crystalline Caverns': 'DeepDive_MissionBar_CrystalCaves.png',
+            'Glacial Strata': 'DeepDive_MissionBar_GlacialStrata.png',
+            'Radioactive Exclusion Zone': 'DeepDive_MissionBar_Radioactive.png',
+            'Fungus Bogs': 'DeepDive_MissionBar_FungusBogs.png',
+            'Dense Biozone': 'DeepDive_MissionBar_LushDownpour.png',
+            'Salt Pits': 'DeepDive_MissionBar_SaltPits.png',
+            'Sandblasted Corridors': 'DeepDive_MissionBar_Sandblasted.png',
+            'Magma Core': 'DeepDive_MissionBar_MagmaCore.png',
+            'Azure Weald': 'DeepDive_MissionBar_SaltPits.png',
+            'Hollow Bough': 'DeepDive_MissionBar_FungusBogs.png'
+        }
+        biome = dds[dd_str]['Biome']
+        biome = biomes[biome]
+        html += f'         <img class="image-container" src="/files/{biome}"></img>\n'
         html += '         <br>\n'
         folder_name = dd_str.replace(' ', '_')
-        os.mkdir(f'./index/{folder_name}')
         for mission in dds[dd_str]['Stages']:
-            img_count += 1
-            fname = str(img_count)
-            mission.save(f'./index/{folder_name}/{fname}.png')
-            html += f'         <img class="missionr" src="/{folder_name}/{fname}.png"></img>\n'
-        return html, img_count
+            stg_count += 1
+            fname = str(stg_count)
+            html += f'         <img class="missionr" title="Stage {fname}" src="/files/{folder_name}/{fname}.png"></img>\n'
+        return html
     img_count = 0
     Biomes = DRG['Biomes']
+    DeepDives = DDs['Deep Dives']
     html = ''
     html += '''<!doctype html>
                 <html>
@@ -449,9 +495,9 @@ def render_index(DRG):
                         const countdownTimer = setInterval(() => {
                             const now = Date.now();
                             const remainingTime = targetTime - now;
-                            if (remainingTime < 0) {
+                            if (remainingTime < 4) {
                                 clearInterval(countdownTimer);
-                                document.getElementById("ddcountdown").innerHTML = "REFRESH THE PAGE FOR NEW DEEP DIVES";
+                                location.reload();
                             } else {
                                 const days = Math.floor(remainingTime / (1000 * 60 * 60 * 24));
                                 const hours = Math.floor((remainingTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -473,22 +519,23 @@ def render_index(DRG):
                                 targetTime1.setMinutes(0);
                                 targetTime1.setHours(targetTime1.getHours() + 1);
                             }
-                            const countdownElement1 = document.getElementById(\'countdown\');
+                            const countdownElement1 = document.getElementById('countdown');
                             const countdownTimer1 = setInterval(updateCountdown1, 1000);
-                                function updateCountdown1() {
-                                    const remainingTime1 = Math.floor(((targetTime1 - new Date() + 2 ) / 1000));
-                                    if (remainingTime1 < 0) {
-                                        clearInterval(countdownTimer1);
-                                        document.getElementById("countdown").innerHTML = "REFRESH THE PAGE FOR NEW MISSIONS";
-                                    return;
+                            
+                            function updateCountdown1() {
+                                const remainingTime1 = Math.floor(((targetTime1 - new Date() + 2) / 1000));
+                                if (remainingTime1 < 3) {
+                                    clearInterval(countdownTimer1);
+                                    location.reload();
+                                } else {
+                                    const hours1 = Math.floor(remainingTime1 / 3600);
+                                    const minutes1 = Math.floor((remainingTime1 % 3600) / 60);
+                                    const seconds1 = remainingTime1 % 60;
+                                    const countdownString1 = `${hours1.toString().padStart(2, '0')} : ${minutes1.toString().padStart(2, '0')} : ${seconds1.toString().padStart(2, '0')}`;
+                                    countdownElement1.textContent = countdownString1;
                                 }
-                                const hours1 = Math.floor(remainingTime1 / 3600);
-                                const minutes1 = Math.floor((remainingTime1 % 3600) / 60);
-                                const seconds1 = remainingTime1 % 60;
-                                const countdownString1 = `${hours1.toString().padStart(2, \'0\')} : ${minutes1.toString().padStart(2, \'0\')} : ${seconds1.toString().padStart(2, \'0\')}`;
-                                countdownElement1.textContent = countdownString1;
                             }
-                            });
+                        });
                     </script>
                      <title>DRG MISSIONS</title>
                      <meta charset="UTF-8">
@@ -501,11 +548,11 @@ def render_index(DRG):
                      <style>
                          @font-face {
                              font-family: "BebasNeue";
-                             src: url("/BebasNeue-Regular.woff2");
+                             src: url("/files/BebasNeue-Regular.woff2");
                          }
                          @font-face {
                              font-family: "HammerBro101MovieThin-Regular";
-                             src: url("/HammerBro101MovieThin-Regular.woff");
+                             src: url("/files/HammerBro101MovieThin-Regular.woff");
                          }
                          .grid-container {
                             display: grid;
@@ -594,7 +641,7 @@ def render_index(DRG):
                     <div>
                     <h2>'''
     html += '        <div class="biome-container">\n'
-    html += '         <img class="image-container" src="/DeepDive_MissionBar_CrystalCaves.png"></img>\n'
+    html += '         <img class="image-container" src="/files/DeepDive_MissionBar_CrystalCaves.png"></img>\n'
     if 'Crystalline Caverns' not in Biomes.keys():
         html = scanners(html)
     else:
@@ -603,7 +650,7 @@ def render_index(DRG):
     html += '       </h2>\n'
     html += '       <h2>\n'
     html += '        <div class="biome-container">\n'
-    html += '         <img class="image-container" src="/DeepDive_MissionBar_GlacialStrata.png"></img>\n'
+    html += '         <img class="image-container" src="/files/DeepDive_MissionBar_GlacialStrata.png"></img>\n'
     if 'Glacial Strata' not in Biomes.keys():
         html = scanners(html)
     else:
@@ -612,7 +659,7 @@ def render_index(DRG):
     html += '       </h2>\n'
     html += '       <h2>\n'
     html += '        <div class="biome-container">\n'
-    html += '         <img class="image-container" src="/DeepDive_MissionBar_MagmaCore.png"></img>\n'
+    html += '         <img class="image-container" src="/files/DeepDive_MissionBar_MagmaCore.png"></img>\n'
     if 'Magma Core' not in Biomes.keys():
         html = scanners(html)
     else:
@@ -621,7 +668,7 @@ def render_index(DRG):
     html += '       </h2>\n'
     html += '       <h2>\n'
     html += '        <div class="biome-container">\n'
-    html += '         <img class="image-container" src="/DeepDive_MissionBar_SaltPits.png"></img>\n'
+    html += '         <img class="image-container" src="/files/DeepDive_MissionBar_SaltPits.png"></img>\n'
     if 'Salt Pits' not in Biomes.keys():
         html = scanners(html)
     else:
@@ -630,7 +677,7 @@ def render_index(DRG):
     html += '       </h2>\n'
     html += '       <h2>\n'
     html += '        <div class ="biome-container">\n'
-    html += '         <img class="image-container" src="/DeepDive_MissionBar_AzureWeald.png"></img>\n'
+    html += '         <img class="image-container" src="/files/DeepDive_MissionBar_AzureWeald.png"></img>\n'
     if 'Azure Weald' not in Biomes.keys():
         html = scanners(html)
     else:
@@ -639,7 +686,7 @@ def render_index(DRG):
     html += '       </h2>\n'
     html += '       <h2>\n'
     html += '        <div class ="biome-container">\n'
-    html += '         <img class="image-container" src="/DeepDive_MissionBar_Sandblasted.png"></img>\n'
+    html += '         <img class="image-container" src="/files/DeepDive_MissionBar_Sandblasted.png"></img>\n'
     if 'Sandblasted Corridors' not in Biomes.keys():
         html = scanners(html)
     else:
@@ -648,7 +695,7 @@ def render_index(DRG):
     html += '       </h2>\n'
     html += '       <h2>\n'
     html += '        <div class ="biome-container">\n'
-    html += '         <img class="image-container" src="/DeepDive_MissionBar_Radioactive.png"></img>\n'
+    html += '         <img class="image-container" src="/files/DeepDive_MissionBar_Radioactive.png"></img>\n'
     if 'Radioactive Exclusion Zone' not in Biomes.keys():
         html = scanners(html)
     else:
@@ -657,7 +704,7 @@ def render_index(DRG):
     html += '       </h2>\n'
     html += '       <h2>\n'
     html += '        <div class = "biome-container">\n'
-    html += '         <img class="image-container" src="/DeepDive_MissionBar_FungusBogs.png"></img>\n'
+    html += '         <img class="image-container" src="/files/DeepDive_MissionBar_FungusBogs.png"></img>\n'
     if 'Fungus Bogs' not in Biomes.keys():
         html = scanners(html)
     else:
@@ -666,7 +713,7 @@ def render_index(DRG):
     html += '       </h2>\n'
     html += '       <h2>\n'
     html += '        <div class ="biome-container">\n'
-    html += '         <img class="image-container" src="/DeepDive_MissionBar_HollowBough.png"></img>\n'
+    html += '         <img class="image-container" src="/files/DeepDive_MissionBar_HollowBough.png"></img>\n'
     if 'Hollow Bough' not in Biomes.keys():
         html = scanners(html)
     else:
@@ -675,11 +722,12 @@ def render_index(DRG):
     html += '       </h2>\n'
     html += '       <h2>\n'
     html += '        <div class ="biome-container">\n'
-    html += '         <img class="image-container" src="/DeepDive_MissionBar_LushDownpour.png"></img>\n'
+    html += '         <img class="image-container" src="/files/DeepDive_MissionBar_LushDownpour.png"></img>\n'
     if 'Dense Biozone' not in Biomes.keys():
         html = scanners(html)
     else:
         html, img_count = array_standard_missions(Biomes, 'Dense Biozone', img_count, html)
+    img_count = 0
     html += '        </div>\n'
     html += '        </div>\n'
     html += '        <div>\n'
@@ -689,17 +737,17 @@ def render_index(DRG):
     html += '           <div class="missionscountdown">NEW DEEP DIVES IN</div>\n'
     html += '          <span id="ddcountdown"></span>\n'
     html += '           <h2>\n'    
-    html += '          <img class="image-container" src="/dd.png"></img>\n'
-    #html, img_count = array_dd_missions(DeepDives, 'Deep Dive Normal', img_count, html)
+    html += '          <img class="image-container" src="/files/dd.png"></img>\n'
+    html = array_dd_missions(DeepDives, 'Deep Dive Normal', img_count, html)
     html += '         </h2>\n'
     html += '        </div>\n'
     html += '        <div class="dd-container">\n'
     html += '           <h2>\n'
-    html += '          <img class="image-container" src="/edd.png"</img>\n'
-    #html, img_count = array_dd_missions(DeepDives, 'Deep Dive Elite', img_count, html)
+    html += '          <img class="image-container" src="/files/edd.png"</img>\n'
+    html = array_dd_missions(DeepDives, 'Deep Dive Elite', img_count, html)
     html += '           </h2>\n'
     html += '           <hr>\n'
-    html += '         <a class="jsonlink" href="/?json=bulkmissions"><strong>FULL MISSION DATA</strong></a> <a class="jsonlink" href="/?json=current"><strong>CURRENT DATA</strong></a> <a class="jsonlink" href="/?json=DD"><strong>CURRENT DD DATA</strong></a>\n'
+    html += '         <a class="jsonlink" href="/json?data=bulkmissions"><strong>FULL MISSION DATA</strong></a> <a class="jsonlink" href="/json?data=current"><strong>CURRENT DATA</strong></a> <a class="jsonlink" href="/json?data=DD"><strong>CURRENT DD DATA</strong></a>\n'
     html += "          <p class='gsgdisclaimer'>This website is a third-party platform and is not affiliated, endorsed, or sponsored by Ghost Ship Games. The use of Deep Rock Galactic's in-game assets on this website is solely for illustrative purposes and does not imply any ownership or association with the game or its developers. All copyrights and trademarks belong to their respective owners. For official information about Deep Rock Galactic, please visit the official Ghost Ship Games website.</p>\n"
     html += '       </div>\n'
     html += '       </div>\n'
@@ -720,39 +768,35 @@ tstamp = queue.Queue()
 tstampthread = threading.Thread(target=rotate_timestamp, args=(DRG, tstamp))
 tstampthread.start()
 
-biomes_Queue = queue.Queue()
-biomesthread = threading.Thread(target=rotate_biomes, args=(DRG, tstamp, biomes_Queue))
+biomesthread = threading.Thread(target=rotate_biomes, args=(DRG, tstamp))
 biomesthread.start()
-    
-app = Flask(__name__, template_folder='./templates', static_folder='')
+
+DDs = queue.Queue()
+ddsthread = threading.Thread(target=rotate_DDs, args=(DDs,))
+ddsthread.start()
+
+app = Flask(__name__, template_folder='./templates', static_folder=f'{os.getcwd()}/files')
 
 @app.route('/')
 def home():
     applicable_timestamp = tstamp.queue[0]
-    json_arg = request.args.get('json')
+    return render_template_string(render_index(DRG[applicable_timestamp], DDs.queue[0]))
+
+@app.route('/json')
+def serve_json():
+    json_arg = request.args.get('data')
     if json_arg:
         if json_arg == 'bulkmissions':
             return jsonify(DRG)
         elif json_arg == 'DD':
-            return jsonify(DDs)
+            return jsonify(DDs.queue[0])
         elif json_arg == 'current':
             data = DRG[applicable_timestamp]
             return jsonify(data), 200, {'Title': applicable_timestamp}
         else:
             return "No applicable data", 404
-    return render_template_string(render_index(DRG[applicable_timestamp]))
+    else:
+        return "No applicable data", 404
 
 if __name__ == '__main__':
     app.run()
-
-#DeepDives = DRG['Deep Dives']
-#DeepDives = render_deepdives(DeepDives)
-#DRG['Deep Dives'] = DeepDives
-
-#Biomes = DRG['Biomes']
-#Biomes = render_biomes(Biomes)
-#DRG['Biomes'] = Biomes
-
-#if os.path.exists('./index'):
-    #shutil.rmtree('./index')
-    #os.mkdir('index')
