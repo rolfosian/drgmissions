@@ -1,15 +1,29 @@
-#PILLOW AND HTML RENDERING SCRIPT FOR USE IN CONJUNCTION WITH MISSION DATA FETCHED BY LUA SCRIPT, GENERATES MISSION ICONS OF CURRENT MISSIONS AND UPLOADS TO STATIC WEB HOST (in this case netlify)
 from PIL import Image, ImageDraw, ImageFont
 import re
 import os
 import json
 import requests
+from time import sleep
 import time 
 import subprocess
 from datetime import datetime, timezone, timedelta
 import shutil
 from dateutil import parser
 from flask import Flask, render_template, render_template_string, request, send_from_directory, jsonify
+import queue
+import threading
+import signal
+import sys
+
+def sort_dictionary(dictionary, custom_order):
+    sorted_dict = {}
+    for key in custom_order:
+        if key in dictionary:
+            sorted_dict[key] = dictionary[key]
+            del dictionary[key]
+
+    sorted_dict.update(dictionary)
+    return sorted_dict
 
 def order_dictionary_by_date(dictionary):
     sorted_keys = sorted(dictionary.keys(), key=lambda x: parser.isoparse(x))
@@ -25,8 +39,65 @@ def select_timestamp(DRG):
         timestamp = datetime.fromisoformat(keys[i].replace('Z', ''))
         next_timestamp = datetime.fromisoformat(keys[i+1].replace('Z', ''))
         if current_time > timestamp and current_time < next_timestamp:
-            print(keys[i])
             return keys[i]
+
+def rotate_timestamp(DRG, tstamp_Queue):
+    while True:
+        applicable_timestamp = select_timestamp(DRG)
+        if tstamp_Queue.qsize() == 0:
+            tstamp_Queue.put(applicable_timestamp)
+        timestamp = tstamp_Queue.queue[0]
+        if applicable_timestamp != timestamp:
+            tstamp_Queue.put(applicable_timestamp)
+            tstamp_Queue.get()
+        sleep(1)
+
+def rotate_biomes(DRG, tstamp_Queue, biomes_Queue):
+    order = ['Crystalline Caverns', 'Glacial Strata', 'Magma Core', 'Salt Pits', 'Azure Weald', 'Sandblasted Corridors', 'Radioactive Exclusion Zone', 'Fungus Bogs', 'Hollow Bough', 'Denze Biozone']
+    def array_biomes(Biomes, timestamp):
+        biomes = [
+            'Azure Weald',
+            'Crystalline Caverns',
+            'Fungus Bogs',
+            'Glacial Strata',
+            'Magma Core',
+            'Radioactive Exclusion Zone',
+            'Sandblasted Corridors',
+            'Dense Biozone',
+            'Salt Pits',
+            'Hollow Bough']
+        for biome in biomes:
+            biome_dir = biome.replace(' ', '_')
+            if os.path.exists(biome_dir):
+                shutil.rmtree(biome_dir)
+        img_count = 0
+        for biome in Biomes.keys():
+            folder_name = biome.replace(' ', '_')
+            if os.path.exists(f'./{folder_name}'):
+                shutil.rmtree(f'./{folder_name}')
+            os.mkdir(f'./{folder_name}')
+            for mission in Biomes[biome]:
+                img_count += 1
+                fname = str(img_count)
+                mission['rendered_mission'].save(f'./{folder_name}/{fname}.png')
+        return timestamp
+    while tstamp_Queue.qsize() == 0:
+        continue
+    timestamp = None
+    while True:
+        applicable_timestamp = tstamp_Queue.queue[0]
+        if not timestamp:
+            Biomes = DRG[applicable_timestamp]['Biomes']
+            Biomes = render_biomes(Biomes)
+            Biomes = sort_dictionary(Biomes, order)
+            timestamp = array_biomes(Biomes, applicable_timestamp)
+            continue
+        if applicable_timestamp != timestamp:
+            Biomes = DRG[applicable_timestamp]['Biomes']
+            Biomes = render_biomes(Biomes)
+            Biomes = sort_dictionary(Biomes, order)
+            timestamp = array_biomes(Biomes, applicable_timestamp)
+        sleep(1)
 
 def scale_image(image, i):
     new_width = int(image.width * i)
@@ -319,13 +390,12 @@ def render_index(DRG):
         html += '          <br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
         return html
     def array_standard_missions(Biomes, biome_str, img_count, html):
-        html += '         <br>\n'       
+        html += '         <br>\n'
         folder_name = biome_str.replace(' ', '_')
-        os.mkdir(f'./index/{folder_name}')
         for mission in Biomes[biome_str]:
             img_count += 1
             fname = str(img_count)
-            mission['rendered_mission'].save(f'./index/{folder_name}/{fname}.png')
+            
             html += f'         <img class="mission" src="/{folder_name}/{fname}.png"></img>\n'
         return html, img_count
     def array_dd_missions(dds, dd_str, img_count, html):
@@ -526,8 +596,8 @@ def render_index(DRG):
     html += '         <img class="image-container" src="https://cdn.discordapp.com/attachments/426026691077472269/1113074252762071081/DeepDive_MissionBar_CrystalCaves.png"></img>\n'
     if 'Crystalline Caverns' not in Biomes.keys():
         html = scanners(html)
-    #else:
-        #html, img_count = array_standard_missions(Biomes, 'Crystalline Caverns', img_count, html)
+    else:
+        html, img_count = array_standard_missions(Biomes, 'Crystalline Caverns', img_count, html)
     html += '        </div>\n'
     html += '       </h2>\n'
     html += '       <h2>\n'
@@ -535,8 +605,8 @@ def render_index(DRG):
     html += '         <img class="image-container" src="https://cdn.discordapp.com/attachments/426026691077472269/1113074253261189191/DeepDive_MissionBar_GlacialStrata.png"></img>\n'
     if 'Glacial Strata' not in Biomes.keys():
         html = scanners(html)
-    #else:
-        #html, img_count = array_standard_missions(Biomes, 'Glacial Strata', img_count, html)
+    else:
+        html, img_count = array_standard_missions(Biomes, 'Glacial Strata', img_count, html)
     html += '        </div>\n'
     html += '       </h2>\n'
     html += '       <h2>\n'
@@ -544,8 +614,8 @@ def render_index(DRG):
     html += '         <img class="image-container" src="https://cdn.discordapp.com/attachments/426026691077472269/1113074254062301224/DeepDive_MissionBar_MagmaCore.png"></img>\n'
     if 'Magma Core' not in Biomes.keys():
         html = scanners(html)
-    #else:
-        #html, img_count = array_standard_missions(Biomes, 'Magma Core', img_count, html)
+    else:
+        html, img_count = array_standard_missions(Biomes, 'Magma Core', img_count, html)
     html += '        </div>\n'
     html += '       </h2>\n'
     html += '       <h2>\n'
@@ -553,8 +623,8 @@ def render_index(DRG):
     html += '         <img class="image-container" src="https://cdn.discordapp.com/attachments/426026691077472269/1113074254754353192/DeepDive_MissionBar_SaltPits.png"></img>\n'
     if 'Salt Pits' not in Biomes.keys():
         html = scanners(html)
-    #else:
-        #html, img_count = array_standard_missions(Biomes, 'Salt Pits', img_count, html)
+    else:
+        html, img_count = array_standard_missions(Biomes, 'Salt Pits', img_count, html)
     html += '        </div>\n'
     html += '       </h2>\n'
     html += '       <h2>\n'
@@ -562,8 +632,8 @@ def render_index(DRG):
     html += '         <img class="image-container" src="https://cdn.discordapp.com/attachments/426026691077472269/1113074252460077056/DeepDive_MissionBar_AzureWeald.png"></img>\n'
     if 'Azure Weald' not in Biomes.keys():
         html = scanners(html)
-    #else:
-        #html, img_count = array_standard_missions(Biomes, 'Azure Weald', img_count, html)
+    else:
+        html, img_count = array_standard_missions(Biomes, 'Azure Weald', img_count, html)
     html += '        </div>\n'
     html += '       </h2>\n'
     html += '       <h2>\n'
@@ -571,8 +641,8 @@ def render_index(DRG):
     html += '         <img class="image-container" src="https://cdn.discordapp.com/attachments/426026691077472269/1113074252120330240/DeepDive_MissionBar_Sandblasted.png"></img>\n'
     if 'Sandblasted Corridors' not in Biomes.keys():
         html = scanners(html)
-    #else:
-        #html, img_count = array_standard_missions(Biomes, 'Sandblasted Corridors', img_count, html)
+    else:
+        html, img_count = array_standard_missions(Biomes, 'Sandblasted Corridors', img_count, html)
     html += '        </div>\n'
     html += '       </h2>\n'
     html += '       <h2>\n'
@@ -580,8 +650,8 @@ def render_index(DRG):
     html += '         <img class="image-container" src="https://cdn.discordapp.com/attachments/426026691077472269/1113074254418821242/DeepDive_MissionBar_Radioactive.png"></img>\n'
     if 'Radioactive Exclusion Zone' not in Biomes.keys():
         html = scanners(html)
-    #else:
-        #html, img_count = array_standard_missions(Biomes, 'Radioactive Exclusion Zone', img_count, html)
+    else:
+        html, img_count = array_standard_missions(Biomes, 'Radioactive Exclusion Zone', img_count, html)
     html += '        </div>\n'
     html += '       </h2>\n'
     html += '       <h2>\n'
@@ -589,8 +659,8 @@ def render_index(DRG):
     html += '         <img class="image-container" src="https://cdn.discordapp.com/attachments/426026691077472269/1113074252996939917/DeepDive_MissionBar_FungusBogs.png"></img>\n'
     if 'Fungus Bogs' not in Biomes.keys():
         html = scanners(html)
-    #else:
-        #html, img_count = array_standard_missions(Biomes, 'Fungus Bogs', img_count, html)
+    else:
+        html, img_count = array_standard_missions(Biomes, 'Fungus Bogs', img_count, html)
     html += '        </div>\n'
     html += '       </h2>\n'
     html += '       <h2>\n'
@@ -598,8 +668,8 @@ def render_index(DRG):
     html += '         <img class="image-container" src="https://cdn.discordapp.com/attachments/426026691077472269/1113074253521240124/DeepDive_MissionBar_HollowBough.png"></img>\n'
     if 'Hollow Bough' not in Biomes.keys():
         html = scanners(html)
-    #else:
-        #html, img_count = array_standard_missions(Biomes, 'Hollow Bough', img_count, html)
+    else:
+        html, img_count = array_standard_missions(Biomes, 'Hollow Bough', img_count, html)
     html += '        </div>\n'
     html += '       </h2>\n'
     html += '       <h2>\n'
@@ -607,8 +677,8 @@ def render_index(DRG):
     html += '         <img class="image-container" src="https://cdn.discordapp.com/attachments/426026691077472269/1113074253789663242/DeepDive_MissionBar_LushDownpour.png"></img>\n'
     if 'Dense Biozone' not in Biomes.keys():
         html = scanners(html)
-    #else:
-        #html, img_count = array_standard_missions(Biomes, 'Dense Biozone', img_count, html)
+    else:
+        html, img_count = array_standard_missions(Biomes, 'Dense Biozone', img_count, html)
     html += '        </div>\n'
     html += '        </div>\n'
     html += '        <div>\n'
@@ -640,22 +710,27 @@ def render_index(DRG):
 with open('drgmissionsgod.json', 'r') as f:
     DRG = f.read()
     f.close()
-    
+
 DRG = json.loads(DRG)
 
 DRG = order_dictionary_by_date(DRG)
+
+tstamp = queue.Queue()
+tstampthread = threading.Thread(target=rotate_timestamp, args=(DRG, tstamp))
+tstampthread.start()
+
+biomes_Queue = queue.Queue()
+biomesthread = threading.Thread(target=rotate_biomes, args=(DRG, tstamp, biomes_Queue))
+biomesthread.start()
     
 app = Flask(__name__, template_folder='./templates', static_folder='')
 
 @app.route('/')
 def home():
-    applicable_timestamp = select_timestamp(DRG)
+    applicable_timestamp = tstamp.queue[0]
     json_arg = request.args.get('json')
     img_arg = request.args.get('img')
     if img_arg:
-        #Biomes = DRG[applicable_timestamp]['Biomes']
-        #Biomes = render_biomes(Biomes)
-        #DRG['Biomes'] = Biomes
         pass
     if json_arg:
         if json_arg == 'bulkmissions':
