@@ -9,10 +9,11 @@ import subprocess
 from datetime import datetime, timezone, timedelta
 import shutil
 from dateutil import parser
-from flask import Flask, render_template, render_template_string, request, send_from_directory, jsonify
+from flask import Flask, render_template_string, request, send_file, jsonify
 import queue
 import threading
 import glob
+from io import BytesIO
 
 def sort_dictionary(dictionary, custom_order):
     sorted_dict = {}
@@ -31,18 +32,21 @@ def order_dictionary_by_date(dictionary):
         ordered_dictionary[key] = dictionary[key]
     return ordered_dictionary
 
-def select_timestamp(DRG):
+def select_timestamp(DRG, next_):
     current_time = datetime.utcnow()
     keys = list(DRG.keys())
     for i in range(len(keys) - 1):
         timestamp = datetime.fromisoformat(keys[i].replace('Z', ''))
         next_timestamp = datetime.fromisoformat(keys[i+1].replace('Z', ''))
         if current_time > timestamp and current_time < next_timestamp:
-            return keys[i]
+            if next_:
+                return keys[i+1]
+            else:
+                return keys[i]
 
-def rotate_timestamp(DRG, tstamp_Queue):
+def rotate_timestamp(DRG, tstamp_Queue, next_):
     while True:
-        applicable_timestamp = select_timestamp(DRG)
+        applicable_timestamp = select_timestamp(DRG, next_=next_)
         if tstamp_Queue.qsize() == 0:
             tstamp_Queue.put(applicable_timestamp)
         timestamp = tstamp_Queue.queue[0]
@@ -51,35 +55,44 @@ def rotate_timestamp(DRG, tstamp_Queue):
             tstamp_Queue.get()
         sleep(1)
 
-def rotate_biomes(DRG, tstamp_Queue):
-    order = ['Crystalline Caverns', 'Glacial Strata', 'Magma Core', 'Salt Pits', 'Azure Weald', 'Sandblasted Corridors', 'Radioactive Exclusion Zone', 'Fungus Bogs', 'Hollow Bough', 'Denze Biozone']
+def rotate_biomes(DRG, tstamp_Queue, biomes_Queue):
+    order = ['Glacial Strata', 'Crystalline Caverns', 'Salt Pits', 'Magma Core', 'Azure Weald', 'Sandblasted Corridors', 'Fungus Bogs', 'Radioactive Exclusion Zone', 'Dense Biozone', 'Hollow Bough']
     def array_biomes(Biomes, timestamp):
-        biomes = [
-            'Azure Weald',
-            'Crystalline Caverns',
-            'Fungus Bogs',
-            'Glacial Strata',
-            'Magma Core',
-            'Radioactive Exclusion Zone',
-            'Sandblasted Corridors',
-            'Dense Biozone',
-            'Salt Pits',
-            'Hollow Bough']
-        for biome in biomes:
-            biome_dir = biome.replace(' ', '_')
-            if os.path.exists(biome_dir):
-                shutil.rmtree(biome_dir)
-        img_count = 0
+        #biomes = [
+            #'Azure Weald',
+            #'Crystalline Caverns',
+            #'Fungus Bogs',
+            #'Glacial Strata',
+            #'Magma Core',
+            #'Radioactive Exclusion Zone',
+            #'Sandblasted Corridors',
+            #'Dense Biozone',
+            #'Salt Pits',
+            #'Hollow Bough']
+        #for biome in biomes:
+            #biome_dir = biome.replace(' ', '_')
+            #if os.path.exists(biome_dir):
+                #shutil.rmtree(biome_dir)
+        #img_count = 0
+        Biomes1 = {}
         for biome in Biomes.keys():
-            folder_name = biome.replace(' ', '_')
-            if os.path.exists(f'./files/{folder_name}'):
-                shutil.rmtree(f'./files/{folder_name}')
-            os.mkdir(f'./files/{folder_name}')
+            biome1 = {}
+            Biomes1[biome] = []
+            #folder_name = biome.replace(' ', '_')
+            #if os.path.exists(f'./files/{folder_name}'):
+                #shutil.rmtree(f'./files/{folder_name}')
+            #os.mkdir(f'./files/{folder_name}')
             for mission in Biomes[biome]:
-                img_count += 1
+                mission0 = {}
+                mission0['CodeName'] = mission['CodeName']
+                #img_count += 1
                 fname = str(img_count)
-                mission['rendered_mission'].save(f'./files/{folder_name}/{fname}.png')
-        return timestamp
+                mission_icon = BytesIO()
+                mission['rendered_mission'].save(mission_icon, format='PNG')
+                mission_icon.seek(0)
+                mission0['rendered_mission'] = mission_icon
+                Biomes1[biome].append(mission0)
+        return timestamp, Biomes1
     while tstamp_Queue.qsize() == 0:
         continue
     timestamp = None
@@ -89,13 +102,16 @@ def rotate_biomes(DRG, tstamp_Queue):
             Biomes = DRG[applicable_timestamp]['Biomes']
             Biomes = render_biomes(Biomes)
             Biomes = sort_dictionary(Biomes, order)
-            timestamp = array_biomes(Biomes, applicable_timestamp)
+            timestamp, Biomes = array_biomes(Biomes, applicable_timestamp)
+            biomes_Queue.put(Biomes)
             continue
         if applicable_timestamp != timestamp:
             Biomes = DRG[applicable_timestamp]['Biomes']
             Biomes = render_biomes(Biomes)
             Biomes = sort_dictionary(Biomes, order)
-            timestamp = array_biomes(Biomes, applicable_timestamp)
+            timestamp, Biomes = array_biomes(Biomes, applicable_timestamp)
+            biomes_Queue.put(Biomes)
+            biomes_Queue.get()
         sleep(1)
 
 def rotate_DDs(DDs):
@@ -437,19 +453,36 @@ def render_deepdives(DeepDives):
             rendered_deepdives[t]['Stages'].append(stage_png)
     return rendered_deepdives
 
-def render_index(DRG, DDs):
+global img_index
+img_index = {
+    'Crystalline%20Caverns': [1, 2, 3, 4, 5],
+    'Glacial%20Strata': [1, 2, 3, 4, 5],
+    'Radioactive%20Exclusion%20Zone': [1, 2, 3, 4, 5],
+    'Fungus%20Bogs': [1, 2, 3, 4, 5],
+    'Dense%20Biozone': [1, 2, 3, 4, 5],
+    'Salt%20Pits': [1, 2, 3, 4, 5],
+    'Sandblasted%20Corridors': [1, 2, 3, 4, 5],
+    'Magma%20Core': [1, 2, 3, 4, 5],
+    'Azure%20Weald': [1, 2, 3, 4, 5],
+    'Hollow%20Bough': [1, 2, 3, 4, 5]
+}
+
+def render_index(timestamp, DDs, nextindex):
     def scanners(html):
         html += '          <br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
         return html
-    def array_standard_missions(Biomes, biome_str, img_count, html):
+    def array_standard_missions(Biomes, biome_str, html, nextindex):
         html += '         <br>\n'
-        folder_name = biome_str.replace(' ', '_')
+        url_biome = biome_str.replace(' ', '%20')
+        img_count = 0
         for mission in Biomes[biome_str]:
             img_count += 1
-            fname = str(img_count)
-            
-            html += f'         <img class="mission" src="/files/{folder_name}/{fname}.png"></img>\n'
-        return html, img_count
+            if nextindex:
+                fname = f'/next/png?img={url_biome}_{str(img_count)}'
+            else:
+                fname = f'/png?img={url_biome}_{str(img_count)}'
+            html += f'          <div class="mission-hover-zoom"><img class="mission" src="{fname}"></div>\n'
+        return html
     def array_dd_missions(dds, dd_str, stg_count, html):
         biomes = {
             'Crystalline Caverns': 'DeepDive_MissionBar_CrystalCaves.png',
@@ -465,26 +498,26 @@ def render_index(DRG, DDs):
         }
         biome = dds[dd_str]['Biome']
         biome = biomes[biome]
-        html += f'         <img class="image-container" src="/files/{biome}"></img>\n'
+        html += f'         <img class="image-container" src="/files/{biome}">\n'
         html += '         <br>\n'
         folder_name = dd_str.replace(' ', '_')
         for mission in dds[dd_str]['Stages']:
             stg_count += 1
             fname = str(stg_count)
-            html += f'         <img class="missionr" title="Stage {fname}" src="/files/{folder_name}/{fname}.png"></img>\n'
+            html += f'         <div class="mission-hover-zoom"><img class="mission" title="Stage {fname}" src="/files/{folder_name}/{fname}.png"></div>\n'
         return html
     img_count = 0
-    Biomes = DRG['Biomes']
+    Biomes = timestamp['Biomes']
     DeepDives = DDs['Deep Dives']
     html = ''
     html += '''<!doctype html>
                 <html>
                  <head>
                  <script>
-                    document.addEventListener("DOMContentLoaded", function() {
+                    document.addEventListener("DOMContentLoaded", function () {
                         const targetDay = 4; // Thursday (0 = Sunday, 1 = Monday, etc.)
                         const targetHour = 11; // 11am UTC
-                        const targetTime = new Date();
+                        let targetTime = new Date();
                         targetTime.setUTCHours(targetHour, 0, 0, 0);
                         if (targetTime.getUTCDay() === targetDay && Date.now() > targetTime.getTime()) {
                             targetTime.setUTCDate(targetTime.getUTCDate() + 7); // Add 7 days to go to the next Thursday
@@ -494,57 +527,75 @@ def render_index(DRG, DDs):
                         }
                         const countdownTimer = setInterval(() => {
                             const now = Date.now();
-                            const remainingTime = targetTime - now;
-                            if (remainingTime < 4) {
+                            const remainingTime = targetTime.getTime() - now; // Use getTime() to get the time in milliseconds
+                            if (remainingTime <= 0) {
                                 clearInterval(countdownTimer);
-                                location.reload();
+                                document.getElementById("ddcountdown").innerHTML = "0D 00:00:00";
                             } else {
                                 const days = Math.floor(remainingTime / (1000 * 60 * 60 * 24));
                                 const hours = Math.floor((remainingTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                                 const minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
                                 const seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
-                                document.getElementById("ddcountdown").innerHTML = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+                                const formattedTime = formatTime(days, hours, minutes, seconds);
+                                document.getElementById("ddcountdown").innerHTML = formattedTime;
                             }
                         }, 1000);
+
+                        function formatTime(days, hours, minutes, seconds) {
+                            return `${days}:${formatNumber(hours)}:${formatNumber(minutes)}:${formatNumber(seconds)}`;
+                        }
+
+                        function formatNumber(number) {
+                            return number.toString().padStart(2, "0");
+                        }
                     });
                     </script>
                     <script>
-                        document.addEventListener("DOMContentLoaded", function() {
-                            const targetTime1 = new Date();
-                            targetTime1.setSeconds(0);
-                            targetTime1.setMilliseconds(0);
-                            if (targetTime1.getMinutes() < 30) {
-                                targetTime1.setMinutes(30);
-                            } else {
-                                targetTime1.setMinutes(0);
-                                targetTime1.setHours(targetTime1.getHours() + 1);
-                            }
-                            const countdownElement1 = document.getElementById('countdown');
-                            const countdownTimer1 = setInterval(updateCountdown1, 1000);
-                            
-                            function updateCountdown1() {
-                                const remainingTime1 = Math.floor(((targetTime1 - new Date() + 2) / 1000));
-                                if (remainingTime1 < 3) {
-                                    clearInterval(countdownTimer1);
+                    document.addEventListener("DOMContentLoaded", function() {
+                        const targetTime1 = new Date();
+                        targetTime1.setSeconds(0);
+                        targetTime1.setMilliseconds(0);
+                        if (targetTime1.getMinutes() < 30) {
+                            targetTime1.setMinutes(30);
+                        } else {
+                            targetTime1.setMinutes(0);
+                            targetTime1.setHours(targetTime1.getHours() + 1);
+                        }
+                        const countdownElement1 = document.getElementById('countdown');
+                        let isReloading = false; // Flag to track reloading status
+                        const countdownTimer1 = setInterval(updateCountdown1, 1000);
+
+                        function updateCountdown1() {
+                            const remainingTime1 = Math.floor(((targetTime1 - new Date() + 2) / 1000));
+                            if (remainingTime1 < 0 && !isReloading) {
+                                clearInterval(countdownTimer1);
+                                isReloading = true;
+                                setTimeout(function() {
                                     location.reload();
-                                } else {
-                                    const hours1 = Math.floor(remainingTime1 / 3600);
-                                    const minutes1 = Math.floor((remainingTime1 % 3600) / 60);
-                                    const seconds1 = remainingTime1 % 60;
-                                    const countdownString1 = `${hours1.toString().padStart(2, '0')} : ${minutes1.toString().padStart(2, '0')} : ${seconds1.toString().padStart(2, '0')}`;
-                                    countdownElement1.textContent = countdownString1;
-                                }
+                                }, 3000);
+                                countdownElement1.textContent = '00 : 00 : 00'; // Display "00 : 00 : 00"
+                            } else if (remainingTime1 >= 0) {
+                                const hours1 = Math.floor(remainingTime1 / 3600);
+                                const minutes1 = Math.floor((remainingTime1 % 3600) / 60);
+                                const seconds1 = remainingTime1 % 60;
+                                const countdownString1 = `${hours1.toString().padStart(2, '0')} : ${minutes1.toString().padStart(2, '0')} : ${seconds1.toString().padStart(2, '0')}`;
+                                countdownElement1.textContent = countdownString1;
                             }
-                        });
-                    </script>
-                     <title>DRG MISSIONS</title>
+                        }
+                    });
+                    </script>\n'''
+    if nextindex:
+        html += '       <title>NEXT DRG MISSIONS</title>\n'
+    else:
+        html += '       <title>CURRENT DRG MISSIONS</title>\n'
+    html += '''      
                      <meta charset="UTF-8">
                      <meta name="viewport" content="width=device-width, initial-scale=1.0">
                      <meta property="og:title" content="DRG CURRENT MISSIONS">
                      <meta property="og:type" content="website">
                      <meta property="og:url" content="/drgmissions.json">
                      <meta property="og:description" content="Current Missions, generated by DRG from the current seed, and also the Current DDs.">
-                     <link rel ="icon" href="/favicon.ico" type="image/x-icon">
+                     <link rel ="icon" href="/files/favicon.ico" type="image/x-icon">
                      <style>
                          @font-face {
                              font-family: "BebasNeue";
@@ -554,11 +605,35 @@ def render_index(DRG, DDs):
                              font-family: "HammerBro101MovieThin-Regular";
                              src: url("/files/HammerBro101MovieThin-Regular.woff");
                          }
+                         #background-video {
+                         position: fixed;
+                         right: 0;
+                         bottom: 0;
+                         min-width: 100%;
+                         min-height: 100%;
+                         width: auto;
+                         height: auto;
+                         object-fit: cover;
+                         z-index: -1;
+                         }
                          .grid-container {
-                            display: grid;
-                            grid-template-columns: 1fr 1fr;
-                            align-items: flex-start;
-                            grid-column-gap: 0;
+                         display: grid;
+                         grid-template-columns: auto auto;
+                         padding: 0px;
+                         text-align: center;
+                         }
+                         .grid-item {
+                         padding: 0px;
+                         text-align: center;
+                         }
+                         .mission-hover-zoom {
+                         display: inline-block
+                         }
+                         .mission-hover-zoom img {
+                         transition: transform .5s ease;
+                         }
+                         .mission-hover-zoom:hover img {
+                         transform: scale(1.5);
                          }
                          .mission {
                              display: inline-block;
@@ -569,54 +644,53 @@ def render_index(DRG, DDs):
                              height: auto;
                          }
                          .dd-container {
-                             width: 50%;
-                             height: 50%;
+                             width: auto;
+                             height: 60%;
                          }
                          .image-container {
                              width: 80%;
                              height: auto;
                          }
+
                          .jsonlink {
                              color: #1E90FF;
                              font-size: 30px;
                              font-family: "BebasNeue", sans-serif;
                          }
+                         .midlink {
+                             color: #1E90FF;
+                             font-size: 40px;
+                             font-family: "BebasNeue", sans-serif;
+                         }
                          .scanners {
                              color: red;
                              font-family: "HammerBro101MovieThin-Regular", sans-serif;
-                             font-size: 15px;
+                             font-size: 20px;
                          }
-                        .center-align {
-                            display: flex;
-                            align-items: flex-start;
-                            justify-content: center;
-                            text-align: center;
-                        }
-                        .left-align {
-                            display: flex;
-                            align-items: left;
-                            justify-content: left;
-                            text-align: left;
-                        }
-                        .right-align {
-                            display: flex;
-                            align-items: right;
-                            justify-content: right;
-                            text-align: right;
-                        }
                         .missionscountdown {
+                            text-align: center;
+                            position: fixed;
+                            top: 10%;
+                            left: 50%;
+                            transform: translate(-50%, -50%);
+                            color: white;
+                            font-size: 35px;
+                            font-family: "BebasNeue", sans-serif;
+                        }
+                        .ddscountdown {
                             text-align: center;
                             color: white;
                             font-size: 35px;
                             font-family: "BebasNeue", sans-serif;
                         }
                         span#countdown {
+                            white-space: nowrap;
                             margin-bottom: 0;
-                            display: flex;
-                            align-items: center;
+                            top: 15%;
+                            left: 50%;
                             color: white;
-                            font-size: 72px;
-                            justify-content: center;
+                            font-size: 65px;
+                            transform: translate(-50%, -50%);
                             font-family: "BebasNeue", sans-serif;
                         }
                         span#ddcountdown {
@@ -629,128 +703,132 @@ def render_index(DRG, DDs):
                             font-family: "BebasNeue", sans-serif;
                         }
                         .gsgdisclaimer {
+                            text-align: center;
                             margin-bottom: 0;
                             color: white;
                             font-family: "BebasNeue", sans-serif;
                         }
-                        }
                     </style>
                  </head>
                  <body bgcolor="#303030">
-                  <div class="grid-container center-align">
-                    <div>
+                 <video id="background-video" autoplay muted loop><source src="/files/space_rig.webm" type="video/webm"></video>
+                  <div class="grid-container">
                     <h2>'''
     html += '        <div class="biome-container">\n'
-    html += '         <img class="image-container" src="/files/DeepDive_MissionBar_CrystalCaves.png"></img>\n'
-    if 'Crystalline Caverns' not in Biomes.keys():
-        html = scanners(html)
-    else:
-        html, img_count = array_standard_missions(Biomes, 'Crystalline Caverns', img_count, html)
-    html += '        </div>\n'
-    html += '       </h2>\n'
-    html += '       <h2>\n'
-    html += '        <div class="biome-container">\n'
-    html += '         <img class="image-container" src="/files/DeepDive_MissionBar_GlacialStrata.png"></img>\n'
+    html += '         <img class="image-container" src="/files/DeepDive_MissionBar_GlacialStrata.png">\n'
     if 'Glacial Strata' not in Biomes.keys():
         html = scanners(html)
     else:
-        html, img_count = array_standard_missions(Biomes, 'Glacial Strata', img_count, html)
+        html = array_standard_missions(Biomes, 'Glacial Strata', html, nextindex)
     html += '        </div>\n'
     html += '       </h2>\n'
     html += '       <h2>\n'
     html += '        <div class="biome-container">\n'
-    html += '         <img class="image-container" src="/files/DeepDive_MissionBar_MagmaCore.png"></img>\n'
-    if 'Magma Core' not in Biomes.keys():
+    html += '         <img class="image-container" src="/files/DeepDive_MissionBar_CrystalCaves.png">\n'
+    if 'Crystalline Caverns' not in Biomes.keys():
         html = scanners(html)
     else:
-        html, img_count = array_standard_missions(Biomes, 'Magma Core', img_count, html)
+        html = array_standard_missions(Biomes, 'Crystalline Caverns', html, nextindex)
     html += '        </div>\n'
     html += '       </h2>\n'
     html += '       <h2>\n'
     html += '        <div class="biome-container">\n'
-    html += '         <img class="image-container" src="/files/DeepDive_MissionBar_SaltPits.png"></img>\n'
+    html += '         <img class="image-container" src="/files/DeepDive_MissionBar_SaltPits.png">\n'
     if 'Salt Pits' not in Biomes.keys():
         html = scanners(html)
     else:
-        html, img_count = array_standard_missions(Biomes, 'Salt Pits', img_count, html)
+        html = array_standard_missions(Biomes, 'Salt Pits', html, nextindex)
+    html += '        </div>\n'
+    html += '       </h2>\n'
+    html += '       <h2>\n'
+    html += '        <div class="biome-container">\n'
+    html += '         <img class="image-container" src="/files/DeepDive_MissionBar_MagmaCore.png">\n'
+    if 'Magma Core' not in Biomes.keys():
+        html = scanners(html)
+    else:
+        html = array_standard_missions(Biomes, 'Magma Core', html, nextindex)
     html += '        </div>\n'
     html += '       </h2>\n'
     html += '       <h2>\n'
     html += '        <div class ="biome-container">\n'
-    html += '         <img class="image-container" src="/files/DeepDive_MissionBar_AzureWeald.png"></img>\n'
+    html += '         <img class="image-container" src="/files/DeepDive_MissionBar_AzureWeald.png">\n'
     if 'Azure Weald' not in Biomes.keys():
         html = scanners(html)
     else:
-        html, img_count = array_standard_missions(Biomes, 'Azure Weald', img_count, html)
+        html = array_standard_missions(Biomes, 'Azure Weald', html, nextindex)
     html += '        </div>\n'
     html += '       </h2>\n'
     html += '       <h2>\n'
     html += '        <div class ="biome-container">\n'
-    html += '         <img class="image-container" src="/files/DeepDive_MissionBar_Sandblasted.png"></img>\n'
+    html += '         <img class="image-container" src="/files/DeepDive_MissionBar_Sandblasted.png">\n'
     if 'Sandblasted Corridors' not in Biomes.keys():
         html = scanners(html)
     else:
-        html, img_count = array_standard_missions(Biomes, 'Sandblasted Corridors', img_count, html)
+        html = array_standard_missions(Biomes, 'Sandblasted Corridors', html, nextindex)
     html += '        </div>\n'
     html += '       </h2>\n'
-    html += '       <h2>\n'
-    html += '        <div class ="biome-container">\n'
-    html += '         <img class="image-container" src="/files/DeepDive_MissionBar_Radioactive.png"></img>\n'
-    if 'Radioactive Exclusion Zone' not in Biomes.keys():
-        html = scanners(html)
-    else:
-        html, img_count = array_standard_missions(Biomes, 'Radioactive Exclusion Zone', img_count, html)
-    html += '        </div>\n'
     html += '       </h2>\n'
     html += '       <h2>\n'
     html += '        <div class = "biome-container">\n'
-    html += '         <img class="image-container" src="/files/DeepDive_MissionBar_FungusBogs.png"></img>\n'
+    html += '         <img class="image-container" src="/files/DeepDive_MissionBar_FungusBogs.png">\n'
     if 'Fungus Bogs' not in Biomes.keys():
         html = scanners(html)
     else:
-        html, img_count = array_standard_missions(Biomes, 'Fungus Bogs', img_count, html)
+        html = array_standard_missions(Biomes, 'Fungus Bogs', html, nextindex)
     html += '        </div>\n'
     html += '       </h2>\n'
     html += '       <h2>\n'
     html += '        <div class ="biome-container">\n'
-    html += '         <img class="image-container" src="/files/DeepDive_MissionBar_HollowBough.png"></img>\n'
-    if 'Hollow Bough' not in Biomes.keys():
+    html += '         <img class="image-container" src="/files/DeepDive_MissionBar_Radioactive.png">\n'
+    if 'Radioactive Exclusion Zone' not in Biomes.keys():
         html = scanners(html)
     else:
-        html, img_count = array_standard_missions(Biomes, 'Hollow Bough', img_count, html)
+        html = array_standard_missions(Biomes, 'Radioactive Exclusion Zone', html, nextindex)
     html += '        </div>\n'
-    html += '       </h2>\n'
     html += '       <h2>\n'
     html += '        <div class ="biome-container">\n'
-    html += '         <img class="image-container" src="/files/DeepDive_MissionBar_LushDownpour.png"></img>\n'
+    html += '         <img class="image-container" src="/files/DeepDive_MissionBar_LushDownpour.png">\n'
     if 'Dense Biozone' not in Biomes.keys():
         html = scanners(html)
     else:
-        html, img_count = array_standard_missions(Biomes, 'Dense Biozone', img_count, html)
-    img_count = 0
+        html = array_standard_missions(Biomes, 'Dense Biozone', html, nextindex)
     html += '        </div>\n'
-    html += '        </div>\n'
-    html += '        <div>\n'
+    html += '       </h2>\n'
+    html += '       <h2>\n'
+    html += '        <div class ="biome-container">\n'
+    html += '         <img class="image-container" src="/files/DeepDive_MissionBar_HollowBough.png">\n'
+    if 'Hollow Bough' not in Biomes.keys():
+        html = scanners(html)
+    else:
+        html = array_standard_missions(Biomes, 'Hollow Bough', html, nextindex)
+    html += '       </h2>\n'
     html += '        <div class="dd-container">\n'
-    html += '           <div class="missionscountdown">NEW MISSIONS IN</div>\n'
-    html += '          <span id="countdown"></span>\n'
-    html += '           <div class="missionscountdown">NEW DEEP DIVES IN</div>\n'
-    html += '          <span id="ddcountdown"></span>\n'
-    html += '           <h2>\n'    
-    html += '          <img class="image-container" src="/files/dd.png"></img>\n'
+    img_count = 0
+    html += '           <h2>\n'
+    html += '          <img class="image-container" src="/files/dd.png">\n'
     html = array_dd_missions(DeepDives, 'Deep Dive Normal', img_count, html)
     html += '         </h2>\n'
     html += '        </div>\n'
     html += '        <div class="dd-container">\n'
     html += '           <h2>\n'
-    html += '          <img class="image-container" src="/files/edd.png"</img>\n'
+    html += '          <img class="image-container" src="/files/edd.png">\n'
     html = array_dd_missions(DeepDives, 'Deep Dive Elite', img_count, html)
     html += '           </h2>\n'
+    html += '        </div>\n'
+    html += '       </div>\n'
+    html += '           <div class="ddscountdown">NEW DEEP DIVES IN</div>\n'
+    html += '          <span id="ddcountdown"></span>\n'
     html += '           <hr>\n'
-    html += '         <a class="jsonlink" href="/json?data=bulkmissions"><strong>FULL MISSION DATA</strong></a> <a class="jsonlink" href="/json?data=current"><strong>CURRENT DATA</strong></a> <a class="jsonlink" href="/json?data=DD"><strong>CURRENT DD DATA</strong></a>\n'
-    html += "          <p class='gsgdisclaimer'>This website is a third-party platform and is not affiliated, endorsed, or sponsored by Ghost Ship Games. The use of Deep Rock Galactic's in-game assets on this website is solely for illustrative purposes and does not imply any ownership or association with the game or its developers. All copyrights and trademarks belong to their respective owners. For official information about Deep Rock Galactic, please visit the official Ghost Ship Games website.</p>\n"
     html += '       </div>\n'
-    html += '       </div>\n'
+    html += '        <div class="dd-container">\n'
+    if nextindex:
+        html += '           <div class="missionscountdown"><a class="midlink" href="/"><strong>CURRENT MISSIONS</strong></a><br>NEW MISSIONS IN<br>\n'
+    else:
+        html += '           <div class="missionscountdown"><a class="midlink" href="/next"><strong>NEXT MISSIONS</strong></a><br>NEW MISSIONS IN<br>\n'
+    html += '          <span id="countdown"></span></div>\n'
+    html += '         <a class="jsonlink" href="/json?data=bulkmissions">FULL MISSION DATA</a> <a class="jsonlink" href="/json?data=current">CURRENT MISSION DATA</a> <a class="jsonlink" href="/json?data=next">NEXT MISSION DATA</a> <a class="jsonlink" href="/json?data=DD">CURRENT DD DATA</a>\n'
+    html += "          <p class='gsgdisclaimer'><i>This website is a third-party platform and is not affiliated, endorsed, or sponsored by Ghost Ship Games. The use of Deep Rock Galactic's in-game assets on this website is solely for illustrative purposes and does not imply any ownership or association with the game or its developers. All copyrights and trademarks belong to their respective owners. For official information about Deep Rock Galactic, please visit the official Ghost Ship Games website.</i></p>\n"
+    html += '        </div>\n'
     html += '       </div>\n'
     html += '    </body>\n'
     html += '</html>\n'
@@ -765,11 +843,19 @@ DRG = json.loads(DRG)
 DRG = order_dictionary_by_date(DRG)
 
 tstamp = queue.Queue()
-tstampthread = threading.Thread(target=rotate_timestamp, args=(DRG, tstamp))
+tstampthread = threading.Thread(target=rotate_timestamp, args=(DRG, tstamp, False,))
 tstampthread.start()
+next_tstamp = queue.Queue()
+next_tstampthread = threading.Thread(target=rotate_timestamp, args=(DRG, next_tstamp, True,))
+next_tstampthread.start()
 
-biomesthread = threading.Thread(target=rotate_biomes, args=(DRG, tstamp))
+currybiomes = queue.Queue()
+biomesthread = threading.Thread(target=rotate_biomes, args=(DRG, tstamp, currybiomes,))
 biomesthread.start()
+
+nextbiomes = queue.Queue()
+nextbiomesthread = threading.Thread(target=rotate_biomes, args=(DRG, next_tstamp, nextbiomes,))
+nextbiomesthread.start()
 
 DDs = queue.Queue()
 ddsthread = threading.Thread(target=rotate_DDs, args=(DDs,))
@@ -780,7 +866,56 @@ app = Flask(__name__, template_folder='./templates', static_folder=f'{os.getcwd(
 @app.route('/')
 def home():
     applicable_timestamp = tstamp.queue[0]
-    return render_template_string(render_index(DRG[applicable_timestamp], DDs.queue[0]))
+    return render_template_string(render_index(DRG[applicable_timestamp], DDs.queue[0], False))
+
+@app.route('/next')
+def home1():
+    applicable_timestamp = next_tstamp.queue[0]
+    return render_template_string(render_index(DRG[applicable_timestamp], DDs.queue[0], True))
+
+@app.route('/png')
+def serve_img():
+    img_arg = request.args.get('img')
+    if img_arg:
+        try:
+            img_arg = img_arg.split('_')
+            biomestr = img_arg[0].replace('%20', ' ')
+            img_index_ = int(img_arg[1])
+            Biomes = currybiomes.queue[0]
+            count = 0
+            for mission in Biomes[biomestr]:
+                count += 1
+                if count == img_index_:
+                    mission1 = BytesIO()
+                    mission1.write(mission['rendered_mission'].getvalue())
+                    mission1.seek(0)
+                    return send_file(mission1, mimetype='image/png')
+        except Exception:
+            return 404
+    else:
+        return 404
+
+@app.route('/next/png')
+def serve_next_img():
+    img_arg = request.args.get('img')
+    if img_arg:
+        try:
+            img_arg = img_arg.split('_')
+            biomestr = img_arg[0].replace('%20', ' ')
+            img_index_ = int(img_arg[1])
+            Biomes = nextbiomes.queue[0]
+            count = 0
+            for mission in Biomes[biomestr]:
+                count += 1
+                if count == img_index_:
+                    mission1 = BytesIO()
+                    mission1.write(mission['rendered_mission'].getvalue())
+                    mission1.seek(0)
+                    return send_file(mission1, mimetype='image/png')
+        except Exception:
+            return 404
+    else:
+        return 404
 
 @app.route('/json')
 def serve_json():
@@ -791,12 +926,18 @@ def serve_json():
         elif json_arg == 'DD':
             return jsonify(DDs.queue[0])
         elif json_arg == 'current':
+            applicable_timestamp = tstamp.queue[0]
             data = DRG[applicable_timestamp]
-            return jsonify(data), 200, {'Title': applicable_timestamp}
+            return jsonify(data)
+        elif json_arg == 'next':
+            applicable_timestamp = next_tstamp.queue[0]
+            data = DRG[applicable_timestamp]
+            return jsonify(data)
         else:
-            return "No applicable data", 404
+            return 404
     else:
-        return "No applicable data", 404
+        return 404
+
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host='0.0.0.0', port=5000)
