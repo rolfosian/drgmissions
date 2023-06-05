@@ -393,14 +393,14 @@ function Main()
             end
         end
     end
-    local currytime = os.date("!%Y-%m-%d %H:%M:%S")
-    local year, month, day, hour, minute, second = currytime:match("(%d+)-(%d+)-(%d+) (%d+):(%d+):(%d+)")
-    currytime = string.format("%02d-%02d-%02d %02d:%02d:%02d", year %100, month, day, hour, minute, second)
-    currytime = Split(currytime, ' ')
-    -- Remove ReverseDateFormat function and just use currytime[1] if your system date format is YY-MM-DD
-    local command = 'date '..ReverseDateFormat(currytime[1])..' & time '..currytime[2]
-    -- Set time to current UTC
-    os.execute(command)
+    -- local currytime = os.date("!%Y-%m-%d %H:%M:%S")
+    -- local year, month, day, hour, minute, second = currytime:match("(%d+)-(%d+)-(%d+) (%d+):(%d+):(%d+)")
+    -- currytime = string.format("%02d-%02d-%02d %02d:%02d:%02d", year %100, month, day, hour, minute, second)
+    -- currytime = Split(currytime, ' ')
+    -- -- Remove ReverseDateFormat function and just use currytime[1] if your system date format is YY-MM-DD
+    -- local command = 'date '..ReverseDateFormat(currytime[1])..' & time '..currytime[2]
+    -- -- Set time to current UTC
+    -- os.execute(command)
     --Linux format:
     -- local command = 'date -s "'..currytime[1]..' '..currytime[2]..'"'
     -- os.execute(command)
@@ -409,7 +409,7 @@ function Main()
     local firstdate = os.date("!*t")
     local current_time = os.time(firstdate)
     --Set target date
-    local target_date = os.time{year=2023, month=6, day=8, hour=0, min=0, sec=0}
+    local target_date = os.time{year=2023, month=6, day=6, hour=0, min=0, sec=0}
     -- Calculate the difference in seconds between the current UTC time and the target date
     local diff_seconds = os.difftime(target_date, current_time)
     -- Calculate total amount of 30 minute increments between current time and the target date
@@ -438,7 +438,7 @@ function Main()
             end
         end
         if missions then
-            local timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
+            local timestamp = os.date("%Y-%m-%dT%H:%M:%S")
             for index, mission in pairs(missions) do
                 b = GetBiome(mission)
                 if not HasKey(master['Biomes'], b) then
@@ -454,7 +454,7 @@ function Main()
             god[timestamp] = master
 
             --Get 'current' time
-            local currytime = os.date("%Y-%m-%d %H:%M:%S")
+            local currytime = os.date("!%Y-%m-%d %H:%M:%S")
             local year, month, day, hour, minute, second = currytime:match("(%d+)-(%d+)-(%d+) (%d+):(%d+):(%d+)")
             minute = tonumber(minute)
             -- Round down to the nearest half-hour
@@ -474,7 +474,7 @@ function Main()
             -- Set time forward 30 minutes
             print(command..'\n')
             os.execute(command)
-            socket.sleep(0.2)
+            socket.sleep(1)
         end
     end
     local options = {
