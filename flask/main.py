@@ -9,11 +9,12 @@ import subprocess
 from datetime import datetime, timezone, timedelta
 import shutil
 from dateutil import parser
-from flask import Flask, render_template_string, request, send_file, jsonify
+from flask import Flask, render_template_string, request, send_file, jsonify, make_response
 import queue
 import threading
 import glob
 from io import BytesIO
+import hashlib
 
 def sort_dictionary(dictionary, custom_order):
     sorted_dict = {}
@@ -73,7 +74,6 @@ def rotate_biomes(DRG, tstamp_Queue, biomes_Queue):
             #biome_dir = biome.replace(' ', '_')
             #if os.path.exists(biome_dir):
                 #shutil.rmtree(biome_dir)
-        #img_count = 0
         Biomes1 = {}
         for biome in Biomes.keys():
             biome1 = {}
@@ -85,11 +85,11 @@ def rotate_biomes(DRG, tstamp_Queue, biomes_Queue):
             for mission in Biomes[biome]:
                 mission0 = {}
                 mission0['CodeName'] = mission['CodeName']
-                #img_count += 1
-                fname = str(img_count)
                 mission_icon = BytesIO()
                 mission['rendered_mission'].save(mission_icon, format='PNG')
                 mission_icon.seek(0)
+                etag = hashlib.md5(mission_icon.getvalue()).hexdigest()
+                mission0['etag'] = etag
                 mission0['rendered_mission'] = mission_icon
                 Biomes1[biome].append(mission0)
         return timestamp, Biomes1
@@ -289,7 +289,7 @@ def render_mission(m_d):
     LENGTH = scale_image(LENGTH, 0.45)
     x, y = calc_center(LENGTH, BACKGROUND)
     BACKGROUND.paste(LENGTH, (x, y+120), mask=LENGTH)
-    BACKGROUND = scale_image(BACKGROUND, 0.38)
+    BACKGROUND = scale_image(BACKGROUND, 0.46)
     return BACKGROUND
 
 def render_dd_stage(m_d):
@@ -412,7 +412,7 @@ def render_dd_stage(m_d):
     #LENGTH = scale_image(LENGTH, 0.45)
     #x, y = calc_center(LENGTH, BACKGROUND)
     #BACKGROUND.paste(LENGTH, (x, y+120), mask=LENGTH)
-    BACKGROUND = scale_image(BACKGROUND, 0.38)
+    BACKGROUND = scale_image(BACKGROUND, 0.46)
     return BACKGROUND
 
 def render_biomes(Biomes):
@@ -452,20 +452,6 @@ def render_deepdives(DeepDives):
             stage_png = render_dd_stage(stage)
             rendered_deepdives[t]['Stages'].append(stage_png)
     return rendered_deepdives
-
-global img_index
-img_index = {
-    'Crystalline%20Caverns': [1, 2, 3, 4, 5],
-    'Glacial%20Strata': [1, 2, 3, 4, 5],
-    'Radioactive%20Exclusion%20Zone': [1, 2, 3, 4, 5],
-    'Fungus%20Bogs': [1, 2, 3, 4, 5],
-    'Dense%20Biozone': [1, 2, 3, 4, 5],
-    'Salt%20Pits': [1, 2, 3, 4, 5],
-    'Sandblasted%20Corridors': [1, 2, 3, 4, 5],
-    'Magma%20Core': [1, 2, 3, 4, 5],
-    'Azure%20Weald': [1, 2, 3, 4, 5],
-    'Hollow%20Bough': [1, 2, 3, 4, 5]
-}
 
 def render_index(timestamp, DDs, nextindex):
     def scanners(html):
@@ -605,6 +591,9 @@ def render_index(timestamp, DDs, nextindex):
                              font-family: "HammerBro101MovieThin-Regular";
                              src: url("/files/HammerBro101MovieThin-Regular.woff");
                          }
+                         body::-webkit-scrollbar {
+                         display: none;
+                         }
                          #background-video {
                          position: fixed;
                          right: 0;
@@ -618,8 +607,8 @@ def render_index(timestamp, DDs, nextindex):
                          }
                          .grid-container {
                          display: grid;
+                         background-color: rgba(0, 0, 0, 0.5); /* 20% opacity */;
                          grid-template-columns: auto auto;
-                         padding: 0px;
                          text-align: center;
                          }
                          .grid-item {
@@ -630,6 +619,8 @@ def render_index(timestamp, DDs, nextindex):
                          display: inline-block
                          }
                          .mission-hover-zoom img {
+                             height: 70%;
+                             width: 70%;
                          transition: transform .5s ease;
                          }
                          .mission-hover-zoom:hover img {
@@ -637,11 +628,10 @@ def render_index(timestamp, DDs, nextindex):
                          }
                          .mission {
                              display: inline-block;
-                             margin-right: 5px;
+                             height: 70%;
+                             width: 70%;
                          }
                          .biome-container {
-                             width: 100%;
-                             height: auto;
                          }
                          .dd-container {
                              width: auto;
@@ -651,7 +641,6 @@ def render_index(timestamp, DDs, nextindex):
                              width: 80%;
                              height: auto;
                          }
-
                          .jsonlink {
                              color: #1E90FF;
                              font-size: 30px;
@@ -816,20 +805,21 @@ def render_index(timestamp, DDs, nextindex):
     html += '           </h2>\n'
     html += '        </div>\n'
     html += '       </div>\n'
+    html += '          <div style="background-color: rgba(0, 0, 0, 0.5); /* 20% opacity */">\n'
     html += '           <div class="ddscountdown">NEW DEEP DIVES IN</div>\n'
     html += '          <span id="ddcountdown"></span>\n'
     html += '           <hr>\n'
-    html += '       </div>\n'
+    html += '        </div>\n'
     html += '        <div class="dd-container">\n'
     if nextindex:
         html += '           <div class="missionscountdown"><a class="midlink" href="/"><strong>CURRENT MISSIONS</strong></a><br>NEW MISSIONS IN<br>\n'
     else:
         html += '           <div class="missionscountdown"><a class="midlink" href="/next"><strong>NEXT MISSIONS</strong></a><br>NEW MISSIONS IN<br>\n'
     html += '          <span id="countdown"></span></div>\n'
+    html += '          <div style="background-color: rgba(0, 0, 0, 0.5); /* 20% opacity */">\n'
     html += '         <a class="jsonlink" href="/json?data=bulkmissions">FULL MISSION DATA</a> <a class="jsonlink" href="/json?data=current">CURRENT MISSION DATA</a> <a class="jsonlink" href="/json?data=next">NEXT MISSION DATA</a> <a class="jsonlink" href="/json?data=DD">CURRENT DD DATA</a>\n'
-    html += "          <p class='gsgdisclaimer'><i>This website is a third-party platform and is not affiliated, endorsed, or sponsored by Ghost Ship Games. The use of Deep Rock Galactic's in-game assets on this website is solely for illustrative purposes and does not imply any ownership or association with the game or its developers. All copyrights and trademarks belong to their respective owners. For official information about Deep Rock Galactic, please visit the official Ghost Ship Games website.</i></p>\n"
+    html += "          <p class='gsgdisclaimer'><i>This website is a third-party platform and is not affiliated, endorsed, or sponsored by Ghost Ship Games. The use of Deep Rock Galactic's in-game assets on this website is solely for illustrative purposes and does not imply any ownership or association with the game or its developers. All copyrights and trademarks belong to their respective owners. For official information about Deep Rock Galactic, please visit the official Ghost Ship Games website.</i></p></div>\n"
     html += '        </div>\n'
-    html += '       </div>\n'
     html += '    </body>\n'
     html += '</html>\n'
     return html
@@ -889,7 +879,9 @@ def serve_img():
                     mission1 = BytesIO()
                     mission1.write(mission['rendered_mission'].getvalue())
                     mission1.seek(0)
-                    return send_file(mission1, mimetype='image/png')
+                    response = make_response(send_file(mission1, mimetype='image/png'))
+                    response.headers['ETag'] = mission['etag']
+                    return response
         except Exception:
             return 404
     else:
@@ -911,7 +903,9 @@ def serve_next_img():
                     mission1 = BytesIO()
                     mission1.write(mission['rendered_mission'].getvalue())
                     mission1.seek(0)
-                    return send_file(mission1, mimetype='image/png')
+                    response = make_response(send_file(mission1, mimetype='image/png'))
+                    response.headers['ETag'] = mission['etag']
+                    return response
         except Exception:
             return 404
     else:
