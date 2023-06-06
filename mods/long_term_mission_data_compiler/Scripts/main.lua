@@ -408,27 +408,28 @@ function Main()
     local firstdate = os.date("!*t")
     local current_time = os.time(firstdate)
     --Set target date
-    local target_date = os.time{year=2023, month=6, day=6, hour=0, min=0, sec=0}
+    local target_date = os.time{year=2023, month=6, day=14, hour=0, min=0, sec=0}
     -- Calculate the difference in seconds between the current UTC time and the target date
     local diff_seconds = os.difftime(target_date, current_time)
     -- Calculate total amount of 30 minute increments between current time and the target date
     local total_increments = math.floor(diff_seconds / 1800)
     -- Initialize Table
     local god = {}
+    local count = 0
     -- Loop for the increments
     for i = 1, total_increments do
-        local playercontrollers = FindAllOf('BP_PlayerController_SpaceRig_C')
-        if playercontrollers then
-            for index, playercontroller in pairs(playercontrollers) do
-                ---@type ABP_PlayerController_SpaceRig_C
-                playercontroller = playercontroller
-                local fullname = string.format("%s",playercontroller:GetFullName())
-                if fullname == 'BP_PlayerController_SpaceRig_C /Game/Game/SpaceRig/BP_PlayerController_SpaceRig.Default__BP_PlayerController_SpaceRig_C' then goto continue end
-                playercontroller:ShowMissionSelect()
-                break
-                ::continue::
-            end
-        end
+        -- local playercontrollers = FindAllOf('BP_PlayerController_SpaceRig_C')
+        -- if playercontrollers then
+        --     for index, playercontroller in pairs(playercontrollers) do
+        --         ---@type ABP_PlayerController_SpaceRig_C
+        --         playercontroller = playercontroller
+        --         local fullname = string.format("%s",playercontroller:GetFullName())
+        --         if fullname == 'BP_PlayerController_SpaceRig_C /Game/Game/SpaceRig/BP_PlayerController_SpaceRig.Default__BP_PlayerController_SpaceRig_C' then goto continue end
+        --         playercontroller:ShowMissionSelect()
+        --         break
+        --         ::continue::
+        --     end
+        -- end
         local master = {}
         master['Biomes'] = {}
         -- Get GeneratedMission UObjects
@@ -485,19 +486,20 @@ function Main()
             local command = 'date '..ReverseDateFormat(newtime[1])..' & time '..newtime[2]
             -- Set time forward 30 minutes
             print(command..'\n')
+            count = count + 1
+            print(tostring(count)..'\n')
             os.execute(command)
-            local mk3s = FindAllOf('_SCREEN_MissionSelectionMK3_C')
-            if mk3s then
-                for index, mk3 in pairs(mk3s) do
-                    mk3 = mk3
-                    local fullname = string.format("%s",mk3:GetFullName())
-                    if fullname == '_SCREEN_MissionSelectionMK3_C /Game/UI/Menu_MissionSelectionMK3/_SCREEN_MissionSelectionMK3.Default___SCREEN_MissionSelectionMK3_C' then goto continue end
-                    mk3:CloseThisWindow() 
-                    break
-                    ::continue::
-                end
-            end
-            socket.sleep(0.1)
+            -- local mk3s = FindAllOf('_SCREEN_MissionSelectionMK3_C')
+            -- if mk3s then
+            --     for index, mk3 in pairs(mk3s) do
+            --         local fullname = string.format("%s",mk3:GetFullName())
+            --         if fullname == '_SCREEN_MissionSelectionMK3_C /Game/UI/Menu_MissionSelectionMK3/_SCREEN_MissionSelectionMK3.Default___SCREEN_MissionSelectionMK3_C' then goto continue end
+            --         mk3:CloseThisWindow() 
+            --         break
+            --         ::continue::
+            --     end
+            -- end
+            socket.sleep(1)
         end
     end
     local options = {
