@@ -16,6 +16,9 @@ import glob
 from io import BytesIO
 import hashlib
 
+global lock
+lock = threading.Lock()
+
 def sort_dictionary(dictionary, custom_order):
     sorted_dict = {}
     for key in custom_order:
@@ -99,19 +102,21 @@ def rotate_biomes(DRG, tstamp_Queue, biomes_Queue):
     while True:
         applicable_timestamp = tstamp_Queue.queue[0]
         if not timestamp:
-            Biomes = DRG[applicable_timestamp]['Biomes']
-            Biomes = render_biomes(Biomes)
-            Biomes = sort_dictionary(Biomes, order)
-            timestamp, Biomes = array_biomes(Biomes, applicable_timestamp)
-            biomes_Queue.put(Biomes)
-            continue
+            with lock:
+                Biomes = DRG[applicable_timestamp]['Biomes']
+                Biomes = render_biomes(Biomes)
+                Biomes = sort_dictionary(Biomes, order)
+                timestamp, Biomes = array_biomes(Biomes, applicable_timestamp)
+                biomes_Queue.put(Biomes)
+                continue
         if applicable_timestamp != timestamp:
-            Biomes = DRG[applicable_timestamp]['Biomes']
-            Biomes = render_biomes(Biomes)
-            Biomes = sort_dictionary(Biomes, order)
-            timestamp, Biomes = array_biomes(Biomes, applicable_timestamp)
-            biomes_Queue.put(Biomes)
-            biomes_Queue.get()
+            with lock:
+                Biomes = DRG[applicable_timestamp]['Biomes']
+                Biomes = render_biomes(Biomes)
+                Biomes = sort_dictionary(Biomes, order)
+                timestamp, Biomes = array_biomes(Biomes, applicable_timestamp)
+                biomes_Queue.put(Biomes)
+                biomes_Queue.get()
         sleep(1)
 
 def rotate_DDs(DDs):
@@ -484,7 +489,7 @@ def render_index(timestamp, DDs, nextindex):
         }
         biome = dds[dd_str]['Biome']
         biome = biomes[biome]
-        html += f'         <img class="image-container" src="/files/{biome}">\n'
+        html += f'         <img class="dd-biome" src="/files/{biome}">\n'
         html += '         <br>\n'
         folder_name = dd_str.replace(' ', '_')
         for mission in dds[dd_str]['Stages']:
@@ -499,6 +504,7 @@ def render_index(timestamp, DDs, nextindex):
     html += '''<!doctype html>
                 <html>
                  <head>
+                 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
                  <script>
                     document.addEventListener("DOMContentLoaded", function () {
                         const targetDay = 4; // Thursday (0 = Sunday, 1 = Monday, etc.)
@@ -506,14 +512,14 @@ def render_index(timestamp, DDs, nextindex):
                         let targetTime = new Date();
                         targetTime.setUTCHours(targetHour, 0, 0, 0);
                         if (targetTime.getUTCDay() === targetDay && Date.now() > targetTime.getTime()) {
-                            targetTime.setUTCDate(targetTime.getUTCDate() + 7); // Add 7 days to go to the next Thursday
+                            targetTime.setUTCDate(targetTime.getUTCDate() + 7);
                         }
                         while (targetTime.getUTCDay() !== targetDay) {
                             targetTime.setUTCDate(targetTime.getUTCDate() + 1);
                         }
                         const countdownTimer = setInterval(() => {
                             const now = Date.now();
-                            const remainingTime = targetTime.getTime() - now; // Use getTime() to get the time in milliseconds
+                            const remainingTime = targetTime.getTime() - now;
                             if (remainingTime <= 0) {
                                 clearInterval(countdownTimer);
                                 document.getElementById("ddcountdown").innerHTML = "0D 00:00:00";
@@ -535,8 +541,6 @@ def render_index(timestamp, DDs, nextindex):
                             return number.toString().padStart(2, "0");
                         }
                     });
-                    </script>
-                    <script>
                     document.addEventListener("DOMContentLoaded", function() {
                         const targetTime1 = new Date();
                         targetTime1.setSeconds(0);
@@ -569,140 +573,48 @@ def render_index(timestamp, DDs, nextindex):
                             }
                         }
                     });
-                    </script>\n'''
+                    window.addEventListener('blur', function() {
+                        const video = document.querySelector('#background-video');
+                        video.pause();
+                        });
+                        window.addEventListener('focus', function() {
+                        const video = document.querySelector('#background-video');
+                        video.play();
+                        });
+                    $(document).ready(function() {
+                    $("#missionscountdown").hide(); // Hide the countdown initially
+                    $("#slideButton").click(function() {
+                        $("#missionscountdown").slideToggle(function() {
+                        if ($("#missionscountdown").is(":hidden")) {
+                            $("#slideButton").text("Show countdown");
+                        } else {
+                            $("#slideButton").text("Hide countdown");
+                        }
+                        });
+                    });
+                    });</script>\n'''
     if nextindex:
-        html += '       <title>NEXT DRG MISSIONS</title>\n'
+        html += '               <title>UPCOMING DRG MISSIONS</title>\n'
     else:
-        html += '       <title>CURRENT DRG MISSIONS</title>\n'
+        html += '               <title>CURRENT DRG MISSIONS</title>\n'
     html += '''      
                      <meta charset="UTF-8">
                      <meta name="viewport" content="width=device-width, initial-scale=1.0">
                      <meta property="og:title" content="DRG CURRENT MISSIONS">
                      <meta property="og:type" content="website">
-                     <meta property="og:url" content="/drgmissions.json">
+                     <meta property="og:image" content="https://example.com/thumbnail.jpg">
                      <meta property="og:description" content="Current Missions, generated by DRG from the current seed, and also the Current DDs.">
                      <link rel ="icon" href="/files/favicon.ico" type="image/x-icon">
-                     <style>
-                         @font-face {
-                             font-family: "BebasNeue";
-                             src: url("/files/BebasNeue-Regular.woff2");
-                         }
-                         @font-face {
-                             font-family: "HammerBro101MovieThin-Regular";
-                             src: url("/files/HammerBro101MovieThin-Regular.woff");
-                         }
-                         body::-webkit-scrollbar {
-                         display: none;
-                         }
-                         #background-video {
-                         position: fixed;
-                         right: 0;
-                         bottom: 0;
-                         min-width: 100%;
-                         min-height: 100%;
-                         width: auto;
-                         height: auto;
-                         object-fit: cover;
-                         z-index: -1;
-                         }
-                         .grid-container {
-                         display: grid;
-                         background-color: rgba(0, 0, 0, 0.5); /* 20% opacity */;
-                         grid-template-columns: auto auto;
-                         text-align: center;
-                         }
-                         .grid-item {
-                         padding: 0px;
-                         text-align: center;
-                         }
-                         .mission-hover-zoom {
-                         display: inline-block
-                         }
-                         .mission-hover-zoom img {
-                             height: 70%;
-                             width: 70%;
-                         transition: transform .5s ease;
-                         }
-                         .mission-hover-zoom:hover img {
-                         transform: scale(1.5);
-                         }
-                         .mission {
-                             display: inline-block;
-                             height: 70%;
-                             width: 70%;
-                         }
-                         .biome-container {
-                         }
-                         .dd-container {
-                             width: auto;
-                             height: 60%;
-                         }
-                         .image-container {
-                             width: 80%;
-                             height: auto;
-                         }
-                         .jsonlink {
-                             color: #1E90FF;
-                             font-size: 30px;
-                             font-family: "BebasNeue", sans-serif;
-                         }
-                         .midlink {
-                             color: #1E90FF;
-                             font-size: 40px;
-                             font-family: "BebasNeue", sans-serif;
-                         }
-                         .scanners {
-                             color: red;
-                             font-family: "HammerBro101MovieThin-Regular", sans-serif;
-                             font-size: 20px;
-                         }
-                        .missionscountdown {
-                            text-align: center;
-                            position: fixed;
-                            top: 10%;
-                            left: 50%;
-                            transform: translate(-50%, -50%);
-                            color: white;
-                            font-size: 35px;
-                            font-family: "BebasNeue", sans-serif;
-                        }
-                        .ddscountdown {
-                            text-align: center;
-                            color: white;
-                            font-size: 35px;
-                            font-family: "BebasNeue", sans-serif;
-                        }
-                        span#countdown {
-                            white-space: nowrap;
-                            margin-bottom: 0;
-                            top: 15%;
-                            left: 50%;
-                            color: white;
-                            font-size: 65px;
-                            transform: translate(-50%, -50%);
-                            font-family: "BebasNeue", sans-serif;
-                        }
-                        span#ddcountdown {
-                            margin-bottom: 0;
-                            display: flex;
-                            align-items: center;
-                            color: white;
-                            font-size: 72px;
-                            justify-content: center;
-                            font-family: "BebasNeue", sans-serif;
-                        }
-                        .gsgdisclaimer {
-                            text-align: center;
-                            margin-bottom: 0;
-                            color: white;
-                            font-family: "BebasNeue", sans-serif;
-                        }
-                    </style>
+                     <link rel ="stylesheet" href="/files/styles.css" type="text/css">
                  </head>
                  <body bgcolor="#303030">
                  <video id="background-video" autoplay muted loop><source src="/files/space_rig.webm" type="video/webm"></video>
-                  <div class="grid-container">
-                    <h2>'''
+                 <div class="overlay"></div>\n'''
+    html += '        <div id="countdowncontainer">\n'
+    html += '           <div id="missionscountdown">NEW MISSIONS IN<br>\n'
+    html += '          <span id="countdown"></span></div><button id="slideButton">Show countdown</button></div>'
+    html +=     '''      <div class="grid-container">
+                    <h2>\n'''
     html += '        <div class="biome-container">\n'
     html += '         <img class="image-container" src="/files/DeepDive_MissionBar_GlacialStrata.png">\n'
     if 'Glacial Strata' not in Biomes.keys():
@@ -798,6 +710,7 @@ def render_index(timestamp, DDs, nextindex):
     html = array_dd_missions(DeepDives, 'Deep Dive Normal', img_count, html)
     html += '         </h2>\n'
     html += '        </div>\n'
+
     html += '        <div class="dd-container">\n'
     html += '           <h2>\n'
     html += '          <img class="image-container" src="/files/edd.png">\n'
@@ -805,18 +718,16 @@ def render_index(timestamp, DDs, nextindex):
     html += '           </h2>\n'
     html += '        </div>\n'
     html += '       </div>\n'
-    html += '          <div style="background-color: rgba(0, 0, 0, 0.5); /* 20% opacity */">\n'
+    html += '          <div>\n'
     html += '           <div class="ddscountdown">NEW DEEP DIVES IN</div>\n'
     html += '          <span id="ddcountdown"></span>\n'
     html += '           <hr>\n'
     html += '        </div>\n'
-    html += '        <div class="dd-container">\n'
+    html += '          <div>\n'
     if nextindex:
-        html += '           <div class="missionscountdown"><a class="midlink" href="/"><strong>CURRENT MISSIONS</strong></a><br>NEW MISSIONS IN<br>\n'
+        html += '<button class="currentButton" onclick="window.location.href = \'/\';">Click here to see current missions</button>\n'
     else:
-        html += '           <div class="missionscountdown"><a class="midlink" href="/next"><strong>NEXT MISSIONS</strong></a><br>NEW MISSIONS IN<br>\n'
-    html += '          <span id="countdown"></span></div>\n'
-    html += '          <div style="background-color: rgba(0, 0, 0, 0.5); /* 20% opacity */">\n'
+        html += '<button class="currentButton" onclick="window.location.href = \'/next\';">Click here to see upcoming missions</button>\n'
     html += '         <a class="jsonlink" href="/json?data=bulkmissions">FULL MISSION DATA</a> <a class="jsonlink" href="/json?data=current">CURRENT MISSION DATA</a> <a class="jsonlink" href="/json?data=next">NEXT MISSION DATA</a> <a class="jsonlink" href="/json?data=DD">CURRENT DD DATA</a>\n'
     html += "          <p class='gsgdisclaimer'><i>This website is a third-party platform and is not affiliated, endorsed, or sponsored by Ghost Ship Games. The use of Deep Rock Galactic's in-game assets on this website is solely for illustrative purposes and does not imply any ownership or association with the game or its developers. All copyrights and trademarks belong to their respective owners. For official information about Deep Rock Galactic, please visit the official Ghost Ship Games website.</i></p></div>\n"
     html += '        </div>\n'
@@ -871,7 +782,8 @@ def serve_img():
             img_arg = img_arg.split('_')
             biomestr = img_arg[0].replace('%20', ' ')
             img_index_ = int(img_arg[1])
-            Biomes = currybiomes.queue[0]
+            with lock:
+                Biomes = currybiomes.queue[0]
             count = 0
             for mission in Biomes[biomestr]:
                 count += 1
@@ -895,7 +807,8 @@ def serve_next_img():
             img_arg = img_arg.split('_')
             biomestr = img_arg[0].replace('%20', ' ')
             img_index_ = int(img_arg[1])
-            Biomes = nextbiomes.queue[0]
+            with lock:
+                Biomes = nextbiomes.queue[0]
             count = 0
             for mission in Biomes[biomestr]:
                 count += 1

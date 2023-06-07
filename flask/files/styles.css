@@ -1,0 +1,156 @@
+@font-face {
+font-family: "BebasNeue";
+src: url("/files/BebasNeue-Regular.woff2");
+}
+@font-face {
+font-family: "HammerBro101MovieThin-Regular";
+src: url("/files/HammerBro101MovieThin-Regular.woff");
+}
+body::-webkit-scrollbar {
+display: none;
+}
+#background-video {
+position: fixed;
+min-width: 100%;
+min-height: 100%;
+width: auto;
+height: auto;
+object-fit: contain;
+z-index: -1;
+will-change: transform;
+pointer-events: none;
+}
+#background-video + .overlay {
+position: fixed;
+right: 0;
+bottom: 0;
+min-width: 100%;
+min-height: 100%;
+width: auto;
+height: auto;
+z-index: -1;
+background-color: rgba(0, 0, 0, 0.4);
+}
+.background-video:focus {
+pointer-events: auto;
+}
+.grid-container {
+display: grid;
+grid-template-columns: auto auto;
+items-align: center;
+text-align:  center;
+}
+.grid-item {
+padding: 0px;
+text-align: center;
+}
+.mission-hover-zoom {
+display: inline-block
+}
+.mission-hover-zoom img {
+height: 70%;
+width: 70%;
+transition: transform .5s ease;
+}
+.mission-hover-zoom:hover img {
+transform: scale(1.5);
+}
+.mission {
+display: inline-block;
+height: 70%;
+width: 70%;
+z-index: 9999;
+}
+.biome-container {
+}
+.dd-container {
+width: auto;
+height: 60%;
+}
+.image-container {
+width: 80%;
+height: auto;
+}
+.dd-biome {
+width: 60%;
+height: 60%;
+}
+.jsonlink {
+color: #1E90FF;
+font-size: 30px;
+font-family: "BebasNeue", sans-serif;
+}
+.nextlink {
+color: #1E90FF;
+font-size: 40px;
+font-family: "BebasNeue", sans-serif;
+}
+.scanners {
+color: red;
+font-family: "HammerBro101MovieThin-Regular", sans-serif;
+font-size: 20px;
+}
+.ddscountdown {
+text-align: center;
+color: white;
+font-size: 35px;
+font-family: "BebasNeue", sans-serif;
+}
+span#countdown {
+white-space: nowrap;
+left: 50%;
+color: white;
+font-size: 65px;
+transform: translate(-50%, -50%);
+font-family: "BebasNeue", sans-serif;
+}
+span#ddcountdown {
+margin-bottom: 0;
+display: flex;
+align-items: center;
+color: white;
+font-size: 72px;
+justify-content: center;
+font-family: "BebasNeue", sans-serif;
+}
+.gsgdisclaimer {
+margin-bottom: 0;
+font-size: 20px;
+color: white;
+font-family: "BebasNeue", sans-serif;
+}
+#countdowncontainer {
+position: fixed;
+top: 0;
+left: 50%;
+transform: translateX(-50%);
+justify-content: center;
+z-index: 9999;
+}
+#slideButton {
+position: relative;
+left: 50%;
+transform: translateX(-50%);
+bottom: 0;
+background-color: #303030;
+width: auto;
+height: auto;
+color: white;
+font-size: 20px;
+font-family: "BebasNeue", sans-serif;
+}
+.currentButton {
+position: absolute;
+left: 50%;
+transform: translateX(-50%);
+background-color: #303030;
+color: white;
+font-size: 20px;
+font-family: "BebasNeue", sans-serif;
+}
+#missionscountdown {
+text-align: center;
+color: white;
+font-size: 35px;
+font-family: "BebasNeue", sans-serif;
+}
