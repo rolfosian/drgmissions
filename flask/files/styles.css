@@ -140,12 +140,12 @@ font-size: 20px;
 font-family: "BebasNeue", sans-serif;
 }
 .currentButton {
-position: absolute;
+position: relative;
 left: 50%;
 transform: translateX(-50%);
 background-color: #303030;
 color: white;
-font-size: 20px;
+font-size: 14px;
 font-family: "BebasNeue", sans-serif;
 }
 #missionscountdown {
