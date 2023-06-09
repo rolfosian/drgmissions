@@ -505,7 +505,7 @@ def render_index(timestamp, next_timestamp, DDs):
     next_Biomes = next_timestamp['Biomes']
     DeepDives = DDs['Deep Dives']
     nextindex = False
-    html = '''<!doctype html>
+    html = '''  <!DOCTYPE html>
                 <html>
                  <head>
                  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
@@ -615,6 +615,8 @@ def render_index(timestamp, next_timestamp, DDs):
                         var current = document.getElementById("current");
                         current.classList.toggle("collapsed");
                         toggleCollapse();
+                        var button = document.getElementById('currentButton');
+                        button.setAttribute('onclick', 'toggleCollapse()');
                     }
                     window.onload = onLoad;
                     </script>
@@ -632,7 +634,7 @@ def render_index(timestamp, next_timestamp, DDs):
                  <video id="background-video" autoplay muted loop><source src="/files/space_rig.webm" type="video/webm"></video>
                  <div class="overlay"></div>\n'''
     html += '        <div id="countdowncontainer">\n'
-    html += '<button id="currentButton" onclick="toggleCollapse()">Click here to see upcoming missions</button><br>\n'
+    html += '<button id="currentButton">Click here to see upcoming missions</button><br>\n'
     html += '           <div id="missionscountdown">NEW MISSIONS IN<br>\n'
     html += '          <span id="countdown"></span></div><button id="slideButton">Show countdown</button></div>'
     html += '          <div id="current">\n'
