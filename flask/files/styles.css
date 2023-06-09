@@ -9,6 +9,10 @@ src: url("/files/HammerBro101MovieThin-Regular.woff");
 body::-webkit-scrollbar {
 display: none;
 }
+.collapsed {
+display: none;
+height: 0;
+}
 #background-video {
 position: fixed;
 min-width: 100%;
@@ -19,6 +23,18 @@ object-fit: contain;
 z-index: -1;
 will-change: transform;
 pointer-events: none;
+}
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url('/files/space_rig_thumb.jpg');
+  background-size: cover;
+  background-position: center;
+  z-index: -2;
 }
 #background-video + .overlay {
 position: fixed;
@@ -139,7 +155,7 @@ color: white;
 font-size: 20px;
 font-family: "BebasNeue", sans-serif;
 }
-.currentButton {
+#currentButton {
 position: relative;
 left: 50%;
 transform: translateX(-50%);

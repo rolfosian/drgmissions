@@ -459,50 +459,53 @@ def render_deepdives(DeepDives):
             rendered_deepdives[t]['Stages'].append(stage_png)
     return rendered_deepdives
 
-def render_index(timestamp, DDs, nextindex):
-    def scanners(html):
-        html += '          <br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
-        return html
-    def array_standard_missions(Biomes, biome_str, html, nextindex):
-        html += '         <br>\n'
-        url_biome = biome_str.replace(' ', '%20')
-        img_count = 0
-        for mission in Biomes[biome_str]:
-            img_count += 1
-            if nextindex:
-                fname = f'/next/png?img={url_biome}_{str(img_count)}'
-            else:
-                fname = f'/png?img={url_biome}_{str(img_count)}'
-            html += f'          <div class="mission-hover-zoom"><img class="mission" src="{fname}"></div>\n'
-        return html
-    def array_dd_missions(dds, dd_str, stg_count, html):
-        biomes = {
-            'Crystalline Caverns': 'DeepDive_MissionBar_CrystalCaves.png',
-            'Glacial Strata': 'DeepDive_MissionBar_GlacialStrata.png',
-            'Radioactive Exclusion Zone': 'DeepDive_MissionBar_Radioactive.png',
-            'Fungus Bogs': 'DeepDive_MissionBar_FungusBogs.png',
-            'Dense Biozone': 'DeepDive_MissionBar_LushDownpour.png',
-            'Salt Pits': 'DeepDive_MissionBar_SaltPits.png',
-            'Sandblasted Corridors': 'DeepDive_MissionBar_Sandblasted.png',
-            'Magma Core': 'DeepDive_MissionBar_MagmaCore.png',
-            'Azure Weald': 'DeepDive_MissionBar_SaltPits.png',
-            'Hollow Bough': 'DeepDive_MissionBar_FungusBogs.png'
-        }
-        biome = dds[dd_str]['Biome']
-        biome1 = biomes[biome]
-        html += f'         <img title="{biome}" class="dd-biome" src="/files/{biome1}">\n'
-        html += '         <br>\n'
-        folder_name = dd_str.replace(' ', '_')
-        for mission in dds[dd_str]['Stages']:
-            stg_count += 1
-            fname = str(stg_count)
-            html += f'         <div class="mission-hover-zoom"><img class="mission" title="Stage {fname}" src="/files/{folder_name}/{fname}.png"></div>\n'
-        return html
+
+def scanners(html):
+    html += '          <br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
+    return html
+def array_standard_missions(Biomes, biome_str, html, nextindex):
+    html += '         <br>\n'
+    url_biome = biome_str.replace(' ', '%20')
+    img_count = 0
+    for mission in Biomes[biome_str]:
+        img_count += 1
+        if nextindex:
+            fname = f'/upcoming_png?img={url_biome}_{str(img_count)}'
+        else:
+            fname = f'/png?img={url_biome}_{str(img_count)}'
+        html += f'          <div class="mission-hover-zoom"><img class="mission" src="{fname}"></div>\n'
+    return html
+def array_dd_missions(dds, dd_str, stg_count, html):
+    biomes = {
+        'Crystalline Caverns': 'DeepDive_MissionBar_CrystalCaves.png',
+        'Glacial Strata': 'DeepDive_MissionBar_GlacialStrata.png',
+        'Radioactive Exclusion Zone': 'DeepDive_MissionBar_Radioactive.png',
+        'Fungus Bogs': 'DeepDive_MissionBar_FungusBogs.png',
+        'Dense Biozone': 'DeepDive_MissionBar_LushDownpour.png',
+        'Salt Pits': 'DeepDive_MissionBar_SaltPits.png',
+        'Sandblasted Corridors': 'DeepDive_MissionBar_Sandblasted.png',
+        'Magma Core': 'DeepDive_MissionBar_MagmaCore.png',
+        'Azure Weald': 'DeepDive_MissionBar_SaltPits.png',
+        'Hollow Bough': 'DeepDive_MissionBar_FungusBogs.png'
+    }
+    biome = dds[dd_str]['Biome']
+    biome1 = biomes[biome]
+    html += f'         <img title="{biome}" class="dd-biome" src="/files/{biome1}">\n'
+    html += '         <br>\n'
+    folder_name = dd_str.replace(' ', '_')
+    for mission in dds[dd_str]['Stages']:
+        stg_count += 1
+        fname = str(stg_count)
+        html += f'         <div class="mission-hover-zoom"><img class="mission" title="Stage {fname}" src="/files/{folder_name}/{fname}.png"></div>\n'
+    return html
+
+def render_index(timestamp, next_timestamp, DDs):
     img_count = 0
     Biomes = timestamp['Biomes']
+    next_Biomes = next_timestamp['Biomes']
     DeepDives = DDs['Deep Dives']
-    html = ''
-    html += '''<!doctype html>
+    nextindex = False
+    html = '''<!doctype html>
                 <html>
                  <head>
                  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
@@ -574,37 +577,54 @@ def render_index(timestamp, DDs, nextindex):
                             }
                         }
                     });
-                    window.addEventListener('blur', function() {
-                        const video = document.querySelector('#background-video');
-                        video.pause();
-                        });
+                        window.addEventListener('blur', function() {
+                            const video = document.querySelector('#background-video');
+                            video.pause();
+                            });
                         window.addEventListener('focus', function() {
                         const video = document.querySelector('#background-video');
                         video.play();
                         });
-                    $(document).ready(function() {
-                    $("#missionscountdown").hide(); // Hide the countdown initially
-                    $("#slideButton").click(function() {
-                        $("#missionscountdown").slideToggle(function() {
-                        if ($("#missionscountdown").is(":hidden")) {
-                            $("#slideButton").text("Show countdown");
-                        } else {
-                            $("#slideButton").text("Hide countdown");
-                        }
+                        $(document).ready(function() {
+                        $("#missionscountdown").hide();
+                        $("#slideButton").click(function() {
+                            $("#missionscountdown").slideToggle(function() {
+                            if ($("#missionscountdown").is(":hidden")) {
+                                $("#slideButton").text("Show countdown");
+                            } else {
+                                $("#slideButton").text("Hide countdown");
+                            }
+                            });
                         });
-                    });
-                    });</script>\n'''
-    if nextindex:
-        html += '               <title>UPCOMING DRG MISSIONS</title>\n'
-    else:
-        html += '               <title>CURRENT DRG MISSIONS</title>\n'
-    html += '''      
+                        });
+                    function toggleCollapse() {
+                    var current = document.getElementById("current");
+                    var upcoming = document.getElementById("upcoming");
+                    var currentButton = document.getElementById("currentButton");
+                    current.classList.toggle("collapsed");
+                    upcoming.classList.toggle("collapsed");
+                    if (current.classList.contains("collapsed")) {
+                        currentButton.textContent = "Click here to see current missions";
+                        document.title = "Upcoming Missions from the Hoxxes IV Space Rig Mission Terminal";
+                    } else {
+                        currentButton.textContent = "Click here to see upcoming missions";
+                        document.title = "Current Missions from the Hoxxes IV Space Rig Mission Terminal";
+                    }
+                    };
+                    function onLoad() {
+                        var current = document.getElementById("current");
+                        current.classList.toggle("collapsed");
+                        toggleCollapse();
+                    }
+                    window.onload = onLoad;
+                    </script>
+                    <title>Current Missions from the Hoxxes IV Space Rig Mission Terminal</title>\n'
                      <meta charset="UTF-8">
                      <meta name="viewport" content="width=device-width, initial-scale=1.0">
                      <meta property="og:title" content="DRG CURRENT MISSIONS">
                      <meta property="og:type" content="website">
                      <meta property="og:image" content="/files/Mission_control_portrait.png">
-                     <meta property="og:description" content="Current Missions, generated by DRG from the current seed, and also the Current DDs.">
+                     <meta property="og:description" content="Current missions generated by DRG from the current seed.">
                      <link rel ="icon" href="/files/favicon.ico" type="image/x-icon">
                      <link rel ="stylesheet" href="/files/styles.css" type="text/css">
                  </head>
@@ -612,12 +632,10 @@ def render_index(timestamp, DDs, nextindex):
                  <video id="background-video" autoplay muted loop><source src="/files/space_rig.webm" type="video/webm"></video>
                  <div class="overlay"></div>\n'''
     html += '        <div id="countdowncontainer">\n'
-    if nextindex:
-        html += '<button class="currentButton" onclick="window.location.href = \'/\';">Click here to see current missions</button><br>\n'
-    else:
-        html += '<button class="currentButton" onclick="window.location.href = \'/next\';">Click here to see upcoming missions</button><br>\n'
+    html += '<button id="currentButton" onclick="toggleCollapse()">Click here to see upcoming missions</button><br>\n'
     html += '           <div id="missionscountdown">NEW MISSIONS IN<br>\n'
     html += '          <span id="countdown"></span></div><button id="slideButton">Show countdown</button></div>'
+    html += '          <div id="current">\n'
     html +=     '''      <div class="grid-container">
                     <h2>\n'''
     html += '        <div class="biome-container">\n'
@@ -673,7 +691,6 @@ def render_index(timestamp, DDs, nextindex):
         html = array_standard_missions(Biomes, 'Sandblasted Corridors', html, nextindex)
     html += '        </div>\n'
     html += '       </h2>\n'
-    html += '       </h2>\n'
     html += '       <h2>\n'
     html += '        <div class = "biome-container">\n'
     html += '         <img title="Fungus Bogs" class="image-container" src="/files/DeepDive_MissionBar_FungusBogs.png">\n'
@@ -691,6 +708,7 @@ def render_index(timestamp, DDs, nextindex):
     else:
         html = array_standard_missions(Biomes, 'Radioactive Exclusion Zone', html, nextindex)
     html += '        </div>\n'
+    html += '       </h2>\n'
     html += '       <h2>\n'
     html += '        <div class ="biome-container">\n'
     html += '         <img title="Dense Biozone" class="image-container" src="/files/DeepDive_MissionBar_LushDownpour.png">\n'
@@ -708,6 +726,103 @@ def render_index(timestamp, DDs, nextindex):
     else:
         html = array_standard_missions(Biomes, 'Hollow Bough', html, nextindex)
     html += '       </h2>\n'
+    html += '	    </div>\n'
+    html += '	    </div>\n'
+    nextindex = True
+    html += '          <div id="upcoming">\n'
+    html +=     '''      <div class="grid-container">
+                    <h2>\n'''
+    html += '        <div class="biome-container">\n'
+    html += '         <img title="Glacial Strata" class="image-container" src="/files/DeepDive_MissionBar_GlacialStrata.png">\n'
+    if 'Glacial Strata' not in next_Biomes.keys():
+        html = scanners(html)
+    else:
+        html = array_standard_missions(next_Biomes, 'Glacial Strata', html, nextindex)
+    html += '        </div>\n'
+    html += '       </h2>\n'
+    html += '       <h2>\n'
+    html += '        <div class="biome-container">\n'
+    html += '         <img title="Crystalline Caverns" class="image-container" src="/files/DeepDive_MissionBar_CrystalCaves.png">\n'
+    if 'Crystalline Caverns' not in next_Biomes.keys():
+        html = scanners(html)
+    else:
+        html = array_standard_missions(next_Biomes, 'Crystalline Caverns', html, nextindex)
+    html += '        </div>\n'
+    html += '       </h2>\n'
+    html += '       <h2>\n'
+    html += '        <div class="biome-container">\n'
+    html += '         <img title="Salt Pits" class="image-container" src="/files/DeepDive_MissionBar_SaltPits.png">\n'
+    if 'Salt Pits' not in next_Biomes.keys():
+        html = scanners(html)
+    else:
+        html = array_standard_missions(next_Biomes, 'Salt Pits', html, nextindex)
+    html += '        </div>\n'
+    html += '       </h2>\n'
+    html += '       <h2>\n'
+    html += '        <div class="biome-container">\n'
+    html += '         <img title="Magma Core" class="image-container" src="/files/DeepDive_MissionBar_MagmaCore.png">\n'
+    if 'Magma Core' not in next_Biomes.keys():
+        html = scanners(html)
+    else:
+        html = array_standard_missions(next_Biomes, 'Magma Core', html, nextindex)
+    html += '        </div>\n'
+    html += '       </h2>\n'
+    html += '       <h2>\n'
+    html += '        <div class ="biome-container">\n'
+    html += '         <img title="Azure Weald" class="image-container" src="/files/DeepDive_MissionBar_AzureWeald.png">\n'
+    if 'Azure Weald' not in next_Biomes.keys():
+        html = scanners(html)
+    else:
+        html = array_standard_missions(next_Biomes, 'Azure Weald', html, nextindex)
+    html += '        </div>\n'
+    html += '       </h2>\n'
+    html += '       <h2>\n'
+    html += '        <div class ="biome-container">\n'
+    html += '         <img title="Sandblasted Corridors" class="image-container" src="/files/DeepDive_MissionBar_Sandblasted.png">\n'
+    if 'Sandblasted Corridors' not in next_Biomes.keys():
+        html = scanners(html)
+    else:
+        html = array_standard_missions(next_Biomes, 'Sandblasted Corridors', html, nextindex)
+    html += '        </div>\n'
+    html += '       </h2>\n'
+    html += '       <h2>\n'
+    html += '        <div class = "biome-container">\n'
+    html += '         <img title="Fungus Bogs" class="image-container" src="/files/DeepDive_MissionBar_FungusBogs.png">\n'
+    if 'Fungus Bogs' not in next_Biomes.keys():
+        html = scanners(html)
+    else:
+        html = array_standard_missions(next_Biomes, 'Fungus Bogs', html, nextindex)
+    html += '        </div>\n'
+    html += '       </h2>\n'
+    html += '       <h2>\n'
+    html += '        <div class ="biome-container">\n'
+    html += '         <img title="Radioactive Exclusion Zone" class="image-container" src="/files/DeepDive_MissionBar_Radioactive.png">\n'
+    if 'Radioactive Exclusion Zone' not in next_Biomes.keys():
+        html = scanners(html)
+    else:
+        html = array_standard_missions(next_Biomes, 'Radioactive Exclusion Zone', html, nextindex)
+    html += '        </div>\n'
+    html += '       </h2>\n'
+    html += '       <h2>\n'
+    html += '        <div class ="biome-container">\n'
+    html += '         <img title="Dense Biozone" class="image-container" src="/files/DeepDive_MissionBar_LushDownpour.png">\n'
+    if 'Dense Biozone' not in next_Biomes.keys():
+        html = scanners(html)
+    else:
+        html = array_standard_missions(next_Biomes, 'Dense Biozone', html, nextindex)
+    html += '        </div>\n'
+    html += '       </h2>\n'
+    html += '       <h2>\n'
+    html += '        <div class ="biome-container">\n'
+    html += '         <img title="Hollow Bough" class="image-container" src="/files/DeepDive_MissionBar_HollowBough.png">\n'
+    if 'Hollow Bough' not in next_Biomes.keys():
+        html = scanners(html)
+    else:
+        html = array_standard_missions(next_Biomes, 'Hollow Bough', html, nextindex)
+    html += '       </h2>\n'
+    html += '	    </div>\n'
+    html += '	    </div>\n'
+    html += '       <div class="grid-container">\n'
     html += '        <div class="dd-container">\n'
     img_count = 0
     html += '           <h2>\n'
@@ -715,7 +830,6 @@ def render_index(timestamp, DDs, nextindex):
     html = array_dd_missions(DeepDives, 'Deep Dive Normal', img_count, html)
     html += '         </h2>\n'
     html += '        </div>\n'
-
     html += '        <div class="dd-container">\n'
     html += '           <h2>\n'
     html += '          <img class="image-container" src="/files/edd.png">\n'
@@ -723,14 +837,15 @@ def render_index(timestamp, DDs, nextindex):
     html += '           </h2>\n'
     html += '        </div>\n'
     html += '       </div>\n'
+    html += '	    </div>\n'
     html += '          <div>\n'
     html += '           <div class="ddscountdown">NEW DEEP DIVES IN</div>\n'
     html += '          <span id="ddcountdown"></span>\n'
     html += '           <hr>\n'
     html += '        </div>\n'
     html += '          <div>\n'
-    html += '         <a class="jsonlink" href="/json?data=bulkmissions">FULL MISSION DATA</a> <a class="jsonlink" href="/json?data=current">CURRENT MISSION DATA</a> <a class="jsonlink" href="/json?data=next">NEXT MISSION DATA</a> <a class="jsonlink" href="/json?data=DD">CURRENT DD DATA</a>\n'
-    html += "          <p class='gsgdisclaimer'><i>This website is a third-party platform and is not affiliated, endorsed, or sponsored by Ghost Ship Games. The use of Deep Rock Galactic's in-game assets on this website is solely for illustrative purposes and does not imply any ownership or association with the game or its developers. All copyrights and trademarks belong to their respective owners. For official information about Deep Rock Galactic, please visit the official Ghost Ship Games website.</i></p></div>\n"
+    html += '         <a class="jsonlink" href="/json?data=bulkmissions">FULL MISSION DATA</a> <a class="jsonlink" href="/json?data=current">CURRENT MISSION DATA</a> <a class="jsonlink" href="/json?data=next">UPCOMING MISSION DATA</a> <a class="jsonlink" href="/json?data=DD">CURRENT DD DATA</a>\n'
+    html += "          <p class='gsgdisclaimer'><i>This website is a third-party platform and is not affiliated, endorsed, or sponsored by Ghost Ship Games. The use of Deep Rock Galactic's in-game assets on this website is solely for illustrative purposes and does not imply any ownership or association with the game or its developers. All copyrights and trademarks belong to their respective owners. For official information about Deep Rock Galactic, please visit the official Ghost Ship Games website.  *Missions may very rarely display incorrect length and complexity values</i></p></div>\n"
     html += '        </div>\n'
     html += '    </body>\n'
     html += '</html>\n'
@@ -768,13 +883,7 @@ app = Flask(__name__, static_folder=f'{os.getcwd()}/files')
 
 @app.route('/')
 def home():
-    applicable_timestamp = tstamp.queue[0]
-    return render_template_string(render_index(DRG[applicable_timestamp], DDs.queue[0], False))
-
-@app.route('/next')
-def home1():
-    applicable_timestamp = next_tstamp.queue[0]
-    return render_template_string(render_index(DRG[applicable_timestamp], DDs.queue[0], True))
+    return render_template_string(render_index(DRG[tstamp.queue[0]], DRG[next_tstamp.queue[0]],  DDs.queue[0],))
 
 @app.route('/png')
 def serve_img():
@@ -804,7 +913,7 @@ def serve_img():
     else:
         return 404
 
-@app.route('/next/png')
+@app.route('/upcoming_png')
 def serve_next_img():
     img_arg = request.args.get('img')
     if img_arg:
@@ -853,20 +962,20 @@ def serve_json():
     else:
         return 404
 
-#with open('token.txt', 'r') as f:
-    #AUTH_TOKEN = f.read().strip()
-    #f.close()
+with open('token.txt', 'r') as f:
+    AUTH_TOKEN = f.read().strip()
+    f.close()
     
-#with open('ip.txt', 'r') as f:
-    #ALLOWED_IP = f.read().strip()
-    #f.close()
+with open('ip.txt', 'r') as f:
+    ALLOWED_IP = f.read().strip()
+    f.close()
     
-@app.route('/upload', methods=['POST'])
+@app.route('/upload')
 def upload():
     try:
         token = request.headers.get('Authorization')
         if not token or token != f"Bearer {AUTH_TOKEN}":
-            return "Unauthorized", 401
+            return 404
         request_ip = request.headers.get('X-Forwarded-For')
         if request_ip != ALLOWED_IP:
             return "Forbidden", 403
@@ -880,4 +989,4 @@ def upload():
     
 if __name__ == '__main__':
     start_threads()
-    app.run(threaded=True, host='0.0.0.0', port=5000)
+    app.run(threaded=True, host='127.0.0.1', port=5000)
