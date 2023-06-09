@@ -276,11 +276,9 @@ function UnpackStandardMission(mission, master, b)
         mission1['Length'] = '3'
         mission1['Complexity'] = '3'
         if mission1['MissionWarnings'] then
-            if mission1['MissionWarnings'][2] == nil then
-                mission1['Complexity'] = '2'
-            end
+            mission1['Complexity'] = '2'
         end
-    end 
+    end
     if string.find(MissionDNA, 'DNA_Fractured_Complex_C') and complexity == 'Either 2 or 3' and length == 'Either 2 or 3' and PrimaryObjective == 'Egg Hunt' then
         mission1['Length'] = '3'
     end
