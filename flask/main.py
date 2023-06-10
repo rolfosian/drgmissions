@@ -103,7 +103,6 @@ def rotate_biomes(DRG, tstamp_Queue, biomes_Queue):
     while True:
         applicable_timestamp = tstamp_Queue.queue[0]
         if not timestamp:
-            with lock:
                 Biomes = DRG[applicable_timestamp]['Biomes']
                 Biomes = render_biomes(Biomes)
                 #Biomes = sort_dictionary(Biomes, order)
@@ -111,10 +110,9 @@ def rotate_biomes(DRG, tstamp_Queue, biomes_Queue):
                 biomes_Queue.put(Biomes)
                 continue
         if applicable_timestamp != timestamp:
-            with lock:
                 Biomes = DRG[applicable_timestamp]['Biomes']
                 Biomes = render_biomes(Biomes)
-                Biomes = sort_dictionary(Biomes, order)
+                #Biomes = sort_dictionary(Biomes, order)
                 timestamp, Biomes = array_biomes(Biomes, applicable_timestamp)
                 biomes_Queue.put(Biomes)
                 biomes_Queue.get()
@@ -615,6 +613,10 @@ def render_index(timestamp, next_timestamp, DDs):
         }
         };
         function onLoad() {
+            const loadingElement = document.querySelector('p.loading');
+            if (loadingElement) {
+            loadingElement.style.display = 'none';
+            }
             var current = document.getElementById("current");
             current.classList.toggle("collapsed");
             toggleCollapse();
@@ -625,13 +627,8 @@ def render_index(timestamp, next_timestamp, DDs):
         var upcoming = document.getElementById("upcoming");
         var current = document.getElementById('current');
         upcoming.style.visibility = 'visible';
-        });
-        $(window).on('load', function() {
-        $('.biome-container').each(function(index) {
-            var div = $(this);
-            setTimeout(function() {
-            div.css('opacity', '1');
-            }, 0 * index);
+        $(".biome-container").each(function() {
+        $(this).css("opacity", "1");
         });
         });
         window.onload = onLoad;
@@ -649,6 +646,7 @@ def render_index(timestamp, next_timestamp, DDs):
         <body bgcolor="#303030">
         <video id="background-video" autoplay muted loop><source src="/files/space_rig.webm" type="video/webm"></video>
         <div class="overlay"></div>
+        <p class="loading">Loading</p>
         <div id="countdowncontainer">
         <button id="currentButton">Click to view upcoming missions</button><br>
         <div id="missionscountdown">NEW MISSIONS IN<br>
@@ -860,8 +858,9 @@ def render_index(timestamp, next_timestamp, DDs):
     html += '          <span id="ddcountdown"></span>\n'
     html += '           <hr>\n'
     html += '        </div>\n'
-    html += '          <div>\n'
-    html += '         <a class="jsonlink" href="/json?data=bulkmissions">FULL MISSION DATA</a> <a class="jsonlink" href="/json?data=current">CURRENT MISSION DATA</a> <a class="jsonlink" href="/json?data=next">UPCOMING MISSION DATA</a> <a class="jsonlink" href="/json?data=DD">CURRENT DD DATA</a>\n'
+    html += '          <div class="jsonc">\n'
+    html += '         <div class="jsonlinks"><span><a class="jsonlink" href="/json?data=bulkmissions">FULL MISSION DATA</a> <a class="jsonlink" href="/json?data=current">CURRENT MISSION DATA</a> <a class="jsonlink" href="/json?data=next">UPCOMING MISSION DATA</a> <a class="jsonlink" href="/json?data=DD">CURRENT DD DATA</a></span></div>\n'
+    html += '           <span class="credits">Send credits (eth): 0xb9c8591A80A3158f7cFFf96EC3c7eA9adB7818E7</span></div>\n'
     html += "          <p class='gsgdisclaimer'><i>This website is a third-party platform and is not affiliated, endorsed, or sponsored by Ghost Ship Games. The use of Deep Rock Galactic's in-game assets on this website is solely for illustrative purposes and does not imply any ownership or association with the game or its developers. All copyrights and trademarks belong to their respective owners. For official information about Deep Rock Galactic, please visit the official Ghost Ship Games website.</i></p></div>\n"
     html += '    </body>\n'
     html += '</html>\n'
@@ -898,8 +897,16 @@ def start_threads():
 app = Flask(__name__, static_folder=f'{os.getcwd()}/files')
 
 @app.route('/')
-def home():        
-    return render_template_string(render_index(DRG[tstamp.queue[0]], DRG[next_tstamp.queue[0]],  DDs.queue[0],))
+def home():
+    while True:
+        try:
+            current_timestamp = tstamp.queue[0]
+            next_timestamp = next_tstamp.queue[0]
+            DDs_ = DDs.queue[0]
+            break
+        except Exception as e:
+            continue
+    return render_template_string(render_index(DRG[current_timestamp], DRG[next_timestamp],  DDs_,))
 
 @app.route('/png')
 def serve_img():
@@ -909,8 +916,12 @@ def serve_img():
             img_arg = img_arg.split('_')
             biomestr = img_arg[0].replace('%20', ' ')
             img_index_ = int(img_arg[1])
-            with lock:
-                Biomes = currybiomes.queue[0]
+            while True:
+                try:
+                    Biomes = currybiomes.queue[0]
+                    break
+                except Exception as e:
+                    continue
             count = 0
             for mission in Biomes[biomestr]:
                 count += 1
@@ -937,8 +948,12 @@ def serve_next_img():
             img_arg = img_arg.split('_')
             biomestr = img_arg[0].replace('%20', ' ')
             img_index_ = int(img_arg[1])
-            with lock:
-                Biomes = nextbiomes.queue[0]
+            while True:
+                try:
+                    Biomes = nextbiomes.queue[0]
+                    break
+                except Exception as e:
+                    continue
             count = 0
             for mission in Biomes[biomestr]:
                 count += 1
