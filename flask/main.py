@@ -485,7 +485,7 @@ def array_dd_missions(dds, dd_str, stg_count, html):
         'Salt Pits': 'DeepDive_MissionBar_SaltPits.png',
         'Sandblasted Corridors': 'DeepDive_MissionBar_Sandblasted.png',
         'Magma Core': 'DeepDive_MissionBar_MagmaCore.png',
-        'Azure Weald': 'DeepDive_MissionBar_SaltPits.png',
+        'Azure Weald': 'DeepDive_MissionBar_AzureWeald.png',
         'Hollow Bough': 'DeepDive_MissionBar_FungusBogs.png'
     }
     biome = dds[dd_str]['Biome']
@@ -506,317 +506,333 @@ def render_index(timestamp, next_timestamp, DDs):
     DeepDives = DDs['Deep Dives']
     nextindex = False
     html = '''  <!DOCTYPE html>
-                <html>
-                 <head>
-                 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
-                 <script>
-                    document.addEventListener("DOMContentLoaded", function () {
-                        const targetDay = 4; // Thursday (0 = Sunday, 1 = Monday, etc.)
-                        const targetHour = 11; // 11am UTC
-                        let targetTime = new Date();
-                        targetTime.setUTCHours(targetHour, 0, 0, 0);
-                        if (targetTime.getUTCDay() === targetDay && Date.now() > targetTime.getTime()) {
-                            targetTime.setUTCDate(targetTime.getUTCDate() + 7);
-                        }
-                        while (targetTime.getUTCDay() !== targetDay) {
-                            targetTime.setUTCDate(targetTime.getUTCDate() + 1);
-                        }
-                        const countdownTimer = setInterval(() => {
-                            const now = Date.now();
-                            const remainingTime = targetTime.getTime() - now;
-                            if (remainingTime <= 0) {
-                                clearInterval(countdownTimer);
-                                document.getElementById("ddcountdown").innerHTML = "0D 00:00:00";
-                            } else {(0)
-                                const days = Math.floor(remainingTime / (1000 * 60 * 60 * 24));
-                                const hours = Math.floor((remainingTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                                const minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
-                                const seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
-                                const formattedTime = formatTime(days, hours, minutes, seconds);
-                                document.getElementById("ddcountdown").innerHTML = formattedTime;
-                            }
-                        }, 1000);
+    <html>
+        <head>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+        <script>
+        $(document).ready(function(){
+            $(this).scrollTop(0);
+        });
+        document.addEventListener("DOMContentLoaded", function () {
+            const targetDay = 4;
+            const targetHour = 11;
+            let targetTime = new Date();
+            targetTime.setUTCHours(targetHour, 0, 0, 0);
+            if (targetTime.getUTCDay() === targetDay && Date.now() > targetTime.getTime()) {
+                targetTime.setUTCDate(targetTime.getUTCDate() + 7);
+            }
+            while (targetTime.getUTCDay() !== targetDay) {
+                targetTime.setUTCDate(targetTime.getUTCDate() + 1);
+            }
+            const countdownTimer = setInterval(() => {
+                const now = Date.now();
+                const remainingTime = targetTime.getTime() - now;
+                if (remainingTime <= 0) {
+                    clearInterval(countdownTimer);
+                    document.getElementById("ddcountdown").innerHTML = "0D 00:00:00";
+                } else {(0)
+                    const days = Math.floor(remainingTime / (1000 * 60 * 60 * 24));
+                    const hours = Math.floor((remainingTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
+                    const formattedTime = formatTime(days, hours, minutes, seconds);
+                    document.getElementById("ddcountdown").innerHTML = formattedTime;
+                }
+            }, 1000);
 
-                        function formatTime(days, hours, minutes, seconds) {
-                            return `${days}:${formatNumber(hours)}:${formatNumber(minutes)}:${formatNumber(seconds)}`;
-                        }
+            function formatTime(days, hours, minutes, seconds) {
+                return `${days}:${formatNumber(hours)}:${formatNumber(minutes)}:${formatNumber(seconds)}`;
+            }
 
-                        function formatNumber(number) {
-                            return number.toString().padStart(2, "0");
-                        }
-                    });
-                    document.addEventListener("DOMContentLoaded", function() {
-                        const targetTime1 = new Date();
-                        targetTime1.setSeconds(0);
-                        targetTime1.setMilliseconds(0);
-                        if (targetTime1.getMinutes() < 30) {
-                            targetTime1.setMinutes(30);
-                        } else {
-                            targetTime1.setMinutes(0);
-                            targetTime1.setHours(targetTime1.getHours() + 1);
-                        }
-                        const countdownElement1 = document.getElementById('countdown');
-                        let isReloading = false; // Flag to track reloading status
-                        const countdownTimer1 = setInterval(updateCountdown1, 1000);
+            function formatNumber(number) {
+                return number.toString().padStart(2, "0");
+            }
+        });
+        document.addEventListener("DOMContentLoaded", function() {
+            const targetTime1 = new Date();
+            targetTime1.setSeconds(0);
+            targetTime1.setMilliseconds(0);
+            if (targetTime1.getMinutes() < 30) {
+                targetTime1.setMinutes(30);
+            } else {
+                targetTime1.setMinutes(0);
+                targetTime1.setHours(targetTime1.getHours() + 1);
+            }
+            const countdownElement1 = document.getElementById('countdown');
+            let isReloading = false;
+            const countdownTimer1 = setInterval(updateCountdown1, 1000);
 
-                        function updateCountdown1() {
-                            const remainingTime1 = Math.floor(((targetTime1 - new Date() + 2) / 1000));
-                            if (remainingTime1 < 0 && !isReloading) {
-                                clearInterval(countdownTimer1);
-                                isReloading = true;
-                                setTimeout(function() {
-                                    location.reload();
-                                }, 3000);
-                                countdownElement1.textContent = '00 : 00 : 00'; // Display "00 : 00 : 00"
-                            } else if (remainingTime1 >= 0) {
-                                const hours1 = Math.floor(remainingTime1 / 3600);
-                                const minutes1 = Math.floor((remainingTime1 % 3600) / 60);
-                                const seconds1 = remainingTime1 % 60;
-                                const countdownString1 = `${hours1.toString().padStart(2, '0')} : ${minutes1.toString().padStart(2, '0')} : ${seconds1.toString().padStart(2, '0')}`;
-                                countdownElement1.textContent = countdownString1;
-                            }
-                        }
-                    });
-                        window.addEventListener('blur', function() {
-                            const video = document.querySelector('#background-video');
-                            video.pause();
-                            });
-                        window.addEventListener('focus', function() {
-                        const video = document.querySelector('#background-video');
-                        video.play();
-                        });
-                        $(document).ready(function() {
-                        $("#missionscountdown").hide();
-                        $("#slideButton").click(function() {
-                            $("#missionscountdown").slideToggle(function() {
-                            if ($("#missionscountdown").is(":hidden")) {
-                                $("#slideButton").text("Show countdown");
-                            } else {
-                                $("#slideButton").text("Hide countdown");
-                            }
-                            });
-                        });
-                        });
-                    function toggleCollapse() {
-                    var current = document.getElementById("current");
-                    var upcoming = document.getElementById("upcoming");
-                    var currentButton = document.getElementById("currentButton");
-                    current.classList.toggle("collapsed");
-                    upcoming.classList.toggle("collapsed");
-                    if (current.classList.contains("collapsed")) {
-                        currentButton.textContent = "Click here to see current missions";
-                        document.title = "Upcoming Missions from the Hoxxes IV Space Rig Mission Terminal";
-                    } else {
-                        currentButton.textContent = "Click here to see upcoming missions";
-                        document.title = "Current Missions from the Hoxxes IV Space Rig Mission Terminal";
-                    }
-                    };
-                    function onLoad() {
-                        var current = document.getElementById("current");
-                        current.classList.toggle("collapsed");
-                        toggleCollapse();
-                        var button = document.getElementById('currentButton');
-                        button.setAttribute('onclick', 'toggleCollapse()');
-                    }
-                    window.onload = onLoad;
-                    </script>
-                    <title>Current Missions from the Hoxxes IV Space Rig Mission Terminal</title>\n'
-                     <meta charset="UTF-8">
-                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                     <meta property="og:title" content="DRG CURRENT MISSIONS">
-                     <meta property="og:type" content="website">
-                     <meta property="og:image" content="/files/Mission_control_portrait.png">
-                     <meta property="og:description" content="Current missions generated by DRG from the current seed.">
-                     <link rel ="icon" href="/files/favicon.ico" type="image/x-icon">
-                     <link rel ="stylesheet" href="/files/styles.css" type="text/css">
-                 </head>
-                 <body bgcolor="#303030">
-                 <video id="background-video" autoplay muted loop><source src="/files/space_rig.webm" type="video/webm"></video>
-                 <div class="overlay"></div>\n'''
-    html += '        <div id="countdowncontainer">\n'
-    html += '<button id="currentButton">Click here to see upcoming missions</button><br>\n'
-    html += '           <div id="missionscountdown">NEW MISSIONS IN<br>\n'
-    html += '          <span id="countdown"></span></div><button id="slideButton">Show countdown</button></div>'
-    html += '          <div id="current">\n'
-    html +=     '''      <div class="grid-container">
-                    <h2>\n'''
-    html += '        <div class="biome-container">\n'
-    html += '         <img title="Glacial Strata" class="image-container" src="/files/DeepDive_MissionBar_GlacialStrata.png">\n'
+            function updateCountdown1() {
+                const remainingTime1 = Math.floor(((targetTime1 - new Date() + 2) / 1000));
+                if (remainingTime1 < 0 && !isReloading) {
+                    clearInterval(countdownTimer1);
+                    isReloading = true;
+                    setTimeout(function() {
+                        location.reload();
+                    }, 3000);
+                    countdownElement1.textContent = '00 : 00 : 00';
+                } else if (remainingTime1 >= 0) {
+                    const hours1 = Math.floor(remainingTime1 / 3600);
+                    const minutes1 = Math.floor((remainingTime1 % 3600) / 60);
+                    const seconds1 = remainingTime1 % 60;
+                    const countdownString1 = `${hours1.toString().padStart(2, '0')} : ${minutes1.toString().padStart(2, '0')} : ${seconds1.toString().padStart(2, '0')}`;
+                    countdownElement1.textContent = countdownString1;
+                }
+            }
+        });
+            window.addEventListener('blur', function() {
+                const video = document.querySelector('#background-video');
+                video.pause();
+                });
+            window.addEventListener('focus', function() {
+            const video = document.querySelector('#background-video');
+            video.play();
+            });
+            $(document).ready(function() {
+            $("#missionscountdown").hide();
+            $("#slideButton").click(function() {
+                $("#missionscountdown").slideToggle(function() {
+                if ($("#missionscountdown").is(":hidden")) {
+                    $("#slideButton").text("Show countdown");
+                } else {
+                    $("#slideButton").text("Hide countdown");
+                }
+                });
+            });
+            });
+        function toggleCollapse() {
+        var current = document.getElementById("current");
+        var upcoming = document.getElementById("upcoming");
+        var currentButton = document.getElementById("currentButton");
+        current.classList.toggle("collapsed");
+        upcoming.classList.toggle("collapsed");
+        if (current.classList.contains("collapsed")) {
+            currentButton.textContent = "Click to view current missions";
+            document.title = "Upcoming Missions from the Hoxxes IV Mission Terminal";
+        } else {
+            currentButton.textContent = "Click to view upcoming missions";
+            document.title = "Current Missions from the Hoxxes IV Mission Terminal";
+        }
+        };
+        function onLoad() {
+            var current = document.getElementById("current");
+            current.classList.toggle("collapsed");
+            toggleCollapse();
+            var button = document.getElementById('currentButton');
+            button.setAttribute('onclick', 'toggleCollapse()');
+        }
+        window.addEventListener('load', function() {
+        var upcoming = document.getElementById("upcoming");
+        var current = document.getElementById('current');
+        upcoming.style.visibility = 'visible';
+        });
+        $(window).on('load', function() {
+        $('.biome-container').each(function(index) {
+            var div = $(this);
+            setTimeout(function() {
+            div.css('opacity', '1');
+            }, 0 * index);
+        });
+        });
+        window.onload = onLoad;
+        </script>
+        <title>Current Missions from the Hoxxes IV Space Rig Mission Terminal</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta property="og:title" content="Current and Upcoming Missions from the Hoxxes IV Mission Terminal">
+        <meta property="og:type" content="website">
+        <meta property="og:image" content="/files/Mission_control_portrait.png">
+        <meta property="og:description" content="Current missions generated by DRG from the current seed.">
+        <link rel ="icon" href="/files/favicon.ico" type="image/x-icon">
+        <link rel ="stylesheet" href="/files/styles.css" type="text/css">
+        </head>
+        <body bgcolor="#303030">
+        <video id="background-video" autoplay muted loop><source src="/files/space_rig.webm" type="video/webm"></video>
+        <div class="overlay"></div>
+        <div id="countdowncontainer">
+        <button id="currentButton">Click to view upcoming missions</button><br>
+        <div id="missionscountdown">NEW MISSIONS IN<br>
+        <span id="countdown"></span></div><button id="slideButton">Show countdown</button></div>
+        <div id="current">\n'''
+    html += '''      <div class="grid-container">
+            <h2>
+            <div class="biome-container">
+             <img title="Glacial Strata" class="image-container" src="/files/DeepDive_MissionBar_GlacialStrata.png">\n'''
     if 'Glacial Strata' not in Biomes.keys():
         html = scanners(html)
     else:
         html = array_standard_missions(Biomes, 'Glacial Strata', html, nextindex)
-    html += '        </div>\n'
-    html += '       </h2>\n'
-    html += '       <h2>\n'
-    html += '        <div class="biome-container">\n'
-    html += '         <img title="Crystalline Caverns" class="image-container" src="/files/DeepDive_MissionBar_CrystalCaves.png">\n'
+    html += '''        </div>
+           </h2>
+           <h2>
+            <div class="biome-container">
+             <img title="Crystalline Caverns" class="image-container" src="/files/DeepDive_MissionBar_CrystalCaves.png">\n'''
     if 'Crystalline Caverns' not in Biomes.keys():
         html = scanners(html)
     else:
         html = array_standard_missions(Biomes, 'Crystalline Caverns', html, nextindex)
-    html += '        </div>\n'
-    html += '       </h2>\n'
-    html += '       <h2>\n'
-    html += '        <div class="biome-container">\n'
-    html += '         <img title="Salt Pits" class="image-container" src="/files/DeepDive_MissionBar_SaltPits.png">\n'
+    html += '''        </div>
+       </h2>
+       <h2>
+        <div class="biome-container">
+         <img title="Salt Pits" class="image-container" src="/files/DeepDive_MissionBar_SaltPits.png">\n'''
     if 'Salt Pits' not in Biomes.keys():
         html = scanners(html)
     else:
         html = array_standard_missions(Biomes, 'Salt Pits', html, nextindex)
-    html += '        </div>\n'
-    html += '       </h2>\n'
-    html += '       <h2>\n'
-    html += '        <div class="biome-container">\n'
-    html += '         <img title="Magma Core" class="image-container" src="/files/DeepDive_MissionBar_MagmaCore.png">\n'
+    html += '''        </div>
+       </h2>
+       <h2>
+        <div class="biome-container">
+         <img title="Magma Core" class="image-container" src="/files/DeepDive_MissionBar_MagmaCore.png">\n'''
     if 'Magma Core' not in Biomes.keys():
         html = scanners(html)
     else:
         html = array_standard_missions(Biomes, 'Magma Core', html, nextindex)
-    html += '        </div>\n'
-    html += '       </h2>\n'
-    html += '       <h2>\n'
-    html += '        <div class ="biome-container">\n'
-    html += '         <img title="Azure Weald" class="image-container" src="/files/DeepDive_MissionBar_AzureWeald.png">\n'
+    html += '''        </div>
+           </h2>
+           <h2>
+            <div class ="biome-container">
+             <img title="Sandblasted Corridors" class="image-container" src="/files/DeepDive_MissionBar_AzureWeald.png">\n'''
     if 'Azure Weald' not in Biomes.keys():
         html = scanners(html)
     else:
         html = array_standard_missions(Biomes, 'Azure Weald', html, nextindex)
-    html += '        </div>\n'
-    html += '       </h2>\n'
-    html += '       <h2>\n'
-    html += '        <div class ="biome-container">\n'
-    html += '         <img title="Sandblasted Corridors" class="image-container" src="/files/DeepDive_MissionBar_Sandblasted.png">\n'
+    html += '''        </div>
+           </h2>
+           <h2>
+            <div class ="biome-container">
+             <img title="Sandblasted Corridors" class="image-container" src="/files/DeepDive_MissionBar_Sandblasted.png">\n'''
     if 'Sandblasted Corridors' not in Biomes.keys():
         html = scanners(html)
     else:
         html = array_standard_missions(Biomes, 'Sandblasted Corridors', html, nextindex)
-    html += '        </div>\n'
-    html += '       </h2>\n'
-    html += '       <h2>\n'
-    html += '        <div class = "biome-container">\n'
-    html += '         <img title="Fungus Bogs" class="image-container" src="/files/DeepDive_MissionBar_FungusBogs.png">\n'
+    html += '''        </div>
+           </h2>
+           <h2>
+            <div class = "biome-container">
+             <img title="Fungus Bogs" class="image-container" src="/files/DeepDive_MissionBar_FungusBogs.png">\n'''
     if 'Fungus Bogs' not in Biomes.keys():
         html = scanners(html)
     else:
         html = array_standard_missions(Biomes, 'Fungus Bogs', html, nextindex)
-    html += '        </div>\n'
-    html += '       </h2>\n'
-    html += '       <h2>\n'
-    html += '        <div class ="biome-container">\n'
-    html += '         <img title="Radioactive Exclusion Zone" class="image-container" src="/files/DeepDive_MissionBar_Radioactive.png">\n'
+    html += '''        </div>
+           </h2>
+           <h2>
+            <div class ="biome-container">
+             <img title="Radioactive Exclusion Zone" class="image-container" src="/files/DeepDive_MissionBar_Radioactive.png">\n'''
     if 'Radioactive Exclusion Zone' not in Biomes.keys():
         html = scanners(html)
     else:
         html = array_standard_missions(Biomes, 'Radioactive Exclusion Zone', html, nextindex)
-    html += '        </div>\n'
-    html += '       </h2>\n'
-    html += '       <h2>\n'
-    html += '        <div class ="biome-container">\n'
-    html += '         <img title="Dense Biozone" class="image-container" src="/files/DeepDive_MissionBar_LushDownpour.png">\n'
+    html += '''        </div>
+           </h2>
+           <h2>
+            <div class ="biome-container">
+             <img title="Dense Biozone" class="image-container" src="/files/DeepDive_MissionBar_LushDownpour.png">\n'''
     if 'Dense Biozone' not in Biomes.keys():
         html = scanners(html)
     else:
         html = array_standard_missions(Biomes, 'Dense Biozone', html, nextindex)
-    html += '        </div>\n'
-    html += '       </h2>\n'
-    html += '       <h2>\n'
-    html += '        <div class ="biome-container">\n'
-    html += '         <img title="Hollow Bough" class="image-container" src="/files/DeepDive_MissionBar_HollowBough.png">\n'
+    html += '''        </div>
+           </h2>
+           <h2>
+            <div class ="biome-container">
+             <img title="Hollow Bough" class="image-container" src="/files/DeepDive_MissionBar_HollowBough.png">\n'''
     if 'Hollow Bough' not in Biomes.keys():
         html = scanners(html)
     else:
         html = array_standard_missions(Biomes, 'Hollow Bough', html, nextindex)
-    html += '       </h2>\n'
-    html += '	    </div>\n'
-    html += '	    </div>\n'
+    html += '''       </h2>
+    	    </div>
+    	    </div>\n'''
     nextindex = True
-    html += '          <div id="upcoming">\n'
-    html +=     '''      <div class="grid-container">
-                    <h2>\n'''
-    html += '        <div class="biome-container">\n'
-    html += '         <img title="Glacial Strata" class="image-container" src="/files/DeepDive_MissionBar_GlacialStrata.png">\n'
+    html += '''          <div id="upcoming" style="visibility: hidden;">
+          <div class="grid-container">
+                    <h2>
+            <div class="biome-container">
+             <img title="Glacial Strata" class="image-container" src="/files/DeepDive_MissionBar_GlacialStrata.png">\n'''
     if 'Glacial Strata' not in next_Biomes.keys():
         html = scanners(html)
     else:
         html = array_standard_missions(next_Biomes, 'Glacial Strata', html, nextindex)
-    html += '        </div>\n'
-    html += '       </h2>\n'
-    html += '       <h2>\n'
-    html += '        <div class="biome-container">\n'
-    html += '         <img title="Crystalline Caverns" class="image-container" src="/files/DeepDive_MissionBar_CrystalCaves.png">\n'
+    html += '''        </div>
+           </h2>
+           <h2>
+            <div class="biome-container">
+             <img title="Crystalline Caverns" class="image-container" src="/files/DeepDive_MissionBar_CrystalCaves.png">\n'''
     if 'Crystalline Caverns' not in next_Biomes.keys():
         html = scanners(html)
     else:
         html = array_standard_missions(next_Biomes, 'Crystalline Caverns', html, nextindex)
-    html += '        </div>\n'
-    html += '       </h2>\n'
-    html += '       <h2>\n'
-    html += '        <div class="biome-container">\n'
-    html += '         <img title="Salt Pits" class="image-container" src="/files/DeepDive_MissionBar_SaltPits.png">\n'
+    html += '''        </div>
+       </h2>
+       <h2>
+        <div class="biome-container">
+         <img title="Salt Pits" class="image-container" src="/files/DeepDive_MissionBar_SaltPits.png">\n'''
     if 'Salt Pits' not in next_Biomes.keys():
         html = scanners(html)
     else:
         html = array_standard_missions(next_Biomes, 'Salt Pits', html, nextindex)
-    html += '        </div>\n'
-    html += '       </h2>\n'
-    html += '       <h2>\n'
-    html += '        <div class="biome-container">\n'
-    html += '         <img title="Magma Core" class="image-container" src="/files/DeepDive_MissionBar_MagmaCore.png">\n'
+    html += '''        </div>
+       </h2>
+       <h2>
+        <div class="biome-container">
+         <img title="Magma Core" class="image-container" src="/files/DeepDive_MissionBar_MagmaCore.png">\n'''
     if 'Magma Core' not in next_Biomes.keys():
         html = scanners(html)
     else:
         html = array_standard_missions(next_Biomes, 'Magma Core', html, nextindex)
-    html += '        </div>\n'
-    html += '       </h2>\n'
-    html += '       <h2>\n'
-    html += '        <div class ="biome-container">\n'
-    html += '         <img title="Azure Weald" class="image-container" src="/files/DeepDive_MissionBar_AzureWeald.png">\n'
+    html += '''        </div>
+           </h2>
+           <h2>
+            <div class ="biome-container">
+             <img title="Sandblasted Corridors" class="image-container" src="/files/DeepDive_MissionBar_AzureWeald.png">\n'''
     if 'Azure Weald' not in next_Biomes.keys():
         html = scanners(html)
     else:
         html = array_standard_missions(next_Biomes, 'Azure Weald', html, nextindex)
-    html += '        </div>\n'
-    html += '       </h2>\n'
-    html += '       <h2>\n'
-    html += '        <div class ="biome-container">\n'
-    html += '         <img title="Sandblasted Corridors" class="image-container" src="/files/DeepDive_MissionBar_Sandblasted.png">\n'
+    html += '''        </div>
+           </h2>
+           <h2>
+            <div class ="biome-container">
+             <img title="Sandblasted Corridors" class="image-container" src="/files/DeepDive_MissionBar_Sandblasted.png">\n'''
     if 'Sandblasted Corridors' not in next_Biomes.keys():
         html = scanners(html)
     else:
         html = array_standard_missions(next_Biomes, 'Sandblasted Corridors', html, nextindex)
-    html += '        </div>\n'
-    html += '       </h2>\n'
-    html += '       <h2>\n'
-    html += '        <div class = "biome-container">\n'
-    html += '         <img title="Fungus Bogs" class="image-container" src="/files/DeepDive_MissionBar_FungusBogs.png">\n'
+    html += '''        </div>
+           </h2>
+           <h2>
+            <div class = "biome-container">
+             <img title="Fungus Bogs" class="image-container" src="/files/DeepDive_MissionBar_FungusBogs.png">\n'''
     if 'Fungus Bogs' not in next_Biomes.keys():
         html = scanners(html)
     else:
         html = array_standard_missions(next_Biomes, 'Fungus Bogs', html, nextindex)
-    html += '        </div>\n'
-    html += '       </h2>\n'
-    html += '       <h2>\n'
-    html += '        <div class ="biome-container">\n'
-    html += '         <img title="Radioactive Exclusion Zone" class="image-container" src="/files/DeepDive_MissionBar_Radioactive.png">\n'
+    html += '''        </div>
+           </h2>
+           <h2>
+            <div class ="biome-container">
+             <img title="Radioactive Exclusion Zone" class="image-container" src="/files/DeepDive_MissionBar_Radioactive.png">\n'''
     if 'Radioactive Exclusion Zone' not in next_Biomes.keys():
         html = scanners(html)
     else:
         html = array_standard_missions(next_Biomes, 'Radioactive Exclusion Zone', html, nextindex)
-    html += '        </div>\n'
-    html += '       </h2>\n'
-    html += '       <h2>\n'
-    html += '        <div class ="biome-container">\n'
-    html += '         <img title="Dense Biozone" class="image-container" src="/files/DeepDive_MissionBar_LushDownpour.png">\n'
+    html += '''        </div>
+           </h2>
+           <h2>
+            <div class ="biome-container">
+             <img title="Dense Biozone" class="image-container" src="/files/DeepDive_MissionBar_LushDownpour.png">\n'''
     if 'Dense Biozone' not in next_Biomes.keys():
         html = scanners(html)
     else:
         html = array_standard_missions(next_Biomes, 'Dense Biozone', html, nextindex)
-    html += '        </div>\n'
-    html += '       </h2>\n'
-    html += '       <h2>\n'
-    html += '        <div class ="biome-container">\n'
-    html += '         <img title="Hollow Bough" class="image-container" src="/files/DeepDive_MissionBar_HollowBough.png">\n'
+    html += '''        </div>
+           </h2>
+           <h2>
+            <div class ="biome-container">
+             <img title="Hollow Bough" class="image-container" src="/files/DeepDive_MissionBar_HollowBough.png">\n'''
     if 'Hollow Bough' not in next_Biomes.keys():
         html = scanners(html)
     else:
@@ -838,7 +854,6 @@ def render_index(timestamp, next_timestamp, DDs):
     html = array_dd_missions(DeepDives, 'Deep Dive Elite', img_count, html)
     html += '           </h2>\n'
     html += '        </div>\n'
-    html += '       </div>\n'
     html += '	    </div>\n'
     html += '          <div>\n'
     html += '           <div class="ddscountdown">NEW DEEP DIVES IN</div>\n'
@@ -847,8 +862,7 @@ def render_index(timestamp, next_timestamp, DDs):
     html += '        </div>\n'
     html += '          <div>\n'
     html += '         <a class="jsonlink" href="/json?data=bulkmissions">FULL MISSION DATA</a> <a class="jsonlink" href="/json?data=current">CURRENT MISSION DATA</a> <a class="jsonlink" href="/json?data=next">UPCOMING MISSION DATA</a> <a class="jsonlink" href="/json?data=DD">CURRENT DD DATA</a>\n'
-    html += "          <p class='gsgdisclaimer'><i>This website is a third-party platform and is not affiliated, endorsed, or sponsored by Ghost Ship Games. The use of Deep Rock Galactic's in-game assets on this website is solely for illustrative purposes and does not imply any ownership or association with the game or its developers. All copyrights and trademarks belong to their respective owners. For official information about Deep Rock Galactic, please visit the official Ghost Ship Games website.  *Missions may very rarely display incorrect length and complexity values</i></p></div>\n"
-    html += '        </div>\n'
+    html += "          <p class='gsgdisclaimer'><i>This website is a third-party platform and is not affiliated, endorsed, or sponsored by Ghost Ship Games. The use of Deep Rock Galactic's in-game assets on this website is solely for illustrative purposes and does not imply any ownership or association with the game or its developers. All copyrights and trademarks belong to their respective owners. For official information about Deep Rock Galactic, please visit the official Ghost Ship Games website.</i></p></div>\n"
     html += '    </body>\n'
     html += '</html>\n'
     return html
@@ -884,7 +898,7 @@ def start_threads():
 app = Flask(__name__, static_folder=f'{os.getcwd()}/files')
 
 @app.route('/')
-def home():
+def home():        
     return render_template_string(render_index(DRG[tstamp.queue[0]], DRG[next_tstamp.queue[0]],  DDs.queue[0],))
 
 @app.route('/png')
@@ -972,20 +986,26 @@ with open('ip.txt', 'r') as f:
     ALLOWED_IP = f.read().strip()
     f.close()
     
-@app.route('/upload')
+@app.route('/upload', methods=['GET', 'POST'])
 def upload():
     try:
         token = request.headers.get('Authorization')
         if not token or token != f"Bearer {AUTH_TOKEN}":
-            return 404
+            return 401
         request_ip = request.headers.get('X-Forwarded-For')
         if request_ip != ALLOWED_IP:
             return "Forbidden", 403
         if 'file' not in request.files:
             return "No file in the request", 400
         file_ = request.files['file']
-        file_.save(os.path.join(os.getcwd(), file_.filename))
-        return "File uploaded successfully"
+        cwd = os.getcwd()
+        filename = file_.filename
+        if file_.filename.endswith('.json') or file_.filename.endswith('.py'):
+            file_.save(f'{cwd}/{filename}')
+        else:
+            file_.save(f'{cwd}/files/{filename}')
+        response_data = {'message': 'Success'}
+        return jsonify(response_data)
     except Exception:
         return 404
     
