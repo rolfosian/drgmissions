@@ -16,5 +16,5 @@
 * Contingencies for if the game doesn't terminate gracefully on 'organic' exit
 * Contingencies for if the game crashes
 * Loop script to actually launch the game and upload DD data to flask host weekly
-* Figure out
+* Figure out a solution to reduce required delay between iterations for accurate data to be collected by the 30 minute incrementer
 * Figure out how to manipulate wine(?) system clock with hook on linux
