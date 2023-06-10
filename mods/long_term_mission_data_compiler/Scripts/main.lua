@@ -10,6 +10,7 @@
 -- Contingencies for if the game doesn't terminate gracefully on 'organic' exit
 -- Contingencies for if the game crashes
 -- Loop script to actually launch the game and upload DD data to flask host weekly
+-- Figure out a solution to reduce required delay between iterations for accurate data to be collected
 -- Figure out how to manipulate wine(?) system clock with hook on linux
 
 local json = require("./mods/long_term_mission_data_compiler/Scripts/dkjson")
@@ -272,15 +273,9 @@ function UnpackStandardMission(mission, master, b)
         mission1['Complexity'] = '3'
         mission1['Length'] = '3'
     end
-    if string.find(MissionDNA, 'DNA_Fractured_Complex_C') and complexity == 'Either 2 or 3' and length == 'Either 2 or 3' and PrimaryObjective == 'Egg Hunt' then
+    if string.find(MissionDNA, '_Complex_C') and complexity == 'Either 2 or 3' and length == 'Either 2 or 3' and PrimaryObjective == 'Egg Hunt' then
         mission1['Length'] = '3'
-        mission1['Complexity'] = '3'
-        if mission1['MissionWarnings'] then
-            mission1['Complexity'] = '2'
-        end
-    end
-    if string.find(MissionDNA, 'DNA_Fractured_Complex_C') and complexity == 'Either 2 or 3' and length == 'Either 2 or 3' and PrimaryObjective == 'Egg Hunt' then
-        mission1['Length'] = '3'
+        mission1['Complexity'] = '2'
     end
     if string.find(MissionDNA, 'Fractured_Medium_C') and PrimaryObjective == 'Egg Hunt' and length == 'Either 2 or 3' and complexity == 'Either 2 or 3' then
         mission1['Length'] = '2'
@@ -370,6 +365,7 @@ end
 function Main()
     local startmenus = nil
     local currytime = nil
+
     -- Wait for start menu to load
     while true do
         startmenus = FindAllOf('Bp_StartMenu_PlayerController_C')
@@ -398,17 +394,6 @@ function Main()
             end
         end
     end
-    -- local currytime = os.date("!%Y-%m-%d %H:%M:%S")
-    -- local year, month, day, hour, minute, second = currytime:match("(%d+)-(%d+)-(%d+) (%d+):(%d+):(%d+)")
-    -- currytime = string.format("%02d-%02d-%02d %02d:%02d:%02d", year %100, month, day, hour, minute, second)
-    -- currytime = Split(currytime, ' ')
-    -- -- Remove ReverseDateFormat function and just use currytime[1] if your system date format is YY-MM-DD
-    -- local command = 'date '..ReverseDateFormat(currytime[1])..' & time '..currytime[2]
-    -- -- Set time to current UTC
-    -- os.execute(command)
-    --Linux format:
-    -- local command = 'date -s "'..currytime[1]..' '..currytime[2]..'"'
-    -- os.execute(command)
 
     -- Get current UTC Time
     local firstdate = os.date("!*t")
@@ -424,18 +409,6 @@ function Main()
     local count = 0
     -- Loop for the increments
     for i = 1, total_increments do
-        -- local playercontrollers = FindAllOf('BP_PlayerController_SpaceRig_C')
-        -- if playercontrollers then
-        --     for index, playercontroller in pairs(playercontrollers) do
-        --         ---@type ABP_PlayerController_SpaceRig_C
-        --         playercontroller = playercontroller
-        --         local fullname = string.format("%s",playercontroller:GetFullName())
-        --         if fullname == 'BP_PlayerController_SpaceRig_C /Game/Game/SpaceRig/BP_PlayerController_SpaceRig.Default__BP_PlayerController_SpaceRig_C' then goto continue end
-        --         playercontroller:ShowMissionSelect()
-        --         break
-        --         ::continue::
-        --     end
-        -- end
         local master = {}
         master['Biomes'] = {}
         -- Get GeneratedMission UObjects
@@ -495,16 +468,7 @@ function Main()
             count = count + 1
             print(tostring(count)..'\n')
             os.execute(command)
-            -- local mk3s = FindAllOf('_SCREEN_MissionSelectionMK3_C')
-            -- if mk3s then
-            --     for index, mk3 in pairs(mk3s) do
-            --         local fullname = string.format("%s",mk3:GetFullName())
-            --         if fullname == '_SCREEN_MissionSelectionMK3_C /Game/UI/Menu_MissionSelectionMK3/_SCREEN_MissionSelectionMK3.Default___SCREEN_MissionSelectionMK3_C' then goto continue end
-            --         mk3:CloseThisWindow() 
-            --         break
-            --         ::continue::
-            --     end
-            -- end
+
             socket.sleep(1)
         end
     end
