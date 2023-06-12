@@ -63,29 +63,10 @@ def rotate_timestamp(DRG, tstamp_Queue, next_):
 def rotate_biomes(DRG, tstamp_Queue, biomes_Queue):
     order = ['Glacial Strata', 'Crystalline Caverns', 'Salt Pits', 'Magma Core', 'Azure Weald', 'Sandblasted Corridors', 'Fungus Bogs', 'Radioactive Exclusion Zone', 'Dense Biozone', 'Hollow Bough']
     def array_biomes(Biomes, timestamp):
-        #biomes = [
-            #'Azure Weald',
-            #'Crystalline Caverns',
-            #'Fungus Bogs',
-            #'Glacial Strata',
-            #'Magma Core',
-            #'Radioactive Exclusion Zone',
-            #'Sandblasted Corridors',
-            #'Dense Biozone',
-            #'Salt Pits',
-            #'Hollow Bough']
-        #for biome in biomes:
-            #biome_dir = biome.replace(' ', '_')
-            #if os.path.exists(biome_dir):
-                #shutil.rmtree(biome_dir)
         Biomes1 = {}
         for biome in Biomes.keys():
             biome1 = {}
             Biomes1[biome] = []
-            #folder_name = biome.replace(' ', '_')
-            #if os.path.exists(f'./files/{folder_name}'):
-                #shutil.rmtree(f'./files/{folder_name}')
-            #os.mkdir(f'./files/{folder_name}')
             for mission in Biomes[biome]:
                 mission0 = {}
                 mission0['CodeName'] = mission['CodeName']
@@ -496,7 +477,6 @@ def array_dd_missions(dds, dd_str, stg_count, html):
         fname = str(stg_count)
         html += f'         <div class="mission-hover-zoom"><img class="mission" title="Stage {fname}" src="/files/{folder_name}/{fname}.png"></div>\n'
     return html
-
 def render_index(timestamp, next_timestamp, DDs):
     img_count = 0
     Biomes = timestamp['Biomes']
@@ -599,18 +579,54 @@ def render_index(timestamp, next_timestamp, DDs):
             });
             });
         function toggleCollapse() {
-        var current = document.getElementById("current");
-        var upcoming = document.getElementById("upcoming");
-        var currentButton = document.getElementById("currentButton");
-        current.classList.toggle("collapsed");
-        upcoming.classList.toggle("collapsed");
-        if (current.classList.contains("collapsed")) {
-            currentButton.textContent = "Click to view current missions";
-            document.title = "Upcoming Missions from the Hoxxes IV Mission Terminal";
-        } else {
-            currentButton.textContent = "Click to view upcoming missions";
-            document.title = "Current Missions from the Hoxxes IV Mission Terminal";
-        }
+            var current = document.getElementById("current");
+            var upcoming = document.getElementById("upcoming");
+            var currentButton = document.getElementById("currentButton");
+            current.classList.toggle("collapsed");
+            upcoming.classList.toggle("collapsed");
+            if (current.classList.contains("collapsed")) {
+                currentButton.textContent = "Click here to see current missions";
+                document.title = "Upcoming Missions from the Hoxxes IV Mission Terminal";
+            } else {
+                currentButton.textContent = "Click here to see upcoming missions";
+                document.title = "Current Missions from the Hoxxes IV Mission Terminal";
+            }
+        };
+        function toggleBackground() {
+            var video = document.getElementById("background-video");
+            var backgroundbutton = document.getElementById('backgroundButton');
+            var overlay = document.querySelector(".overlay");
+            if (video.style.display === "none" && overlay.style.display === "none") {
+                video.style.display = "block";
+                overlay.style.display = "block";
+                backgroundbutton.textContent = "Hide background";
+                video.play();
+            } else {
+                video.style.display = "none";
+                overlay.style.display = "none";
+                backgroundbutton.textContent = "Show background";
+                video.pause();
+            }
+        };
+        function toggleButtons() {
+            var buttonsbutton = document.getElementById('buttonsbutton');
+            var backgroundbutton = document.getElementById('backgroundButton');
+            var slideButton = document.getElementById('slideButton');
+            var currentButton = document.getElementById('currentButton');
+            var missionscountdown = document.getElementById('missionscountdown');
+            if (slideButton.style.display === "none") {
+                backgroundbutton.style.display = "inline-block";
+                slideButton.style.display = "inline-block";
+                slideButton.textContent = "Show countdown";
+                currentButton.style.display = "inline-block";
+                buttonsbutton.textContent = " x ";
+            } else {
+                missionscountdown.style.display = "none";
+                backgroundbutton.style.display = "none";
+                slideButton.style.display = "none";
+                currentButton.style.display = "none";
+                buttonsbutton.textContent = "+";
+            }
         };
         function onLoad() {
             const loadingElement = document.querySelector('p.loading');
@@ -620,9 +636,13 @@ def render_index(timestamp, next_timestamp, DDs):
             var current = document.getElementById("current");
             current.classList.toggle("collapsed");
             toggleCollapse();
-            var button = document.getElementById('currentButton');
-            button.setAttribute('onclick', 'toggleCollapse()');
-        }
+            var buttonsbutton = document.getElementById('buttonsbutton');
+            buttonsbutton.setAttribute('onclick', 'toggleButtons()');
+            var currentbutton = document.getElementById('currentButton');
+            currentbutton.setAttribute('onclick', 'toggleCollapse()');
+            var backgroundbutton = document.getElementById('backgroundButton');
+            backgroundbutton.setAttribute('onclick', 'toggleBackground()');
+        };
         window.addEventListener('load', function() {
         var upcoming = document.getElementById("upcoming");
         var current = document.getElementById('current');
@@ -648,9 +668,11 @@ def render_index(timestamp, next_timestamp, DDs):
         <div class="overlay"></div>
         <p class="loading">Loading</p>
         <div id="countdowncontainer">
-        <button id="currentButton">Click to view upcoming missions</button><br>
-        <div id="missionscountdown">NEW MISSIONS IN<br>
-        <span id="countdown"></span></div><button id="slideButton">Show countdown</button></div>
+            <button id="backgroundButton">Hide background</button><button id="buttonsbutton">x</button><br>
+            <div id="missionscountdown">NEW MISSIONS IN<br>
+            <span id="countdown"></span></div><button id="slideButton">Show countdown</button><br>
+            <button id="currentButton">Click here to see upcoming missions</button>
+        </div>
         <div id="current">\n'''
     html += '''      <div class="grid-container">
             <h2>
@@ -835,35 +857,35 @@ def render_index(timestamp, next_timestamp, DDs):
         html = scanners(html)
     else:
         html = array_standard_missions(next_Biomes, 'Hollow Bough', html, nextindex)
-    html += '       </h2>\n'
-    html += '	    </div>\n'
-    html += '	    </div>\n'
-    html += '       <div class="grid-container">\n'
-    html += '        <div class="dd-container">\n'
     img_count = 0
-    html += '           <h2>\n'
-    html += '          <img class="image-container" src="/files/dd.png">\n'
+    html += '''       </h2>
+         </div>
+         </div>
+           <div class="grid-container">
+            <div class="dd-container">
+               <h2>
+              <img class="image-container" src="/files/dd.png">\n'''
     html = array_dd_missions(DeepDives, 'Deep Dive Normal', img_count, html)
-    html += '         </h2>\n'
-    html += '        </div>\n'
-    html += '        <div class="dd-container">\n'
-    html += '           <h2>\n'
-    html += '          <img class="image-container" src="/files/edd.png">\n'
+    html += '''         </h2>
+            </div>
+            <div class="dd-container">
+               <h2>
+              <img class="image-container" src="/files/edd.png">\n'''
     html = array_dd_missions(DeepDives, 'Deep Dive Elite', img_count, html)
-    html += '           </h2>\n'
-    html += '        </div>\n'
-    html += '	    </div>\n'
-    html += '          <div>\n'
-    html += '           <div class="ddscountdown">NEW DEEP DIVES IN</div>\n'
-    html += '          <span id="ddcountdown"></span>\n'
-    html += '           <hr>\n'
-    html += '        </div>\n'
-    html += '          <div class="jsonc">\n'
-    html += '         <div class="jsonlinks"><span><a class="jsonlink" href="/json?data=bulkmissions">FULL MISSION DATA</a> <a class="jsonlink" href="/json?data=current">CURRENT MISSION DATA</a> <a class="jsonlink" href="/json?data=next">UPCOMING MISSION DATA</a> <a class="jsonlink" href="/json?data=DD">CURRENT DD DATA</a></span></div>\n'
-    html += '           <span class="credits">Send credits (eth): 0xb9c8591A80A3158f7cFFf96EC3c7eA9adB7818E7</span></div>\n'
-    html += "          <p class='gsgdisclaimer'><i>This website is a third-party platform and is not affiliated, endorsed, or sponsored by Ghost Ship Games. The use of Deep Rock Galactic's in-game assets on this website is solely for illustrative purposes and does not imply any ownership or association with the game or its developers. All copyrights and trademarks belong to their respective owners. For official information about Deep Rock Galactic, please visit the official Ghost Ship Games website.</i></p></div>\n"
-    html += '    </body>\n'
-    html += '</html>\n'
+    html += '''           </h2>
+            </div>
+    	    </div>
+              <div>
+               <div class="ddscountdown">NEW DEEP DIVES IN</div>
+              <span id="ddcountdown"></span>
+               <hr>
+            </div>
+              <div class="jsonc">
+             <div class="jsonlinks"><span><a class="jsonlink" href="/json?data=bulkmissions">FULL MISSION DATA</a> <a class="jsonlink" href="/json?data=current">CURRENT MISSION DATA</a> <a class="jsonlink" href="/json?data=next">UPCOMING MISSION DATA</a> <a class="jsonlink" href="/json?data=DD">CURRENT DD DATA</a></span></div>
+               <span class="credits">Send credits (eth): 0xb9c8591A80A3158f7cFFf96EC3c7eA9adB7818E7</span></div>
+              <p class='gsgdisclaimer'><i>This website is a third-party platform and is not affiliated, endorsed, or sponsored by Ghost Ship Games. The use of Deep Rock Galactic's in-game assets on this website is solely for illustrative purposes and does not imply any ownership or association with the game or its developers. All copyrights and trademarks belong to their respective owners. For official information about Deep Rock Galactic, please visit the official Ghost Ship Games website.</i></p></div>
+        </body>
+    </html>'''
     return html
 
 with open('drgmissionsgod.json', 'r') as f:
@@ -898,6 +920,7 @@ app = Flask(__name__, static_folder=f'{os.getcwd()}/files')
 
 @app.route('/')
 def home():
+    start_time = time.time()
     while True:
         try:
             current_timestamp = tstamp.queue[0]
@@ -905,6 +928,8 @@ def home():
             DDs_ = DDs.queue[0]
             break
         except Exception as e:
+            if time.time() - start_time > 4:
+                return 408
             continue
     return render_template_string(render_index(DRG[current_timestamp], DRG[next_timestamp],  DDs_,))
 
@@ -916,11 +941,14 @@ def serve_img():
             img_arg = img_arg.split('_')
             biomestr = img_arg[0].replace('%20', ' ')
             img_index_ = int(img_arg[1])
+            start_time = time.time()
             while True:
                 try:
                     Biomes = currybiomes.queue[0]
                     break
                 except Exception as e:
+                    if time.time() - start_time > 4:
+                        return 408
                     continue
             count = 0
             for mission in Biomes[biomestr]:
@@ -948,11 +976,14 @@ def serve_next_img():
             img_arg = img_arg.split('_')
             biomestr = img_arg[0].replace('%20', ' ')
             img_index_ = int(img_arg[1])
+            start_time = time.time()
             while True:
                 try:
                     Biomes = nextbiomes.queue[0]
                     break
                 except Exception as e:
+                    if time.time() - start_time > 4:
+                        return 408
                     continue
             count = 0
             for mission in Biomes[biomestr]:
