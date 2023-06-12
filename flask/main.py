@@ -713,7 +713,7 @@ def render_index(timestamp, next_timestamp, DDs):
            </h2>
            <h2>
             <div class ="biome-container">
-             <img title="Sandblasted Corridors" class="image-container" src="/files/DeepDive_MissionBar_AzureWeald.png">\n'''
+             <img title="Azure Weald" class="image-container" src="/files/DeepDive_MissionBar_AzureWeald.png">\n'''
     if 'Azure Weald' not in Biomes.keys():
         html = scanners(html)
     else:
@@ -807,7 +807,7 @@ def render_index(timestamp, next_timestamp, DDs):
            </h2>
            <h2>
             <div class ="biome-container">
-             <img title="Sandblasted Corridors" class="image-container" src="/files/DeepDive_MissionBar_AzureWeald.png">\n'''
+             <img title="Azure Weald" class="image-container" src="/files/DeepDive_MissionBar_AzureWeald.png">\n'''
     if 'Azure Weald' not in next_Biomes.keys():
         html = scanners(html)
     else:
