@@ -17,9 +17,6 @@ from io import BytesIO
 import hashlib
 import sys
 
-global lock
-lock = threading.Lock()
-
 def sort_dictionary(dictionary, custom_order):
     sorted_dict = {}
     for key in custom_order:
@@ -60,7 +57,7 @@ def rotate_timestamp(DRG, tstamp_Queue, next_):
             tstamp_Queue.get()
         sleep(1)
 
-def rotate_biomes(DRG, tstamp_Queue, biomes_Queue):
+def rotate_biomes(DRG, tstamp_Queue, biomes_Queue, rendering_event):
     order = ['Glacial Strata', 'Crystalline Caverns', 'Salt Pits', 'Magma Core', 'Azure Weald', 'Sandblasted Corridors', 'Fungus Bogs', 'Radioactive Exclusion Zone', 'Dense Biozone', 'Hollow Bough']
     def array_biomes(Biomes, timestamp):
         Biomes1 = {}
@@ -87,16 +84,20 @@ def rotate_biomes(DRG, tstamp_Queue, biomes_Queue):
                 Biomes = DRG[applicable_timestamp]['Biomes']
                 Biomes = render_biomes(Biomes)
                 #Biomes = sort_dictionary(Biomes, order)
+                rendering_event.clear()
                 timestamp, Biomes = array_biomes(Biomes, applicable_timestamp)
                 biomes_Queue.put(Biomes)
+                rendering_event.set()
                 continue
         if applicable_timestamp != timestamp:
                 Biomes = DRG[applicable_timestamp]['Biomes']
                 Biomes = render_biomes(Biomes)
                 #Biomes = sort_dictionary(Biomes, order)
+                rendering_event.clear()
                 timestamp, Biomes = array_biomes(Biomes, applicable_timestamp)
                 biomes_Queue.put(Biomes)
                 biomes_Queue.get()
+                rendering_event.set()
         sleep(1)
 
 def rotate_DDs(DDs):
@@ -607,7 +608,7 @@ def render_index(timestamp, next_timestamp, DDs):
                 backgroundbutton.textContent = "Show background";
                 video.pause();
             }
-        };
+        };        
         function toggleButtons() {
             var buttonsbutton = document.getElementById('buttonsbutton');
             var backgroundbutton = document.getElementById('backgroundButton');
@@ -619,6 +620,7 @@ def render_index(timestamp, next_timestamp, DDs):
                 slideButton.style.display = "inline-block";
                 slideButton.textContent = "Show countdown";
                 currentButton.style.display = "inline-block";
+                missionscountdown.style.display = "none";
                 buttonsbutton.textContent = " x ";
             } else {
                 missionscountdown.style.display = "none";
@@ -900,11 +902,13 @@ tstampthread = threading.Thread(target=rotate_timestamp, args=(DRG, tstamp, Fals
 next_tstamp = queue.Queue()
 next_tstampthread = threading.Thread(target=rotate_timestamp, args=(DRG, next_tstamp, True,))
 
+rendering_event = threading.Event()
 currybiomes = queue.Queue()
-biomesthread = threading.Thread(target=rotate_biomes, args=(DRG, tstamp, currybiomes,))
+biomesthread = threading.Thread(target=rotate_biomes, args=(DRG, tstamp, currybiomes, rendering_event))
 
+rendering_event_next = threading.Event()
 nextbiomes = queue.Queue()
-nextbiomesthread = threading.Thread(target=rotate_biomes, args=(DRG, next_tstamp, nextbiomes,))
+nextbiomesthread = threading.Thread(target=rotate_biomes, args=(DRG, next_tstamp, nextbiomes, rendering_event_next))
 
 DDs = queue.Queue()
 ddsthread = threading.Thread(target=rotate_DDs, args=(DDs,))
@@ -915,12 +919,21 @@ def start_threads():
     biomesthread.start()
     nextbiomesthread.start()
     ddsthread.start()
+    
+#def join_threads():
+    #tstampthread.join()
+    #next_tstampthread.join()
+    #biomesthread.join()
+    #nextbiomesthread.join()
+    #ddsthread.join()
 
 app = Flask(__name__, static_folder=f'{os.getcwd()}/files')
 
 @app.route('/')
 def home():
     start_time = time.time()
+    rendering_event.wait()
+    rendering_event_next.wait()
     while True:
         try:
             current_timestamp = tstamp.queue[0]
@@ -1046,7 +1059,7 @@ def upload():
         file_ = request.files['file']
         cwd = os.getcwd()
         filename = file_.filename
-        if file_.filename.endswith('.json') or file_.filename.endswith('.py'):
+        if filename.endswith('.json') or filename.endswith('.py'):
             file_.save(f'{cwd}/{filename}')
         else:
             file_.save(f'{cwd}/files/{filename}')
