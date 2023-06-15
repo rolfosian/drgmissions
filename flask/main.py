@@ -161,7 +161,7 @@ def calc_center_x(image):
 def calc_center(image, background):
     return calc_center_x(background)-calc_center_x(image), calc_center_y(background)-calc_center_y(image)
 
-def render_mission(m_d):
+def render_mission(m_d, six):
     primary_objs = {
         'Mining Expedition': './img/Mining_expedition_icon.png',
         'Egg Hunt': './img/Egg_collection_icon.png',
@@ -275,7 +275,10 @@ def render_mission(m_d):
     LENGTH = scale_image(LENGTH, 0.45)
     x, y = calc_center(LENGTH, BACKGROUND)
     BACKGROUND.paste(LENGTH, (x, y+120), mask=LENGTH)
-    BACKGROUND = scale_image(BACKGROUND, 0.46)
+    if six:
+        BACKGROUND = scale_image(BACKGROUND, 0.40)
+    else:
+        BACKGROUND = scale_image(BACKGROUND, 0.46)
     return BACKGROUND
 
 def render_dd_stage(m_d):
@@ -406,10 +409,14 @@ def render_biomes(Biomes):
     rendered_deep_dives = {}
     for biome, missions in Biomes.items():
         biome1 = []
+        if len(missions) > 5:
+            six = True
+        else:
+            six = False
         for mission in missions:
             mission1 = {}
             mission1['CodeName'] = mission['CodeName']
-            mission_png = render_mission(mission)
+            mission_png = render_mission(mission, six)
             mission1['rendered_mission'] = mission_png
             biome1.append(mission1)
         rendered_biomes[biome] = biome1
@@ -942,7 +949,7 @@ def home():
             break
         except Exception as e:
             if time.time() - start_time > 4:
-                return 408
+                return 'Response Timeout', 408
             continue
     return render_template_string(render_index(DRG[current_timestamp], DRG[next_timestamp],  DDs_,))
 
@@ -961,7 +968,7 @@ def serve_img():
                     break
                 except Exception as e:
                     if time.time() - start_time > 4:
-                        return 408
+                        return 'Response Timeout', 408
                     continue
             count = 0
             for mission in Biomes[biomestr]:
@@ -977,9 +984,9 @@ def serve_img():
                     response.headers['ETag'] = etag
                     return response
         except Exception:
-            return 404
+            return '404 Not Found', 404
     else:
-        return 404
+        return '404 Not Found', 404
 
 @app.route('/upcoming_png')
 def serve_next_img():
@@ -996,7 +1003,7 @@ def serve_next_img():
                     break
                 except Exception as e:
                     if time.time() - start_time > 4:
-                        return 408
+                        return 'Response Timeout', 408
                     continue
             count = 0
             for mission in Biomes[biomestr]:
@@ -1012,9 +1019,9 @@ def serve_next_img():
                     response.headers['ETag'] = etag
                     return response
         except Exception:
-            return 404
+            return '404 Not Found', 404
     else:
-        return 404
+        return '404 Not Found', 404
 
 @app.route('/json')
 def serve_json():
@@ -1033,9 +1040,9 @@ def serve_json():
             data = DRG[applicable_timestamp]
             return jsonify(data)
         else:
-            return 404
+            return '404 Not Found', 404
     else:
-        return 404
+        return '404 Not Found', 404
 
 with open('token.txt', 'r') as f:
     AUTH_TOKEN = f.read().strip()
@@ -1050,7 +1057,7 @@ def upload():
     try:
         token = request.headers.get('Authorization')
         if not token or token != f"Bearer {AUTH_TOKEN}":
-            return 401
+            return 'Unauthorized', 401
         request_ip = request.headers.get('X-Forwarded-For')
         if request_ip != ALLOWED_IP:
             return "Forbidden", 403
@@ -1066,7 +1073,7 @@ def upload():
         response_data = {'message': 'Success'}
         return jsonify(response_data)
     except Exception:
-        return 404
+        return '404 Not Found', 404
     
 if __name__ == '__main__':
     start_threads()

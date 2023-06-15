@@ -77,14 +77,11 @@ end
 function HasKey(table, key)
     return table[key] ~= nil
 end
-function UnpackStandardMission(mission, master, b)
+function UnpackStandardMission(mission, master, b, missionscount)
+    missionscount = missionscount + 1
     local mission1 = {}
-    local missionfullname = string.format("%s",mission:GetFullName())
-    local missionfullname_parts = Split(missionfullname, '_')
-    local missionid_string = missionfullname_parts[#missionfullname_parts]
-    missionid_string = string.sub(missionid_string, -3)
-    local missionid = tonumber(missionid_string)
-    mission1['id'] = missionid
+    -- local missionfullname = string.format("%s",mission:GetFullName())
+    mission1['id'] = missionscount
     -- local MissionName = mission:GetPropertyValue("MissionName") -- Get FText object
     -- print(MissionName) -- CRASHES
     -- print(MissionName:ToString()) -- RETURNS EMPTY STRING DUE TO BUG IN RE-UE4SS LUA API
@@ -320,11 +317,11 @@ function UnpackStandardMission(mission, master, b)
     if string.find(MissionDNA, '_Complex') and complexity == 'Either 2 or 3' then
         mission1['Complexity'] = '3'
     end
-    if mission1['Length'] == 'Either 2 or 3' or mission1['Complexity'] == 'Either 2 or 3' then
-        mission1['id'] = missionid
-    end
+    -- if mission1['Length'] == 'Either 2 or 3' or mission1['Complexity'] == 'Either 2 or 3' then
+    --     print(missionfullname)
+    -- end
     table.insert(master['Biomes'][b], mission1)
-    ::continue::
+    return missionscount
 end
 function GetBiome(mission)
     local b = mission:GetPropertyValue('Biome')
@@ -408,6 +405,7 @@ function Main()
     -- Initialize Table
     local god = {}
     local count = 0
+    local missionscount = 0
     -- Loop for the increments
     for i = 1, total_increments do
         local master = {}
@@ -437,8 +435,7 @@ function Main()
                 if not HasKey(master['Biomes'], b) then
                     master['Biomes'][b] = {}
                 end
-                UnpackStandardMission(mission, master, b)
-                ::continue::
+                missionscount = UnpackStandardMission(mission, master, b, missionscount)
             end
             -- local indent = "    "
             -- local master_str = TableToString(master, indent)
@@ -473,10 +470,10 @@ function Main()
             socket.sleep(1)
         end
     end
-    local options = {
-        indent = "  ",
-    }
-    god = json.encode(god, options)
+    -- local options = {
+    --     indent = "  ",
+    -- }
+    god = json.encode(god)
     local file = io.open('drgmissionsgod.json', 'w')
     if file then
         file:write(god)
