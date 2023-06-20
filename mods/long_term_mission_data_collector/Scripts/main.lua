@@ -467,7 +467,7 @@ function Main()
             print(tostring(count)..'\n')
             os.execute(command)
 
-            socket.sleep(1)
+            socket.sleep(1.3)
         end
     end
     -- local options = {
