@@ -9,10 +9,6 @@ src: url("/files/HammerBro101MovieThin-Regular.woff");
 body::-webkit-scrollbar {
 display: none;
 }
-.collapsed {
-display: none;
-height: 0;
-}
 .loading {
 position: fixed;
 text-overflow: ;
@@ -62,10 +58,14 @@ min-height: 100%;
 width: auto;
 height: auto;
 z-index: -1;
-background-color: rgba(0, 0, 0, 0.4);
+background-color: rgba(0, 0, 0, 0.6);
 }
 .background-video:focus {
 pointer-events: auto;
+}
+.collapsed {
+display: none;
+height: 0;
 }
 .grid-container {
 display: grid;
@@ -76,16 +76,22 @@ text-align:  center;
 padding: 0px;
 text-align: center;
 }
+.biome-container {
+opacity: 0;
+transition: opacity 0.5s ease-in-out;
+}
+.image-container {
+width: 80%;
+height: auto;
+}
 .mission-hover-zoom {
 display: inline-block
 }
 .mission-hover-zoom img {
-height: 70%;
-width: 70%;
-transition: transform .5s ease;
+transition: transform .6s ease;
 }
 .mission-hover-zoom:hover img {
-transform: scale(1.5);
+transform: scale(1.7);
 }
 .mission {
 display: inline-block;
@@ -96,17 +102,9 @@ z-index: 9999;
 .fade-in {
   opacity: 1;
 }
-.biome-container {
-opacity: 0;
-transition: opacity 0.5s ease-in-out;
-}
 .dd-container {
 width: auto;
 height: 60%;
-}
-.image-container {
-width: 80%;
-height: auto;
 }
 .dd-biome {
 width: 60%;

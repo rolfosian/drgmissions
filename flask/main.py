@@ -103,7 +103,7 @@ def rotate_biomes(DRG, tstamp_Queue, biomes_Queue, rendering_event):
 def rotate_DDs(DDs):
     def sort_dd_json_list_by_timestamp(json_pattern):
         json_list = glob.glob(json_pattern)
-        sorted_json_list = sorted(json_list, key=lambda x: datetime.strptime(x.split('_')[1].split('.')[0], "%Y-%m-%dT%H-%M-%SZ"))
+        sorted_json_list = sorted(json_list, key=lambda x: datetime.strptime(x.split('_')[1].split('.')[0], "%Y-%m-%dT%H-%M-%SZ"), reverse=True)
         return sorted_json_list
     json_pattern = './DD_*.json'
     current_json = None
@@ -160,6 +160,81 @@ def calc_center_x(image):
 
 def calc_center(image, background):
     return calc_center_x(background)-calc_center_x(image), calc_center_y(background)-calc_center_y(image)
+
+def calc_text_center(image_width, image_height, text, font, font_size):
+    temp_image = Image.new("RGB", (image_width, image_height))
+    temp_draw = ImageDraw.Draw(temp_image)
+    
+    text_bbox = temp_draw.textbbox((0, 0), text, font=font)
+    text_width = text_bbox[2] - text_bbox[0]
+    text_height = text_bbox[3] - text_bbox[1]
+
+    text_x = (image_width - text_width) // 2
+    text_y = (image_height - text_height) // 2
+    return text_x, text_y
+
+def render_mission_obj_resource(primary_obj, complexity, length):
+    font_path = './img/HammerBro101MovieBold-Regular.ttf'
+    font_size = 45
+    font = ImageFont.truetype(font_path, font_size)
+    text_color = (255, 255, 255)
+    primary_objs = {
+        'Mining Expedition': './img/Morkite_icon.png',
+        'Egg Hunt': './img/Alien_egg_icon.png',
+        'On-Site Refining': './img/Icon_PumpingJack_Core_Simplified_Workfile.png',
+        'Salvage Operation': './img/Icon_Salvage_Mules_Objective.png',
+        'Escort Duty': './img/Icon_FuelCannister_Simplified.png',
+        'Point Extraction': './img/Icons_Resources_Outline_Aquarq.png',
+        'Elimination': './img/Kill_Dreadnought_Objective_icon.png',
+        'Industrial Sabotage': './img/Icon_Facility_DataRack.png'
+            }
+    values = {
+        ('Mining Expedition', '1', '1'): '200',
+        ('Mining Expedition', '1', '2'): '225',
+        ('Mining Expedition', '2', '2'): '250',
+        ('Mining Expedition', '2', '3'): '325',
+        ('Mining Expedition', '3', '3'): '400',
+        ('Egg Hunt', '1'): '4',
+        ('Egg Hunt', '2'): '6',
+        ('Egg Hunt', 'default'): '8',
+        ('Point Extraction', '2'): '7',
+        ('Point Extraction', 'default'): '10',
+        ('Industrial Sabotage', 'default'): '1',
+        ('On-Site Refining', 'default'): '3',
+        ('Escort Duty', '2'): '1',
+        ('Escort Duty', 'default'): '2',
+        ('Elimination', '2'): '2',
+        ('Elimination', 'default'): '3',
+        ('Salvage Operation', '2'): '2',
+        ('Salvage Operation', 'default'): '3',
+    }
+    
+    BACKGROUND = Image.new("RGBA", (256, 256), (0,0,0,0))
+    HEXAGON = Image.open('./img/hexagon.png')
+    HEXAGON = scale_image(HEXAGON, 0.4)
+    x, y = calc_center(HEXAGON, BACKGROUND)
+    BACKGROUND.paste(HEXAGON, (x, y), mask=HEXAGON)
+    RESOURCE = Image.open(primary_objs[primary_obj])
+    if primary_obj == 'Mining Expedition':
+        RESOURCE = scale_image(RESOURCE, 0.2)
+    elif primary_obj == 'Egg Hunt':
+        RESOURCE = scale_image(RESOURCE, 0.25)
+    else:
+        RESOURCE = scale_image(RESOURCE, 0.14)
+    x, y = calc_center(RESOURCE, BACKGROUND)
+    if primary_obj == 'Mining Expedition':
+        BACKGROUND.paste(RESOURCE, (x, y-20), mask=RESOURCE)
+    else:
+        BACKGROUND.paste(RESOURCE, (x, y-13), mask=RESOURCE)
+
+    text = values.get((primary_obj, complexity, length), values.get((primary_obj, length), values.get((primary_obj, 'default'), 'Unknown')))
+    DRAW = ImageDraw.Draw(BACKGROUND)
+    text_x, text_y = calc_text_center(BACKGROUND.width, BACKGROUND.height, text, font, font_size)
+    if primary_obj == 'Mining Expedition':
+        DRAW.text((text_x, text_y+15), text, font=font, fill=text_color)
+    else:
+        DRAW.text((text_x, text_y+25), text, font=font, fill=text_color)
+    return BACKGROUND
 
 def render_mission(m_d, six):
     primary_objs = {
@@ -232,7 +307,7 @@ def render_mission(m_d, six):
     SECONDARY = Image.open(SECONDARY)
     SECONDARY = scale_image(SECONDARY, 0.2)
     x, y = calc_center(SECONDARY, BACKGROUND)
-    BACKGROUND.paste(SECONDARY, (x-110, y+95), mask=SECONDARY)
+    BACKGROUND.paste(SECONDARY, (x-110, y-95), mask=SECONDARY)
     
     if 'MissionWarnings' in m_d:
         MISSIONWARNING1 = None
@@ -275,6 +350,10 @@ def render_mission(m_d, six):
     LENGTH = scale_image(LENGTH, 0.45)
     x, y = calc_center(LENGTH, BACKGROUND)
     BACKGROUND.paste(LENGTH, (x, y+120), mask=LENGTH)
+    PRIMARY_OBJ_RESOURCE = render_mission_obj_resource(PrimaryObj, Complexity, Length)
+    PRIMARY_OBJ_RESOURCE = scale_image(PRIMARY_OBJ_RESOURCE, 0.6)
+    x, y = calc_center(PRIMARY_OBJ_RESOURCE, BACKGROUND)
+    BACKGROUND.paste(PRIMARY_OBJ_RESOURCE, (x-110, y+95), mask=PRIMARY_OBJ_RESOURCE)
     if six:
         BACKGROUND = scale_image(BACKGROUND, 0.40)
     else:
