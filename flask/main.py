@@ -117,7 +117,7 @@ def rotate_DDs(DDs):
                 DDs.put(dds)
             else:
                 DDs.put(dds)
-                DDS.get()
+                DDs.get()
             dds = dds['Deep Dives']
             dds = render_deepdives(dds)
             dd_str = 'Deep Dive Normal'
