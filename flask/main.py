@@ -360,6 +360,53 @@ def render_mission(m_d, six):
         BACKGROUND = scale_image(BACKGROUND, 0.46)
     return BACKGROUND
 
+def render_dd_secondary_obj_resource(secondary_obj):
+    font_path = './img/HammerBro101MovieBold-Regular.ttf'
+    font_size = 45
+    font = ImageFont.truetype(font_path, font_size)
+    text_color = (255, 255, 255)
+    secondary_objs = {
+        'Repair Minimules': './img/Icon_Salvage_Mules_Objective.png',
+        'Kill Dreadnought(s)': './img/Kill_Dreadnought_Objective_icon.png',
+        'Mine Morkite': './img/Morkite_icon.png',
+        'Get Alien Eggs': './img/Alien_egg_icon.png',
+        'Black Box': './img/Blackbox_icon.png'
+            }
+    values = {
+        'Repair Minimules': '2',
+        'Kill Dreadnought(s)': '1',
+        'Mine Morkite': '150',
+        'Get Alien Eggs':'2',
+        'Black Box':'1',
+    }
+
+    BACKGROUND = Image.new("RGBA", (256, 256), (0,0,0,0))
+    HEXAGON = Image.open('./img/hexagon.png')
+    HEXAGON = scale_image(HEXAGON, 0.4)
+    x, y = calc_center(HEXAGON, BACKGROUND)
+    BACKGROUND.paste(HEXAGON, (x, y), mask=HEXAGON)
+    RESOURCE = Image.open(secondary_objs[secondary_obj])
+    if secondary_obj == 'Mine Morkite' or secondary_obj == 'Get Alien Eggs':
+        RESOURCE = scale_image(RESOURCE, 0.2)
+    elif secondary_obj == 'Black Box':
+        RESOURCE = scale_image(RESOURCE, 0.3)
+    else:
+        RESOURCE = scale_image(RESOURCE, 0.14)
+    x, y = calc_center(RESOURCE, BACKGROUND)
+    if secondary_obj == 'Mine Morkite':
+        BACKGROUND.paste(RESOURCE, (x, y-20), mask=RESOURCE)
+    else:
+        BACKGROUND.paste(RESOURCE, (x, y-13), mask=RESOURCE)
+
+    text = values.get(secondary_obj)
+    DRAW = ImageDraw.Draw(BACKGROUND)
+    text_x, text_y = calc_text_center(BACKGROUND.width, BACKGROUND.height, text, font, font_size)
+    if secondary_obj == 'Mine Morkite':
+        DRAW.text((text_x, text_y+15), text, font=font, fill=text_color)
+    else:
+        DRAW.text((text_x, text_y+25), text, font=font, fill=text_color)
+    return BACKGROUND
+
 def render_dd_stage(m_d):
     primary_objs = {
         'Mining Expedition': './img/Mining_expedition_icon.png',
@@ -413,8 +460,6 @@ def render_dd_stage(m_d):
         'Lithophage Outbreak': './img/Warning_lithophage_outbreak_icon.png',
         'Rival Presence': './img/Warning_rival_presence_icon.png'
             }
-    resources = {
-        }
     
     BACKGROUND = Image.new("RGBA", (350, 300), (0,0,0,0))
     
@@ -426,18 +471,18 @@ def render_dd_stage(m_d):
     BACKGROUND.paste(PRIMARY, (x, y), mask=PRIMARY)
     
     SecondaryObj = m_d['SecondaryObjective']
-    SECONDARY = secondary_objs[SecondaryObj]
-    SECONDARY = Image.open(SECONDARY)
-    if SecondaryObj == 'Mine Morkite':
-        SECONDARY = scale_image(SECONDARY, 0.2)
-    elif SecondaryObj == 'Black Box':
-        SECONDARY = scale_image(SECONDARY, 0.3)
-    elif SecondaryObj == 'Get Alien Eggs':
-        SECONDARY = scale_image(SECONDARY, 0.2)
-    else:
-        SECONDARY = scale_image(SECONDARY, 0.1)
+    SECONDARY = render_dd_secondary_obj_resource(SecondaryObj)
+    SECONDARY = scale_image(SECONDARY, 0.6)
+    #if SecondaryObj == 'Mine Morkite':
+        #SECONDARY = scale_image(SECONDARY, 0.2)
+    #elif SecondaryObj == 'Black Box':
+        #SECONDARY = scale_image(SECONDARY, 0.3)
+    #elif SecondaryObj == 'Get Alien Eggs':
+        #SECONDARY = scale_image(SECONDARY, 0.2)
+    #else:
+        #SECONDARY = scale_image(SECONDARY, 0.1)
     x, y = calc_center(SECONDARY, BACKGROUND)
-    BACKGROUND.paste(SECONDARY, (x-110, y+95), mask=SECONDARY)
+    BACKGROUND.paste(SECONDARY, (x-110, y-95), mask=SECONDARY)
     
     if 'MissionWarnings' in m_d:
         MISSIONWARNING1 = None
