@@ -247,9 +247,6 @@ function UnpackStandardMission(mission, master, b, missionscount)
         mission1['Complexity'] = '2'
         mission1['Length'] = '2'
     end
-    if string.find(MissionDNA, 'Motherlode_Long_C') and length == 'Either 2 or 3' and PrimaryObjective == 'Point Extraction' then
-        mission1['Complexity'] = '3'
-    end
     if string.find(MissionDNA, 'DNA_2_01_C') and complexity == 'Either 2 or 3' and length == 'Either 2 or 3' and PrimaryObjective == 'Mining Expedition' then
         mission1['Complexity'] = '1'
         mission1['Length'] = '1'

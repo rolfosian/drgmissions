@@ -473,14 +473,6 @@ def render_dd_stage(m_d):
     SecondaryObj = m_d['SecondaryObjective']
     SECONDARY = render_dd_secondary_obj_resource(SecondaryObj)
     SECONDARY = scale_image(SECONDARY, 0.6)
-    #if SecondaryObj == 'Mine Morkite':
-        #SECONDARY = scale_image(SECONDARY, 0.2)
-    #elif SecondaryObj == 'Black Box':
-        #SECONDARY = scale_image(SECONDARY, 0.3)
-    #elif SecondaryObj == 'Get Alien Eggs':
-        #SECONDARY = scale_image(SECONDARY, 0.2)
-    #else:
-        #SECONDARY = scale_image(SECONDARY, 0.1)
     x, y = calc_center(SECONDARY, BACKGROUND)
     BACKGROUND.paste(SECONDARY, (x-110, y-95), mask=SECONDARY)
     
@@ -512,19 +504,23 @@ def render_dd_stage(m_d):
         x, y = calc_center(MISSIONMUTATOR, BACKGROUND)
         BACKGROUND.paste(MISSIONMUTATOR, (x-100, y-10), mask=MISSIONMUTATOR)
 
-    #Complexity = m_d['Complexity']
-    #COMPLEXITY = complexities[Complexity]
-    #COMPLEXITY = Image.open(COMPLEXITY)
-    #COMPLEXITY = scale_image(COMPLEXITY, 0.45)
-    #x, y = calc_center(COMPLEXITY, BACKGROUND)
-    #BACKGROUND.paste(COMPLEXITY, (x, y-120), mask=COMPLEXITY)
+    Complexity = m_d['Complexity']
+    COMPLEXITY = complexities[Complexity]
+    COMPLEXITY = Image.open(COMPLEXITY)
+    COMPLEXITY = scale_image(COMPLEXITY, 0.45)
+    x, y = calc_center(COMPLEXITY, BACKGROUND)
+    BACKGROUND.paste(COMPLEXITY, (x, y-120), mask=COMPLEXITY)
 
-    #Length = m_d['Length']
-    #LENGTH = lengths[Length]
-    #LENGTH = Image.open(LENGTH)
-    #LENGTH = scale_image(LENGTH, 0.45)
-    #x, y = calc_center(LENGTH, BACKGROUND)
-    #BACKGROUND.paste(LENGTH, (x, y+120), mask=LENGTH)
+    Length = m_d['Length']
+    LENGTH = lengths[Length]
+    LENGTH = Image.open(LENGTH)
+    LENGTH = scale_image(LENGTH, 0.45)
+    x, y = calc_center(LENGTH, BACKGROUND)
+    BACKGROUND.paste(LENGTH, (x, y+120), mask=LENGTH)
+    PRIMARY_OBJ_RESOURCE = render_mission_obj_resource(PrimaryObj, Complexity, Length)
+    PRIMARY_OBJ_RESOURCE = scale_image(PRIMARY_OBJ_RESOURCE, 0.8)
+    x, y = calc_center(PRIMARY_OBJ_RESOURCE, BACKGROUND)
+    BACKGROUND.paste(PRIMARY_OBJ_RESOURCE, (x-110, y+95), mask=PRIMARY_OBJ_RESOURCE)
     BACKGROUND = scale_image(BACKGROUND, 0.46)
     return BACKGROUND
 

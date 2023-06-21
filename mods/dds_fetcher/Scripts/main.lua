@@ -37,7 +37,7 @@ end
 function HasKey(table, key)
     return table[key] ~= nil
 end
-function UnpackDeepDiveMission(mission, master, t) -- Considering adding logic here to show complexity and length for dd stages, but it would remove a whole lot more from the DD mystique imo...
+function UnpackDeepDiveMission(mission, master, t)
     local mission1 = {}
     local missionfullname = string.format("%s",mission:GetFullName())
     local missionfullname_parts = Split(missionfullname, '_')
@@ -156,6 +156,135 @@ function UnpackDeepDiveMission(mission, master, t) -- Considering adding logic h
             -- print(MissionMutator)
         end
     end
+    local ComplexityLimit = mission:GetPropertyValue("ComplexityLimit")
+    ComplexityLimit = string.format("%s",ComplexityLimit:GetFullName())
+    local complexity = nil
+    if string.find(ComplexityLimit,'Complexity_Simple') then
+        complexity = '1'
+    elseif string.find(ComplexityLimit, 'Complexity_Average') then
+        complexity = '2'
+    elseif string.find(ComplexityLimit, 'Complexity_Complex') then
+        complexity = '3'
+    elseif string.find(ComplexityLimit, 'nil') then
+        complexity = 'Either 2 or 3'
+    end
+    mission1['Complexity'] = complexity
+    local DurationLimit = mission:GetPropertyValue("DurationLimit")
+    DurationLimit =  string.format("%s",DurationLimit:GetFullName())
+    local length = nil
+    if DurationLimit == 'nil' then
+        length = 'Either 2 or 3'
+    elseif string.find(DurationLimit, 'Duration_Short') then
+        length = '1'
+    elseif string.find(DurationLimit, 'Duration_Normal') then
+        length = '2'
+    end
+    mission1['Length'] = length
+    local MissionDNA = mission:GetPropertyValue("MissionDNA")
+    MissionDNA = string.format("%s",MissionDNA:GetFullName())
+    --Salvage DNA
+    if string.find(MissionDNA, "SalvageFractured_Complex") and complexity == 'Either 2 or 3' and length == 'Either 2 or 3' then
+        mission1['Complexity'] = '3'
+        mission1['Length'] = '3'
+    end
+    if string.find(MissionDNA, 'SalvageFractured_Medium') and complexity == 'Either 2 or 3' and length == 'Either 2 or 3' then
+        mission1['Complexity'] = '2'
+        mission1['Length'] = '2'
+    end
+    --Refinery DNA
+    if string.find(MissionDNA, 'Refinery_Complex') and complexity == 'Either 2 or 3' and length == 'Either 2 or 3' then
+        mission1['Complexity'] = '3'
+        mission1['Length'] = '2'
+    end
+    if string.find(MissionDNA, 'Refinery_Medium_C') and complexity == 'Either 2 or 3' and length == 'Either 2 or 3' then
+        mission1['Complexity'] = '2'
+        mission1['Length'] = '2'
+    end
+    --Mining Expedition DNA
+    if string.find(MissionDNA, 'DNA_2_01_C') and complexity == 'Either 2 or 3' and length == 'Either 2 or 3' and PrimaryObjective == 'Mining Expedition' then
+        mission1['Complexity'] = '1'
+        mission1['Length'] = '1'
+    end
+    if string.find(MissionDNA, 'DNA_2_02_C') and complexity == 'Either 2 or 3' and length == 'Either 2 or 3' and PrimaryObjective == 'Mining Expedition' then
+        mission1['Complexity'] = '2'
+        mission1['Length'] = '2'
+    end
+    if string.find(MissionDNA, 'DNA_2_02_C') and complexity == 'Either 2 or 3' and length == '2' and PrimaryObjective == 'Mining Expedition' then
+        mission1['Complexity'] = '2'
+    end
+    if string.find(MissionDNA, 'DNA_2_02_C') and complexity == '2' and length == 'Either 2 or 3' and PrimaryObjective == 'Mining Expedition' then
+        mission1['Length'] = '2'
+    end
+    if string.find(MissionDNA, 'DNA_2_03_C') and complexity == 'Either 2 or 3' and length == 'Either 2 or 3' then
+        mission1['Complexity'] = '1'
+        mission1['Length'] = '2'
+    end
+    if string.find(MissionDNA, 'DNA_2_04_C') and complexity == 'Either 2 or 3' and length == 'Either 2 or 3' and PrimaryObjective == 'Mining Expedition' then
+        mission1['Complexity'] = '2'
+        mission1['Length'] = '3'
+    end
+    if string.find(MissionDNA, 'DNA_2_05_C') and complexity == 'Either 2 or 3' and length == 'Either 2 or 3' then
+        mission1['Complexity'] = '3'
+        mission1['Length'] = '3'
+    end
+    --Egg Hunt DNA
+    if string.find(MissionDNA, '_Complex') and complexity == 'Either 2 or 3' and length == 'Either 2 or 3' and PrimaryObjective == 'Egg Hunt' then
+        mission1['Length'] = '3'
+        mission1['Complexity'] = '2'
+        complexity = '2'
+    end
+    if string.find(MissionDNA, 'Fractured_Medium_C') and PrimaryObjective == 'Egg Hunt' and length == 'Either 2 or 3' and complexity == 'Either 2 or 3' then
+        mission1['Length'] = '2'
+        mission1['Complexity'] = '2'
+    end
+    if string.find(MissionDNA, 'Fractured_Medium_C') and PrimaryObjective == 'Egg Hunt' and length == '2' and complexity == 'Either 2 or 3' then
+        mission1['Complexity'] = '2'
+    end 
+    if string.find(MissionDNA, 'FracturedSimple_C') and PrimaryObjective == 'Egg Hunt' then
+        mission1['Complexity'] = '1'
+        mission1['Length'] = '1'
+    end
+    --Elimination DNA
+    if string.find(MissionDNA, 'Star_Medium_C') and PrimaryObjective == 'Elimination' then
+        mission1['Complexity'] = '2'
+        mission1['Length'] = '2'
+    end
+    if string.find(MissionDNA, 'Star_Complex_C') and PrimaryObjective == 'Elimination' then
+        mission1['Complexity'] = '3'
+        mission1['Length'] = '3'
+    end
+    --Point Extraction DNA
+    if string.find(MissionDNA, 'Motherlode_Short_C') and PrimaryObjective == 'Point Extraction' and length == 'Either 2 or 3' and complexity == 'Either 2 or 3' then
+        mission1['Complexity'] = '3'
+        mission1['Length'] = '2'
+    end
+    if string.find(MissionDNA, 'Motherlode_Long_C') and PrimaryObjective == 'Point Extraction' and length == 'Either 2 or 3' and complexity == 'Either 2 or 3' then
+        mission1['Complexity'] = '3'
+        mission1['Length'] = '3'
+    end
+    --Generic DNA
+    if string.find(MissionDNA, 'MediumComplex') and complexity == 'Either 2 or 3' then
+        mission1['Length'] = '2'
+        mission1['Complexity'] = '3'
+    end
+    if string.find(MissionDNA, 'LongAverage') and complexity == 'Either 2 or 3' then
+        mission1['Length'] = '3'
+        mission1['Complexity'] = '2'
+    end
+    if string.find(MissionDNA, 'LongComplex') and complexity == 'Either 2 or 3' then
+        mission1['Length'] = '3'
+        mission1['Complexity'] = '3'
+    end
+    if string.find(MissionDNA, 'MediumAverage') and complexity == 'Either 2 or 3' then
+        mission1['Length'] = '2'
+        mission1['Complexity'] = '2'
+    end
+    if string.find(MissionDNA, 'Simple') and complexity == 'Either 2 or 3' then
+        mission1['Complexity'] = '1'
+    end
+    if string.find(MissionDNA, '_Complex') and complexity == 'Either 2 or 3' then
+        mission1['Complexity'] = '3'
+    end
     table.insert(master['Deep Dives'][t]['Stages'], mission1)
 end
 function GetMissions()
@@ -235,8 +364,10 @@ function Main()
         end
     end
     -- Execute the function that 'press any key' evokes
-    for index, startmenu in pairs(startmenus) do
-        startmenu:PressStart()
+    if startmenus then
+        for index, startmenu in pairs(startmenus) do
+            startmenu:PressStart()
+        end
     end
     local waiting_for_load = true
     -- Wait for Space Rig to load
