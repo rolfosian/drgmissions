@@ -258,6 +258,10 @@ function UnpackDeepDiveMission(mission, master, t)
         mission1['Complexity'] = '3'
         mission1['Length'] = '2'
     end
+    if string.find(MissionDNA, 'Motherlode_Short_C') and PrimaryObjective == 'Point Extraction' and length == '2' and complexity == 'Either 2 or 3' then
+        mission1['Complexity'] = '3'
+        mission1['Length'] = '2'
+    end
     if string.find(MissionDNA, 'Motherlode_Long_C') and PrimaryObjective == 'Point Extraction' and length == 'Either 2 or 3' and complexity == 'Either 2 or 3' then
         mission1['Complexity'] = '3'
         mission1['Length'] = '3'

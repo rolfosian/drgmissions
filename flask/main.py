@@ -17,6 +17,17 @@ from io import BytesIO
 import hashlib
 import sys
 
+def wait_rotation(rendering_event, rendering_event_next):
+    target_minutes_59 = [29, 59]
+    while True:
+        current_time = datetime.now().time()
+        current_minute = current_time.minute
+        current_second = current_time.second + current_time.microsecond / 1e6
+        if current_second > 59.60 and current_minute in target_minutes_59:
+            rendering_event.clear()
+            rendering_event_next.clear()
+        sleep(0.1)
+
 def sort_dictionary(dictionary, custom_order):
     sorted_dict = {}
     for key in custom_order:
@@ -673,15 +684,11 @@ def render_index(timestamp, next_timestamp, DDs):
                 if (remainingTime1 < 0 && !isReloading) {
                     clearInterval(countdownTimer1);
                     isReloading = true;
-                    setTimeout(function() {
-                        location.reload();
-                    }, 3000);
-                    countdownElement1.textContent = '00 : 00 : 00';
+                    location.reload();
                 } else if (remainingTime1 >= 0) {
-                    const hours1 = Math.floor(remainingTime1 / 3600);
-                    const minutes1 = Math.floor((remainingTime1 % 3600) / 60);
+                    const minutes1 = Math.floor(remainingTime1 / 60);
                     const seconds1 = remainingTime1 % 60;
-                    const countdownString1 = `${hours1.toString().padStart(2, '0')} : ${minutes1.toString().padStart(2, '0')} : ${seconds1.toString().padStart(2, '0')}`;
+                    const countdownString1 = `${minutes1.toString().padStart(2, '0')} : ${seconds1.toString().padStart(2, '0')}`;
                     countdownElement1.textContent = countdownString1;
                 }
             }
@@ -1020,6 +1027,7 @@ def render_index(timestamp, next_timestamp, DDs):
 with open('drgmissionsgod.json', 'r') as f:
     DRG = f.read()
     f.close()
+DRG = DRG.replace(':02Z', ':00Z')
 DRG = json.loads(DRG)
 DRG = order_dictionary_by_date(DRG)
 
@@ -1037,6 +1045,8 @@ rendering_event_next = threading.Event()
 nextbiomes = queue.Queue()
 nextbiomesthread = threading.Thread(target=rotate_biomes, args=(DRG, next_tstamp, nextbiomes, rendering_event_next))
 
+wait_rotationthread = threading.Thread(target=wait_rotation, args=(rendering_event, rendering_event_next))
+
 DDs = queue.Queue()
 ddsthread = threading.Thread(target=rotate_DDs, args=(DDs,))
 
@@ -1046,6 +1056,7 @@ def start_threads():
     biomesthread.start()
     nextbiomesthread.start()
     ddsthread.start()
+    wait_rotationthread.start()
     
 #def join_threads():
     #tstampthread.join()
@@ -1053,95 +1064,82 @@ def start_threads():
     #biomesthread.join()
     #nextbiomesthread.join()
     #ddsthread.join()
+    #wait_rotationthread.join()
 
 app = Flask(__name__, static_folder=f'{os.getcwd()}/files')
 
 @app.route('/')
 def home():
-    start_time = time.time()
     rendering_event.wait()
     rendering_event_next.wait()
-    while True:
-        try:
-            current_timestamp = tstamp.queue[0]
-            next_timestamp = next_tstamp.queue[0]
-            DDs_ = DDs.queue[0]
-            break
-        except Exception as e:
-            if time.time() - start_time > 4:
-                return 'Response Timeout', 408
-            continue
+    current_timestamp = tstamp.queue[0]
+    next_timestamp = next_tstamp.queue[0]
+    DDs_ = DDs.queue[0]
     return render_template_string(render_index(DRG[current_timestamp], DRG[next_timestamp],  DDs_,))
 
 @app.route('/png')
 def serve_img():
     img_arg = request.args.get('img')
-    if img_arg:
-        try:
-            img_arg = img_arg.split('_')
-            biomestr = img_arg[0].replace('%20', ' ')
-            img_index_ = int(img_arg[1])
-            start_time = time.time()
-            while True:
-                try:
-                    Biomes = currybiomes.queue[0]
-                    break
-                except Exception as e:
-                    if time.time() - start_time > 4:
-                        return 'Response Timeout', 408
-                    continue
-            count = 0
-            for mission in Biomes[biomestr]:
-                count += 1
-                if count == img_index_:
-                    mission1 = BytesIO()
-                    mission1.write(mission['rendered_mission'].getvalue())
-                    mission1.seek(0)
-                    etag = mission['etag']
-                    if request.headers.get('If-None-Match') == etag:
-                        return '', 304
-                    response = make_response(send_file(mission1, mimetype='image/png'))
-                    response.headers['ETag'] = etag
-                    return response
-        except Exception:
-            return '404 Not Found', 404
-    else:
-        return '404 Not Found', 404
+    try:
+        img_arg = img_arg.split('_')
+        biomestr = img_arg[0].replace('%20', ' ')
+        img_index_ = int(img_arg[1])
+        start_time = time.time()
+        while True:
+            try:
+                Biomes = currybiomes.queue[0]
+                break
+            except Exception as e:
+                if time.time() - start_time > 4:
+                    return 'Response Timeout', 408
+                continue
+        count = 0
+        for mission in Biomes[biomestr]:
+            count += 1
+            if count == img_index_:
+                mission1 = BytesIO()
+                mission1.write(mission['rendered_mission'].getvalue())
+                mission1.seek(0)
+                etag = mission['etag']
+                if request.headers.get('If-None-Match') == etag:
+                    return '', 304
+                response = make_response(send_file(mission1, mimetype='image/png'))
+                response.headers['ETag'] = etag
+                return response
+    except Exception:
+        return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
 
 @app.route('/upcoming_png')
 def serve_next_img():
     img_arg = request.args.get('img')
-    if img_arg:
-        try:
-            img_arg = img_arg.split('_')
-            biomestr = img_arg[0].replace('%20', ' ')
-            img_index_ = int(img_arg[1])
-            start_time = time.time()
-            while True:
-                try:
-                    Biomes = nextbiomes.queue[0]
-                    break
-                except Exception as e:
-                    if time.time() - start_time > 4:
-                        return 'Response Timeout', 408
-                    continue
-            count = 0
-            for mission in Biomes[biomestr]:
-                count += 1
-                if count == img_index_:
-                    mission1 = BytesIO()
-                    mission1.write(mission['rendered_mission'].getvalue())
-                    mission1.seek(0)
-                    etag = mission['etag']
-                    if request.headers.get('If-None-Match') == etag:
-                        return '', 304
-                    response = make_response(send_file(mission1, mimetype='image/png'))
-                    response.headers['ETag'] = etag
-                    return response
-        except Exception:
-            return '404 Not Found', 404
-    else:
-        return '404 Not Found', 404
+    try:
+        img_arg = img_arg.split('_')
+        biomestr = img_arg[0].replace('%20', ' ')
+        img_index_ = int(img_arg[1])
+        start_time = time.time()
+        while True:
+            try:
+                Biomes = nextbiomes.queue[0]
+                break
+            except Exception as e:
+                if time.time() - start_time > 4:
+                    return 'Response Timeout', 408
+                continue
+        count = 0
+        for mission in Biomes[biomestr]:
+            count += 1
+            if count == img_index_:
+                mission1 = BytesIO()
+                mission1.write(mission['rendered_mission'].getvalue())
+                mission1.seek(0)
+                etag = mission['etag']
+                if request.headers.get('If-None-Match') == etag:
+                    return '', 304
+                response = make_response(send_file(mission1, mimetype='image/png'))
+                response.headers['ETag'] = etag
+                return response
+    except Exception:
+        return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
 
 @app.route('/json')
 def serve_json():
@@ -1160,9 +1158,9 @@ def serve_json():
             data = DRG[applicable_timestamp]
             return jsonify(data)
         else:
-            return '404 Not Found', 404
+            return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
     else:
-        return '404 Not Found', 404
+        return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
 
 with open('token.txt', 'r') as f:
     AUTH_TOKEN = f.read().strip()
@@ -1195,8 +1193,9 @@ def upload():
         response_data = {'message': 'Success'}
         return jsonify(response_data)
     except Exception:
-        return '404 Not Found', 404
-    
+        return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
+
+
 if __name__ == '__main__':
     start_threads()
     app.run(threaded=True, host='127.0.0.1', port=5000)
