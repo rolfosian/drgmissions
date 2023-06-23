@@ -41,7 +41,7 @@ def reconstruct_dictionary(dictionary):
                             for missionkey, missionvalue in mission.items():
                                 if isinstance(missionvalue, list):
                                     mission1[missionkey] = sorted(missionvalue)
-                        mission1 = sort_dictionary(mission, list_order)
+                        mission1 = sort_dictionary(mission1, list_order)
                         missions1.append(mission1)
                     god[key][nested_key][biome] = missions1
     return god
@@ -68,6 +68,24 @@ def find_duplicates(dictionary):
     else:
         print("No duplicate strings found.")
 
+def check_sum_of_missions(dictionary):
+    missions_keys = []
+    for key, value in dictionary.items():
+        mission_count = 0
+        biomes = []
+        for biome, missions in value['Biomes'].items():
+            biomes.append(biome)
+        for biome in biomes:
+            mission_count += len(value['Biomes'][biome])
+        if mission_count < 22 or mission_count > 23:
+            missions_keys.append(key)
+    if missions_keys:
+        print('Invalid number of missions in:')
+        for key in missions_keys:
+            print(f'Key:{key}')
+    else:
+        print('No sum of missions outside range')
+
 with open('drgmissionsgod.json', 'r') as f:
     DRG = f.read()
     DRG = json.loads(DRG)
@@ -76,3 +94,4 @@ DRG = order_dictionary_by_date(DRG)
 DRG = reconstruct_dictionary(DRG)
 
 find_duplicates(DRG)
+check_sum_of_missions(DRG)
