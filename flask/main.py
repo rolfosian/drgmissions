@@ -109,7 +109,7 @@ def rotate_biomes(DRG, tstamp_Queue, biomes_Queue, rendering_event):
                 biomes_Queue.put(Biomes)
                 biomes_Queue.get()
                 rendering_event.set()
-        sleep(1)
+        sleep(0.2)
 
 def rotate_DDs(DDs):
     def sort_dd_json_list_by_timestamp(json_pattern):
@@ -151,7 +151,7 @@ def rotate_DDs(DDs):
                 img_count += 1
                 fname = str(img_count)
                 mission.save(f'./files/{folder_name}/{fname}.png')
-        sleep(1)
+        sleep(0.2)
 
 def scale_image(image, i):
     new_width = int(image.width * i)
