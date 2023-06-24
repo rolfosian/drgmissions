@@ -13,8 +13,10 @@
 * [This script will fetch the current DD data and exit the game in short order](https://github.com/rolfosian/drgmissions/blob/main/mods/dds_fetcher/Scripts/main.lua)
 
 ## **TODO**
-- Contingencies for if the game doesn't terminate gracefully on 'organic' exit
+- ~~Contingencies for if the game doesn't terminate gracefully on 'organic' exit~~ Refer to kill process function in [this script](https://github.com/rolfosian/drgmissions/blob/main/DDs_Run.py)
 - Contingencies for if the game crashes
 - ~~Loop script to actually launch the game and upload DD data to flask host weekly~~ Refer to [this script](https://github.com/rolfosian/drgmissions/blob/main/DDs_Run.py) and its corresponding [.bat](https://github.com/rolfosian/drgmissions/blob/main/Run_DDs.bat) for Task scheduler info. I set a cron to run wakeonlan on my home server at 10:59 Thursday to send magic packets to wake a hardware tertiary machine I built out of old trash. Tested with a Windows 10 virtual machine using `-nullrhi` and it works also but is slow.
 - Figure out a solution to reduce required delay between iterations for accurate data to be collected by the 30 minute incrementer
 - Figure out how to manipulate wine(?) system clock with hook on linux
+- Determine functions for loading into Deep Dive stages and scraping extra data such as Dreadnought types and BET-C? Idk, I don't like the idea of going too deep, it starts to feel like cheating at some point
+- Convert Complexity/Length sanitation/finalization to table lookup
