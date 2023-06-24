@@ -1,0 +1,56 @@
+{
+  "Deep Dives":{
+    "Deep Dive Elite":{
+      "Stages":[{
+          "SecondaryObjective":"Kill Dreadnought(s)",
+          "id":836,
+          "MissionWarnings":["Rival Presence"],
+          "Length":"2",
+          "Complexity":"2",
+          "MissionMutator":"Rich Atmosphere",
+          "PrimaryObjective":"Egg Hunt"
+        },{
+          "SecondaryObjective":"Get Alien Eggs",
+          "id":835,
+          "MissionWarnings":["Regenerative Bugs"],
+          "Length":"2",
+          "Complexity":"2",
+          "PrimaryObjective":"Salvage Operation"
+        },{
+          "Complexity":"2",
+          "id":834,
+          "Length":"2",
+          "SecondaryObjective":"Repair Minimules",
+          "PrimaryObjective":"Escort Duty"
+        }],
+      "CodeName":" ",
+      "Biome":"Crystalline Caverns"
+    },
+    "Deep Dive Normal":{
+      "Stages":[{
+          "SecondaryObjective":"Get Alien Eggs",
+          "id":840,
+          "MissionWarnings":["Regenerative Bugs"],
+          "Length":"3",
+          "Complexity":"3",
+          "PrimaryObjective":"Salvage Operation"
+        },{
+          "SecondaryObjective":"Repair Minimules",
+          "id":839,
+          "MissionWarnings":["Shield Disruption"],
+          "Length":"2",
+          "Complexity":"2",
+          "PrimaryObjective":"Mining Expedition"
+        },{
+          "MissionMutator":"Critical Weakness",
+          "id":838,
+          "Length":"1",
+          "Complexity":"1",
+          "SecondaryObjective":"Repair Minimules",
+          "PrimaryObjective":"Egg Hunt"
+        }],
+      "CodeName":" ",
+      "Biome":"Radioactive Exclusion Zone"
+    }
+  }
+}
