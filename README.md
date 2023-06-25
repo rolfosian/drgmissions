@@ -20,3 +20,5 @@
 - Figure out how to manipulate wine(?) system clock with hook on linux
 - Determine functions for loading into Deep Dive stages and scraping extra data such as Dreadnought types and BET-C? Idk, I don't like the idea of going too deep, it starts to feel like cheating at some point
 - Convert Complexity/Length sanitation/finalization to table lookup
+- Parallelize png rendering and arraying functions and change png route args to codenames instead of indexing once possible
+- JS Functions in html to save page configuration and keep background/countdown hidden on refresh if they are hidden
