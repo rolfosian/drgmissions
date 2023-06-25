@@ -66,7 +66,7 @@ def rotate_timestamp(DRG, tstamp_Queue, next_):
         if applicable_timestamp != timestamp:
             tstamp_Queue.put(applicable_timestamp)
             tstamp_Queue.get()
-        sleep(1)
+        sleep(0.2)
 
 def rotate_biomes(DRG, tstamp_Queue, biomes_Queue, rendering_event):
     order = ['Glacial Strata', 'Crystalline Caverns', 'Salt Pits', 'Magma Core', 'Azure Weald', 'Sandblasted Corridors', 'Fungus Bogs', 'Radioactive Exclusion Zone', 'Dense Biozone', 'Hollow Bough']
@@ -772,6 +772,7 @@ def render_index(timestamp, next_timestamp, DDs):
             var current = document.getElementById("current");
             current.classList.toggle("collapsed");
             toggleCollapse();
+            $("#missionscountdown").slideToggle();
             var buttonsbutton = document.getElementById('buttonsbutton');
             buttonsbutton.setAttribute('onclick', 'toggleButtons()');
             var currentbutton = document.getElementById('currentButton');
@@ -806,7 +807,7 @@ def render_index(timestamp, next_timestamp, DDs):
         <div id="countdowncontainer">
             <button id="backgroundButton">Hide background</button><button id="buttonsbutton">x</button><br>
             <div id="missionscountdown">NEW MISSIONS IN<br>
-            <span id="countdown"></span></div><button id="slideButton">Show countdown</button><br>
+            <span id="countdown"></span></div><button id="slideButton">Hide countdown</button><br>
             <button id="currentButton">Click here to see upcoming missions</button>
         </div>
         <div id="current">\n'''
