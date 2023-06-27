@@ -16,17 +16,7 @@ import glob
 from io import BytesIO
 import hashlib
 import sys
-
-def wait_rotation(rendering_event, rendering_event_next):
-    target_minutes_59 = [29, 59]
-    while True:
-        current_time = datetime.now().time()
-        current_minute = current_time.minute
-        current_second = current_time.second + current_time.microsecond / 1e6
-        if current_second > 59.60 and current_minute in target_minutes_59:
-            rendering_event.clear()
-            rendering_event_next.clear()
-        sleep(0.1)
+from concurrent.futures import ThreadPoolExecutor, as_completed, wait
 
 def sort_dictionary(dictionary, custom_order):
     sorted_dict = {}
@@ -66,26 +56,51 @@ def rotate_timestamp(DRG, tstamp_Queue, next_):
         if applicable_timestamp != timestamp:
             tstamp_Queue.put(applicable_timestamp)
             tstamp_Queue.get()
-        sleep(0.2)
+        sleep(0.25)
+
+def wait_rotation(rendering_event, rendering_event_next):
+    target_minutes_59 = [29, 59]
+    while True:
+        current_time = datetime.now().time()
+        current_minute = current_time.minute
+        current_second = current_time.second + current_time.microsecond / 1e6
+        if current_second > 59.20 and current_minute in target_minutes_59:
+            rendering_event.clear()
+            rendering_event_next.clear()
+        sleep(0.25)
 
 def rotate_biomes(DRG, tstamp_Queue, biomes_Queue, rendering_event):
-    order = ['Glacial Strata', 'Crystalline Caverns', 'Salt Pits', 'Magma Core', 'Azure Weald', 'Sandblasted Corridors', 'Fungus Bogs', 'Radioactive Exclusion Zone', 'Dense Biozone', 'Hollow Bough']
+    #order = ['Glacial Strata', 'Crystalline Caverns', 'Salt Pits', 'Magma Core', 'Azure Weald', 'Sandblasted Corridors', 'Fungus Bogs', 'Radioactive Exclusion Zone', 'Dense Biozone', 'Hollow Bough']
+    def process_mission(mission):
+        mission0 = {}
+        mission0['CodeName'] = mission['CodeName']
+        mission_icon = BytesIO()
+        mission['rendered_mission'].save(mission_icon, format='PNG')
+        mission_icon.seek(0)
+        etag = hashlib.md5(mission_icon.getvalue()).hexdigest()
+        mission0['etag'] = etag
+        mission0['rendered_mission'] = mission_icon
+        return mission0
+    def wrap_missions_executor(missions):
+        mission_futures = []
+        with ThreadPoolExecutor() as executor:
+            for mission in missions:
+                future = executor.submit(process_mission, mission)
+                mission_futures.append(future)
+            results = [future.result() for future in mission_futures]
+            return results
+    def wrap_biomes_executor(Biomes):
+        with ThreadPoolExecutor() as executor:
+            biome_futures = {}
+            for biome, missions in Biomes.items():
+                future = executor.submit(wrap_missions_executor, missions)
+                biome_futures[biome] = future
+            results = {biome: future.result() for biome, future in biome_futures.items()}
+            return results
     def array_biomes(Biomes, timestamp):
-        Biomes1 = {}
-        for biome in Biomes.keys():
-            biome1 = {}
-            Biomes1[biome] = []
-            for mission in Biomes[biome]:
-                mission0 = {}
-                mission0['CodeName'] = mission['CodeName']
-                mission_icon = BytesIO()
-                mission['rendered_mission'].save(mission_icon, format='PNG')
-                mission_icon.seek(0)
-                etag = hashlib.md5(mission_icon.getvalue()).hexdigest()
-                mission0['etag'] = etag
-                mission0['rendered_mission'] = mission_icon
-                Biomes1[biome].append(mission0)
+        Biomes1 = wrap_biomes_executor(Biomes)
         return timestamp, Biomes1
+    
     while tstamp_Queue.qsize() == 0:
         continue
     timestamp = None
@@ -95,7 +110,6 @@ def rotate_biomes(DRG, tstamp_Queue, biomes_Queue, rendering_event):
                 Biomes = DRG[applicable_timestamp]['Biomes']
                 Biomes = render_biomes(Biomes)
                 #Biomes = sort_dictionary(Biomes, order)
-                rendering_event.clear()
                 timestamp, Biomes = array_biomes(Biomes, applicable_timestamp)
                 biomes_Queue.put(Biomes)
                 rendering_event.set()
@@ -104,12 +118,11 @@ def rotate_biomes(DRG, tstamp_Queue, biomes_Queue, rendering_event):
                 Biomes = DRG[applicable_timestamp]['Biomes']
                 Biomes = render_biomes(Biomes)
                 #Biomes = sort_dictionary(Biomes, order)
-                rendering_event.clear()
                 timestamp, Biomes = array_biomes(Biomes, applicable_timestamp)
                 biomes_Queue.put(Biomes)
                 biomes_Queue.get()
                 rendering_event.set()
-        sleep(0.2)
+        sleep(0.25)
 
 def rotate_DDs(DDs):
     def sort_dd_json_list_by_timestamp(json_pattern):
@@ -151,7 +164,7 @@ def rotate_DDs(DDs):
                 img_count += 1
                 fname = str(img_count)
                 mission.save(f'./files/{folder_name}/{fname}.png')
-        sleep(0.2)
+        sleep(0.25)
 
 def scale_image(image, i):
     new_width = int(image.width * i)
@@ -369,7 +382,8 @@ def render_mission(m_d, six):
         BACKGROUND = scale_image(BACKGROUND, 0.40)
     else:
         BACKGROUND = scale_image(BACKGROUND, 0.46)
-    return BACKGROUND
+    mission = {'rendered_mission': BACKGROUND, 'CodeName': m_d['CodeName'], 'id': m_d['id']}
+    return mission
 
 def render_dd_secondary_obj_resource(secondary_obj):
     font_path = './img/HammerBro101MovieBold-Regular.ttf'
@@ -535,22 +549,31 @@ def render_dd_stage(m_d):
     BACKGROUND = scale_image(BACKGROUND, 0.46)
     return BACKGROUND
 
-def render_biomes(Biomes):
-    rendered_biomes = {}
-    rendered_deep_dives = {}
-    for biome, missions in Biomes.items():
-        biome1 = []
-        if len(missions) > 5:
-            six = True
-        else:
-            six = False
+
+def wrap_missions_executor(missions):
+    mission_futures = []
+    with ThreadPoolExecutor() as executor:
         for mission in missions:
-            mission1 = {}
-            mission1['CodeName'] = mission['CodeName']
-            mission_png = render_mission(mission, six)
-            mission1['rendered_mission'] = mission_png
-            biome1.append(mission1)
-        rendered_biomes[biome] = biome1
+            if len(mission) > 5:
+                six = True
+            else:
+                six = False
+            future = executor.submit(render_mission, mission, six)
+            mission_futures.append(future)
+        results = [future.result() for future in mission_futures]
+        return results
+def wrap_biomes_executor(Biomes):
+    with ThreadPoolExecutor() as executor:
+        biome_futures = {}
+        for biome, missions in Biomes.items():
+            future = executor.submit(wrap_missions_executor, missions)
+            biome_futures[biome] = future
+        results = {biome: future.result() for biome, future in biome_futures.items()}
+        return results
+def render_biomes(Biomes):
+    start_time = time.time()
+    rendered_biomes = wrap_biomes_executor(Biomes)
+    print(time.time() - start_time)
     return rendered_biomes
 
 def render_deepdives(DeepDives):
@@ -1098,12 +1121,12 @@ def serve_img():
         for mission in Biomes[biomestr]:
             count += 1
             if count == img_index_:
-                mission1 = BytesIO()
-                mission1.write(mission['rendered_mission'].getvalue())
-                mission1.seek(0)
                 etag = mission['etag']
                 if request.headers.get('If-None-Match') == etag:
                     return '', 304
+                mission1 = BytesIO()
+                mission1.write(mission['rendered_mission'].getvalue())
+                mission1.seek(0)
                 response = make_response(send_file(mission1, mimetype='image/png'))
                 response.headers['ETag'] = etag
                 return response
@@ -1130,12 +1153,12 @@ def serve_next_img():
         for mission in Biomes[biomestr]:
             count += 1
             if count == img_index_:
-                mission1 = BytesIO()
-                mission1.write(mission['rendered_mission'].getvalue())
-                mission1.seek(0)
                 etag = mission['etag']
                 if request.headers.get('If-None-Match') == etag:
                     return '', 304
+                mission1 = BytesIO()
+                mission1.write(mission['rendered_mission'].getvalue())
+                mission1.seek(0)
                 response = make_response(send_file(mission1, mimetype='image/png'))
                 response.headers['ETag'] = etag
                 return response
