@@ -12,6 +12,8 @@ def kill_process_by_name_starts_with(start_string):
 
 with open('./mods/mods.txt', 'r') as f:
     mods = f.read()
+    mods = mods.replace('dds_fetcher : 1', 'dds_fetcher : 0')
+    mods = mods.replace('GetDailyDeals : 1', 'GetDailyDeals: 0')
     mods = mods.replace('long_term_mission_data_collector : 0', 'long_term_mission_data_collector : 1')
     f.close()
 with open('./mods/mods.txt', 'w') as f:

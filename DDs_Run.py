@@ -35,6 +35,8 @@ wait_until_next_hour()
 
 with open('./mods/mods.txt', 'r') as f:
     mods = f.read()
+    mods = mods.replace('GetDailyDeals : 1', 'GetDailyDeals: 0')
+    mods = mods.replace('long_term_mission_data_collector : 1', 'long_term_mission_data_collector : 0')
     mods = mods.replace('dds_fetcher : 0', 'dds_fetcher : 1')
     f.close()
 with open('./mods/mods.txt', 'w') as f:
