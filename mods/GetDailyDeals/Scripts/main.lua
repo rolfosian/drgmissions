@@ -54,6 +54,14 @@ function Main()
   end
   -- Initialize Table
   local DailyDeal = {}
+  local resources = {
+    {pattern = 'Jadiz', result = 'Jadiz'},
+    {pattern = 'Enor', result = 'Enor Pearl'},
+    {pattern = 'Magnite', result = 'Magnite'},
+    {pattern = 'Umanite', result = 'Umanite'},
+    {pattern = 'Croppa', result = 'Croppa'},
+    {pattern = 'Bismor', result = 'Bismor'},
+  }
   local fullname = nil
   local resource = nil
   local resourceamount = nil
@@ -69,9 +77,24 @@ function Main()
           dailydeal = dailydeal:GetPropertyValue('CurrDeal')
 
           resource = dailydeal.Resource
-          DailyDeal['Resource'] = string.format("%s",resource:GetFullName())
+          resource = string.format("%s",resource:GetFullName())
+          for _, obj in ipairs(resources) do
+            if string.find(resource, obj.pattern) then
+                resource = obj.result
+                break
+            end
+          end
+          DailyDeal['Resource'] = resource
           DailyDeal['ResourceAmount'] = dailydeal.ResourceAmount
-          DailyDeal['DealType'] = dailydeal.DealType
+
+          dealtype = dailydeal.DealType
+          if dealtype == 0 then
+            dealtype = 'Buy'
+          else
+            dealtype = 'Sell'
+          end
+          DailyDeal['DealType'] = dealtype
+
           DailyDeal['Credits'] =  dailydeal.Credits
           DailyDeal['ChangePercent'] = dailydeal.ChangePercent
           ::continue::
