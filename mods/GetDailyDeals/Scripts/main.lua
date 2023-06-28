@@ -81,7 +81,7 @@ function Main()
   DailyDeal = json.encode(DailyDeal)
   local file = io.open('drgdailydeal.json', 'w')
   if file then
-    file:write(dailydeal)
+    file:write(DailyDeal)
     file:close()
   end
 
