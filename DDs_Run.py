@@ -32,6 +32,15 @@ def kill_process_by_name_starts_with(start_string):
             proc.kill()
 
 wait_until_next_hour()
+
+with open('./mods/mods.txt', 'r') as f:
+    mods = f.read()
+    mods = mods.replace('dds_fetcher : 0', 'dds_fetcher : 1')
+    f.close()
+with open('./mods/mods.txt', 'w') as f:
+    f.write(mods)
+    f.close()
+    
 subprocess.Popen(['start', 'steam://run/548430//-nullrhi'], shell=True)
 
 with open('token.txt') as f:
@@ -51,5 +60,13 @@ while True:
             upload_file(url, file, token)
             os.remove(file)
         break
+
+with open('./mods/mods.txt', 'r') as f:
+    mods = f.read()
+    mods = mods.replace('dds_fetcher : 1', 'dds_fetcher : 0')
+    f.close()
+with open('./mods/mods.txt', 'w') as f:
+    f.write(mods)
+    f.close()
 
 subprocess.Popen(["rundll32.exe", "powrprof.dll,SetSuspendState", "Sleep"], shell=True)

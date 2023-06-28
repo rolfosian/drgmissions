@@ -29,35 +29,32 @@ def increment_datetime(datetime_str):
 
 def reverse_date_format(input_date):
     year, month, day = input_date.split('-')
-    input_date = f"{day}-{month}-{year}"
+    input_date = f"{day}-{month}-{year[2:]}"
     return input_date
 
 print(os.getcwd())
 
 with open('./mods/mods.txt', 'r') as f:
     mods = f.read()
-    mods = mods.replace('GetDailyDeal : 0', 'GetDailyDeal : 1')
+    mods = mods.replace('GetDailyDeals : 0', 'GetDailyDeals : 1')
     f.close()
 with open('./mods/mods.txt', 'w') as f:
     f.write(mods)
     f.close()
 
-# Get the current UTC time
+# Get the current UTC date
 current_time = datetime.datetime.utcnow()
 current_time = current_time.replace(hour=0, minute=0, second=0, microsecond=0)
 
 # Set the target date
-target_date = datetime.datetime(2023, 7, 18, 0, 0, 0)
+target_date = datetime.datetime(2024, 7, 18, 0, 0, 0)
 
 # Calculate the difference between the target date and the current time
 diff_seconds = (target_date - current_time).total_seconds()
 
 # Calculate the total number of 24-hour increments
 total_increments = int(diff_seconds // 86400)
-# print(total_increments)
-
-# Initialize the count variable
-count = 0
+print(total_increments)
 
 AllTheDeals = {}
 # Loop for the increments
@@ -65,7 +62,15 @@ for i in range(total_increments):
     subprocess.Popen(['start', 'steam://run/548430//-nullrhi'], shell=True)
     timestamp = current_time.strftime("%Y-%m-%dT%H:%M:%SZ")
     waiting_for_json = True
+    timeout = False
+    start_time = time.time()
     while waiting_for_json:
+        if time.time() - start_time > 240:
+            timeout = True
+            kill_process_by_name_starts_with('FSD')
+            kill_process_by_name_starts_with('Unreal')
+            sleep(3)
+            break
         for filename in os.listdir():
             if filename.endsiwth('.json'):
                 sleep(0.25)
@@ -75,22 +80,26 @@ for i in range(total_increments):
                 os.remove(filename)
                 kill_process_by_name_starts_with('FSD')
                 kill_process_by_name_starts_with('Unreal')
+                sleep(1)
                 waiting_for_json = False
         sleep(0.5)
+    if timeout:
+        continue
     current_time = datetime.datetime.strptime(increment_datetime(timestamp), "%d-%m-%yT%H:%M:%SZ")
     current_time = current_time.replace(hour=0, minute=0, second=1)
     newtime = str(current_time).split(' ')
     print(current_time)
+    #Set clock forward 1 day
     subprocess.run(['date', reverse_date_format(newtime[0]), '& time', newtime[1]])
 
 with open('./mods/mods.txt', 'r') as f:
     mods = f.read()
-    mods = mods.replace('GetDailyDeal : 1', 'GetDailyDeal : 0')
+    mods = mods.replace('GetDailyDeals : 1', 'GetDailyDeals : 0')
     f.close()
 with open('./mods/mods.txt', 'w') as f:
     f.write(mods)
     f.close()
     
-with open(AllTheDeals) as f:
+with open('drgdailydeals.json', 'w') as f:
     f.write(json.dumps(AllTheDeals))
     f.close()
