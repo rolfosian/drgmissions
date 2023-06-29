@@ -211,14 +211,14 @@ function UnpackStandardMission(mission, master, b, missionscount)
     elseif string.find(ComplexityLimit, 'Complexity_Complex') then
         complexity = '3'
     elseif string.find(ComplexityLimit, 'nil') then
-        complexity = 'Either 2 or 3'
+        complexity = 'Indefinite'
     end
     mission1['Complexity'] = complexity
     local DurationLimit = mission:GetPropertyValue("DurationLimit")
     DurationLimit =  string.format("%s",DurationLimit:GetFullName())
     local length = nil
     if DurationLimit == 'nil' then
-        length = 'Either 2 or 3'
+        length = 'Indefinite'
     elseif string.find(DurationLimit, 'Duration_Short') then
         length = '1'
     elseif string.find(DurationLimit, 'Duration_Normal') then
@@ -227,52 +227,52 @@ function UnpackStandardMission(mission, master, b, missionscount)
     mission1['Length'] = length
     local MissionDNA = mission:GetPropertyValue("MissionDNA")
     MissionDNA = string.format("%s",MissionDNA:GetFullName())
-    if string.find(MissionDNA, "SalvageFractured_Complex") and complexity == 'Either 2 or 3' and length == 'Either 2 or 3' then
+    if string.find(MissionDNA, "SalvageFractured_Complex") and complexity == 'Indefinite' and length == 'Indefinite' then
         mission1['Complexity'] = '3'
         mission1['Length'] = '3'
     end
-    if string.find(MissionDNA, 'SalvageFractured_Medium') and complexity == 'Either 2 or 3' and length == 'Either 2 or 3' then
+    if string.find(MissionDNA, 'SalvageFractured_Medium') and complexity == 'Indefinite' and length == 'Indefinite' then
         mission1['Complexity'] = '2'
         mission1['Length'] = '2'
     end
-    if string.find(MissionDNA, 'Motherlode_Short_C') and PrimaryObjective == 'Point Extraction' and length == 'Either 2 or 3' and complexity == 'Either 2 or 3' then
+    if string.find(MissionDNA, 'Motherlode_Short_C') and PrimaryObjective == 'Point Extraction' and length == 'Indefinite' and complexity == 'Indefinite' then
         mission1['Complexity'] = '3'
         mission1['Length'] = '2'
     end
-    if string.find(MissionDNA, 'Refinery_Complex') and complexity == 'Either 2 or 3' and length == 'Either 2 or 3' then
+    if string.find(MissionDNA, 'Refinery_Complex') and complexity == 'Indefinite' and length == 'Indefinite' then
         mission1['Complexity'] = '3'
         mission1['Length'] = '2'
     end
-    if string.find(MissionDNA, 'Refinery_Medium_C') and complexity == 'Either 2 or 3' and length == 'Either 2 or 3' then
+    if string.find(MissionDNA, 'Refinery_Medium_C') and complexity == 'Indefinite' and length == 'Indefinite' then
         mission1['Complexity'] = '2'
         mission1['Length'] = '2'
     end
-    if string.find(MissionDNA, 'DNA_2_01_C') and complexity == 'Either 2 or 3' and length == 'Either 2 or 3' and PrimaryObjective == 'Mining Expedition' then
+    if string.find(MissionDNA, 'DNA_2_01_C') and complexity == 'Indefinite' and length == 'Indefinite' and PrimaryObjective == 'Mining Expedition' then
         mission1['Complexity'] = '1'
         mission1['Length'] = '1'
     end
-    if string.find(MissionDNA, 'DNA_2_02_C') and complexity == 'Either 2 or 3' and length == 'Either 2 or 3' and PrimaryObjective == 'Mining Expedition' then
+    if string.find(MissionDNA, 'DNA_2_02_C') and complexity == 'Indefinite' and length == 'Indefinite' and PrimaryObjective == 'Mining Expedition' then
         mission1['Complexity'] = '2'
         mission1['Length'] = '2'
     end
-    if string.find(MissionDNA, 'DNA_2_03_C') and complexity == 'Either 2 or 3' and length == 'Either 2 or 3' then
+    if string.find(MissionDNA, 'DNA_2_03_C') and complexity == 'Indefinite' and length == 'Indefinite' then
         mission1['Complexity'] = '1'
         mission1['Length'] = '2'
     end
-    if string.find(MissionDNA, 'DNA_2_04_C') and complexity == 'Either 2 or 3' and length == 'Either 2 or 3' and PrimaryObjective == 'Mining Expedition' then
+    if string.find(MissionDNA, 'DNA_2_04_C') and complexity == 'Indefinite' and length == 'Indefinite' and PrimaryObjective == 'Mining Expedition' then
         mission1['Complexity'] = '2'
         mission1['Length'] = '3'
     end
-    if string.find(MissionDNA, 'DNA_2_05_C') and complexity == 'Either 2 or 3' and length == 'Either 2 or 3' then
+    if string.find(MissionDNA, 'DNA_2_05_C') and complexity == 'Indefinite' and length == 'Indefinite' then
         mission1['Complexity'] = '3'
         mission1['Length'] = '3'
     end
-    if string.find(MissionDNA, '_Complex') and complexity == 'Either 2 or 3' and length == 'Either 2 or 3' and PrimaryObjective == 'Egg Hunt' then
+    if string.find(MissionDNA, '_Complex') and complexity == 'Indefinite' and length == 'Indefinite' and PrimaryObjective == 'Egg Hunt' then
         mission1['Length'] = '3'
         mission1['Complexity'] = '2'
         complexity = '2'
     end
-    if string.find(MissionDNA, 'Fractured_Medium_C') and PrimaryObjective == 'Egg Hunt' and length == 'Either 2 or 3' and complexity == 'Either 2 or 3' then
+    if string.find(MissionDNA, 'Fractured_Medium_C') and PrimaryObjective == 'Egg Hunt' and length == 'Indefinite' and complexity == 'Indefinite' then
         mission1['Length'] = '2'
         mission1['Complexity'] = '2'
     end 
@@ -288,33 +288,33 @@ function UnpackStandardMission(mission, master, b, missionscount)
         mission1['Complexity'] = '3'
         mission1['Length'] = '3' 
     end
-    if string.find(MissionDNA, 'Motherlode_Long_C') and PrimaryObjective == 'Point Extraction' and length == 'Either 2 or 3' and complexity == 'Either 2 or 3' then
+    if string.find(MissionDNA, 'Motherlode_Long_C') and PrimaryObjective == 'Point Extraction' and length == 'Indefinite' and complexity == 'Indefinite' then
         mission1['Complexity'] = '3'
         mission1['Length'] = '3'
     end
-    if string.find(MissionDNA, 'MediumComplex') and complexity == 'Either 2 or 3' then
+    if string.find(MissionDNA, 'MediumComplex') and complexity == 'Indefinite' then
         mission1['Length'] = '2'
         mission1['Complexity'] = '3'
     end
-    if string.find(MissionDNA, 'LongAverage') and complexity == 'Either 2 or 3' then
+    if string.find(MissionDNA, 'LongAverage') and complexity == 'Indefinite' then
         mission1['Length'] = '3'
         mission1['Complexity'] = '2'
     end
-    if string.find(MissionDNA, 'LongComplex') and complexity == 'Either 2 or 3' then
+    if string.find(MissionDNA, 'LongComplex') and complexity == 'Indefinite' then
         mission1['Length'] = '3'
         mission1['Complexity'] = '3'
     end
-    if string.find(MissionDNA, 'MediumAverage') and complexity == 'Either 2 or 3' then
+    if string.find(MissionDNA, 'MediumAverage') and complexity == 'Indefinite' then
         mission1['Length'] = '2'
         mission1['Complexity'] = '2'
     end
-    if string.find(MissionDNA, 'Simple') and complexity == 'Either 2 or 3' then
+    if string.find(MissionDNA, 'Simple') and complexity == 'Indefinite' then
         mission1['Complexity'] = '1'
     end
-    if string.find(MissionDNA, '_Complex') and complexity == 'Either 2 or 3' then
+    if string.find(MissionDNA, '_Complex') and complexity == 'Indefinite' then
         mission1['Complexity'] = '3'
     end
-    -- if mission1['Length'] == 'Either 2 or 3' or mission1['Complexity'] == 'Either 2 or 3' then
+    -- if mission1['Length'] == 'Indefinite' or mission1['Complexity'] == 'Indefinite' then
     --     print(missionfullname)
     -- end
     table.insert(master['Biomes'][b], mission1)

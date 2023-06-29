@@ -11,6 +11,9 @@
 - Deep Rock Galactic\FSD.exe AND Deep Rock Galactic\FSD\Binaries\Win64\FSD-Win64-Shipping.exe AND ALSO Steam ARE ALL required to be run with administrator privileges in order for this script to be able to modify the system clock and run without errors
 
 * [This script will fetch the current DD data and exit the game in short order](https://github.com/rolfosian/drgmissions/blob/main/mods/dds_fetcher/Scripts/main.lua)
+* [This script](https://github.com/rolfosian/drgmissions/blob/main/mods/GetDailyDeals/Scripts/main.lua) and its [corresponding python script](https://github.com/rolfosian/drgmissions/blob/main/Daily_Trades_Run.py) will fetch all of the daily deals up until the date set by the target_date variable in the python script. UTC System Clock Timezone is required for this script, as are administrator priveliges for the python script. I tried to do it like the standard missions collector but the game would just hang after the second or third time the clock was changed, so this method restarts the game for every daily deal.
+* Make sure to turn off automatic time settings
+* If running the clock changing scripts in a VM, make sure to turn off guest/host timesync, IE: https://www.virtualbox.org/manual/ch09.html#disabletimesync
 
 ## **TODO**
 - ~~Contingencies for if the game doesn't terminate gracefully on 'organic' exit~~ Refer to kill process function in [this script](https://github.com/rolfosian/drgmissions/blob/main/DDs_Run.py)
@@ -19,6 +22,7 @@
 - Figure out a solution to reduce required delay between iterations for accurate data to be collected by the 30 minute incrementer
 - Figure out how to manipulate wine(?) system clock with hook on linux
 - Determine functions for loading into Deep Dive stages and scraping extra data such as Dreadnought types and BET-C? Idk, I don't like the idea of going too deep, it starts to feel like cheating at some point
-- Convert Complexity/Length sanitation/finalization to table lookup
-- ~~Parallelize png rendering and arraying functions and change png route args to codenames instead of indexing once possible~~ Moved png rendering and arraying to thread pools, but the gains are miniscule because of thread management overhead and maybe the GIL or something. Needs processing pool to see gains that are bigger than fractions of a millisecond, but the vps is only 1 vcore so I'm not going to bother.
-- JS Functions in html to save page configuration and keep background/countdown hidden on refresh if they are hidden
+- Clean up and convert Complexity/Length finalization to table lookup
+- ~~Parallelize png rendering and arraying functions and change png route args to codenames instead of indexing once possible~~ Moved png rendering and arraying to thread pools, but the gains are miniscule because of thread management overhead and maybe the GIL or something, and also requires hard restart of interpreter so gunicorn --reload isn't feasible. Needs processing pool to see gains that are bigger than fractions of a millisecond, but the vps is only 1 vcore so I'm not going to bother.
+- JS Functions in html to save page configuration and keep background/countdown hidden on refresh if they are hidden.
+- Mobile site
