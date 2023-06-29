@@ -69,36 +69,87 @@ def wait_rotation(rendering_event, rendering_event_next):
             rendering_event_next.clear()
         sleep(0.25)
 
+def rotate_dailydeal(AllTheDeals, tstamp_Queue, deal_Queue):
+    while tstamp_Queue.qsize() == 0:
+        continue
+    timestamp = None
+    while True:
+        applicable_timestamp = tstamp_Queue.queue[0]
+        if not timestamp:
+            deal_dict = AllTheDeals[applicable_timestamp]
+            dailydeal = {}
+            rendered_dailydeal = render_dailydeal(deal_dict)
+            DailyDeal = BytesIO()
+            rendered_dailydeal.save(DailyDeal, format='PNG')
+            DailyDeal.seek(0)
+            etag = hashlib.md5(DailyDeal.getvalue()).hexdigest()
+            dailydeal['rendered_dailydeal'] = DailyDeal
+            dailydeal['etag'] = etag
+            deal_Queue.put(dailydeal)
+            timestamp = applicable_timestamp
+            continue
+        if applicable_timestamp != timestamp:
+            AllTheDeals[applicable_timestamp] = deal_dict
+            dailydeal = {}
+            rendered_dailydeal = render_dailydeal(deal_dict)
+            DailyDeal = BytesIO()
+            rendered_dailydeal.save(DailyDeal, format='JPEG')
+            DailyDeal.seek(0)
+            etag = hashlib.md5(DailyDeal.getvalue()).hexdigest()
+            dailydeal['rendered_dailydeal'] = DailyDeal
+            dailydeal['etag'] = etag
+            deal_Queue.put(dailydeal)
+            deal_Queue.get()
+            timestamp = applicable_timestamp
+        sleep(0.75)
+    
+
 def rotate_biomes(DRG, tstamp_Queue, biomes_Queue, rendering_event):
     #order = ['Glacial Strata', 'Crystalline Caverns', 'Salt Pits', 'Magma Core', 'Azure Weald', 'Sandblasted Corridors', 'Fungus Bogs', 'Radioactive Exclusion Zone', 'Dense Biozone', 'Hollow Bough']
-    def process_mission(mission):
-        mission0 = {}
-        mission0['CodeName'] = mission['CodeName']
-        mission_icon = BytesIO()
-        mission['rendered_mission'].save(mission_icon, format='PNG')
-        mission_icon.seek(0)
-        etag = hashlib.md5(mission_icon.getvalue()).hexdigest()
-        mission0['etag'] = etag
-        mission0['rendered_mission'] = mission_icon
-        return mission0
-    def wrap_missions_executor(missions):
-        mission_futures = []
-        with ThreadPoolExecutor() as executor:
-            for mission in missions:
-                future = executor.submit(process_mission, mission)
-                mission_futures.append(future)
-            results = [future.result() for future in mission_futures]
-            return results
-    def wrap_biomes_executor(Biomes):
-        with ThreadPoolExecutor() as executor:
-            biome_futures = {}
-            for biome, missions in Biomes.items():
-                future = executor.submit(wrap_missions_executor, missions)
-                biome_futures[biome] = future
-            results = {biome: future.result() for biome, future in biome_futures.items()}
-            return results
+    #def process_mission(mission):
+        #mission0 = {}
+        #mission0['CodeName'] = mission['CodeName']
+        #mission_icon = BytesIO()
+        #mission['rendered_mission'].save(mission_icon, format='PNG')
+        #mission_icon.seek(0)
+        #etag = hashlib.md5(mission_icon.getvalue()).hexdigest()
+        #mission0['etag'] = etag
+        #mission0['rendered_mission'] = mission_icon
+        #return mission0
+    #def wrap_missions_executor(missions):
+        #mission_futures = []
+        #with ThreadPoolExecutor() as executor:
+            #for mission in missions:
+                #future = executor.submit(process_mission, mission)
+                #mission_futures.append(future)
+            #results = [future.result() for future in mission_futures]
+            #return results
+    #def wrap_biomes_executor(Biomes):
+        #with ThreadPoolExecutor() as executor:
+            #biome_futures = {}
+            #for biome, missions in Biomes.items():
+                #future = executor.submit(wrap_missions_executor, missions)
+                #biome_futures[biome] = future
+            #results = {biome: future.result() for biome, future in biome_futures.items()}
+            #return results
+    #def array_biomes(Biomes, timestamp):
+        #Biomes1 = wrap_biomes_executor(Biomes)
+        #return timestamp, Biomes1
     def array_biomes(Biomes, timestamp):
-        Biomes1 = wrap_biomes_executor(Biomes)
+        Biomes1 = {}
+        for biome in Biomes.keys():
+            biome1 = {}
+            Biomes1[biome] = []
+            for mission in Biomes[biome]:
+                mission0 = {}
+                mission0['CodeName'] = mission['CodeName']
+                mission_icon = BytesIO()
+                mission['rendered_mission'].save(mission_icon, format='PNG')
+                mission_icon.seek(0)
+                etag = hashlib.md5(mission_icon.getvalue()).hexdigest()
+                mission0['etag'] = etag
+                mission0['rendered_mission'] = mission_icon
+                Biomes1[biome].append(mission0)
         return timestamp, Biomes1
     
     while tstamp_Queue.qsize() == 0:
@@ -196,6 +247,166 @@ def calc_text_center(image_width, image_height, text, font, font_size):
     text_x = (image_width - text_width) // 2
     text_y = (image_height - text_height) // 2
     return text_x, text_y
+
+def render_daily_deal_background(hue, luminance, saturation, red, green, blue):
+    new_image = Image.new("RGBA", (400, 635), (red, green, blue, 255))
+    new_image = new_image.convert("HSV")
+    new_image.putpixel((0, 0), (hue, saturation, luminance))
+    new_image = new_image.convert("RGBA")
+    return new_image
+
+def render_daily_deal_head(hue, luminance, saturation, red, green, blue):
+    new_image = Image.new("RGBA", (400, 120), (red, green, blue, 255))
+    new_image = new_image.convert("HSV")
+    new_image.putpixel((0, 0), (hue, saturation, luminance))
+    new_image = new_image.convert("RGBA")
+    return new_image
+
+def render_daily_deal_bubble(changepercent, dealtype):
+    save_profit = {
+        'Buy':'Savings!',
+        'Sell':'Profit!',
+        }
+    
+    BUBBLE = Image.open('./img/Icon_TradeTerminal_SaleBubble.png')
+    BUBBLE = scale_image(BUBBLE, 0.8)
+    
+    font_path = './img/Bungee-Regular.ttf'
+    font_size = 75
+    font = ImageFont.truetype(font_path, font_size)
+    text = str(round(changepercent))
+    if len(text) == 2:
+        digit1 = list(text)[0]
+        digit2 = f'{list(text)[1]}%'
+        DIGIT1 = ImageDraw.Draw(BUBBLE)
+        digit1_x, digit1_y = calc_text_center(BUBBLE.width, BUBBLE.height, digit1, font, font_size)
+        DIGIT1.text((digit1_x-60, digit1_y-15), digit1, font=font, fill=(0, 0, 0))
+        DIGIT2 = ImageDraw.Draw(BUBBLE)
+        digit2_x, digit2_y = calc_text_center(BUBBLE.width, BUBBLE.height, digit2, font, font_size)
+        DIGIT2.text((digit1_x-5, digit1_y-15), digit2, font=font, fill=(0, 0, 0))
+        SAVINGS_PROFIT = ImageDraw.Draw(BUBBLE)
+        font_size = 30
+        font = ImageFont.truetype(font_path, font_size)
+        savings_x, savings_y = calc_text_center(BUBBLE.width, BUBBLE.height, save_profit[dealtype], font, font_size)
+        SAVINGS_PROFIT.text((savings_x, savings_y+38), save_profit[dealtype], font=font, fill=(0, 0, 0))
+    else:
+        text = f'{text}%'
+        CHANGEPERCENT = ImageDraw.Draw(BUBBLE)
+        text_x, text_y = calc_text_center(BUBBLE.width, BUBBLE.height, text, font, font_size)
+        CHANGEPERCENT.text((text_x, text_y-15), text, font=font, fill=(0, 0, 0))
+        SAVINGS_PROFIT = ImageDraw.Draw(BUBBLE)
+        font_size = 30
+        font = ImageFont.truetype(font_path, font_size)
+        savings_x, savings_y = calc_text_center(BUBBLE.width, BUBBLE.height, save_profit[dealtype], font, font_size)
+        SAVINGS_PROFIT.text((savings_x, savings_y+38), save_profit[dealtype], font=font, fill=(0, 0, 0))
+    return BUBBLE
+
+def render_daily_deal_resource_and_amount(resources, resource, resourceamount):
+    RESOURCE = Image.open(resources[resource])
+    RESOURCE = scale_image(RESOURCE, 0.3)
+    text = str(resourceamount)
+    font_path = './img/Bungee-Regular.ttf'
+    font_size = 75
+    font = ImageFont.truetype(font_path, font_size)
+    text_width = len(text) * font_size
+    text_height = len(text) * font_size
+    image_width = text_width + (2 * RESOURCE.width)
+    image_height = text_height
+    BACKGROUND = Image.new("RGBA", (image_width, image_height), (0, 0, 0, 0))
+    x, y = calc_center(RESOURCE, BACKGROUND)
+    BACKGROUND.paste(RESOURCE, (25,y))
+    BACKGROUND.paste(RESOURCE.transpose(Image.FLIP_LEFT_RIGHT), ((image_width - RESOURCE.width)-25, y))
+    DRAW = ImageDraw.Draw(BACKGROUND)
+    text_x, text_y = calc_text_center(BACKGROUND.width, BACKGROUND.height, text, font, font_size)
+    DRAW.text((text_x, text_y), text, font=font, fill=(255,255,255))
+    return BACKGROUND
+
+def render_daily_deal_credits(credits):
+    CREDITS = Image.open('./img/Credit.png')
+    CREDITS = scale_image(CREDITS, 0.4)
+    text = str(credits)
+    font_path = './img/Bungee-Regular.ttf'
+    font_size = 75
+    font = ImageFont.truetype(font_path, font_size)
+    text_width = len(text) * font_size
+    text_height = len(text) * font_size
+    image_width = text_width + (2 * CREDITS.width)
+    image_height = text_height
+    BACKGROUND = Image.new("RGBA", (image_width, image_height), (0, 0, 0, 0))
+    x, y = calc_center(CREDITS, BACKGROUND)
+    BACKGROUND.paste(CREDITS, (35,y))
+    BACKGROUND.paste(CREDITS, ((image_width - CREDITS.width)-35, y))
+    DRAW = ImageDraw.Draw(BACKGROUND)
+    text_x, text_y = calc_text_center(BACKGROUND.width, BACKGROUND.height, text, font, font_size)
+    DRAW.text((text_x, text_y), text, font=font, fill=(255,255,255))
+    return BACKGROUND
+
+def render_dailydeal(deal_dict):
+    font_path = './img/HammerBro101MovieBold-Regular.ttf'
+    font_size = 45
+    font = ImageFont.truetype(font_path, font_size)
+    resources = {
+        'Bismor': './img/Bismor_icon.png',
+        'Croppa': './img/Croppa_icon.png',
+        'Enor Pearl': './img/Enor_pearl_icon.png',
+        'Jadiz': './img/Jadiz_icon.png',
+        'Magnite': './img/Magnite_icon.png',
+        'Umanite': './img/Umanite_icon.png',
+        
+        'Credits': './img/Credit.png',
+            }
+    buy_or_get = {
+        'Buy' : 'Pay',
+        'Sell': 'Get',
+        }
+    
+    BACKGROUND = render_daily_deal_background(138, 38, 240, 0, 44, 81)
+    BACKGROUND_HEAD = render_daily_deal_head(115, 96, 107, 57, 148, 136)
+    x, y = calc_center(BACKGROUND_HEAD, BACKGROUND)
+    BACKGROUND.paste(BACKGROUND_HEAD, (x, y-257), mask = BACKGROUND_HEAD)
+    
+    text = "TODAY'S OFFER:"
+    BACKGROUND_TITLE = ImageDraw.Draw(BACKGROUND)
+    text_x, text_y = calc_text_center(BACKGROUND.width, BACKGROUND.height, text, font, font_size)
+    BACKGROUND_TITLE.text((text_x, text_y-295), text, font=font, fill=(0, 0, 0))
+
+    font_path = './img/Bungee-Regular.ttf'
+    font_size = 60
+    font = ImageFont.truetype(font_path, font_size)
+    
+    text = deal_dict['Resource']
+    RESOURCE_TEXT = ImageDraw.Draw(BACKGROUND)
+    text_x, text_y = calc_text_center(BACKGROUND.width, BACKGROUND.height, text, font, font_size)
+    RESOURCE_TEXT.text((text_x, text_y-250), text, font=font, fill=(0, 0, 0))
+    
+    RESOURCEAMOUNT_AND_RESOURCE = render_daily_deal_resource_and_amount(resources, deal_dict['Resource'], deal_dict['ResourceAmount'])
+    x, y = calc_center(RESOURCEAMOUNT_AND_RESOURCE, BACKGROUND)
+    BACKGROUND.paste(RESOURCEAMOUNT_AND_RESOURCE, (x, y-130), mask=RESOURCEAMOUNT_AND_RESOURCE)
+    
+    font_size = 35
+    font = ImageFont.truetype(font_path, font_size)
+    text = deal_dict['DealType']
+    DEALTYPE = ImageDraw.Draw(BACKGROUND)
+    text_x, text_y = calc_text_center(BACKGROUND.width, BACKGROUND.height, text, font, font_size)
+    DEALTYPE.text((text_x, text_y-170), text, font=font, fill=(255, 255, 255))
+    
+    text = buy_or_get[deal_dict['DealType']]
+    DEALTYPE = ImageDraw.Draw(BACKGROUND)
+    text_x, text_y = calc_text_center(BACKGROUND.width, BACKGROUND.height, text, font, font_size)
+    DEALTYPE.text((text_x, text_y-33), text, font=font, fill=(255, 255, 255))
+    
+    credits = deal_dict['Credits']
+    CREDITS = render_daily_deal_credits(credits)
+    x, y = calc_center(CREDITS, BACKGROUND)
+    BACKGROUND.paste(CREDITS, (x, y+10), mask=CREDITS)
+    
+    BUBBLE = render_daily_deal_bubble(deal_dict['ChangePercent'], deal_dict['DealType'])
+    BUBBLE = BUBBLE.rotate(-20, expand=True)
+    x, y = calc_center(BUBBLE, BACKGROUND)
+    BACKGROUND.paste(BUBBLE, (x-60, y+200), mask=BUBBLE)
+    
+    BACKGROUND = scale_image(BACKGROUND, 0.5)
+    return BACKGROUND
 
 def render_mission_obj_resource(primary_obj, complexity, length):
     font_path = './img/HammerBro101MovieBold-Regular.ttf'
@@ -382,8 +593,8 @@ def render_mission(m_d, six):
         BACKGROUND = scale_image(BACKGROUND, 0.40)
     else:
         BACKGROUND = scale_image(BACKGROUND, 0.46)
-    mission = {'rendered_mission': BACKGROUND, 'CodeName': m_d['CodeName'], 'id': m_d['id']}
-    return mission
+    #mission = {'rendered_mission': BACKGROUND, 'CodeName': m_d['CodeName'], 'id': m_d['id']}
+    return BACKGROUND
 
 def render_dd_secondary_obj_resource(secondary_obj):
     font_path = './img/HammerBro101MovieBold-Regular.ttf'
@@ -550,30 +761,47 @@ def render_dd_stage(m_d):
     return BACKGROUND
 
 
-def wrap_missions_executor(missions):
-    mission_futures = []
-    with ThreadPoolExecutor() as executor:
-        for mission in missions:
-            if len(mission) > 5:
-                six = True
-            else:
-                six = False
-            future = executor.submit(render_mission, mission, six)
-            mission_futures.append(future)
-        results = [future.result() for future in mission_futures]
-        return results
-def wrap_biomes_executor(Biomes):
-    with ThreadPoolExecutor() as executor:
-        biome_futures = {}
-        for biome, missions in Biomes.items():
-            future = executor.submit(wrap_missions_executor, missions)
-            biome_futures[biome] = future
-        results = {biome: future.result() for biome, future in biome_futures.items()}
-        return results
+#def wrap_missions_executor(missions):
+    #mission_futures = []
+    #with ThreadPoolExecutor() as executor:
+        #for mission in missions:
+            #if len(mission) > 5:
+                #six = True
+            #else:
+                #six = False
+            #future = executor.submit(render_mission, mission, six)
+            #mission_futures.append(future)
+        #results = [future.result() for future in mission_futures]
+        #return results
+#def wrap_biomes_executor(Biomes):
+    #with ThreadPoolExecutor() as executor:
+        #biome_futures = {}
+        #for biome, missions in Biomes.items():
+            #future = executor.submit(wrap_missions_executor, missions)
+            #biome_futures[biome] = future
+        #results = {biome: future.result() for biome, future in biome_futures.items()}
+        #return results
+#def render_biomes(Biomes):
+    #start_time = time.time()
+    #rendered_biomes = wrap_biomes_executor(Biomes)
+    #print(time.time() - start_time)
+    #return rendered_biomes
+
 def render_biomes(Biomes):
-    start_time = time.time()
-    rendered_biomes = wrap_biomes_executor(Biomes)
-    print(time.time() - start_time)
+    rendered_biomes = {}
+    for biome, missions in Biomes.items():
+        biome1 = []
+        if len(missions) > 5:
+            six = True
+        else:
+            six = False
+        for mission in missions:
+            mission1 = {}
+            mission1['CodeName'] = mission['CodeName']
+            mission_png = render_mission(mission, six)
+            mission1['rendered_mission'] = mission_png
+            biome1.append(mission1)
+        rendered_biomes[biome] = biome1
     return rendered_biomes
 
 def render_deepdives(DeepDives):
@@ -736,6 +964,18 @@ def render_index(timestamp, next_timestamp, DDs):
                 });
             });
             });
+            $(document).ready(function() {
+            $("#DAILYDEAL").hide();
+            $("#dailydealbutton").click(function() {
+                $("#DAILYDEAL").slideToggle(500, function() {
+                if ($("#DAILYDEAL").is(":hidden")) {
+                    $("#dailydealbutton").text("Show Daily Deal");
+                } else {
+                    $("#dailydealbutton").text("Hide Daily Deal");
+                }
+                });
+            });
+            });
         function toggleCollapse() {
             var current = document.getElementById("current");
             var upcoming = document.getElementById("upcoming");
@@ -772,16 +1012,24 @@ def render_index(timestamp, next_timestamp, DDs):
             var slideButton = document.getElementById('slideButton');
             var currentButton = document.getElementById('currentButton');
             var missionscountdown = document.getElementById('missionscountdown');
+            var DAILYDEAL = document.getElementById('DAILYDEAL');
+            var dailydealbutton = document.getElementById('dailydealbutton');
+            var DailyDealImg = document.getElementById('DailyDeal');
             if (slideButton.style.display === "none") {
                 backgroundbutton.style.display = "inline-block";
                 slideButton.style.display = "inline-block";
                 slideButton.textContent = "Show countdown";
                 currentButton.style.display = "inline-block";
+                dailydealbutton.style.display = "inline-block";
+                dailydealbutton.textContent = "Show Daily Deal";
+                DAILYDEAL.style.display = "none";
                 missionscountdown.style.display = "none";
                 buttonsbutton.textContent = " x ";
             } else {
                 missionscountdown.style.display = "none";
                 backgroundbutton.style.display = "none";
+                DAILYDEAL.style.display = "none";
+                dailydealbutton.style.display = "none";
                 slideButton.style.display = "none";
                 currentButton.style.display = "none";
                 buttonsbutton.textContent = "+";
@@ -829,6 +1077,7 @@ def render_index(timestamp, next_timestamp, DDs):
         <p class="loading">Loading</p>
         <div id="countdowncontainer">
             <button id="backgroundButton">Hide background</button><button id="buttonsbutton">x</button><br>
+            <div id=DAILYDEAL><img id="DailyDeal" src="/dailydeal"></div><button id="dailydealbutton">Show Daily Deal</button><br>
             <div id="missionscountdown">NEW MISSIONS IN<br>
             <span id="countdown"></span></div><button id="slideButton">Hide countdown</button><br>
             <button id="currentButton">Click here to see upcoming missions</button>
@@ -1041,7 +1290,7 @@ def render_index(timestamp, next_timestamp, DDs):
                <hr>
             </div>
               <div class="jsonc">
-             <div class="jsonlinks"><span><a class="jsonlink" href="/json?data=bulkmissions">FULL MISSION DATA</a> <a class="jsonlink" href="/json?data=current">CURRENT MISSION DATA</a> <a class="jsonlink" href="/json?data=next">UPCOMING MISSION DATA</a> <a class="jsonlink" href="/json?data=DD">CURRENT DD DATA</a></span></div>
+             <div class="jsonlinks"><span><a class="jsonlink" href="/json?data=bulkmissions">FULL MISSION DATA</a> <a class="jsonlink" href="/json?data=current">CURRENT MISSION DATA</a> <a class="jsonlink" href="/json?data=next">UPCOMING MISSION DATA</a> <a class="jsonlink" href="/json?data=DD">CURRENT DD DATA</a> <a class="jsonlink" href="/json?data=dailydeal">CURRENT DAILY DEAL DATA</a></span></div>
                <span class="credits">Send credits (eth): 0xb9c8591A80A3158f7cFFf96EC3c7eA9adB7818E7</span></div>
               <p class='gsgdisclaimer'><i>This website is a third-party platform and is not affiliated, endorsed, or sponsored by Ghost Ship Games. The use of Deep Rock Galactic's in-game assets on this website is solely for illustrative purposes and does not imply any ownership or association with the game or its developers. All copyrights and trademarks belong to their respective owners. For official information about Deep Rock Galactic, please visit the official Ghost Ship Games website.</i></p></div>
         </body>
@@ -1055,11 +1304,24 @@ DRG = DRG.replace(':02Z', ':00Z')
 DRG = json.loads(DRG)
 DRG = order_dictionary_by_date(DRG)
 
+with open('drgdailydeals.json', 'r') as f:
+    AllTheDeals = f.read()
+    f.close()
+AllTheDeals = AllTheDeals.replace(':01Z', ':00Z')
+AllTheDeals = json.loads(AllTheDeals)
+AllTheDeals = order_dictionary_by_date(AllTheDeals)
+
 tstamp = queue.Queue()
 tstampthread = threading.Thread(target=rotate_timestamp, args=(DRG, tstamp, False,))
 
 next_tstamp = queue.Queue()
 next_tstampthread = threading.Thread(target=rotate_timestamp, args=(DRG, next_tstamp, True,))
+
+dailydeal_tstamp = queue.Queue()
+dailydeal_tstampthread = threading.Thread(target=rotate_timestamp, args=(AllTheDeals, dailydeal_tstamp, False))
+
+dailydeal = queue.Queue()
+dailydealthread = threading.Thread(target=rotate_dailydeal, args=(AllTheDeals, dailydeal_tstamp, dailydeal))
 
 rendering_event = threading.Event()
 currybiomes = queue.Queue()
@@ -1077,10 +1339,16 @@ ddsthread = threading.Thread(target=rotate_DDs, args=(DDs,))
 def start_threads():
     tstampthread.start()
     next_tstampthread.start()
+    
     biomesthread.start()
     nextbiomesthread.start()
+    
     ddsthread.start()
+    
     wait_rotationthread.start()
+    
+    dailydeal_tstampthread.start()
+    dailydealthread.start()
     
 #def join_threads():
     #tstampthread.join()
@@ -1089,6 +1357,8 @@ def start_threads():
     #nextbiomesthread.join()
     #ddsthread.join()
     #wait_rotationthread.join()
+    #dailydeal_tstampthread.join()
+    #dailydealthread.join()
 
 app = Flask(__name__, static_folder=f'{os.getcwd()}/files')
 
@@ -1165,6 +1435,30 @@ def serve_next_img():
     except Exception:
         return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
 
+@app.route('/dailydeal')
+def serve_dailydeal_png():
+    try:
+        while True:
+            try:
+                daily_deal = dailydeal.queue[0]
+                break
+            except Exception as e:
+                if time.time() - start_time > 4:
+                    return 'Response Timeout', 408
+                continue
+        etag = daily_deal['etag']
+        if request.headers.get('If-None-Match') == etag:
+            return '', 304
+        daily_deal1 = BytesIO()
+        daily_deal1.write(daily_deal['rendered_dailydeal'].getvalue())
+        daily_deal1.seek(0)
+        response = make_response(send_file(daily_deal1, mimetype='image/png'))
+        response.headers['ETag'] = etag
+        return response
+    except Exception:
+        return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
+    
+
 @app.route('/json')
 def serve_json():
     json_arg = request.args.get('data')
@@ -1180,6 +1474,10 @@ def serve_json():
         elif json_arg == 'next':
             applicable_timestamp = next_tstamp.queue[0]
             data = DRG[applicable_timestamp]
+            return jsonify(data)
+        elif json_arg == 'dailydeal':
+            applicable_timestamp = dailydeal_tstamp.queue[0]
+            data = AllTheDeals[applicable_timestamp]
             return jsonify(data)
         else:
             return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404

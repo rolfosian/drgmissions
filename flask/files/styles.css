@@ -200,6 +200,16 @@ color: white;
 font-size: 15px;
 font-family: "BebasNeue", sans-serif;
 }
+#dailydealbutton {
+position: relative;
+left: 50%;
+text-align: center;
+transform: translateX(-50%);
+background-color: #303030;
+color: white;
+font-size: 15px;
+font-family: "BebasNeue", sans-serif;
+}
 #missionscountdown {
 text-align: center;
 color: white;
