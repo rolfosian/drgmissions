@@ -444,21 +444,17 @@ def render_mission_obj_resource(primary_obj, complexity, length):
     #print(f'HEXAGON Y: {str(y)}')
     BACKGROUND.paste(HEXAGON, (69, 59), mask=HEXAGON)
     RESOURCE = Image.open(primary_objs[primary_obj])
-    if primary_obj == 'Mining Expedition' or primary_obj == 'Egg Hunt':
+    if primary_obj == 'Mining Expedition':
         RESOURCE = scale_image(RESOURCE, 0.2)
-        #x, y = calc_center(RESOURCE, BACKGROUND)
-        #print(f'PRIMARY OBJ RESOURCE X (MINING/EGG): {str(x)}')
-        #print(f'PRIMARY OBJ RESOURCE Y (MINING/EGG): {str(y-20)}')
+    elif primary_obj == 'Egg Hunt':
+        RESOURCE = scale_image(RESOURCE, 0.25)
     else:
         RESOURCE = scale_image(RESOURCE, 0.14)
-        #x, y = calc_center(RESOURCE, BACKGROUND)
-        #print(f'PRIMARY OBJ RESOURCE X (DEFAULT): {str(x)}')
-        #print(f'PRIMARY OBJ RESOURCE Y (DEFAULT): {str(y-13)}')
-    
-    if primary_obj == 'Mining Expedition' or primary_obj == 'Egg Hunt':
-        BACKGROUND.paste(RESOURCE, (103, 83), mask=RESOURCE)
+    x, y = calc_center(RESOURCE, BACKGROUND)
+    if primary_obj == 'Mining Expedition':
+        BACKGROUND.paste(RESOURCE, (x, y-20), mask=RESOURCE)
     else:
-        BACKGROUND.paste(RESOURCE, (93, 80), mask=RESOURCE)
+        BACKGROUND.paste(RESOURCE, (x, y-13), mask=RESOURCE)
 
     text = values.get((primary_obj, complexity, length), values.get((primary_obj, length), values.get((primary_obj, 'default'), 'Unknown')))
     DRAW = ImageDraw.Draw(BACKGROUND)
