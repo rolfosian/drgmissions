@@ -23,7 +23,7 @@ def wait_until_next_hour():
     now = datetime.datetime.now()
     next_hour = now.replace(hour=now.hour + 1, minute=0, second=0, microsecond=0)
     time_to_wait = (next_hour - now).total_seconds()
-    time.sleep(time_to_wait)
+    time.sleep(time_to_wait+1)
         
 def kill_process_by_name_starts_with(start_string):
     for proc in psutil.process_iter(['pid', 'name']):
@@ -50,7 +50,14 @@ with open('token.txt') as f:
 
 url = 'https://doublexp.net/upload'
 files = []
+start_time = time.time()
 while True:
+    if time.time() - start_time() > 300: #Timeout if crash/freeze
+        kill_process_by_name_starts_with('FSD')
+        kill_process_by_name_starts_with('Unreal')
+        time.sleep(3)
+        start_time = time.time()
+        continue
     for filename in os.listdir():
         if filename.endswith('.json'):
             time.sleep(2)

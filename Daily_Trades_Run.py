@@ -96,7 +96,6 @@ def main():
                     waiting_for_json = False
             sleep(0.5)
         if timeout:
-            timeout = False
             continue
         current_time = datetime.datetime.strptime(increment_datetime(timestamp), "%d-%m-%yT%H:%M:%SZ")
         current_time = current_time.replace(hour=0, minute=0, second=1)
