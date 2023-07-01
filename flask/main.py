@@ -89,11 +89,11 @@ def rotate_dailydeal(AllTheDeals, tstamp_Queue, deal_Queue):
             timestamp = applicable_timestamp
             continue
         if applicable_timestamp != timestamp:
-            AllTheDeals[applicable_timestamp] = deal_dict
+            deal_dict = AllTheDeals[applicable_timestamp]
             dailydeal = {}
             rendered_dailydeal = render_dailydeal(deal_dict)
             DailyDeal = BytesIO()
-            rendered_dailydeal.save(DailyDeal, format='JPEG')
+            rendered_dailydeal.save(DailyDeal, format='PNG')
             DailyDeal.seek(0)
             etag = hashlib.md5(DailyDeal.getvalue()).hexdigest()
             dailydeal['rendered_dailydeal'] = DailyDeal
@@ -846,14 +846,13 @@ def serve_img():
         for mission in Biomes[biomestr]:
             count += 1
             if count == img_index_:
-                etag = mission['etag']
-                if request.headers.get('If-None-Match') == etag:
+                if request.headers.get('If-None-Match') == mission['etag']:
                     return '', 304
                 mission1 = BytesIO()
                 mission1.write(mission['rendered_mission'].getvalue())
                 mission1.seek(0)
                 response = make_response(send_file(mission1, mimetype='image/png'))
-                response.headers['ETag'] = etag
+                response.headers['ETag'] = mission['etag']
                 return response
     except Exception:
         return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
@@ -878,14 +877,13 @@ def serve_next_img():
         for mission in Biomes[biomestr]:
             count += 1
             if count == img_index_:
-                etag = mission['etag']
-                if request.headers.get('If-None-Match') == etag:
+                if request.headers.get('If-None-Match') == mission['etag']:
                     return '', 304
                 mission1 = BytesIO()
                 mission1.write(mission['rendered_mission'].getvalue())
                 mission1.seek(0)
                 response = make_response(send_file(mission1, mimetype='image/png'))
-                response.headers['ETag'] = etag
+                response.headers['ETag'] = mission['etag']
                 return response
     except Exception:
         return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
@@ -902,14 +900,13 @@ def serve_dailydeal_png():
                 if time.time() - start_time > 4:
                     return 'Response Timeout', 408
                 continue
-        etag = daily_deal['etag']
-        if request.headers.get('If-None-Match') == etag:
+        if request.headers.get('If-None-Match') == daily_deal['etag']:
             return '', 304
         daily_deal1 = BytesIO()
         daily_deal1.write(daily_deal['rendered_dailydeal'].getvalue())
         daily_deal1.seek(0)
         response = make_response(send_file(daily_deal1, mimetype='image/png'))
-        response.headers['ETag'] = etag
+        response.headers['ETag'] = daily_deal['etag']
         return response
     except Exception:
         return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
@@ -925,16 +922,13 @@ def serve_json():
             return jsonify(DDs.queue[0])
         elif json_arg == 'current':
             applicable_timestamp = tstamp.queue[0]
-            data = DRG[applicable_timestamp]
-            return jsonify(data)
+            return jsonify(DRG[applicable_timestamp])
         elif json_arg == 'next':
             applicable_timestamp = next_tstamp.queue[0]
-            data = DRG[applicable_timestamp]
-            return jsonify(data)
+            return jsonify(DRG[applicable_timestamp])
         elif json_arg == 'dailydeal':
             applicable_timestamp = dailydeal_tstamp.queue[0]
-            data = AllTheDeals[applicable_timestamp]
-            return jsonify(data)
+            return jsonify(AllTheDeals[applicable_timestamp])
         else:
             return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
     else:

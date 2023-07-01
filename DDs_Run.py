@@ -59,7 +59,7 @@ while True:
         start_time = time.time()
         continue
     for filename in os.listdir():
-        if filename.endswith('.json'):
+        if filename.startswith('DD_') and filename.endswith('.json'):
             time.sleep(2)
             files.append(filename)
             kill_process_by_name_starts_with('FSD')

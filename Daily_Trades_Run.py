@@ -84,7 +84,7 @@ def main():
                 sleep(3)
                 break
             for filename in os.listdir():
-                if filename.endswith('.json'):
+                if filename == 'drgdailydeal.json':
                     sleep(0.25)
                     with open(filename, 'r') as f:
                         deal = json.loads(f.read())
