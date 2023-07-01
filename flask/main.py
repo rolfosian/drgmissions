@@ -34,9 +34,9 @@ def order_dictionary_by_date(dictionary):
         ordered_dictionary[key] = dictionary[key]
     return ordered_dictionary
 
-def select_timestamp(DRG, next_):
+def select_timestamp(dictionary, next_):
     current_time = datetime.utcnow()
-    keys = list(DRG.keys())
+    keys = list(dictionary.keys())
     for i in range(len(keys) - 1):
         timestamp = datetime.fromisoformat(keys[i].replace('Z', ''))
         next_timestamp = datetime.fromisoformat(keys[i+1].replace('Z', ''))
@@ -46,12 +46,12 @@ def select_timestamp(DRG, next_):
             else:
                 return keys[i]
 
-def rotate_timestamp(DRG, tstamp_Queue, next_):
-    applicable_timestamp = select_timestamp(DRG, next_=next_)
+def rotate_timestamp(dictionary, tstamp_Queue, next_):
+    applicable_timestamp = select_timestamp(dictionary, next_=next_)
     tstamp_Queue.put(applicable_timestamp)
     timestamp = tstamp_Queue.queue[0]
     while True:
-        applicable_timestamp = select_timestamp(DRG, next_=next_)
+        applicable_timestamp = select_timestamp(dictionary, next_=next_)
         if applicable_timestamp != timestamp:
             tstamp_Queue.put(applicable_timestamp)
             tstamp_Queue.get()
@@ -276,7 +276,6 @@ def render_deepdives(DeepDives):
             rendered_deepdives[t]['Stages'].append(stage_png)
     return rendered_deepdives
 
-
 def scanners(html):
     html += '          <br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     return html
@@ -326,9 +325,7 @@ def render_index(timestamp, next_timestamp, DDs):
         <head>
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
         <script>
-        $(document).ready(function(){
-            $(this).scrollTop(0);
-        });
+        window.scrollTo(0, 0);
         document.addEventListener("DOMContentLoaded", function () {
             const targetDay = 4;
             const targetHour = 11;
@@ -904,7 +901,6 @@ def serve_dailydeal_png():
     except Exception:
         return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
     
-
 @app.route('/json')
 def serve_json():
     json_arg = request.args.get('data')

@@ -52,7 +52,7 @@ def render_daily_deal_bubble(changepercent, dealtype):
         DIGIT1.text((digit1_x-60, digit1_y-15), digit1, font=font, fill=(0, 0, 0))
         DIGIT2 = ImageDraw.Draw(BUBBLE)
         digit2_x, digit2_y = calc_text_center(BUBBLE.width, BUBBLE.height, digit2, font, font_size)
-        DIGIT2.text((digit1_x-5, digit1_y-15), digit2, font=font, fill=(0, 0, 0))
+        DIGIT2.text((digit2_x-5, digit2_y-15), digit2, font=font, fill=(0, 0, 0))
         SAVINGS_PROFIT = ImageDraw.Draw(BUBBLE)
         font_size = 30
         font = ImageFont.truetype(font_path, font_size)

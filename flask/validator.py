@@ -85,6 +85,25 @@ def check_sum_of_missions(dictionary):
             print(f'Key:{key}')
     else:
         print('No sum of missions outside range')
+        
+def check_missions_keys(dictionary):
+    missions_keys = []
+    for key, value in dictionary.items():
+        biomes = []
+        for biome, missions in value['Biomes'].items():
+            biomes.append(biome)
+        for biome in biomes:
+            for mission in value['Biomes'][biome]:
+                key_count = len(list(mission.keys()))
+                if key_count not in [6, 7, 8]:
+                    missions_keys.append(f'{key}: {biome}')
+                                         
+    if missions_keys:
+        print('Invalid number of keys in:')
+        for key in missions_keys:
+            print(f'Key:{key}')
+    else:
+        print('No sum of missions keys outside range')
 
 with open('drgmissionsgod.json', 'r') as f:
     DRG = f.read()
@@ -95,3 +114,4 @@ DRG = reconstruct_dictionary(DRG)
 
 find_duplicates(DRG)
 check_sum_of_missions(DRG)
+check_missions_keys(DRG)

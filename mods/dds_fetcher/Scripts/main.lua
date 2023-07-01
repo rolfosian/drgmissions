@@ -1,17 +1,3 @@
--- DEEP ROCK GALACTIC LUA SCRIPT FOR USE IN CONJUNCTION WITH RE-UE4SS LUA API (https://github.com/UE4SS-RE/RE-UE4SS/releases) TO FETCH CURRENT DEEP DIVE DATA
-
--- TO RUN DRG HEADLESS, USE COMMAND LINE ARG -nullrhi WHEN RUNNING THE GAME
--- CONSIDER STEAMCMD FOR EVEN LESS OVERHEAD AND EASIER AUTOMATION FOR UPDATES ETC
--- MAKE SURE TO SKIP INTRO VIDEOS AND USE -nosplash COMMAND LINE ARG
--- main.lua of course goes in Deep Rock Galactic\FSD\Binaries\Win64\Mods\missiondatafetcher\Scripts
--- RE-UE4SS goes in Deep Rock Galactic\FSD\Binaries\Win64 - this is also the CWD of the script.
-
--- TODO
--- Contingencies for if the game doesn't terminate gracefully on 'organic' exit
--- Contingencies for if the game crashes
--- Loop script to actually launch the game and upload DD data to flask host weekly
--- Figure out how to manipulate wine(?) system clock with hook on linux
-
 local json = require("./mods/dds_fetcher/Scripts/dkjson")
 function TableToString(table, indent)
     indent = indent or ""
@@ -183,6 +169,17 @@ function UnpackDeepDiveMission(mission, master, t)
     local MissionDNA = mission:GetPropertyValue("MissionDNA")
     MissionDNA = string.format("%s",MissionDNA:GetFullName())
     --Salvage DNA
+    -- local SalvageDNAs = {
+    --     {pattern = 'SalvageFractured_Complex', result = {length = '3', complexity = '3'}},
+    --     {pattern = 'SalvageFractured_Medium', result = {length = '2', complexity = '2'}},
+    -- }
+    -- for _, pattern in pairs(SalvageDNAs) do
+    --     if string.find(MissionDNA, pattern.pattern) and complexity == 'Indefinite' and length == 'Indefinite' then
+    --         mission1['Length'] = pattern.result.length
+    --         mission1['Complexity'] = pattern.result.complexity
+    --         break
+    --     end
+    -- end
     if string.find(MissionDNA, "SalvageFractured_Complex") and complexity == 'Indefinite' and length == 'Indefinite' then
         mission1['Complexity'] = '3'
         mission1['Length'] = '3'
@@ -191,7 +188,19 @@ function UnpackDeepDiveMission(mission, master, t)
         mission1['Complexity'] = '2'
         mission1['Length'] = '2'
     end
+
     --Refinery DNA
+    -- local RefineryDNAs = {
+    --     {pattern = 'Refinery_Complex', result = {length = '2', complexity = '3'}},
+    --     {pattern = 'Refinery_Medium_C', result = {length = '2', complexity = '2'}},
+    -- }
+    -- for _, pattern in pairs(RefineryDNAs) do
+    --     if string.find(MissionDNA, pattern.pattern) and complexity == 'Indefinite' and length == 'Indefinite' then
+    --         mission1['Length'] = pattern.result.length
+    --         mission1['Complexity'] = pattern.result.complexity
+    --         break
+    --     end
+    -- end
     if string.find(MissionDNA, 'Refinery_Complex') and complexity == 'Indefinite' and length == 'Indefinite' then
         mission1['Complexity'] = '3'
         mission1['Length'] = '2'
@@ -200,23 +209,38 @@ function UnpackDeepDiveMission(mission, master, t)
         mission1['Complexity'] = '2'
         mission1['Length'] = '2'
     end
+    
     --Mining Expedition DNA
-    if string.find(MissionDNA, 'DNA_2_01_C') and complexity == 'Indefinite' and length == 'Indefinite' and PrimaryObjective == 'Mining Expedition' then
+    -- local MiningExpeditionDNAs = {
+    --     {pattern = 'DNA_2_01_C', result = {length = '1', complexity = '1'}},
+    --     {pattern = 'DNA_2_02_C', result = {length = '2', complexity = '2'}},
+    --     {pattern = 'DNA_2_03_C', result = {length = '2', complexity = '1'}},
+    --     {pattern = 'DNA_2_04_C', result = {length = '3', complexity = '2'}},
+    --     {pattern = 'DNA_2_05_C', result = {length = '3', complexity = '3'}},
+    -- }
+    -- for _, pattern in pairs(MiningExpeditionDNAs) do
+    --     if string.find(MissionDNA, pattern.pattern) and complexity == 'Indefinite' and length == 'Indefinite' then
+    --         mission1['Length'] = pattern.result.length
+    --         mission1['Complexity'] = pattern.result.complexity
+    --         break
+    --     end
+    -- end
+    if string.find(MissionDNA, 'DNA_2_01_C') and complexity == 'Indefinite' and length == '1' and PrimaryObjective == 'Mining Expedition' then
         mission1['Complexity'] = '1'
         mission1['Length'] = '1'
     end
-    if string.find(MissionDNA, 'DNA_2_01_C') and complexity == 'Indefinite' and length == '1' and PrimaryObjective == 'Mining Expedition' then
+    if string.find(MissionDNA, 'DNA_2_02_C') and complexity == 'Indefinite' and length == '2' then
+        mission1['Complexity'] = '2'
+    end
+    if string.find(MissionDNA, 'DNA_2_02_C') and complexity == '2' and length == 'Indefinite' then
+        mission1['Length'] = '2'
+    end
+    if string.find(MissionDNA, 'DNA_2_01_C') and complexity == 'Indefinite' and length == 'Indefinite' and PrimaryObjective == 'Mining Expedition' then
         mission1['Complexity'] = '1'
         mission1['Length'] = '1'
     end
     if string.find(MissionDNA, 'DNA_2_02_C') and complexity == 'Indefinite' and length == 'Indefinite' and PrimaryObjective == 'Mining Expedition' then
         mission1['Complexity'] = '2'
-        mission1['Length'] = '2'
-    end
-    if string.find(MissionDNA, 'DNA_2_02_C') and complexity == 'Indefinite' and length == '2' and PrimaryObjective == 'Mining Expedition' then
-        mission1['Complexity'] = '2'
-    end
-    if string.find(MissionDNA, 'DNA_2_02_C') and complexity == '2' and length == 'Indefinite' and PrimaryObjective == 'Mining Expedition' then
         mission1['Length'] = '2'
     end
     if string.find(MissionDNA, 'DNA_2_03_C') and complexity == 'Indefinite' and length == 'Indefinite' then
@@ -231,6 +255,7 @@ function UnpackDeepDiveMission(mission, master, t)
         mission1['Complexity'] = '3'
         mission1['Length'] = '3'
     end
+
     --Egg Hunt DNA
     if string.find(MissionDNA, '_Complex') and complexity == 'Indefinite' and length == 'Indefinite' and PrimaryObjective == 'Egg Hunt' then
         mission1['Length'] = '3'
@@ -271,6 +296,19 @@ function UnpackDeepDiveMission(mission, master, t)
         mission1['Length'] = '3'
     end
     --Generic DNA
+    -- local GenericDNAs = {
+    --     {pattern = 'MediumComplex', result = {length = '2', complexity = '3'}},
+    --     {pattern = 'LongAverage', result = {length = '3', complexity = '2'}},
+    --     {pattern = 'LongComplex', result = {length = '3', complexity = '3'}},
+    --     {pattern = 'MediumAverage', result = {length = '2', complexity = '2'}},
+    -- }
+    -- for _, pattern in pairs(GenericDNAs) do
+    --     if string.find(MissionDNA, pattern.pattern) and complexity == 'Indefinite' then
+    --         mission1['Length'] = pattern.result.length
+    --         mission1['Complexity'] = pattern.result.complexity
+    --         break
+    --     end
+    -- end
     if string.find(MissionDNA, 'MediumComplex') and complexity == 'Indefinite' then
         mission1['Length'] = '2'
         mission1['Complexity'] = '3'
