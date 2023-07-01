@@ -24,7 +24,6 @@ def sort_dictionary(dictionary, custom_order):
         if key in dictionary:
             sorted_dict[key] = dictionary[key]
             del dictionary[key]
-
     sorted_dict.update(dictionary)
     return sorted_dict
 
@@ -48,14 +47,15 @@ def select_timestamp(DRG, next_):
                 return keys[i]
 
 def rotate_timestamp(DRG, tstamp_Queue, next_):
+    applicable_timestamp = select_timestamp(DRG, next_=next_)
+    tstamp_Queue.put(applicable_timestamp)
+    timestamp = tstamp_Queue.queue[0]
     while True:
         applicable_timestamp = select_timestamp(DRG, next_=next_)
-        if tstamp_Queue.qsize() == 0:
-            tstamp_Queue.put(applicable_timestamp)
-        timestamp = tstamp_Queue.queue[0]
         if applicable_timestamp != timestamp:
             tstamp_Queue.put(applicable_timestamp)
             tstamp_Queue.get()
+            timestamp = tstamp_Queue.queue[0]
         sleep(0.25)
 
 def wait_rotation(rendering_event, rendering_event_next):
@@ -72,22 +72,19 @@ def wait_rotation(rendering_event, rendering_event_next):
 def rotate_dailydeal(AllTheDeals, tstamp_Queue, deal_Queue):
     while tstamp_Queue.qsize() == 0:
         continue
-    timestamp = None
+    deal_dict = AllTheDeals[tstamp_Queue.queue[0]]
+    dailydeal = {}
+    rendered_dailydeal = render_dailydeal(deal_dict)
+    DailyDeal = BytesIO()
+    rendered_dailydeal.save(DailyDeal, format='PNG')
+    DailyDeal.seek(0)
+    etag = hashlib.md5(DailyDeal.getvalue()).hexdigest()
+    dailydeal['rendered_dailydeal'] = DailyDeal
+    dailydeal['etag'] = etag
+    deal_Queue.put(dailydeal)
+    timestamp = tstamp_Queue.queue[0]
     while True:
         applicable_timestamp = tstamp_Queue.queue[0]
-        if not timestamp:
-            deal_dict = AllTheDeals[applicable_timestamp]
-            dailydeal = {}
-            rendered_dailydeal = render_dailydeal(deal_dict)
-            DailyDeal = BytesIO()
-            rendered_dailydeal.save(DailyDeal, format='PNG')
-            DailyDeal.seek(0)
-            etag = hashlib.md5(DailyDeal.getvalue()).hexdigest()
-            dailydeal['rendered_dailydeal'] = DailyDeal
-            dailydeal['etag'] = etag
-            deal_Queue.put(dailydeal)
-            timestamp = applicable_timestamp
-            continue
         if applicable_timestamp != timestamp:
             deal_dict = AllTheDeals[applicable_timestamp]
             dailydeal = {}
@@ -137,7 +134,6 @@ def rotate_biomes(DRG, tstamp_Queue, biomes_Queue, rendering_event):
     def array_biomes(Biomes, timestamp):
         Biomes1 = {}
         for biome in Biomes.keys():
-            biome1 = {}
             Biomes1[biome] = []
             for mission in Biomes[biome]:
                 mission0 = {}
@@ -153,17 +149,14 @@ def rotate_biomes(DRG, tstamp_Queue, biomes_Queue, rendering_event):
     
     while tstamp_Queue.qsize() == 0:
         continue
-    timestamp = None
+    Biomes = DRG[tstamp_Queue.queue[0]]['Biomes']
+    Biomes = render_biomes(Biomes)
+    #Biomes = sort_dictionary(Biomes, order)
+    timestamp, Biomes = array_biomes(Biomes, tstamp_Queue.queue[0])
+    biomes_Queue.put(Biomes)
+    rendering_event.set()
     while True:
         applicable_timestamp = tstamp_Queue.queue[0]
-        if not timestamp:
-                Biomes = DRG[applicable_timestamp]['Biomes']
-                Biomes = render_biomes(Biomes)
-                #Biomes = sort_dictionary(Biomes, order)
-                timestamp, Biomes = array_biomes(Biomes, applicable_timestamp)
-                biomes_Queue.put(Biomes)
-                rendering_event.set()
-                continue
         if applicable_timestamp != timestamp:
                 Biomes = DRG[applicable_timestamp]['Biomes']
                 Biomes = render_biomes(Biomes)

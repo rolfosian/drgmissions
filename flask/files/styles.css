@@ -71,7 +71,7 @@ display: grid;
 grid-template-columns: auto auto;
 text-align:  center;
 }
-@media (max-width: 1274px) {
+@media (max-width: 1440px) {
   .grid-container {
     grid-template-columns: 1fr;
   }
