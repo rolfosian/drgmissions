@@ -56,6 +56,7 @@ while True:
         kill_process_by_name_starts_with('FSD')
         kill_process_by_name_starts_with('Unreal')
         time.sleep(3)
+        subprocess.Popen(['start', 'steam://run/548430//-nullrhi'], shell=True)
         start_time = time.time()
         continue
     for filename in os.listdir():
