@@ -57,7 +57,7 @@ def disable_system_time():
     except Exception as e:
         print(f"Error: {e}")
 
-def main_loop(total_increments, AllTheDeals):
+def main_loop(total_increments, current_time, AllTheDeals):
     for i in range(total_increments):
         sleep(2)
         #Start the game
@@ -149,7 +149,7 @@ def main():
     AllTheDeals = {}
     
     # Loop for the increments
-    AllTheDeals = main_loop(total_increments, AllTheDeals)
+    AllTheDeals = main_loop(total_increments, current_time, AllTheDeals)
         
     #Reset mods.txt
     with open('./mods/mods.txt', 'r') as f:
