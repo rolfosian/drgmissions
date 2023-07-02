@@ -105,13 +105,13 @@ def check_missions_keys(dictionary):
     else:
         print('No sum of missions keys outside range')
 
-with open('drgmissionsgod.json', 'r') as f:
-    DRG = f.read()
-    DRG = json.loads(DRG)
+# with open('drgmissionsgod.json', 'r') as f:
+#     DRG = f.read()
+#     DRG = json.loads(DRG)
 
-DRG = order_dictionary_by_date(DRG)
-DRG = reconstruct_dictionary(DRG)
+# DRG = order_dictionary_by_date(DRG)
+# DRG = reconstruct_dictionary(DRG)
 
-find_duplicates(DRG)
-check_sum_of_missions(DRG)
-check_missions_keys(DRG)
+# find_duplicates(DRG)
+# check_sum_of_missions(DRG)
+# check_missions_keys(DRG)

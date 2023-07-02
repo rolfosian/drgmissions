@@ -379,11 +379,12 @@ function Main()
     local firstdate = os.date("!*t")
     local current_time = os.time(firstdate)
     --Set target date
-    local target_date = os.time{year=2023, month=6, day=14, hour=0, min=0, sec=0}
+    local target_date = os.time{year=2023, month=10, day=25, hour=00, min=00, sec=00}
     -- Calculate the difference in seconds between the current UTC time and the target date
     local diff_seconds = os.difftime(target_date, current_time)
     -- Calculate total amount of 30 minute increments between current time and the target date
     local total_increments = math.floor(diff_seconds / 1800)
+    total_increments = total_increments + 1
     -- Initialize Table
     local god = {}
     local count = 0

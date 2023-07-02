@@ -5,6 +5,7 @@ import psutil
 import os
 import json
 from time import sleep
+import winreg
 
 def kill_process_by_name_starts_with(start_string):
     for proc in psutil.process_iter(['pid', 'name']):
@@ -37,45 +38,35 @@ def reverse_date_format(input_date):
     input_date = f"{day}-{month}-{year[2:]}"
     return input_date
 
-print(os.getcwd())
+def enable_system_time():
+    try:
+        key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r'SYSTEM\\CurrentControlSet\\Services\\W32Time\\Parameters', 0, winreg.KEY_WRITE)
+        winreg.SetValueEx(key, 'Type', 0, winreg.REG_SZ, 'NTP')
+        winreg.CloseKey(key)
+        subprocess.run('net start w32time', shell=True)
+        print("Automatic system time enabled.")
+    except Exception as e:
+        print(f"Error: {e}")
+def disable_system_time():
+    try:
+        key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r'SYSTEM\\CurrentControlSet\\Services\\W32Time\\Parameters', 0, winreg.KEY_WRITE)
+        winreg.SetValueEx(key, 'Type', 0, winreg.REG_SZ, 'NoSync')
+        winreg.CloseKey(key)
+        subprocess.run('net stop w32time', shell=True)
+        print("Automatic system time disabled.")
+    except Exception as e:
+        print(f"Error: {e}")
 
-def main():
-    with open('./mods/mods.txt', 'r') as f:
-        mods = f.read()
-        mods = mods.replace('GetDailyDeals : 0', 'GetDailyDeals : 1')
-        f.close()
-    with open('./mods/mods.txt', 'w') as f:
-        f.write(mods)
-        f.close()
-
-    # Get the current UTC date
-    current_time = datetime.datetime.utcnow()
-    current_time = current_time.replace(hour=0, minute=0, second=0)
-    currytime = current_time.strftime("%Y-%m-%dT%H:%M:%SZ")
-    currytime = datetime.datetime.strptime(sanitize_datetime(currytime), "%d-%m-%yT%H:%M:%SZ")
-    currytime = str(currytime).split(' ')
-    # Set the clock to 00:00:00
-    subprocess.run(['date', reverse_date_format(currytime[0]), '&', 'time', currytime[1]], shell=True)
-    # Set the target date
-    target_date = datetime.datetime(2023, 9, 18, 0, 0, 0)
-
-    # Calculate the difference between the target date and the current time
-    diff_seconds = (target_date - current_time).total_seconds()
-
-    # Calculate the total number of 24-hour increments
-    total_increments = int(diff_seconds // 86400)
-    print(total_increments)
-
-    count = 0
-    AllTheDeals = {}
-    # Loop for the increments
+def main_loop(total_increments, AllTheDeals):
     for i in range(total_increments):
         sleep(2)
+        #Start the game
         subprocess.Popen(['start', 'steam://run/548430//-nullrhi'], shell=True)
         timestamp = current_time.strftime("%Y-%m-%dT%H:%M:%SZ")
         waiting_for_json = True
         timeout = False
         start_time = time.time()
+        #Wait for JSON
         while waiting_for_json:
             if time.time() - start_time > 240:
                 timeout = True
@@ -96,14 +87,71 @@ def main():
                     waiting_for_json = False
             sleep(0.5)
         if timeout:
-            continue
+            return main_loop(total_increments, AllTheDeals)
         current_time = datetime.datetime.strptime(increment_datetime(timestamp), "%d-%m-%yT%H:%M:%SZ")
         current_time = current_time.replace(hour=0, minute=0, second=1)
         newtime = str(current_time).split(' ')
         print(current_time)
         #Set clock forward 1 day
         subprocess.run(['date', reverse_date_format(newtime[0]), '&', 'time', newtime[1]], shell=True)
+        total_increments -= 1
+    return AllTheDeals
 
+print(os.getcwd())
+
+def main():
+    #Set mods.txt for GetDailyDeals
+    with open('./mods/mods.txt', 'r') as f:
+        mods = f.read()
+        mods = mods.replace('dds_fetcher : 1', 'dds_fetcher : 0')
+        mods = mods.replace('long_term_mission_data_collector : 1', 'long_term_mission_data_collector : 0')
+        mods = mods.replace('GetDailyDeals : 0', 'GetDailyDeals : 1')
+        f.close()
+    with open('./mods/mods.txt', 'w') as f:
+        f.write(mods)
+        f.close()
+
+    # Get the current UTC date
+    current_time = datetime.datetime.utcnow()
+    current_time = current_time.replace(hour=0, minute=0, second=0)
+    currytime = current_time.strftime("%Y-%m-%dT%H:%M:%SZ")
+    currytime = datetime.datetime.strptime(sanitize_datetime(currytime), "%d-%m-%yT%H:%M:%SZ")
+    currytime = str(currytime).split(' ')
+    
+    #Disable automatic system time
+    disable_system_time()
+    sleep(4)
+    
+    # Set the clock to 00:00:00
+    subprocess.run(['date', reverse_date_format(currytime[0]), '&', 'time', currytime[1]], shell=True)
+    
+    # Set the target date
+    while True:
+        user_input = input("Enter the target date (YYYY-MM-DD HH:MM:SS): ")
+        try:
+            user_date = datetime.datetime.strptime(user_input, "%Y-%m-%d %H:%M:%S")
+            if user_date > current_time:
+                break
+            else:
+                print("Please enter a date and time ahead of the current time.")
+        except Exception:
+            print("Invalid date format. Please enter the date in the format (YYY-MM-DD HH:MM:SS).")
+    target_date = datetime.datetime.strptime(user_input, "%Y-%m-%d %H:%M:%S")
+
+    # Calculate the difference between the target date and the current time
+    diff_seconds = (target_date - current_time).total_seconds()
+
+    # Calculate the total number of 24-hour increments
+    total_increments = int(diff_seconds // 86400)
+    print(total_increments)
+
+    #Initialize master dictionary
+    AllTheDeals = {}
+    
+    # Loop for the increments
+    AllTheDeals = main_loop(total_increments, AllTheDeals)
+        
+    #Reset mods.txt
     with open('./mods/mods.txt', 'r') as f:
         mods = f.read()
         mods = mods.replace('GetDailyDeals : 1', 'GetDailyDeals : 0')
@@ -111,8 +159,13 @@ def main():
     with open('./mods/mods.txt', 'w') as f:
         f.write(mods)
         f.close()
-        
+    
+    #Write AllTheDeals JSON
     with open('drgdailydeals.json', 'w') as f:
         f.write(json.dumps(AllTheDeals))
         f.close()
+    
+    #Enable Automatic system time
+    enable_system_time()
+    sleep(4)
 main()
