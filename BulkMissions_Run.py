@@ -14,8 +14,10 @@ def enable_system_time():
         winreg.SetValueEx(key, 'Type', 0, winreg.REG_SZ, 'NTP')
         winreg.CloseKey(key)
         subprocess.run(['sc', 'config', 'w32time', 'start=', 'demand'], shell=True)
-        subprocess.run(['net', 'start', 'w32time'], shell=True)
-        print("Automatic system time enabled.")
+        subprocess.run(['sc', 'start', 'w32time'], shell=True)
+        sleep(2)
+        subprocess.run(['w32tm', '/resync'], shell=True)
+        print("Automatic system time enabled.\n\n")
     except Exception as e:
         print(f"Error: {e}")
 def disable_system_time():
@@ -24,8 +26,8 @@ def disable_system_time():
         winreg.SetValueEx(key, 'Type', 0, winreg.REG_SZ, 'NoSync')
         winreg.CloseKey(key)
         subprocess.run(['sc', 'config', 'w32time', 'start=', 'disabled'], shell=True)
-        subprocess.run(['net', 'stop', 'w32time'], shell=True)
-        print("Automatic system time disabled.")
+        subprocess.run(['sc', 'stop', 'w32time'], shell=True)
+        print("Automatic system time disabled.\n\n")
     except Exception as e:
         print(f"Error: {e}")
 def toggle_system_time():
@@ -55,6 +57,7 @@ def user_input_set_target_date(current_time):
                 print("Please enter a date and time ahead of the current time.")
         except Exception:
             print("Invalid date format. Please enter the date in the format (YYY-MM-DD).")
+    print('\n')
     return user_date
 
 def main():
@@ -88,16 +91,6 @@ def main():
     with open('./mods/long_term_mission_data_collector/Scripts/main.lua', 'w') as f:
         f.writelines(main_lines)
         f.close()
-
-    # Calculate the difference in seconds between the current UTC time and the target date
-    current_utc = datetime.datetime.utcnow()
-    diff_seconds = (user_date - current_utc).total_seconds()
-    # Calculate the total amount of 30-minute increments between the current time and the target date
-    total_increments = int(diff_seconds // 1800)
-    total_increments += 1
-    
-    #Calculate timeout total seconds duration
-    timeout_seconds = (total_increments * 3) + 180
     
     #Disable automatic time sync
     toggle_system_time()
@@ -107,22 +100,7 @@ def main():
 
     #Wait for JSON
     files = []
-    start_time = time.time()
     while True:
-        if time.time() - start_time > timeout_seconds:
-            print('TIMEOUT, GAME FROZE OR CRASHED BEFORE TARGET DATE REACHED. RESTARTING')
-            kill_process_by_name_starts_with('FSD')
-            kill_process_by_name_starts_with('Unreal')
-            sleep(4)
-            #Enable automatic time sync
-            toggle_system_time()
-            sleep(4)
-            #Disable automatic time sync
-            toggle_system_time()
-            #Restart game, reset start time
-            subprocess.Popen(['start', 'steam://run/548430//-nullrhi'], shell=True)
-            start_time = time.time()
-            continue
         for filename in os.listdir():
             if filename == 'drgmissionsgod.json':
                 sleep(10)
@@ -131,12 +109,14 @@ def main():
                 kill_process_by_name_starts_with('Unreal')
         if files:
             break
-        sleep(1)
+        sleep(1.5)
+    print('\n')
 
     #Reset mods.txt
     with open('./mods/mods.txt', 'r') as f:
         mods = f.read()
         mods = mods.replace('long_term_mission_data_collector : 1', 'long_term_mission_data_collector : 0')
+        f.close()
 
     with open('./mods/mods.txt', 'w') as f:
         f.write(mods)
@@ -148,9 +128,15 @@ def main():
     #Validate JSON
     with open('drgmissionsgod.json', 'r') as f:
         DRG = f.read()
+        DRG = DRG.replace(':02Z', ':00Z')
         DRG = json.loads(DRG)
+        f.close()
 
     DRG = order_dictionary_by_date(DRG)
+    with open('drgmissionsgod.json', 'w') as f:
+        f.write(json.dumps(DRG))
+        f.close()
+
     DRG = reconstruct_dictionary(DRG)
 
     find_duplicates(DRG)
@@ -159,5 +145,9 @@ def main():
 
     #Pause to allow user to check terminal for output
     input('Press enter to exit...')
-
-main()
+try:
+    print(os.getcwd())
+    main()
+except Exception as e:
+    print(e)
+    input('Press enter to exit...')

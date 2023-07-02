@@ -44,8 +44,10 @@ def enable_system_time():
         winreg.SetValueEx(key, 'Type', 0, winreg.REG_SZ, 'NTP')
         winreg.CloseKey(key)
         subprocess.run(['sc', 'config', 'w32time', 'start=', 'demand'], shell=True)
-        subprocess.run(['net', 'start', 'w32time'], shell=True)
-        print("Automatic system time enabled.")
+        subprocess.run(['sc', 'start', 'w32time'], shell=True)
+        sleep(2)
+        subprocess.run(['w32tm', '/resync'], shell=True)
+        print("Automatic system time enabled.\n\n")
     except Exception as e:
         print(f"Error: {e}")
 def disable_system_time():
@@ -54,8 +56,8 @@ def disable_system_time():
         winreg.SetValueEx(key, 'Type', 0, winreg.REG_SZ, 'NoSync')
         winreg.CloseKey(key)
         subprocess.run(['sc', 'config', 'w32time', 'start=', 'disabled'], shell=True)
-        subprocess.run(['net', 'stop', 'w32time'], shell=True)
-        print("Automatic system time disabled.")
+        subprocess.run(['sc', 'stop', 'w32time'], shell=True)
+        print("Automatic system time disabled.\n\n")
     except Exception as e:
         print(f"Error: {e}")
 def toggle_system_time():
@@ -79,6 +81,7 @@ def user_input_set_target_date(current_time):
                 print("Please enter a date and time ahead of the current time.")
         except Exception:
             print("Invalid date format. Please enter the date in the format (YYY-MM-DD).")
+    print('\n')
     return user_date
 
 def main_loop(total_increments, current_time, AllTheDeals):
@@ -93,10 +96,12 @@ def main_loop(total_increments, current_time, AllTheDeals):
         #Wait for JSON
         while waiting_for_json:
             if time.time() - start_time > 240:
+                print('TIMEOUT:')
                 timeout = True
                 kill_process_by_name_starts_with('FSD')
                 kill_process_by_name_starts_with('Unreal')
                 sleep(3)
+                print('\nRESTARTING')
                 break
             for filename in os.listdir():
                 if filename == 'drgdailydeal.json':
