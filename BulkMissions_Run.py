@@ -71,16 +71,7 @@ def main():
 
     #Get target date from user input
     current_time = datetime.datetime.now()
-    while True:
-        user_input = input("Enter the target date (YYYY-MM-DD): ")
-        try:
-            user_date = datetime.datetime.strptime(user_input, "%Y-%m-%d")
-            if user_date > current_time:
-                break
-            else:
-                print("Please enter a date and time ahead of the current time.")
-        except Exception:
-            print("Invalid date format. Please enter the date in the format (YYY-MM-DD).")
+    user_date = user_input_set_target_date(current_time)
             
     target_date_format = user_date.strftime("    local target_date = os.time{year=%Y, month=%m, day=%d, hour=%H, min=%M, sec=%S}\n")
     #Set the target date in the lua script
