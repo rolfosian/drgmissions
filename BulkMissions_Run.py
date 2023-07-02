@@ -13,7 +13,8 @@ def enable_system_time():
         key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r'SYSTEM\\CurrentControlSet\\Services\\W32Time\\Parameters', 0, winreg.KEY_WRITE)
         winreg.SetValueEx(key, 'Type', 0, winreg.REG_SZ, 'NTP')
         winreg.CloseKey(key)
-        subprocess.run('net start w32time', shell=True)
+        subprocess.run(['sc', 'config', 'w32time', 'start=', 'demand'], shell=True)
+        subprocess.run(['net', 'start', 'w32time'], shell=True)
         print("Automatic system time enabled.")
     except Exception as e:
         print(f"Error: {e}")
@@ -22,17 +23,40 @@ def disable_system_time():
         key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r'SYSTEM\\CurrentControlSet\\Services\\W32Time\\Parameters', 0, winreg.KEY_WRITE)
         winreg.SetValueEx(key, 'Type', 0, winreg.REG_SZ, 'NoSync')
         winreg.CloseKey(key)
-        subprocess.run('net stop w32time', shell=True)
+        subprocess.run(['sc', 'config', 'w32time', 'start=', 'disabled'], shell=True)
+        subprocess.run(['net', 'stop', 'w32time'], shell=True)
         print("Automatic system time disabled.")
     except Exception as e:
         print(f"Error: {e}")
+def toggle_system_time():
+    try:
+        output = subprocess.check_output('sc query w32time', shell=True).decode('utf-8')
+        if 'RUNNING' in output:
+            disable_system_time()
+        else:
+            enable_system_time()        
+    except Exception as e:
+        print(f"Error {e}")
 
 def kill_process_by_name_starts_with(start_string):
     for proc in psutil.process_iter(['pid', 'name']):
         if proc.info['name'].startswith(start_string):
             print(f"Terminating process: {proc.info['name']} (PID: {proc.info['pid']})")
             proc.kill()
-            
+
+def user_input_set_target_date(current_time):
+    while True:
+        user_input = input("Enter the target date (YYYY-MM-DD): ")
+        try:
+            user_date = datetime.datetime.strptime(user_input, "%Y-%m-%d")
+            if user_date > current_time:
+                break
+            else:
+                print("Please enter a date and time ahead of the current time.")
+        except Exception:
+            print("Invalid date format. Please enter the date in the format (YYY-MM-DD).")
+    return user_date
+
 def main():
     #Set mods.txt for BulkMissions collector
     with open('./mods/mods.txt', 'r') as f:
@@ -48,15 +72,15 @@ def main():
     #Get target date from user input
     current_time = datetime.datetime.now()
     while True:
-        user_input = input("Enter the target date (YYYY-MM-DD HH:MM:SS): ")
+        user_input = input("Enter the target date (YYYY-MM-DD): ")
         try:
-            user_date = datetime.datetime.strptime(user_input, "%Y-%m-%d %H:%M:%S")
+            user_date = datetime.datetime.strptime(user_input, "%Y-%m-%d")
             if user_date > current_time:
                 break
             else:
                 print("Please enter a date and time ahead of the current time.")
         except Exception:
-            print("Invalid date format. Please enter the date in the format (YYY-MM-DD HH:MM:SS).")
+            print("Invalid date format. Please enter the date in the format (YYY-MM-DD).")
             
     target_date_format = user_date.strftime("    local target_date = os.time{year=%Y, month=%m, day=%d, hour=%H, min=%M, sec=%S}\n")
     #Set the target date in the lua script
@@ -78,14 +102,14 @@ def main():
     current_utc = datetime.datetime.utcnow()
     diff_seconds = (user_date - current_utc).total_seconds()
     # Calculate the total amount of 30-minute increments between the current time and the target date
-    total_increments = int(diff_seconds / 1800)
+    total_increments = int(diff_seconds // 1800)
     total_increments += 1
     
     #Calculate timeout total seconds duration
-    timeout_seconds = (total_increments * 2.5) + 180
+    timeout_seconds = (total_increments * 3) + 180
     
     #Disable automatic time sync
-    disable_system_time()
+    toggle_system_time()
     
     #Run Deep Rock Galactic headless
     subprocess.Popen(['start', 'steam://run/548430//-nullrhi'], shell=True)
@@ -100,10 +124,10 @@ def main():
             kill_process_by_name_starts_with('Unreal')
             sleep(4)
             #Enable automatic time sync
-            enable_system_time()
-            sleep(5)
+            toggle_system_time()
+            sleep(4)
             #Disable automatic time sync
-            disable_system_time()
+            toggle_system_time()
             #Restart game, reset start time
             subprocess.Popen(['start', 'steam://run/548430//-nullrhi'], shell=True)
             start_time = time.time()
@@ -128,7 +152,7 @@ def main():
         f.close()
         
     #Enable automatic time sync
-    enable_system_time()
+    toggle_system_time()
     
     #Validate JSON
     with open('drgmissionsgod.json', 'r') as f:

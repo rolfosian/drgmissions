@@ -43,7 +43,8 @@ def enable_system_time():
         key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r'SYSTEM\\CurrentControlSet\\Services\\W32Time\\Parameters', 0, winreg.KEY_WRITE)
         winreg.SetValueEx(key, 'Type', 0, winreg.REG_SZ, 'NTP')
         winreg.CloseKey(key)
-        subprocess.run('net start w32time', shell=True)
+        subprocess.run(['sc', 'config', 'w32time', 'start=', 'demand'], shell=True)
+        subprocess.run(['net', 'start', 'w32time'], shell=True)
         print("Automatic system time enabled.")
     except Exception as e:
         print(f"Error: {e}")
@@ -52,10 +53,33 @@ def disable_system_time():
         key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r'SYSTEM\\CurrentControlSet\\Services\\W32Time\\Parameters', 0, winreg.KEY_WRITE)
         winreg.SetValueEx(key, 'Type', 0, winreg.REG_SZ, 'NoSync')
         winreg.CloseKey(key)
-        subprocess.run('net stop w32time', shell=True)
+        subprocess.run(['sc', 'config', 'w32time', 'start=', 'disabled'], shell=True)
+        subprocess.run(['net', 'stop', 'w32time'], shell=True)
         print("Automatic system time disabled.")
     except Exception as e:
         print(f"Error: {e}")
+def toggle_system_time():
+    try:
+        output = subprocess.check_output('sc query w32time', shell=True).decode('utf-8')
+        if 'RUNNING' in output:
+            disable_system_time()
+        else:
+            enable_system_time()        
+    except Exception as e:
+        print(f"Error {e}")
+        
+def user_input_set_target_date(current_time):
+    while True:
+        user_input = input("Enter the target date (YYYY-MM-DD): ")
+        try:
+            user_date = datetime.datetime.strptime(user_input, "%Y-%m-%d")
+            if user_date > current_time:
+                break
+            else:
+                print("Please enter a date and time ahead of the current time.")
+        except Exception:
+            print("Invalid date format. Please enter the date in the format (YYY-MM-DD).")
+    return user_date
 
 def main_loop(total_increments, current_time, AllTheDeals):
     for i in range(total_increments):
@@ -83,11 +107,11 @@ def main_loop(total_increments, current_time, AllTheDeals):
                     os.remove(filename)
                     kill_process_by_name_starts_with('FSD')
                     kill_process_by_name_starts_with('Unreal')
-                    sleep(2)
+                    sleep(3)
                     waiting_for_json = False
             sleep(0.5)
         if timeout:
-            return main_loop(total_increments, AllTheDeals)
+            return main_loop(total_increments, current_time, AllTheDeals)
         current_time = datetime.datetime.strptime(increment_datetime(timestamp), "%d-%m-%yT%H:%M:%SZ")
         current_time = current_time.replace(hour=0, minute=0, second=1)
         newtime = str(current_time).split(' ')
@@ -119,24 +143,14 @@ def main():
     currytime = str(currytime).split(' ')
     
     #Disable automatic system time
-    disable_system_time()
+    toggle_system_time()
     sleep(4)
     
     # Set the clock to 00:00:00
     subprocess.run(['date', reverse_date_format(currytime[0]), '&', 'time', currytime[1]], shell=True)
     
     # Set the target date
-    while True:
-        user_input = input("Enter the target date (YYYY-MM-DD HH:MM:SS): ")
-        try:
-            user_date = datetime.datetime.strptime(user_input, "%Y-%m-%d %H:%M:%S")
-            if user_date > current_time:
-                break
-            else:
-                print("Please enter a date and time ahead of the current time.")
-        except Exception:
-            print("Invalid date format. Please enter the date in the format (YYY-MM-DD HH:MM:SS).")
-    target_date = datetime.datetime.strptime(user_input, "%Y-%m-%d %H:%M:%S")
+    target_date = user_input_set_target_date(current_time)
 
     # Calculate the difference between the target date and the current time
     diff_seconds = (target_date - current_time).total_seconds()
@@ -166,6 +180,6 @@ def main():
         f.close()
     
     #Enable Automatic system time
-    enable_system_time()
+    toggle_system_time()
     sleep(4)
 main()
