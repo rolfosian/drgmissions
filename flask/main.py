@@ -389,38 +389,63 @@ def render_index(timestamp, next_timestamp, DDs):
                 }
             }
         });
-            window.addEventListener('blur', function() {
-                const video = document.querySelector('#background-video');
-                video.pause();
-                });
-            window.addEventListener('focus', function() {
+        document.addEventListener("DOMContentLoaded", function () {
+            const targetHour = 0; // Adjust the target hour to 0 for midnight
+            let targetTime = new Date();
+            targetTime.setUTCHours(targetHour, 0, 0, 0);
+            targetTime.setUTCDate(targetTime.getUTCDate() + 1); // Set the target date to the next day
+
+            const countdownTimer = setInterval(() => {
+                const now = Date.now();
+                const remainingTime = targetTime.getTime() - now;
+                if (remainingTime <= 0) {
+                    clearInterval(countdownTimer);
+                    document.getElementById("DailyDealcountdown").innerHTML = "00:00:00";
+                } else {
+                    const hours = Math.floor((remainingTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
+                    const formattedTime = padZero(hours) + ":" + padZero(minutes) + ":" + padZero(seconds);
+                    document.getElementById("DailyDealcountdown").innerHTML = formattedTime;
+                }
+            }, 1000);
+
+            function padZero(number) {
+                return number.toString().padStart(2, "0");
+            }
+        });
+        window.addEventListener('blur', function() {
             const video = document.querySelector('#background-video');
-            video.play();
+            video.pause();
             });
-            $(document).ready(function() {
-            $("#missionscountdown").hide();
-            $("#slideButton").click(function() {
-                $("#missionscountdown").slideToggle(function() {
-                if ($("#missionscountdown").is(":hidden")) {
-                    $("#slideButton").text("Show countdown");
-                } else {
-                    $("#slideButton").text("Hide countdown");
-                }
-                });
+        window.addEventListener('focus', function() {
+        const video = document.querySelector('#background-video');
+        video.play();
+        });
+        $(document).ready(function() {
+        $("#missionscountdown").hide();
+        $("#slideButton").click(function() {
+            $("#missionscountdown").slideToggle(function() {
+            if ($("#missionscountdown").is(":hidden")) {
+                $("#slideButton").text("Show countdown");
+            } else {
+                $("#slideButton").text("Hide countdown");
+            }
             });
+        });
+        });
+        $(document).ready(function() {
+        $("#DAILYDEAL").hide();
+        $("#dailydealbutton").click(function() {
+            $("#DAILYDEAL").slideToggle(700, function() {
+            if ($("#DAILYDEAL").is(":hidden")) {
+                $("#dailydealbutton").text("Show Daily Deal");
+            } else {
+                $("#dailydealbutton").text("Hide Daily Deal");
+            }
             });
-            $(document).ready(function() {
-            $("#DAILYDEAL").hide();
-            $("#dailydealbutton").click(function() {
-                $("#DAILYDEAL").slideToggle(500, function() {
-                if ($("#DAILYDEAL").is(":hidden")) {
-                    $("#dailydealbutton").text("Show Daily Deal");
-                } else {
-                    $("#dailydealbutton").text("Hide Daily Deal");
-                }
-                });
-            });
-            });
+        });
+        });
         function toggleCollapse() {
             var current = document.getElementById("current");
             var upcoming = document.getElementById("upcoming");
@@ -522,7 +547,8 @@ def render_index(timestamp, next_timestamp, DDs):
         <p class="loading">Loading</p>
         <div id="countdowncontainer">
             <button id="backgroundButton">Hide background</button><button id="buttonsbutton">x</button><br>
-            <div id=DAILYDEAL><img id="DailyDeal" class="daily_trade" src="/dailydeal"></div><button id="dailydealbutton">Show Daily Deal</button><br>
+            <div id=DAILYDEAL><div id="dailydealhead">NEW DAILY DEAL IN<br><span id="DailyDealcountdown"></span></div><img id="DailyDeal" class="daily_trade" src="/dailydeal"></div>
+            <button id="dailydealbutton">Show Daily Deal</button><br>
             <div id="missionscountdown">NEW MISSIONS IN<br>
             <span id="countdown"></span></div><button id="slideButton">Hide countdown</button><br>
             <button id="currentButton">Click here to see upcoming missions</button>

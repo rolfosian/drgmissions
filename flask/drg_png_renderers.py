@@ -52,7 +52,7 @@ def render_daily_deal_bubble(changepercent, dealtype):
         DIGIT1.text((digit1_x-60, digit1_y-15), digit1, font=font, fill=(0, 0, 0))
         DIGIT2 = ImageDraw.Draw(BUBBLE)
         digit2_x, digit2_y = calc_text_center(BUBBLE.width, BUBBLE.height, digit2, font, font_size)
-        DIGIT2.text((digit2_x-5, digit2_y-15), digit2, font=font, fill=(0, 0, 0))
+        DIGIT2.text((digit1_x-5, digit1_y-15), digit2, font=font, fill=(0, 0, 0))
         SAVINGS_PROFIT = ImageDraw.Draw(BUBBLE)
         font_size = 30
         font = ImageFont.truetype(font_path, font_size)
@@ -104,11 +104,11 @@ def render_daily_deal_credits(credits):
     BACKGROUND = Image.new("RGBA", (image_width, image_height), (0, 0, 0, 0))
     x, y = calc_center(CREDITS, BACKGROUND)
     if len(text) < 5:
-        BACKGROUND.paste(CREDITS, (35,y))
-        BACKGROUND.paste(CREDITS, ((image_width - CREDITS.width)-35, y))
+        BACKGROUND.paste(CREDITS, (35,y+10))
+        BACKGROUND.paste(CREDITS, ((image_width - CREDITS.width)-35, y+10))
     else:
-        BACKGROUND.paste(CREDITS, (45,y))
-        BACKGROUND.paste(CREDITS, ((image_width - CREDITS.width)-45, y))
+        BACKGROUND.paste(CREDITS, (55,y+10))
+        BACKGROUND.paste(CREDITS, ((image_width - CREDITS.width)-55, y+10))
     DRAW = ImageDraw.Draw(BACKGROUND)
     text_x, text_y = calc_text_center(BACKGROUND.width, BACKGROUND.height, text, font, font_size)
     DRAW.text((text_x, text_y), text, font=font, fill=(255,255,255))
@@ -376,7 +376,7 @@ def render_mission(m_d, six):
         BACKGROUND = scale_image(BACKGROUND, 0.46)
     #BACKGROUND.save('TEST.png', format='PNG')
     #subprocess.run(['gwenview', 'TEST.png'])
-    #mission = {'rendered_mission': BACKGROUND, 'CodeName': m_d['CodeName'], 'id': m_d['id']}
+    ##mission = {'rendered_mission': BACKGROUND, 'CodeName': m_d['CodeName'], 'id': m_d['id']}
     return BACKGROUND
 
 def render_dd_secondary_obj_resource(secondary_obj):

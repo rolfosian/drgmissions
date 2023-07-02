@@ -1,243 +1,269 @@
 @font-face {
-font-family: "BebasNeue";
-src: url("/files/BebasNeue-Regular.woff2");
-}
-@font-face {
-font-family: "HammerBro101MovieThin-Regular";
-src: url("/files/HammerBro101MovieThin-Regular.woff");
-}
-body::-webkit-scrollbar {
-display: none;
-}
-.loading {
-position: fixed;
-top: 35%;
-left: 50%;
-transform: translate(-50%, -50%);
-color: red;
-font-family: "HammerBro101MovieThin-Regular", sans-serif;
-font-size: 60px;
-display: inline-block;
-width: 10ch;
-text-align: center;
-white-space: nowrap;
-text-overflow: ellipsis;
-overflow: hidden;
-}
-#background-video {
-position: fixed;
-min-width: 100%;
-min-height: 100%;
-width: auto;
-height: auto;
-object-fit: contain;
-z-index: -1;
-pointer-events: none;
-}
-.before {
-content: "";
-position: fixed;
-min-width: 100%;
-min-height: 100%;
-top: 0;
-left: 0;
-width: auto;
-height: auto;
-background-image: url('/files/space_rig_thumb.jpg');
-background-size: cover;
-object-fit: contain;
-z-index: -2;
-}
-#background-video + .overlay {
-position: fixed;
-right: 0;
-bottom: 0;
-min-width: 100%;
-min-height: 100%;
-width: auto;
-height: auto;
-z-index: -1;
-background-color: rgba(0, 0, 0, 0.6);
-}
-.background-video:focus {
-pointer-events: auto;
-}
-.collapsed {
-display: none;
-height: 0;
-}
-.grid-container {
-display: grid;
-grid-template-columns: auto auto;
-text-align:  center;
-}
-@media (max-width: 1440px) {
-  .grid-container {
-    grid-template-columns: 1fr;
+  font-family: "BebasNeue";
+  src: url("/files/BebasNeue-Regular.woff2");
   }
-}
-.grid-item {
-padding: 0px;
-text-align: center;
-}
-.biome-container {
-opacity: 0;
-transition: opacity 0.5s ease-in-out;
-}
-.image-container {
-width: 80%;
-height: auto;
-}
-.mission-hover-zoom {
-display: inline-block
-}
-.mission-hover-zoom img {
-transition: transform .6s ease;
-}
-.mission-hover-zoom:hover img {
-transform: scale(1.7);
-}
-.mission {
-display: inline-block;
-height: 70%;
-width: 70%;
-z-index: 9999;
-}
-.fade-in {
-  opacity: 1;
-}
-.dd-container {
-width: auto;
-height: 60%;
-}
-.dd-biome {
-width: 60%;
-height: 60%;
-}
-.jsonc {
-display: flex;
-justify-content: space-between;
-}
-.credits {
-display: inline-block;
-margin-bottom: 0;
-text-align: right;
-font-size: 15px;
-color: white;
-font-family: "BebasNeue", sans-serif;
-}
-.jsonlinks {
+  @font-face {
+  font-family: "HammerBro101MovieThin-Regular";
+  src: url("/files/HammerBro101MovieThin-Regular.woff");
+  }
+  body::-webkit-scrollbar {
+  display: none;
+  }
+  .loading {
+  position: fixed;
+  top: 35%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: red;
+  font-family: "HammerBro101MovieThin-Regular", sans-serif;
+  font-size: 60px;
+  display: inline-block;
+  width: 10ch;
+  text-align: center;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  }
+  #background-video {
+  position: fixed;
+  min-width: 100%;
+  min-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  z-index: -1;
+  pointer-events: none;
+  }
+  .before {
+  content: "";
+  position: fixed;
+  min-width: 100%;
+  min-height: 100%;
+  top: 0;
+  left: 0;
+  width: auto;
+  height: auto;
+  background-image: url('/files/space_rig_thumb.jpg');
+  background-size: cover;
+  object-fit: contain;
+  z-index: -2;
+  }
+  #background-video + .overlay {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  min-width: 100%;
+  min-height: 100%;
+  width: auto;
+  height: auto;
+  z-index: -1;
+  background-color: rgba(0, 0, 0, 0.6);
+  }
+  .background-video:focus {
+  pointer-events: auto;
+  }
+  .collapsed {
+  display: none;
+  height: 0;
+  }
+  .grid-container {
+  display: grid;
+  grid-template-columns: auto auto;
+  text-align:  center;
+  }
+  @media (max-width: 1440px) {
+    .grid-container {
+      display: grid;
+      text-align:  center;
+      grid-template-columns: auto;
+    }
+  }
+  .grid-item {
+  padding: 0px;
+  text-align: center;
+  }
+  .biome-container {
+  opacity: 0;
+  transition: opacity 0.5s ease-in-out;
+  }
+  .image-container {
+  width: 80%;
+  height: auto;
+  }
+  .mission-hover-zoom {
+  display: inline-block
+  }
+  .mission-hover-zoom img {
+  transition: transform .6s ease;
+  }
+  .mission-hover-zoom:hover img {
+  transform: scale(1.7);
+  }
+  .mission {
+  display: inline-block;
+  height: 70%;
+  width: 70%;
+  z-index: 9999;
+  }
+  .fade-in {
+    opacity: 1;
+  }
+  .dd-container {
+  width: auto;
+  height: 60%;
+  }
+  .dd-biome {
+  width: 60%;
+  height: 60%;
+  }
+  .jsonc {
   display: flex;
-}
-.jsonlink {
-color: #1E90FF;
-font-size: 30px;
-font-family: "BebasNeue", sans-serif;
-}
-.nextlink {
-color: #1E90FF;
-font-size: 40px;
-font-family: "BebasNeue", sans-serif;
-}
-.scanners {
-color: red;
-font-family: "HammerBro101MovieThin-Regular", sans-serif;
-font-size: 20px;
-}
-.gsgdisclaimer {
-margin-bottom: 0;
-font-size: 20px;
-color: white;
-font-family: "BebasNeue", sans-serif;
-}
-.ddscountdown {
-text-align: center;
-color: white;
-font-size: 35px;
-font-family: "BebasNeue", sans-serif;
-}
-span#countdown {
-white-space: nowrap;
-left: 50%;
-color: white;
-font-size: 65px;
-transform: translate(-50%, -50%);
-font-family: "BebasNeue", sans-serif;
-}
-span#ddcountdown {
-margin-bottom: 0;
-display: flex;
-align-items: center;
-color: white;
-font-size: 72px;
-justify-content: center;
-font-family: "BebasNeue", sans-serif;
-}
-#countdowncontainer {
-position: fixed;
-top: 0;
-left: 50%;
-transform: translateX(-50%);
-justify-content: center;
-z-index: 9998;
-}
-#slideButton {
-position: relative;
-text-align: center;
-left: 50%;
-transform: translateX(-50%);
-bottom: 0;
-background-color: #303030;
-width: auto;
-height: auto;
-color: white;
-font-size: 15px;
-font-family: "BebasNeue", sans-serif;
-}
-#currentButton {
-position: relative;
-left: 50%;
-text-align: center;
-transform: translateX(-50%);
-background-color: #303030;
-color: white;
-font-size: 15px;
-font-family: "BebasNeue", sans-serif;
-}
-#dailydealbutton {
-position: relative;
-left: 50%;
-text-align: center;
-transform: translateX(-50%);
-background-color: #303030;
-color: white;
-font-size: 15px;
-font-family: "BebasNeue", sans-serif;
-}
-#missionscountdown {
-text-align: center;
-color: white;
-font-size: 35px;
-font-family: "BebasNeue", sans-serif;
-}
-#backgroundButton {
-position: relative;
-text-align: center;
-left: 0;
-top: 0;
-left: 50%;
-transform: translateX(-50%);
-background-color: #303030;
-color: white;
-font-size: 15px;
-font-family: "BebasNeue", sans-serif;
-}
-#buttonsbutton {
-position: relative;
-float: right;
-top: 0;
-background-color: #303030;
-color: white;
-font-size: 15px;
-font-family: sans-serif;
-}
+  justify-content: space-between;
+  }
+  .credits {
+  display: inline-block;
+  margin-bottom: 0;
+  text-align: right;
+  font-size: 15px;
+  color: white;
+  font-family: "BebasNeue", sans-serif;
+  }
+  .jsonlinks {
+    display: flex;
+  }
+  .jsonlink {
+  color: #1E90FF;
+  font-size: 30px;
+  font-family: "BebasNeue", sans-serif;
+  }
+  .nextlink {
+  color: #1E90FF;
+  font-size: 40px;
+  font-family: "BebasNeue", sans-serif;
+  }
+  .scanners {
+  color: red;
+  font-family: "HammerBro101MovieThin-Regular", sans-serif;
+  font-size: 20px;
+  }
+  .gsgdisclaimer {
+  margin-bottom: 0;
+  font-size: 20px;
+  color: white;
+  font-family: "BebasNeue", sans-serif;
+  }
+  .ddscountdown {
+  text-align: center;
+  color: white;
+  font-size: 35px;
+  font-family: "BebasNeue", sans-serif;
+  }
+  span#countdown {
+  white-space: nowrap;
+  left: 50%;
+  color: white;
+  font-size: 65px;
+  transform: translate(-50%, -50%);
+  font-family: "BebasNeue", sans-serif;
+  }
+  span#ddcountdown {
+  margin-bottom: 0;
+  display: flex;
+  align-items: center;
+  color: white;
+  font-size: 72px;
+  justify-content: center;
+  font-family: "BebasNeue", sans-serif;
+  }
+  #countdowncontainer {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  justify-content: center;
+  z-index: 9998;
+  }
+  #slideButton {
+  position: relative;
+  text-align: center;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 0;
+  background-color: #303030;
+  width: auto;
+  height: auto;
+  color: white;
+  font-size: 15px;
+  font-family: "BebasNeue", sans-serif;
+  }
+  #currentButton {
+  position: relative;
+  left: 50%;
+  text-align: center;
+  transform: translateX(-50%);
+  background-color: #303030;
+  color: white;
+  font-size: 15px;
+  font-family: "BebasNeue", sans-serif;
+  }
+  #dailydealbutton {
+  position: relative;
+  left: 50%;
+  text-align: center;
+  transform: translateX(-50%);
+  background-color: #303030;
+  color: white;
+  font-size: 15px;
+  font-family: "BebasNeue", sans-serif;
+  }
+  span#DailyDealcountdown {
+  white-space: nowrap;
+  left: 50%;
+  color: white;
+  font-size: 45px;
+  transform: translate(-50%, -50%);
+  font-family: "BebasNeue", sans-serif;
+  }
+  #dailydealcountdown {
+  text-align: center;
+  color: white;
+  font-size: 15px;
+  font-family: "BebasNeue", sans-serif;
+  }
+  #missionscountdown {
+  text-align: center;
+  color: white;
+  font-size: 35px;
+  font-family: "BebasNeue", sans-serif;
+  }
+  #dailydealhead {
+  text-align: center;
+  color: white;
+  font-size: 35px;
+  font-family: "BebasNeue", sans-serif;
+  }
+  #backgroundButton {
+  position: relative;
+  text-align: center;
+  left: 0;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #303030;
+  color: white;
+  font-size: 15px;
+  font-family: "BebasNeue", sans-serif;
+  }
+  #buttonsbutton {
+  position: relative;
+  float: right;
+  top: 0;
+  background-color: #303030;
+  color: white;
+  font-size: 15px;
+  font-family: sans-serif;
+  }
+  .daily_trade {
+  border-bottom-left-radius: 3%;
+  border-bottom-right-radius: 3%;
+  }
