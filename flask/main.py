@@ -10,7 +10,7 @@ from datetime import datetime #, timezone, timedelta
 import shutil
 from dateutil import parser
 from flask import Flask, render_template_string, request, send_file, jsonify, make_response
-import queue
+#import queue
 import threading
 import glob
 from io import BytesIO
@@ -48,31 +48,32 @@ def select_timestamp(dictionary, next_):
 
 def rotate_timestamp(dictionary, tstamp_Queue, next_):
     applicable_timestamp = select_timestamp(dictionary, next_=next_)
-    tstamp_Queue.put(applicable_timestamp)
-    timestamp = tstamp_Queue.queue[0]
+    tstamp_Queue.append(applicable_timestamp)
+    timestamp = tstamp_Queue[0]
     while True:
         applicable_timestamp = select_timestamp(dictionary, next_=next_)
         if applicable_timestamp != timestamp:
-            tstamp_Queue.put(applicable_timestamp)
-            tstamp_Queue.get()
-            timestamp = tstamp_Queue.queue[0]
+            tstamp_Queue.append(applicable_timestamp)
+            tstamp_Queue.pop(0)
+            timestamp = tstamp_Queue[0]
         sleep(0.25)
 
-def wait_rotation(rendering_event, rendering_event_next):
+def wait_rotation(rendering_event, rendering_event_next, index_event):
     target_minutes_59 = [29, 59]
     while True:
         current_time = datetime.now().time()
         current_minute = current_time.minute
         current_second = current_time.second + current_time.microsecond / 1e6
-        if current_second > 59.20 and current_minute in target_minutes_59:
+        if current_second > 58.50 and current_minute in target_minutes_59:
             rendering_event.clear()
             rendering_event_next.clear()
-        sleep(0.25)
+            index_event.clear()
+        sleep(0.2)
 
 def rotate_dailydeal(AllTheDeals, tstamp_Queue, deal_Queue):
-    while tstamp_Queue.qsize() == 0:
+    while len(tstamp_Queue) == 0:
         continue
-    deal_dict = AllTheDeals[tstamp_Queue.queue[0]]
+    deal_dict = AllTheDeals[tstamp_Queue[0]]
     dailydeal = {}
     rendered_dailydeal = render_dailydeal(deal_dict)
     DailyDeal = BytesIO()
@@ -81,10 +82,11 @@ def rotate_dailydeal(AllTheDeals, tstamp_Queue, deal_Queue):
     etag = hashlib.md5(DailyDeal.getvalue()).hexdigest()
     dailydeal['rendered_dailydeal'] = DailyDeal
     dailydeal['etag'] = etag
-    deal_Queue.put(dailydeal)
-    timestamp = tstamp_Queue.queue[0]
+    deal_Queue.append(dailydeal)
+    timestamp = tstamp_Queue[0]
     while True:
-        applicable_timestamp = tstamp_Queue.queue[0]
+        #applicable_timestamp = tstamp_Queue.queue[0]
+        applicable_timestamp = tstamp_Queue[0]
         if applicable_timestamp != timestamp:
             deal_dict = AllTheDeals[applicable_timestamp]
             dailydeal = {}
@@ -95,8 +97,8 @@ def rotate_dailydeal(AllTheDeals, tstamp_Queue, deal_Queue):
             etag = hashlib.md5(DailyDeal.getvalue()).hexdigest()
             dailydeal['rendered_dailydeal'] = DailyDeal
             dailydeal['etag'] = etag
-            deal_Queue.put(dailydeal)
-            deal_Queue.get()
+            deal_Queue.append(dailydeal)
+            deal_Queue.pop(0)
             timestamp = applicable_timestamp
         sleep(0.75)
     
@@ -147,23 +149,23 @@ def rotate_biomes(DRG, tstamp_Queue, biomes_Queue, rendering_event):
                 Biomes1[biome].append(mission0)
         return timestamp, Biomes1
     
-    while tstamp_Queue.qsize() == 0:
+    while len(tstamp_Queue) == 0:
         continue
-    Biomes = DRG[tstamp_Queue.queue[0]]['Biomes']
+    Biomes = DRG[tstamp_Queue[0]]['Biomes']
     Biomes = render_biomes(Biomes)
     #Biomes = sort_dictionary(Biomes, order)
-    timestamp, Biomes = array_biomes(Biomes, tstamp_Queue.queue[0])
-    biomes_Queue.put(Biomes)
+    timestamp, Biomes = array_biomes(Biomes, tstamp_Queue[0])
+    biomes_Queue.append(Biomes)
     rendering_event.set()
     while True:
-        applicable_timestamp = tstamp_Queue.queue[0]
+        applicable_timestamp = tstamp_Queue[0]
         if applicable_timestamp != timestamp:
                 Biomes = DRG[applicable_timestamp]['Biomes']
                 Biomes = render_biomes(Biomes)
                 #Biomes = sort_dictionary(Biomes, order)
                 timestamp, Biomes = array_biomes(Biomes, applicable_timestamp)
-                biomes_Queue.put(Biomes)
-                biomes_Queue.get()
+                biomes_Queue.append(Biomes)
+                biomes_Queue.pop(0)
                 rendering_event.set()
         sleep(0.25)
 
@@ -180,11 +182,11 @@ def rotate_DDs(DDs):
             current_json = json_list[0]
             with open(f'{json_list[0]}', 'r') as f:
                 dds = json.load(f)
-            if DDs.empty():
-                DDs.put(dds)
+            if len(DDs) == 0:
+                DDs.append(dds)
             else:
-                DDs.put(dds)
-                DDs.get()
+                DDs.append(dds)
+                DDs.pop(0)
             dds = dds['Deep Dives']
             dds = render_deepdives(dds)
             dd_str = 'Deep Dive Normal'
@@ -768,6 +770,33 @@ def render_index(timestamp, next_timestamp, DDs):
     </html>'''
     return html
 
+def rotate_index(DRG, rendering_event, rendering_event_next, current_timestamp_Queue, next_timestamp_Queue, DDs_Queue, index_event, index_Queue):
+    rendering_event.wait()
+    rendering_event_next.wait()
+    current_timestamp = current_timestamp_Queue[0]
+    index = {}
+    index_ = render_index(DRG[current_timestamp], DRG[next_timestamp_Queue[0]],  DDs_Queue[0])
+    index['index'] = index_
+    etag = hashlib.md5(index_.encode()).hexdigest()
+    index['etag'] = etag
+    index_Queue.append(index)
+    index_event.set()
+    while True:
+        applicable_timestamp = current_timestamp_Queue[0]
+        if applicable_timestamp != current_timestamp:
+            rendering_event.wait()
+            rendering_event_next.wait()
+            current_timestamp = current_timestamp_Queue[0]
+            index = {}
+            index_ = render_index(DRG[current_timestamp], DRG[next_timestamp_Queue[0]],  DDs_Queue[0],)
+            index['index'] = index_
+            etag = hashlib.md5(index_.encode()).hexdigest()
+            index['etag'] = etag
+            index_Queue.append(index)
+            index_Queue.pop(0)
+            index_event.set()
+        sleep(0.33)
+
 with open('drgmissionsgod.json', 'r') as f:
     DRG = f.read()
     f.close()
@@ -782,30 +811,42 @@ AllTheDeals = AllTheDeals.replace(':01Z', ':00Z')
 AllTheDeals = json.loads(AllTheDeals)
 AllTheDeals = order_dictionary_by_date(AllTheDeals)
 
-tstamp = queue.Queue()
+#tstamp = queue.Queue()
+tstamp = []
 tstampthread = threading.Thread(target=rotate_timestamp, args=(DRG, tstamp, False,))
 
-next_tstamp = queue.Queue()
+#next_tstamp = queue.Queue()
+next_tstamp = []
 next_tstampthread = threading.Thread(target=rotate_timestamp, args=(DRG, next_tstamp, True,))
 
-dailydeal_tstamp = queue.Queue()
+#dailydeal_tstamp = queue.Queue()
+dailydeal_tstamp = []
 dailydeal_tstampthread = threading.Thread(target=rotate_timestamp, args=(AllTheDeals, dailydeal_tstamp, False))
 
-dailydeal = queue.Queue()
+#dailydeal = queue.Queue()
+dailydeal = []
 dailydealthread = threading.Thread(target=rotate_dailydeal, args=(AllTheDeals, dailydeal_tstamp, dailydeal))
 
 rendering_event = threading.Event()
-currybiomes = queue.Queue()
+#currybiomes = queue.Queue()
+currybiomes = []
 biomesthread = threading.Thread(target=rotate_biomes, args=(DRG, tstamp, currybiomes, rendering_event))
 
 rendering_event_next = threading.Event()
-nextbiomes = queue.Queue()
+#nextbiomes = queue.Queue()
+nextbiomes = []
 nextbiomesthread = threading.Thread(target=rotate_biomes, args=(DRG, next_tstamp, nextbiomes, rendering_event_next))
 
-wait_rotationthread = threading.Thread(target=wait_rotation, args=(rendering_event, rendering_event_next))
-
-DDs = queue.Queue()
+#DDs = queue.Queue()
+DDs = []
 ddsthread = threading.Thread(target=rotate_DDs, args=(DDs,))
+
+index_event = threading.Event()
+#index_Queue = queue.Queue()
+index_Queue = []
+index_thread = threading.Thread(target=rotate_index, args=(DRG, rendering_event, rendering_event_next, tstamp, next_tstamp, DDs, index_event, index_Queue))
+
+wait_rotationthread = threading.Thread(target=wait_rotation, args=(rendering_event, rendering_event_next, index_event))
 
 def start_threads():
     tstampthread.start()
@@ -821,6 +862,8 @@ def start_threads():
     dailydeal_tstampthread.start()
     dailydealthread.start()
     
+    index_thread.start()
+    
 #def join_threads():
     #tstampthread.join()
     #next_tstampthread.join()
@@ -830,17 +873,18 @@ def start_threads():
     #wait_rotationthread.join()
     #dailydeal_tstampthread.join()
     #dailydealthread.join()
+    #index_thread.join()
 
 app = Flask(__name__, static_folder=f'{os.getcwd()}/files')
 
 @app.route('/')
 def home():
-    rendering_event.wait()
-    rendering_event_next.wait()
-    current_timestamp = tstamp.queue[0]
-    next_timestamp = next_tstamp.queue[0]
-    DDs_ = DDs.queue[0]
-    return render_template_string(render_index(DRG[current_timestamp], DRG[next_timestamp],  DDs_,))
+    index_event.wait()
+    if request.headers.get('If-None-Match') == index_Queue[0]['etag']:
+        return '', 304
+    response = make_response(render_template_string(index_Queue[0]['index']))
+    response.headers['ETag'] = index_Queue[0]['etag']
+    return response
 
 @app.route('/png')
 def serve_img():
@@ -852,7 +896,7 @@ def serve_img():
         start_time = time.time()
         while True:
             try:
-                Biomes = currybiomes.queue[0]
+                Biomes = currybiomes[0]
                 break
             except Exception:
                 if time.time() - start_time > 4:
@@ -883,7 +927,7 @@ def serve_next_img():
         start_time = time.time()
         while True:
             try:
-                Biomes = nextbiomes.queue[0]
+                Biomes = nextbiomes[0]
                 break
             except Exception:
                 if time.time() - start_time > 4:
@@ -910,7 +954,7 @@ def serve_dailydeal_png():
         start_time = time.time()
         while True:
             try:
-                daily_deal = dailydeal.queue[0]
+                daily_deal = dailydeal[0]
                 break
             except Exception:
                 if time.time() - start_time > 4:
@@ -934,16 +978,13 @@ def serve_json():
         if json_arg == 'bulkmissions':
             return jsonify(DRG)
         elif json_arg == 'DD':
-            return jsonify(DDs.queue[0])
+            return jsonify(DDs[0])
         elif json_arg == 'current':
-            applicable_timestamp = tstamp.queue[0]
-            return jsonify(DRG[applicable_timestamp])
+            return jsonify(DRG[tstamp[0]])
         elif json_arg == 'next':
-            applicable_timestamp = next_tstamp.queue[0]
-            return jsonify(DRG[applicable_timestamp])
+            return jsonify(DRG[next_tstamp[0]])
         elif json_arg == 'dailydeal':
-            applicable_timestamp = dailydeal_tstamp.queue[0]
-            return jsonify(AllTheDeals[applicable_timestamp])
+            return jsonify(AllTheDeals[dailydeal_tstamp[0]])
         else:
             return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
     else:
