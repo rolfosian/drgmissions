@@ -395,7 +395,7 @@ def render_index(timestamp, next_timestamp, DDs):
             const targetHour = 0; // Adjust the target hour to 0 for midnight
             let targetTime = new Date();
             targetTime.setUTCHours(targetHour, 0, 0, 0);
-            targetTime.setUTCDate(targetTime.getUTCDate() + 1); // Set the target date to the next day
+            targetTime.setUTCDate(targetTime.getUTCDate() + 1);
 
             const countdownTimer = setInterval(() => {
                 const now = Date.now();
@@ -441,7 +441,7 @@ def render_index(timestamp, next_timestamp, DDs):
         $("#dailydealbutton").click(function() {
             $("#DAILYDEAL").slideToggle(700, function() {
             if ($("#DAILYDEAL").is(":hidden")) {
-                $("#dailydealbutton").text("Show Daily Deal");
+                $("#dailydealbutton").text("Click here to see Daily Deal");
             } else {
                 $("#dailydealbutton").text("Hide Daily Deal");
             }
@@ -493,7 +493,7 @@ def render_index(timestamp, next_timestamp, DDs):
                 slideButton.textContent = "Show countdown";
                 currentButton.style.display = "inline-block";
                 dailydealbutton.style.display = "inline-block";
-                dailydealbutton.textContent = "Show Daily Deal";
+                dailydealbutton.textContent = "Click here to see Daily Deal";
                 DAILYDEAL.style.display = "none";
                 missionscountdown.style.display = "none";
                 buttonsbutton.textContent = " x ";
@@ -550,7 +550,7 @@ def render_index(timestamp, next_timestamp, DDs):
         <div id="countdowncontainer">
             <button id="backgroundButton">Hide background</button><button id="buttonsbutton">x</button><br>
             <div id=DAILYDEAL><div id="dailydealhead">NEW DAILY DEAL IN<br><span id="DailyDealcountdown"></span></div><img id="DailyDeal" class="daily_trade" src="/dailydeal"></div>
-            <button id="dailydealbutton">Show Daily Deal</button><br>
+            <button id="dailydealbutton">Click here to see Daily Deal</button><br>
             <div id="missionscountdown">NEW MISSIONS IN<br>
             <span id="countdown"></span></div><button id="slideButton">Hide countdown</button><br>
             <button id="currentButton">Click here to see upcoming missions</button>

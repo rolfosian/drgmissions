@@ -1,4 +1,3 @@
-#This script will throw exception if current hour is 11pm
 #Automatically run with bat file on system wake from sleep via Task Scheduler on On event - Log: System, Source: Microsoft-Windows-Power-Troubleshooter, Event ID: 1
 import datetime
 import subprocess
@@ -21,9 +20,12 @@ def upload_file(url, file_path, bearer_token):
 
 def wait_until_next_hour():
     now = datetime.datetime.now()
-    next_hour = now.replace(hour=now.hour + 1, minute=0, second=0, microsecond=0)
+    if now.hour == 23:
+        next_hour = now.replace(hour=0, minute=0, second=0, microsecond=0) + datetime.timedelta(days=1)
+    else:
+        next_hour = now.replace(hour=now.hour + 1, minute=0, second=0, microsecond=0)
     time_to_wait = (next_hour - now).total_seconds()
-    time.sleep(time_to_wait+1)
+    time.sleep(time_to_wait + 1)
         
 def kill_process_by_name_starts_with(start_string):
     for proc in psutil.process_iter(['pid', 'name']):

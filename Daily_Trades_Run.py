@@ -43,11 +43,11 @@ def enable_system_time():
         key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r'SYSTEM\\CurrentControlSet\\Services\\W32Time\\Parameters', 0, winreg.KEY_WRITE)
         winreg.SetValueEx(key, 'Type', 0, winreg.REG_SZ, 'NTP')
         winreg.CloseKey(key)
-        subprocess.run(['sc', 'config', 'w32time', 'start=', 'demand'], shell=True)
-        subprocess.run(['sc', 'start', 'w32time'], shell=True)
+        subprocess.run(['sc', 'config', 'w32time', 'start=', 'auto'], shell=True)
+        subprocess.run(['net', 'start', 'w32time'], shell=True)
         sleep(2)
         subprocess.run(['w32tm', '/resync'], shell=True)
-        print("Automatic system time enabled.\n\n")
+        print("Automatic system time enabled.\n")
     except Exception as e:
         print(f"Error: {e}")
 def disable_system_time():
@@ -56,8 +56,8 @@ def disable_system_time():
         winreg.SetValueEx(key, 'Type', 0, winreg.REG_SZ, 'NoSync')
         winreg.CloseKey(key)
         subprocess.run(['sc', 'config', 'w32time', 'start=', 'disabled'], shell=True)
-        subprocess.run(['sc', 'stop', 'w32time'], shell=True)
-        print("Automatic system time disabled.\n\n")
+        subprocess.run(['net', 'stop', 'w32time'], shell=True)
+        print("Automatic system time disabled.\n")
     except Exception as e:
         print(f"Error: {e}")
 def toggle_system_time():
@@ -95,13 +95,13 @@ def main_loop(total_increments, current_time, AllTheDeals):
         start_time = time.time()
         #Wait for JSON
         while waiting_for_json:
-            if time.time() - start_time > 240:
-                print('TIMEOUT:')
+            if time.time() - start_time > 120:
+                print('TIMEOUT.')
                 timeout = True
                 kill_process_by_name_starts_with('FSD')
                 kill_process_by_name_starts_with('Unreal')
                 sleep(3)
-                print('\nRESTARTING')
+                print('RESTARTING')
                 break
             for filename in os.listdir():
                 if filename == 'drgdailydeal.json':
@@ -116,6 +116,11 @@ def main_loop(total_increments, current_time, AllTheDeals):
                     waiting_for_json = False
             sleep(0.5)
         if timeout:
+            current_time = current_time.replace(hour=0, minute=0, second=1)
+            currytime = current_time.strftime("%Y-%m-%dT%H:%M:%SZ")
+            currytime = datetime.datetime.strptime(sanitize_datetime(currytime), "%d-%m-%yT%H:%M:%SZ")
+            currytime = str(currytime).split(' ')
+            subprocess.run(['date', reverse_date_format(currytime[0]), '&', 'time', currytime[1]], shell=True)
             return main_loop(total_increments, current_time, AllTheDeals)
         current_time = datetime.datetime.strptime(increment_datetime(timestamp), "%d-%m-%yT%H:%M:%SZ")
         current_time = current_time.replace(hour=0, minute=0, second=1)
@@ -149,7 +154,7 @@ def main():
     
     #Disable automatic system time
     toggle_system_time()
-    sleep(4)
+    sleep(3)
     
     # Set the clock to 00:00:00
     subprocess.run(['date', reverse_date_format(currytime[0]), '&', 'time', currytime[1]], shell=True)
@@ -162,7 +167,8 @@ def main():
 
     # Calculate the total number of 24-hour increments
     total_increments = int(diff_seconds // 86400)
-    print(total_increments)
+    total_increments += 1
+    print(f'Total daily deals to be fetched: {total_increments}')
 
     #Initialize master dictionary
     AllTheDeals = {}

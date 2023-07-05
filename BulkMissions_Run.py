@@ -13,11 +13,11 @@ def enable_system_time():
         key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r'SYSTEM\\CurrentControlSet\\Services\\W32Time\\Parameters', 0, winreg.KEY_WRITE)
         winreg.SetValueEx(key, 'Type', 0, winreg.REG_SZ, 'NTP')
         winreg.CloseKey(key)
-        subprocess.run(['sc', 'config', 'w32time', 'start=', 'demand'], shell=True)
-        subprocess.run(['sc', 'start', 'w32time'], shell=True)
+        subprocess.run(['sc', 'config', 'w32time', 'start=', 'auto'], shell=True)
+        subprocess.run(['net', 'start', 'w32time'], shell=True)
         sleep(2)
         subprocess.run(['w32tm', '/resync'], shell=True)
-        print("Automatic system time enabled.\n\n")
+        print("Automatic system time enabled.\n")
     except Exception as e:
         print(f"Error: {e}")
 def disable_system_time():
@@ -26,8 +26,8 @@ def disable_system_time():
         winreg.SetValueEx(key, 'Type', 0, winreg.REG_SZ, 'NoSync')
         winreg.CloseKey(key)
         subprocess.run(['sc', 'config', 'w32time', 'start=', 'disabled'], shell=True)
-        subprocess.run(['sc', 'stop', 'w32time'], shell=True)
-        print("Automatic system time disabled.\n\n")
+        subprocess.run(['net', 'stop', 'w32time'], shell=True)
+        print("Automatic system time disabled.\n")
     except Exception as e:
         print(f"Error: {e}")
 def toggle_system_time():
@@ -124,7 +124,8 @@ def main():
         
     #Enable automatic time sync
     toggle_system_time()
-    
+    print('\n-----------------------------')
+
     #Validate JSON
     with open('drgmissionsgod.json', 'r') as f:
         DRG = f.read()
