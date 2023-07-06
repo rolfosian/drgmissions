@@ -6,6 +6,18 @@ import os
 import json
 from time import sleep
 import winreg
+import re
+
+def calculate_average_float(float_list):
+    total = 0.0
+    count = 0
+    for num in float_list:
+        total += num
+        count += 1
+    if count == 0:
+        return 0.0
+    average = total / count
+    return round(average, 2)
 
 def kill_process_by_name_starts_with(start_string):
     for proc in psutil.process_iter(['pid', 'name']):
@@ -38,8 +50,17 @@ def reverse_date_format(input_date):
     input_date = f"{day}-{month}-{year[2:]}"
     return input_date
 
+def format_seconds(seconds):
+    timedelta = datetime.timedelta(seconds=seconds)
+    hours = int(timedelta.total_seconds() // 3600)
+    minutes = int((timedelta.total_seconds() % 3600) // 60)
+    remaining_seconds = timedelta.total_seconds() % 60
+    formatted_time = "{:02d}:{:02d}:{:05.2f}".format(hours, minutes, remaining_seconds)
+    return formatted_time
+
 def enable_system_time():
     try:
+        print('-------------------------------------------------------------------------')
         key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r'SYSTEM\\CurrentControlSet\\Services\\W32Time\\Parameters', 0, winreg.KEY_WRITE)
         winreg.SetValueEx(key, 'Type', 0, winreg.REG_SZ, 'NTP')
         winreg.CloseKey(key)
@@ -47,17 +68,18 @@ def enable_system_time():
         subprocess.run(['net', 'start', 'w32time'], shell=True)
         sleep(2)
         subprocess.run(['w32tm', '/resync'], shell=True)
-        print("Automatic system time enabled.\n")
+        print("Automatic system time enabled.\n-------------------------------------------------------------------------\n")
     except Exception as e:
         print(f"Error: {e}")
 def disable_system_time():
     try:
+        print('-------------------------------------------------------------------------')
         key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r'SYSTEM\\CurrentControlSet\\Services\\W32Time\\Parameters', 0, winreg.KEY_WRITE)
         winreg.SetValueEx(key, 'Type', 0, winreg.REG_SZ, 'NoSync')
         winreg.CloseKey(key)
         subprocess.run(['sc', 'config', 'w32time', 'start=', 'disabled'], shell=True)
         subprocess.run(['net', 'stop', 'w32time'], shell=True)
-        print("Automatic system time disabled.\n")
+        print("Automatic system time disabled.\n-------------------------------------------------------------------------\n")
     except Exception as e:
         print(f"Error: {e}")
 def toggle_system_time():
@@ -85,17 +107,20 @@ def user_input_set_target_date(current_time):
     return user_date
 
 def main_loop(total_increments, current_time, AllTheDeals):
-    for i in range(total_increments):
+    game_times = []
+    for i in range(total_increments+1):
         sleep(2)
         #Start the game
         subprocess.Popen(['start', 'steam://run/548430//-nullrhi'], shell=True)
+        game_start_time = time.monotonic()
         timestamp = current_time.strftime("%Y-%m-%dT%H:%M:%SZ")
+        timestamp = re.sub(r':\d{2}Z', ':00Z', timestamp)
         waiting_for_json = True
         timeout = False
-        start_time = time.time()
+        wait_start_time = time.monotonic()
         #Wait for JSON
         while waiting_for_json:
-            if time.time() - start_time > 120:
+            if time.monotonic() - wait_start_time > 120:
                 print('TIMEOUT.')
                 timeout = True
                 kill_process_by_name_starts_with('FSD')
@@ -122,16 +147,19 @@ def main_loop(total_increments, current_time, AllTheDeals):
             currytime = str(currytime).split(' ')
             subprocess.run(['date', reverse_date_format(currytime[0]), '&', 'time', currytime[1]], shell=True)
             return main_loop(total_increments, current_time, AllTheDeals)
+        
+        time_for_json = time.monotonic() - game_start_time
+        game_times.append(time_for_json)
+        print(f'Estimated time remaining: {format_seconds(calculate_average_float(game_times)*total_increments)}', end='\r')
+        
         current_time = datetime.datetime.strptime(increment_datetime(timestamp), "%d-%m-%yT%H:%M:%SZ")
         current_time = current_time.replace(hour=0, minute=0, second=1)
         newtime = str(current_time).split(' ')
-        print(current_time)
         #Set clock forward 1 day
         subprocess.run(['date', reverse_date_format(newtime[0]), '&', 'time', newtime[1]], shell=True)
         total_increments -= 1
+    print(f'Estimated time remaining: {format_seconds(0)}')
     return AllTheDeals
-
-print(os.getcwd())
 
 def main():
     #Set mods.txt for GetDailyDeals
@@ -152,15 +180,15 @@ def main():
     currytime = datetime.datetime.strptime(sanitize_datetime(currytime), "%d-%m-%yT%H:%M:%SZ")
     currytime = str(currytime).split(' ')
     
+    # Set the target date
+    target_date = user_input_set_target_date(current_time)
+
     #Disable automatic system time
     toggle_system_time()
-    sleep(3)
+    sleep(2)
     
     # Set the clock to 00:00:00
     subprocess.run(['date', reverse_date_format(currytime[0]), '&', 'time', currytime[1]], shell=True)
-    
-    # Set the target date
-    target_date = user_input_set_target_date(current_time)
 
     # Calculate the difference between the target date and the current time
     diff_seconds = (target_date - current_time).total_seconds()
@@ -174,8 +202,10 @@ def main():
     AllTheDeals = {}
     
     # Loop for the increments
+    start_time = time.monotonic()
     AllTheDeals = main_loop(total_increments, current_time, AllTheDeals)
-        
+    print(f'Total time elapsed: {format_seconds(time.monotonic() - start_time)}')
+    sleep(2)
     #Reset mods.txt
     with open('./mods/mods.txt', 'r') as f:
         mods = f.read()
@@ -193,4 +223,11 @@ def main():
     #Enable Automatic system time
     toggle_system_time()
     sleep(4)
-main()
+try:
+    if os.path.isfile('drgdailydeal.json'):
+        os.remove('drgdailydeal.json')
+    print(os.getcwd(), '\n')
+    main()
+except Exception as e:
+    print(f'ERROR: {e}')
+    input('Press enter to exit...')
