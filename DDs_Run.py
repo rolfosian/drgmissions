@@ -6,8 +6,6 @@ import psutil
 import os
 import requests
 
-print(os.getcwd())
-
 def upload_file(url, file_path, bearer_token):
     headers = {
         'Authorization': 'Bearer ' + bearer_token
@@ -32,53 +30,61 @@ def kill_process_by_name_starts_with(start_string):
         if proc.info['name'].startswith(start_string):
             print(f"Terminating process: {proc.info['name']} (PID: {proc.info['pid']})")
             proc.kill()
-
-wait_until_next_hour()
-
-with open('./mods/mods.txt', 'r') as f:
-    mods = f.read()
-    mods = mods.replace('GetDailyDeals : 1', 'GetDailyDeals: 0')
-    mods = mods.replace('long_term_mission_data_collector : 1', 'long_term_mission_data_collector : 0')
-    mods = mods.replace('dds_fetcher : 0', 'dds_fetcher : 1')
-    f.close()
-with open('./mods/mods.txt', 'w') as f:
-    f.write(mods)
-    f.close()
+def main():
+    print(os.getcwd())
+    wait_until_next_hour()
     
-subprocess.Popen(['start', 'steam://run/548430//-nullrhi'], shell=True)
+    with open('./mods/mods.txt', 'r') as f:
+        mods = f.read()
+        mods = mods.replace('GetDailyDeals : 1', 'GetDailyDeals: 0')
+        mods = mods.replace('long_term_mission_data_collector : 1', 'long_term_mission_data_collector : 0')
+        mods = mods.replace('dds_fetcher : 0', 'dds_fetcher : 1')
+        f.close()
+    with open('./mods/mods.txt', 'w') as f:
+        f.write(mods)
+        f.close()
+        
+    subprocess.Popen(['start', 'steam://run/548430//-nullrhi'], shell=True)
 
-with open('token.txt') as f:
-    token = f.read().strip()
+    with open('token.txt') as f:
+        token = f.read().strip()
 
-url = 'https://doublexp.net/upload'
-files = []
-start_time = time.time()
-while True:
-    if time.time() - start_time() > 300: #Timeout if crash/freeze
-        kill_process_by_name_starts_with('FSD')
-        kill_process_by_name_starts_with('Unreal')
-        time.sleep(3)
-        subprocess.Popen(['start', 'steam://run/548430//-nullrhi'], shell=True)
-        start_time = time.time()
-        continue
-    for filename in os.listdir():
-        if filename.startswith('DD_') and filename.endswith('.json'):
-            time.sleep(2)
-            files.append(filename)
+    url = 'https://doublexp.net/upload'
+    files = []
+    start_time = time.time()
+    while True:
+        if time.time() - start_time > 300: #Timeout if crash/freeze
             kill_process_by_name_starts_with('FSD')
             kill_process_by_name_starts_with('Unreal')
-    if files:
-        for file in files:
-            upload_file(url, file, token)
-            os.remove(file)
-        break
+            time.sleep(3)
+            subprocess.Popen(['start', 'steam://run/548430//-nullrhi'], shell=True)
+            start_time = time.time()
+            continue
+        for filename in os.listdir():
+            if filename.startswith('DD_') and filename.endswith('.json'):
+                time.sleep(2)
+                files.append(filename)
+                kill_process_by_name_starts_with('FSD')
+                kill_process_by_name_starts_with('Unreal')
+        if files:
+            for file in files:
+                upload_file(url, file, token)
+                os.remove(file)
+            break
+        time.sleep(0.5)
 
-with open('./mods/mods.txt', 'r') as f:
-    mods = f.read()
-    mods = mods.replace('dds_fetcher : 1', 'dds_fetcher : 0')
-    f.close()
-with open('./mods/mods.txt', 'w') as f:
-    f.write(mods)
-    f.close()
+    with open('./mods/mods.txt', 'r') as f:
+        mods = f.read()
+        mods = mods.replace('dds_fetcher : 1', 'dds_fetcher : 0')
+        f.close()
+    with open('./mods/mods.txt', 'w') as f:
+        f.write(mods)
+        f.close()
 
-subprocess.Popen(["rundll32.exe", "powrprof.dll,SetSuspendState", "Sleep"], shell=True)
+    subprocess.Popen(["rundll32.exe", "powrprof.dll,SetSuspendState", "Sleep"], shell=True)
+
+try:
+    main()
+except Exception as e:
+    print(e)
+    input('Press enter to exit...')

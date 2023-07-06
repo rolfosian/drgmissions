@@ -209,7 +209,15 @@ function UnpackDeepDiveMission(mission, master, t)
         mission1['Complexity'] = '2'
         mission1['Length'] = '2'
     end
+    if string.find(MissionDNA, 'Refinery_Medium_C') and mission1['Complexity'] == 'Indefinite' then
+        mission1['Complexity'] = '2'
+        mission1['Length'] = '2'
+    end
     
+    --Industrial Sabotage DNA
+    if string.find(MissionDNA, 'Facility_Simple_C') and complexity == 'Indefinite' then
+        mission1['Complexity'] = '2'
+    end
     --Mining Expedition DNA
     -- local MiningExpeditionDNAs = {
     --     {pattern = 'DNA_2_01_C', result = {length = '1', complexity = '1'}},
