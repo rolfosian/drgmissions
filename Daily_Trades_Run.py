@@ -67,7 +67,7 @@ def enable_system_time():
         subprocess.run(['sc', 'config', 'w32time', 'start=', 'auto'], shell=True)
         subprocess.run(['net', 'start', 'w32time'], shell=True)
         sleep(2)
-        subprocess.run(['w32tm', '/resync'], shell=True)
+        subprocess.run(['w32tm', '/resync'], stderr=subprocess.PIPE, shell=True)
         print("Automatic system time enabled.\n-------------------------------------------------------------------------\n")
     except Exception as e:
         print(f"Error: {e}")
@@ -84,7 +84,7 @@ def disable_system_time():
         print(f"Error: {e}")
 def toggle_system_time():
     try:
-        output = subprocess.check_output('sc query w32time', shell=True).decode('utf-8')
+        output = subprocess.check_output('sc query w32time', stderr=subprocess.PIPE, shell=True).decode('utf-8')
         if 'RUNNING' in output:
             disable_system_time()
         else:
@@ -162,6 +162,11 @@ def main_loop(total_increments, current_time, AllTheDeals):
     return AllTheDeals
 
 def main():
+    time_service_query = subprocess.check_output('sc query w32time', stderr=subprocess.PIPE, shell=True).decode('utf-8')
+    if 'RUNNING' not in time_service_query:
+        enable_system_time()
+        sleep(2)
+    
     #Set mods.txt for GetDailyDeals
     with open('./mods/mods.txt', 'r') as f:
         mods = f.read()

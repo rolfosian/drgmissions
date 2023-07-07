@@ -34,7 +34,26 @@ def order_dictionary_by_date(dictionary):
         ordered_dictionary[key] = dictionary[key]
     return ordered_dictionary
 
-def select_timestamp(dictionary, next_):
+def select_timestamp(next_):
+    current_time = datetime.utcnow()
+    rounded_time = current_time.replace(second=0, microsecond=0)
+    if next_:
+        if rounded_time.minute < 30:
+            rounded_time = rounded_time.replace(minute=30)
+        else:
+            if current_time.hour == 23:
+                rounded_time = rounded_time.replace(minute=0, hour=(rounded_time.hour + 1) % 24, day=(rounded_time.day + 1))
+            else:
+                rounded_time = rounded_time.replace(minute=0, hour=(rounded_time.hour + 1) % 24)
+    else:
+        if rounded_time.minute < 30:
+            rounded_time = rounded_time.replace(minute=0)
+        else:
+            rounded_time = rounded_time.replace(minute=30)
+    rounded_time_str = rounded_time.strftime("%Y-%m-%dT%H:%M:%SZ")
+    return rounded_time_str
+
+def select_timestamp_from_dict(dictionary, next_):
     current_time = datetime.utcnow()
     keys = list(dictionary.keys())
     for i in range(len(keys) - 1):
@@ -46,12 +65,24 @@ def select_timestamp(dictionary, next_):
             else:
                 return keys[i]
 
-def rotate_timestamp(dictionary, tstamp_Queue, next_):
-    applicable_timestamp = select_timestamp(dictionary, next_=next_)
+def rotate_timestamp(tstamp_Queue, next_):
+    applicable_timestamp = select_timestamp(next_=next_)
     tstamp_Queue.append(applicable_timestamp)
     timestamp = tstamp_Queue[0]
     while True:
-        applicable_timestamp = select_timestamp(dictionary, next_=next_)
+        applicable_timestamp = select_timestamp(next_=next_)
+        if applicable_timestamp != timestamp:
+            tstamp_Queue.append(applicable_timestamp)
+            tstamp_Queue.pop(0)
+            timestamp = tstamp_Queue[0]
+        sleep(0.25)
+        
+def rotate_timestamp_from_dict(dictionary, tstamp_Queue, next_):
+    applicable_timestamp = select_timestamp_from_dict(dictionary, next_=next_)
+    tstamp_Queue.append(applicable_timestamp)
+    timestamp = tstamp_Queue[0]
+    while True:
+        applicable_timestamp = select_timestamp_from_dict(dictionary, next_=next_)
         if applicable_timestamp != timestamp:
             tstamp_Queue.append(applicable_timestamp)
             tstamp_Queue.pop(0)
@@ -813,15 +844,15 @@ AllTheDeals = order_dictionary_by_date(AllTheDeals)
 
 #tstamp = queue.Queue()
 tstamp = []
-tstampthread = threading.Thread(target=rotate_timestamp, args=(DRG, tstamp, False,))
+tstampthread = threading.Thread(target=rotate_timestamp, args=(tstamp, False,))
 
 #next_tstamp = queue.Queue()
 next_tstamp = []
-next_tstampthread = threading.Thread(target=rotate_timestamp, args=(DRG, next_tstamp, True,))
+next_tstampthread = threading.Thread(target=rotate_timestamp, args=(next_tstamp, True,))
 
 #dailydeal_tstamp = queue.Queue()
 dailydeal_tstamp = []
-dailydeal_tstampthread = threading.Thread(target=rotate_timestamp, args=(AllTheDeals, dailydeal_tstamp, False))
+dailydeal_tstampthread = threading.Thread(target=rotate_timestamp_from_dict, args=(AllTheDeals, dailydeal_tstamp, False))
 
 #dailydeal = queue.Queue()
 dailydeal = []
