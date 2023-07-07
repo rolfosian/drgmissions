@@ -102,7 +102,7 @@ def user_input_set_target_date(current_time):
             else:
                 print("Please enter a date and time ahead of the current time.")
         except Exception:
-            print("Invalid date format. Please enter the date in the format (YYY-MM-DD).")
+            print("Invalid date format. Please enter the date in the format (YYYY-MM-DD).")
     print('\n')
     return user_date
 

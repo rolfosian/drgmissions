@@ -96,8 +96,7 @@ def check_missions_keys(dictionary):
             for mission in value['Biomes'][biome]:
                 key_count = len(list(mission.keys()))
                 if key_count not in [6, 7, 8]:
-                    missions_keys.append(f'{key}: {biome}')
-                                         
+                    missions_keys.append(f'{key}: {biome}')       
     if missions_keys:
         print('Invalid number of keys in:')
         for key in missions_keys:
@@ -105,6 +104,23 @@ def check_missions_keys(dictionary):
     else:
         print('No sum of missions keys outside range')
 
+def check_missions_length_complexity(dictionary):
+    missions_keys = []
+    for key, value in dictionary.items():
+        biomes = []
+        for biome, missions in value['Biomes'].items():
+            biomes.append(biome)
+        for biome in biomes:
+            for mission in value['Biomes'][biome]:
+                if mission['Complexity'] == 'Indefinite' or mission['Length'] == 'Indefinite':
+                    missions_keys.append(f'{key}: {biome}')       
+    if missions_keys:
+        print('Indefinite complexity or length for mission(s) in:')
+        for key_biome in missions_keys:
+            print(f'Key and Biome: {key_biome}')
+    else:
+        print('No indefinite complexities or lengths found.')
+        
 # with open('drgmissionsgod.json', 'r') as f:
 #     DRG = f.read()
 #     DRG = json.loads(DRG)

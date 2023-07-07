@@ -5,7 +5,7 @@ from time import sleep
 import os
 import datetime
 import json
-from drgmissions_validator import order_dictionary_by_date, reconstruct_dictionary, find_duplicates, check_sum_of_missions, check_missions_keys
+from drgmissions_validator import order_dictionary_by_date, reconstruct_dictionary, find_duplicates, check_sum_of_missions, check_missions_keys, check_missions_length_complexity
 import winreg
 import re
 
@@ -68,7 +68,7 @@ def user_input_set_target_date(current_time):
             else:
                 print("Please enter a date and time ahead of the current time.")
         except Exception:
-            print("Invalid date format. Please enter the date in the format (YYY-MM-DD).")
+            print("Invalid date format. Please enter the date in the format (YYYY-MM-DD).")
     return user_date
 
 def main():
@@ -180,6 +180,7 @@ def main():
     find_duplicates(DRG)
     check_sum_of_missions(DRG)
     check_missions_keys(DRG)
+    check_missions_length_complexity(DRG)
 
     #Pause to allow user to check terminal for output
     input('Press enter to exit...')
