@@ -167,7 +167,7 @@ def rotate_biomes(DRG, tstamp_Queue, biomes_Queue, rendering_event):
     def array_biomes(Biomes, timestamp):
         Biomes1 = {}
         for biome in Biomes.keys():
-            Biomes1[biome] = []
+            Biomes1[biome] = {}
             for mission in Biomes[biome]:
                 mission0 = {}
                 mission0['CodeName'] = mission['CodeName']
@@ -177,7 +177,7 @@ def rotate_biomes(DRG, tstamp_Queue, biomes_Queue, rendering_event):
                 etag = hashlib.md5(mission_icon.getvalue()).hexdigest()
                 mission0['etag'] = etag
                 mission0['rendered_mission'] = mission_icon
-                Biomes1[biome].append(mission0)
+                Biomes1[biome][mission['id']] = mission0
         return timestamp, Biomes1
     
     while len(tstamp_Queue) == 0:
@@ -279,6 +279,7 @@ def render_biomes(Biomes):
         for mission in missions:
             mission1 = {}
             mission1['CodeName'] = mission['CodeName']
+            mission1['id'] = mission['id']
             mission_png = render_mission(mission, six)
             mission1['rendered_mission'] = mission_png
             biome1.append(mission1)
@@ -315,13 +316,11 @@ def scanners(html):
 def array_standard_missions(Biomes, biome_str, html, nextindex):
     html += '         <br>\n'
     url_biome = biome_str.replace(' ', '%20')
-    img_count = 0
     for mission in Biomes[biome_str]:
-        img_count += 1
         if nextindex:
-            fname = f'/upcoming_png?img={url_biome}_{str(img_count)}'
+            fname = f'/upcoming_png?img={url_biome}_{str(mission["id"])}'
         else:
-            fname = f'/png?img={url_biome}_{str(img_count)}'
+            fname = f'/png?img={url_biome}_{str(mission["id"])}'
         html += f'          <div class="mission-hover-zoom"><img class="mission" src="{fname}"></div>\n'
     return html
 def array_dd_missions(dds, dd_str, stg_count, html):
@@ -406,11 +405,17 @@ def render_index(timestamp, next_timestamp, DDs):
             }
             const countdownElement1 = document.getElementById('countdown');
             let isReloading = false;
+            let isWindowFocused = true; 
             const countdownTimer1 = setInterval(updateCountdown1, 1000);
-
+            window.addEventListener('focus', function() {
+                isWindowFocused = true;
+            });
+            window.addEventListener('blur', function() {
+                isWindowFocused = false;
+            });
             function updateCountdown1() {
                 const remainingTime1 = Math.floor(((targetTime1 - new Date() + 2) / 1000));
-                if (remainingTime1 < 0 && !isReloading) {
+                if (remainingTime1 < 0 && !isReloading && isWindowFocused) {
                     clearInterval(countdownTimer1);
                     isReloading = true;
                     location.reload();
@@ -423,11 +428,10 @@ def render_index(timestamp, next_timestamp, DDs):
             }
         });
         document.addEventListener("DOMContentLoaded", function () {
-            const targetHour = 0; // Adjust the target hour to 0 for midnight
+            const targetHour = 0;
             let targetTime = new Date();
             targetTime.setUTCHours(targetHour, 0, 0, 0);
             targetTime.setUTCDate(targetTime.getUTCDate() + 1);
-
             const countdownTimer = setInterval(() => {
                 const now = Date.now();
                 const remainingTime = targetTime.getTime() - now;
@@ -442,7 +446,6 @@ def render_index(timestamp, next_timestamp, DDs):
                     document.getElementById("DailyDealcountdown").innerHTML = formattedTime;
                 }
             }, 1000);
-
             function padZero(number) {
                 return number.toString().padStart(2, "0");
             }
@@ -508,7 +511,19 @@ def render_index(timestamp, next_timestamp, DDs):
                 backgroundbutton.textContent = "Show background";
                 video.pause();
             }
-        };        
+        };
+        function equalizeGridItems() {
+        if (window.matchMedia("(min-width: 1440px)").matches) {
+            const gridItems = document.querySelectorAll('.biome-container');
+            let maxHeight = 0;
+            gridItems.forEach(item => {
+            maxHeight = Math.max(maxHeight, item.offsetHeight);
+            });
+            gridItems.forEach(item => {
+            item.style.height = `${maxHeight}px`;
+            });
+        }
+        }
         function toggleButtons() {
             var buttonsbutton = document.getElementById('buttonsbutton');
             var backgroundbutton = document.getElementById('backgroundButton');
@@ -543,6 +558,7 @@ def render_index(timestamp, next_timestamp, DDs):
             if (loadingElement) {
             loadingElement.style.display = 'none';
             }
+            equalizeGridItems();
             var current = document.getElementById("current");
             current.classList.toggle("collapsed");
             toggleCollapse();
@@ -923,28 +939,13 @@ def serve_img():
     try:
         img_arg = img_arg.split('_')
         biomestr = img_arg[0].replace('%20', ' ')
-        img_index_ = int(img_arg[1])
-        start_time = time.time()
-        while True:
-            try:
-                Biomes = currybiomes[0]
-                break
-            except Exception:
-                if time.time() - start_time > 4:
-                    return 'Response Timeout', 408
-                continue
-        count = 0
-        for mission in Biomes[biomestr]:
-            count += 1
-            if count == img_index_:
-                if request.headers.get('If-None-Match') == mission['etag']:
-                    return '', 304
-                mission1 = BytesIO()
-                mission1.write(mission['rendered_mission'].getvalue())
-                mission1.seek(0)
-                response = make_response(send_file(mission1, mimetype='image/png'))
-                response.headers['ETag'] = mission['etag']
-                return response
+        mission = currybiomes[0][biomestr][int(img_arg[1])]
+        if request.headers.get('If-None-Match') == mission['etag']:
+            return '', 304
+        mission1 = BytesIO()
+        mission1.write(mission['rendered_mission'].getvalue())
+        mission1.seek(0)
+        return send_file(mission1, mimetype='image/png', etag=mission['etag'])
     except Exception:
         return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
 
@@ -954,72 +955,42 @@ def serve_next_img():
     try:
         img_arg = img_arg.split('_')
         biomestr = img_arg[0].replace('%20', ' ')
-        img_index_ = int(img_arg[1])
-        start_time = time.time()
-        while True:
-            try:
-                Biomes = nextbiomes[0]
-                break
-            except Exception:
-                if time.time() - start_time > 4:
-                    return 'Response Timeout', 408
-                continue
-        count = 0
-        for mission in Biomes[biomestr]:
-            count += 1
-            if count == img_index_:
-                if request.headers.get('If-None-Match') == mission['etag']:
-                    return '', 304
-                mission1 = BytesIO()
-                mission1.write(mission['rendered_mission'].getvalue())
-                mission1.seek(0)
-                response = make_response(send_file(mission1, mimetype='image/png'))
-                response.headers['ETag'] = mission['etag']
-                return response
+        mission = nextbiomes[0][biomestr][int(img_arg[1])]
+        if request.headers.get('If-None-Match') == mission['etag']:
+            return '', 304
+        mission1 = BytesIO()
+        mission1.write(mission['rendered_mission'].getvalue())
+        mission1.seek(0)
+        return send_file(mission1, mimetype='image/png', etag=mission['etag'])
     except Exception:
         return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
 
 @app.route('/dailydeal')
 def serve_dailydeal_png():
     try:
-        start_time = time.time()
-        while True:
-            try:
-                daily_deal = dailydeal[0]
-                break
-            except Exception:
-                if time.time() - start_time > 4:
-                    return 'Response Timeout', 408
-                continue
-        if request.headers.get('If-None-Match') == daily_deal['etag']:
+        if request.headers.get('If-None-Match') == dailydeal[0]['etag']:
             return '', 304
-        daily_deal1 = BytesIO()
-        daily_deal1.write(daily_deal['rendered_dailydeal'].getvalue())
-        daily_deal1.seek(0)
-        response = make_response(send_file(daily_deal1, mimetype='image/png'))
-        response.headers['ETag'] = daily_deal['etag']
-        return response
+        dailydeal1 = BytesIO()
+        dailydeal1.write(dailydeal[0]['rendered_dailydeal'].getvalue())
+        dailydeal1.seek(0)
+        return send_file(dailydeal1, mimetype='image/png', etag=dailydeal[0]['etag'])
     except Exception:
         return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
-    
+
 @app.route('/json')
 def serve_json():
     json_arg = request.args.get('data')
-    if json_arg:
-        if json_arg == 'bulkmissions':
-            return jsonify(DRG)
-        elif json_arg == 'DD':
-            return jsonify(DDs[0])
-        elif json_arg == 'current':
-            return jsonify(DRG[tstamp[0]])
-        elif json_arg == 'next':
-            return jsonify(DRG[next_tstamp[0]])
-        elif json_arg == 'dailydeal':
-            return jsonify(AllTheDeals[dailydeal_tstamp[0]])
-        else:
-            return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
-    else:
-        return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
+    try:
+        json_args = {
+        'bulkmissions': DRG,
+        'DD': DDs[0],
+        'current': DRG[tstamp[0]],
+        'next': DRG[next_tstamp[0]],
+        'dailydeal': AllTheDeals[dailydeal_tstamp[0]]
+        }
+        return jsonify(json_args[json_arg])
+    except Exception:
+        return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404   
 
 with open('token.txt', 'r') as f:
     AUTH_TOKEN = f.read().strip()
