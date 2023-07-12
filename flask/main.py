@@ -109,11 +109,13 @@ def rotate_dailydeal(AllTheDeals, tstamp_Queue, deal_Queue):
     rendered_dailydeal = render_dailydeal(deal_dict)
     DailyDeal = BytesIO()
     rendered_dailydeal.save(DailyDeal, format='PNG')
+    rendered_dailydeal.close()
     DailyDeal.seek(0)
     etag = hashlib.md5(DailyDeal.getvalue()).hexdigest()
     dailydeal['rendered_dailydeal'] = DailyDeal
     dailydeal['etag'] = etag
     deal_Queue.append(dailydeal)
+    del dailydeal
     timestamp = tstamp_Queue[0]
     while True:
         #applicable_timestamp = tstamp_Queue.queue[0]
@@ -124,12 +126,14 @@ def rotate_dailydeal(AllTheDeals, tstamp_Queue, deal_Queue):
             rendered_dailydeal = render_dailydeal(deal_dict)
             DailyDeal = BytesIO()
             rendered_dailydeal.save(DailyDeal, format='PNG')
+            rendered_dailydeal.close()
             DailyDeal.seek(0)
             etag = hashlib.md5(DailyDeal.getvalue()).hexdigest()
             dailydeal['rendered_dailydeal'] = DailyDeal
             dailydeal['etag'] = etag
             deal_Queue.append(dailydeal)
             deal_Queue.pop(0)
+            del dailydeal
             timestamp = applicable_timestamp
         sleep(0.75)
     
@@ -173,6 +177,7 @@ def rotate_biomes(DRG, tstamp_Queue, biomes_Queue, rendering_event):
                 mission0['CodeName'] = mission['CodeName']
                 mission_icon = BytesIO()
                 mission['rendered_mission'].save(mission_icon, format='PNG')
+                mission['rendered_mission'].close()
                 mission_icon.seek(0)
                 etag = hashlib.md5(mission_icon.getvalue()).hexdigest()
                 mission0['etag'] = etag
@@ -188,6 +193,7 @@ def rotate_biomes(DRG, tstamp_Queue, biomes_Queue, rendering_event):
     timestamp, Biomes = array_biomes(Biomes, tstamp_Queue[0])
     biomes_Queue.append(Biomes)
     rendering_event.set()
+    del Biomes
     while True:
         applicable_timestamp = tstamp_Queue[0]
         if applicable_timestamp != timestamp:
@@ -198,6 +204,7 @@ def rotate_biomes(DRG, tstamp_Queue, biomes_Queue, rendering_event):
                 biomes_Queue.append(Biomes)
                 biomes_Queue.pop(0)
                 rendering_event.set()
+                del Biomes
         sleep(0.25)
 
 def rotate_DDs(DDs):
@@ -230,6 +237,7 @@ def rotate_DDs(DDs):
                 img_count += 1
                 fname = str(img_count)
                 mission.save(f'./files/{folder_name}/{fname}.png')
+                mission.close()
             dd_str = 'Deep Dive Elite'
             img_count = 0
             folder_name = dd_str.replace(' ', '_')
@@ -240,6 +248,8 @@ def rotate_DDs(DDs):
                 img_count += 1
                 fname = str(img_count)
                 mission.save(f'./files/{folder_name}/{fname}.png')
+                mission.close()
+            del dds
         sleep(0.25)
 
 #def wrap_missions_executor(missions):
@@ -280,8 +290,8 @@ def render_biomes(Biomes):
             mission1 = {}
             mission1['CodeName'] = mission['CodeName']
             mission1['id'] = mission['id']
-            mission_png = render_mission(mission, six)
-            mission1['rendered_mission'] = mission_png
+            #mission_png = render_mission(mission, six)
+            mission1['rendered_mission'] = render_mission(mission, six)
             biome1.append(mission1)
         rendered_biomes[biome] = biome1
     return rendered_biomes
@@ -310,9 +320,6 @@ def render_deepdives(DeepDives):
             rendered_deepdives[t]['Stages'].append(stage_png)
     return rendered_deepdives
 
-def scanners(html):
-    html += '          <br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
-    return html
 def array_standard_missions(Biomes, biome_str, html, nextindex):
     html += '         <br>\n'
     url_biome = biome_str.replace(' ', '%20')
@@ -357,7 +364,15 @@ def render_index(timestamp, next_timestamp, DDs):
         <head>
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
         <script>
+        function scrollToTop() {
         window.scrollTo(0, 0);
+        }
+        $(document).ready(function() {
+        $('img').on('load', function() {
+            scrollToTop();
+        });
+        scrollToTop();
+        });
         document.addEventListener("DOMContentLoaded", function () {
             const targetDay = 4;
             const targetHour = 11;
@@ -608,7 +623,7 @@ def render_index(timestamp, next_timestamp, DDs):
             <div class="biome-container">
              <img title="Glacial Strata" class="image-container" src="/files/DeepDive_MissionBar_GlacialStrata.png">\n'''
     if 'Glacial Strata' not in Biomes.keys():
-        html = scanners(html)
+        html += '          <br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
         html = array_standard_missions(Biomes, 'Glacial Strata', html, nextindex)
     html += '''        </div>
@@ -617,7 +632,7 @@ def render_index(timestamp, next_timestamp, DDs):
             <div class="biome-container">
              <img title="Crystalline Caverns" class="image-container" src="/files/DeepDive_MissionBar_CrystalCaves.png">\n'''
     if 'Crystalline Caverns' not in Biomes.keys():
-        html = scanners(html)
+        html += '          <br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
         html = array_standard_missions(Biomes, 'Crystalline Caverns', html, nextindex)
     html += '''        </div>
@@ -626,7 +641,7 @@ def render_index(timestamp, next_timestamp, DDs):
         <div class="biome-container">
          <img title="Salt Pits" class="image-container" src="/files/DeepDive_MissionBar_SaltPits.png">\n'''
     if 'Salt Pits' not in Biomes.keys():
-        html = scanners(html)
+        html += '          <br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
         html = array_standard_missions(Biomes, 'Salt Pits', html, nextindex)
     html += '''        </div>
@@ -635,7 +650,7 @@ def render_index(timestamp, next_timestamp, DDs):
         <div class="biome-container">
          <img title="Magma Core" class="image-container" src="/files/DeepDive_MissionBar_MagmaCore.png">\n'''
     if 'Magma Core' not in Biomes.keys():
-        html = scanners(html)
+        html += '          <br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
         html = array_standard_missions(Biomes, 'Magma Core', html, nextindex)
     html += '''        </div>
@@ -644,7 +659,7 @@ def render_index(timestamp, next_timestamp, DDs):
             <div class ="biome-container">
              <img title="Azure Weald" class="image-container" src="/files/DeepDive_MissionBar_AzureWeald.png">\n'''
     if 'Azure Weald' not in Biomes.keys():
-        html = scanners(html)
+        html += '          <br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
         html = array_standard_missions(Biomes, 'Azure Weald', html, nextindex)
     html += '''        </div>
@@ -653,7 +668,7 @@ def render_index(timestamp, next_timestamp, DDs):
             <div class ="biome-container">
              <img title="Sandblasted Corridors" class="image-container" src="/files/DeepDive_MissionBar_Sandblasted.png">\n'''
     if 'Sandblasted Corridors' not in Biomes.keys():
-        html = scanners(html)
+        html += '          <br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
         html = array_standard_missions(Biomes, 'Sandblasted Corridors', html, nextindex)
     html += '''        </div>
@@ -662,7 +677,7 @@ def render_index(timestamp, next_timestamp, DDs):
             <div class = "biome-container">
              <img title="Fungus Bogs" class="image-container" src="/files/DeepDive_MissionBar_FungusBogs.png">\n'''
     if 'Fungus Bogs' not in Biomes.keys():
-        html = scanners(html)
+        html += '          <br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
         html = array_standard_missions(Biomes, 'Fungus Bogs', html, nextindex)
     html += '''        </div>
@@ -671,7 +686,7 @@ def render_index(timestamp, next_timestamp, DDs):
             <div class ="biome-container">
              <img title="Radioactive Exclusion Zone" class="image-container" src="/files/DeepDive_MissionBar_Radioactive.png">\n'''
     if 'Radioactive Exclusion Zone' not in Biomes.keys():
-        html = scanners(html)
+        html += '          <br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
         html = array_standard_missions(Biomes, 'Radioactive Exclusion Zone', html, nextindex)
     html += '''        </div>
@@ -680,7 +695,7 @@ def render_index(timestamp, next_timestamp, DDs):
             <div class ="biome-container">
              <img title="Dense Biozone" class="image-container" src="/files/DeepDive_MissionBar_LushDownpour.png">\n'''
     if 'Dense Biozone' not in Biomes.keys():
-        html = scanners(html)
+        html += '          <br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
         html = array_standard_missions(Biomes, 'Dense Biozone', html, nextindex)
     html += '''        </div>
@@ -689,7 +704,7 @@ def render_index(timestamp, next_timestamp, DDs):
             <div class ="biome-container">
              <img title="Hollow Bough" class="image-container" src="/files/DeepDive_MissionBar_HollowBough.png">\n'''
     if 'Hollow Bough' not in Biomes.keys():
-        html = scanners(html)
+        html += '          <br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
         html = array_standard_missions(Biomes, 'Hollow Bough', html, nextindex)
     html += '''       </h2>
@@ -702,7 +717,7 @@ def render_index(timestamp, next_timestamp, DDs):
             <div class="biome-container">
              <img title="Glacial Strata" class="image-container" src="/files/DeepDive_MissionBar_GlacialStrata.png">\n'''
     if 'Glacial Strata' not in next_Biomes.keys():
-        html = scanners(html)
+        html += '          <br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
         html = array_standard_missions(next_Biomes, 'Glacial Strata', html, nextindex)
     html += '''        </div>
@@ -711,7 +726,7 @@ def render_index(timestamp, next_timestamp, DDs):
             <div class="biome-container">
              <img title="Crystalline Caverns" class="image-container" src="/files/DeepDive_MissionBar_CrystalCaves.png">\n'''
     if 'Crystalline Caverns' not in next_Biomes.keys():
-        html = scanners(html)
+        html += '          <br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
         html = array_standard_missions(next_Biomes, 'Crystalline Caverns', html, nextindex)
     html += '''        </div>
@@ -720,7 +735,7 @@ def render_index(timestamp, next_timestamp, DDs):
         <div class="biome-container">
          <img title="Salt Pits" class="image-container" src="/files/DeepDive_MissionBar_SaltPits.png">\n'''
     if 'Salt Pits' not in next_Biomes.keys():
-        html = scanners(html)
+        html += '          <br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
         html = array_standard_missions(next_Biomes, 'Salt Pits', html, nextindex)
     html += '''        </div>
@@ -729,7 +744,7 @@ def render_index(timestamp, next_timestamp, DDs):
         <div class="biome-container">
          <img title="Magma Core" class="image-container" src="/files/DeepDive_MissionBar_MagmaCore.png">\n'''
     if 'Magma Core' not in next_Biomes.keys():
-        html = scanners(html)
+        html += '          <br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
         html = array_standard_missions(next_Biomes, 'Magma Core', html, nextindex)
     html += '''        </div>
@@ -738,7 +753,7 @@ def render_index(timestamp, next_timestamp, DDs):
             <div class ="biome-container">
              <img title="Azure Weald" class="image-container" src="/files/DeepDive_MissionBar_AzureWeald.png">\n'''
     if 'Azure Weald' not in next_Biomes.keys():
-        html = scanners(html)
+        html += '          <br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
         html = array_standard_missions(next_Biomes, 'Azure Weald', html, nextindex)
     html += '''        </div>
@@ -747,7 +762,7 @@ def render_index(timestamp, next_timestamp, DDs):
             <div class ="biome-container">
              <img title="Sandblasted Corridors" class="image-container" src="/files/DeepDive_MissionBar_Sandblasted.png">\n'''
     if 'Sandblasted Corridors' not in next_Biomes.keys():
-        html = scanners(html)
+        html += '          <br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
         html = array_standard_missions(next_Biomes, 'Sandblasted Corridors', html, nextindex)
     html += '''        </div>
@@ -756,7 +771,7 @@ def render_index(timestamp, next_timestamp, DDs):
             <div class = "biome-container">
              <img title="Fungus Bogs" class="image-container" src="/files/DeepDive_MissionBar_FungusBogs.png">\n'''
     if 'Fungus Bogs' not in next_Biomes.keys():
-        html = scanners(html)
+        html += '          <br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
         html = array_standard_missions(next_Biomes, 'Fungus Bogs', html, nextindex)
     html += '''        </div>
@@ -765,7 +780,7 @@ def render_index(timestamp, next_timestamp, DDs):
             <div class ="biome-container">
              <img title="Radioactive Exclusion Zone" class="image-container" src="/files/DeepDive_MissionBar_Radioactive.png">\n'''
     if 'Radioactive Exclusion Zone' not in next_Biomes.keys():
-        html = scanners(html)
+        html += '          <br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
         html = array_standard_missions(next_Biomes, 'Radioactive Exclusion Zone', html, nextindex)
     html += '''        </div>
@@ -774,7 +789,7 @@ def render_index(timestamp, next_timestamp, DDs):
             <div class ="biome-container">
              <img title="Dense Biozone" class="image-container" src="/files/DeepDive_MissionBar_LushDownpour.png">\n'''
     if 'Dense Biozone' not in next_Biomes.keys():
-        html = scanners(html)
+        html += '          <br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
         html = array_standard_missions(next_Biomes, 'Dense Biozone', html, nextindex)
     html += '''        </div>
@@ -783,7 +798,7 @@ def render_index(timestamp, next_timestamp, DDs):
             <div class ="biome-container">
              <img title="Hollow Bough" class="image-container" src="/files/DeepDive_MissionBar_HollowBough.png">\n'''
     if 'Hollow Bough' not in next_Biomes.keys():
-        html = scanners(html)
+        html += '          <br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
         html = array_standard_missions(next_Biomes, 'Hollow Bough', html, nextindex)
     img_count = 0
