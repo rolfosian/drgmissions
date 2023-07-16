@@ -67,13 +67,13 @@ def render_daily_deal_bubble(changepercent, dealtype):
         CHANGEPERCENT = ImageDraw.Draw(BUBBLE)
         text_x, text_y = calc_text_center(BUBBLE.width, BUBBLE.height, text, font, font_size)
         CHANGEPERCENT.text((text_x, text_y-15), text, font=font, fill=(0, 0, 0))
+        del CHANGEPERCENT
         SAVINGS_PROFIT = ImageDraw.Draw(BUBBLE)
         font_size = 30
         font = ImageFont.truetype(font_path, font_size)
         savings_x, savings_y = calc_text_center(BUBBLE.width, BUBBLE.height, save_profit[dealtype], font, font_size)
         SAVINGS_PROFIT.text((savings_x, savings_y+38), save_profit[dealtype], font=font, fill=(0, 0, 0))
     del SAVINGS_PROFIT
-    del CHANGEPERCENT
     return BUBBLE
 
 def render_daily_deal_resource_and_amount(resources, resource, resourceamount):

@@ -6,7 +6,7 @@ import json
 from time import sleep
 import time 
 #import subprocess
-from datetime import datetime #, timezone, timedelta
+from datetime import datetime, timedelta
 import shutil
 from dateutil import parser
 from flask import Flask, render_template_string, request, send_file, jsonify, make_response
@@ -15,6 +15,7 @@ import threading
 import glob
 from io import BytesIO
 import hashlib
+import gc
 #import sys
 #from concurrent.futures import ThreadPoolExecutor, as_completed, wait
 
@@ -34,23 +35,57 @@ def order_dictionary_by_date(dictionary):
         ordered_dictionary[key] = dictionary[key]
     return ordered_dictionary
 
+#def round_time(current_time, next_):
+    #rounded_time = current_time.replace(second=0, microsecond=0)
+    #current_year, current_month, current_day, current_hour, current_minute, current_second = current_time.year, current_time.month, current_time.day, current_time.hour, current_time.minute, current_time.second
+    #days_in_month = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    #if next_:
+        #if rounded_time.minute < 30:
+            #rounded_time = rounded_time.replace(minute=30)
+        #else:
+            #if rounded_time.hour == 23:
+                #try:
+                    #rounded_time = rounded_time.replace(minute=0, hour=(rounded_time.hour + 1) % 24, day=(rounded_time.day + 1))
+                #except ValueError:
+                    #rounded_time = rounded_time.replace(minute=0, hour=(rounded_time.hour + 1) % 24)
+                    #current_day += 1
+                    #current_month += 1
+                    #if current_month > 12:
+                        #rounded_time = rounded_time.replace(month=current_month-12, year=current_year+1, day=1)
+                    #else:
+                        #if rounded_time.month == 2 and current_year % 4 == 0 and (current_year % 100 != 0 or current_year % 400 == 0):
+                            #days_in_month[1] = 29
+                        #if current_day > days_in_month[rounded_time.month - 1]:
+                            #current_day = rounded_time.day - days_in_month[rounded_time.month - 1]
+                            #rounded_time = rounded_time.replace(day=1)
+                            #rounded_time = rounded_time.replace(month=current_month)
+                    
+            #else:
+                #rounded_time = rounded_time.replace(minute=0, hour=(rounded_time.hour + 1) % 24)
+    #else:
+        #if current_time.minute < 30:
+            #rounded_time = rounded_time.replace(minute=0)
+        #else:
+            #rounded_time = rounded_time.replace(minute=30)
+        
+    #rounded_time_str = rounded_time.strftime("%Y-%m-%dT%H:%M:%SZ")
+    #return rounded_time_str
+#def select_timestamp(next_):
+    #current_time = datetime.utcnow()
+    #rounded_time_str = round_time(current_time, next_)
+    #return rounded_time_str
+
+def round_time(current_time, next_):
+    if next_:
+        rounded_time = current_time + timedelta(minutes=30) - timedelta(minutes=current_time.minute % 30)
+    else:
+        rounded_time = current_time - timedelta(minutes=current_time.minute % 30)
+    rounded_time = rounded_time.replace(second=0)
+    rounded_time_str = rounded_time.strftime("%Y-%m-%dT%H:%M:%SZ")
+    return rounded_time_str
 def select_timestamp(next_):
     current_time = datetime.utcnow()
-    rounded_time = current_time.replace(second=0, microsecond=0)
-    if next_:
-        if rounded_time.minute < 30:
-            rounded_time = rounded_time.replace(minute=30)
-        else:
-            if current_time.hour == 23:
-                rounded_time = rounded_time.replace(minute=0, hour=(rounded_time.hour + 1) % 24, day=(rounded_time.day + 1))
-            else:
-                rounded_time = rounded_time.replace(minute=0, hour=(rounded_time.hour + 1) % 24)
-    else:
-        if rounded_time.minute < 30:
-            rounded_time = rounded_time.replace(minute=0)
-        else:
-            rounded_time = rounded_time.replace(minute=30)
-    rounded_time_str = rounded_time.strftime("%Y-%m-%dT%H:%M:%SZ")
+    rounded_time_str = round_time(current_time, next_)
     return rounded_time_str
 
 def select_timestamp_from_dict(dictionary, next_):
@@ -64,6 +99,11 @@ def select_timestamp_from_dict(dictionary, next_):
                 return keys[i+1]
             else:
                 return keys[i]
+        else:
+            try:
+                del dictionary[keys[i]]
+            except KeyError:
+                pass
 
 def rotate_timestamp(tstamp_Queue, next_):
     applicable_timestamp = select_timestamp(next_=next_)
@@ -79,6 +119,7 @@ def rotate_timestamp(tstamp_Queue, next_):
         
 def rotate_timestamp_from_dict(dictionary, tstamp_Queue, next_):
     applicable_timestamp = select_timestamp_from_dict(dictionary, next_=next_)
+    gc.collect()
     tstamp_Queue.append(applicable_timestamp)
     timestamp = tstamp_Queue[0]
     while True:
@@ -121,6 +162,7 @@ def rotate_dailydeal(AllTheDeals, tstamp_Queue, deal_Queue):
         #applicable_timestamp = tstamp_Queue.queue[0]
         applicable_timestamp = tstamp_Queue[0]
         if applicable_timestamp != timestamp:
+            del AllTheDeals[timestamp]
             deal_dict = AllTheDeals[applicable_timestamp]
             dailydeal = {}
             rendered_dailydeal = render_dailydeal(deal_dict)
@@ -182,7 +224,7 @@ def rotate_biomes(DRG, tstamp_Queue, biomes_Queue, rendering_event):
                 etag = hashlib.md5(mission_icon.getvalue()).hexdigest()
                 mission0['etag'] = etag
                 mission0['rendered_mission'] = mission_icon
-                Biomes1[biome][mission['id']] = mission0
+                Biomes1[biome][str(mission['id'])] = mission0
         return timestamp, Biomes1
     
     while len(tstamp_Queue) == 0:
@@ -226,7 +268,13 @@ def rotate_DDs(DDs):
                 DDs.append(dds)
                 DDs.pop(0)
             dds = dds['Deep Dives']
-            dds = render_deepdives(dds)
+            try:
+                dds = render_deepdives(dds)
+            except Exception:
+                sleep(0.5)
+                continue
+            if len(json_list) > 1:
+                os.remove(json_list[1])
             dd_str = 'Deep Dive Normal'
             img_count = 0
             folder_name = dd_str.replace(' ', '_')
@@ -610,12 +658,12 @@ def render_index(timestamp, next_timestamp, DDs):
         <div class="overlay"></div>
         <p class="loading">Loading</p>
         <div id="countdowncontainer">
-            <button id="backgroundButton">Hide background</button><button id="buttonsbutton">x</button><br>
-            <div id=DAILYDEAL><div id="dailydealhead">NEW DAILY DEAL IN<br><span id="DailyDealcountdown"></span></div><img id="DailyDeal" class="daily_trade" src="/dailydeal"></div>
-            <button id="dailydealbutton">Click here to see Daily Deal</button><br>
-            <div id="missionscountdown">NEW MISSIONS IN<br>
-            <span id="countdown"></span></div><button id="slideButton">Hide countdown</button><br>
-            <button id="currentButton">Click here to see upcoming missions</button>
+        <button id="backgroundButton">Hide background</button><button id="buttonsbutton">x</button><br>
+        <div id=DAILYDEAL><div id="dailydealhead">NEW DAILY DEAL IN<br><span id="DailyDealcountdown"></span></div><img id="DailyDeal" class="daily_trade" src="/dailydeal"></div>
+        <button id="dailydealbutton">Click here to see Daily Deal</button><br>
+        <div id="missionscountdown">NEW MISSIONS IN<br>
+        <span id="countdown"></span></div><button id="slideButton">Hide countdown</button><br>
+        <button id="currentButton">Click here to see upcoming missions</button>
         </div>
         <div id="current">\n'''
     html += '''      <div class="grid-container">
@@ -825,7 +873,7 @@ def render_index(timestamp, next_timestamp, DDs):
                <hr>
             </div>
               <div class="jsonc">
-             <div class="jsonlinks"><span><a class="jsonlink" href="/json?data=bulkmissions">FULL MISSION DATA</a> <a class="jsonlink" href="/json?data=current">CURRENT MISSION DATA</a> <a class="jsonlink" href="/json?data=next">UPCOMING MISSION DATA</a> <a class="jsonlink" href="/json?data=DD">CURRENT DD DATA</a> <a class="jsonlink" href="/json?data=dailydeal">CURRENT DAILY DEAL DATA</a></span></div>
+             <div class="jsonlinks"><span style="color: white;font-size: 30px;font-family: "BebasNeue", sans-serif;"> <a class="jsonlink" href="/json?data=current">CURRENT MISSION DATA</a> | <a class="jsonlink" href="/json?data=next">UPCOMING MISSION DATA</a> | <a class="jsonlink" href="/json?data=DD">CURRENT DEEP DIVE DATA</a> | <a class="jsonlink" href="/json?data=dailydeal">CURRENT DAILY DEAL DATA</a> |</span></div>
                <span class="credits">Send credits (eth): 0xb9c8591A80A3158f7cFFf96EC3c7eA9adB7818E7</span></div>
               <p class='gsgdisclaimer'><i>This website is a third-party platform and is not affiliated, endorsed, or sponsored by Ghost Ship Games. The use of Deep Rock Galactic's in-game assets on this website is solely for illustrative purposes and does not imply any ownership or association with the game or its developers. All copyrights and trademarks belong to their respective owners. For official information about Deep Rock Galactic, please visit the official Ghost Ship Games website.</i></p></div>
         </body>
@@ -860,11 +908,8 @@ def rotate_index(DRG, rendering_event, rendering_event_next, current_timestamp_Q
         sleep(0.33)
 
 with open('drgmissionsgod.json', 'r') as f:
-    DRG = f.read()
+    DRG = json.load(f)
     f.close()
-DRG = DRG.replace(':02Z', ':00Z')
-DRG = json.loads(DRG)
-DRG = order_dictionary_by_date(DRG)
 
 with open('drgdailydeals.json', 'r') as f:
     AllTheDeals = f.read()
@@ -910,6 +955,21 @@ index_thread = threading.Thread(target=rotate_index, args=(DRG, rendering_event,
 
 wait_rotationthread = threading.Thread(target=wait_rotation, args=(rendering_event, rendering_event_next, index_event))
 
+#def GARBAGE():
+    #while True:
+        #sleep(43200)
+        #gc.collect()
+#GARBAGE_thread = threading.Thread(target=GARBAGE)
+
+def SERVER_READY(index_event):
+    index_event.wait()
+    now = datetime.now()
+    formatted_datetime = now.strftime("%Y-%m-%d %H:%M:%S")
+    print(f'{formatted_datetime} DRGMISSIONS SERVER IS READY FOR REQUESTS')
+    return
+
+SERVER_READY_thread = threading.Thread(target=SERVER_READY, args=(index_event,))
+
 def start_threads():
     tstampthread.start()
     next_tstampthread.start()
@@ -926,6 +986,9 @@ def start_threads():
     
     index_thread.start()
     
+    SERVER_READY_thread.start()
+    #GARBAGE_thread.start()
+    
 #def join_threads():
     #tstampthread.join()
     #next_tstampthread.join()
@@ -936,7 +999,9 @@ def start_threads():
     #dailydeal_tstampthread.join()
     #dailydealthread.join()
     #index_thread.join()
-
+    #SERVER_READY_thread.join()
+    #GARBAGE_thread.join()
+    
 app = Flask(__name__, static_folder=f'{os.getcwd()}/files')
 
 @app.route('/')
@@ -954,13 +1019,10 @@ def serve_img():
     try:
         img_arg = img_arg.split('_')
         biomestr = img_arg[0].replace('%20', ' ')
-        mission = currybiomes[0][biomestr][int(img_arg[1])]
+        mission = currybiomes[0][biomestr][img_arg[1]]
         if request.headers.get('If-None-Match') == mission['etag']:
             return '', 304
-        mission1 = BytesIO()
-        mission1.write(mission['rendered_mission'].getvalue())
-        mission1.seek(0)
-        return send_file(mission1, mimetype='image/png', etag=mission['etag'])
+        return send_file(BytesIO(mission['rendered_mission'].getvalue()), mimetype='image/png', etag=mission['etag'])
     except Exception:
         return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
 
@@ -970,13 +1032,10 @@ def serve_next_img():
     try:
         img_arg = img_arg.split('_')
         biomestr = img_arg[0].replace('%20', ' ')
-        mission = nextbiomes[0][biomestr][int(img_arg[1])]
+        mission = nextbiomes[0][biomestr][img_arg[1]]
         if request.headers.get('If-None-Match') == mission['etag']:
             return '', 304
-        mission1 = BytesIO()
-        mission1.write(mission['rendered_mission'].getvalue())
-        mission1.seek(0)
-        return send_file(mission1, mimetype='image/png', etag=mission['etag'])
+        return send_file(BytesIO(mission['rendered_mission'].getvalue()), mimetype='image/png', etag=mission['etag'])
     except Exception:
         return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
 
@@ -985,10 +1044,7 @@ def serve_dailydeal_png():
     try:
         if request.headers.get('If-None-Match') == dailydeal[0]['etag']:
             return '', 304
-        dailydeal1 = BytesIO()
-        dailydeal1.write(dailydeal[0]['rendered_dailydeal'].getvalue())
-        dailydeal1.seek(0)
-        return send_file(dailydeal1, mimetype='image/png', etag=dailydeal[0]['etag'])
+        return send_file(BytesIO(dailydeal[0]['rendered_dailydeal'].getvalue()), mimetype='image/png', etag=dailydeal[0]['etag'])
     except Exception:
         return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
 
@@ -997,11 +1053,10 @@ def serve_json():
     json_arg = request.args.get('data')
     try:
         json_args = {
-        'bulkmissions': DRG,
-        'DD': DDs[0],
-        'current': DRG[tstamp[0]],
-        'next': DRG[next_tstamp[0]],
-        'dailydeal': AllTheDeals[dailydeal_tstamp[0]]
+            'DD': DDs[0],
+            'current': DRG[tstamp[0]],
+            'next': DRG[next_tstamp[0]],
+            'dailydeal': AllTheDeals[dailydeal_tstamp[0]]
         }
         return jsonify(json_args[json_arg])
     except Exception:
