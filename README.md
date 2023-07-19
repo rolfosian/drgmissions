@@ -25,6 +25,7 @@
 
 
 ## **TODO**
+- **Public Enemy Number One**: Check and Update Deep Dive scraper weekly to accomodate currently unknown configurations, **contingencies for if Steam misbehaves on wake**
 - ~~Contingencies for if the game doesn't terminate gracefully on 'organic' exit~~ Refer to kill process function in [this script](https://github.com/rolfosian/drgmissions/blob/main/DDs_Run.py)
 - ~~Contingencies for if the game crashes~~ Refer to timeout logic in `.*_Run.py` scripts.
 - ~~Scripts to actually launch the game and upload DD data to flask host weekly~~

@@ -162,7 +162,6 @@ def rotate_dailydeal(AllTheDeals, tstamp_Queue, deal_Queue):
         #applicable_timestamp = tstamp_Queue.queue[0]
         applicable_timestamp = tstamp_Queue[0]
         if applicable_timestamp != timestamp:
-            del AllTheDeals[timestamp]
             deal_dict = AllTheDeals[applicable_timestamp]
             dailydeal = {}
             rendered_dailydeal = render_dailydeal(deal_dict)
@@ -873,7 +872,7 @@ def render_index(timestamp, next_timestamp, DDs):
                <hr>
             </div>
               <div class="jsonc">
-             <div class="jsonlinks"><span style="color: white;font-size: 30px;font-family: "BebasNeue", sans-serif;"> <a class="jsonlink" href="/json?data=current">CURRENT MISSION DATA</a> | <a class="jsonlink" href="/json?data=next">UPCOMING MISSION DATA</a> | <a class="jsonlink" href="/json?data=DD">CURRENT DEEP DIVE DATA</a> | <a class="jsonlink" href="/json?data=dailydeal">CURRENT DAILY DEAL DATA</a> |</span></div>
+             <div class="jsonlinks"><span style="color: white;font-size: 30px;font-family: "BebasNeue", sans-serif;"> <a class="jsonlink" href="/json?data=current">CURRENT MISSION DATA</a> | <a class="jsonlink" href="/json?data=next">UPCOMING MISSION DATA</a> | <a class="jsonlink" href="/json?data=DD">CURRENT DEEP DIVE DATA</a> | <a class="jsonlink" href="/json?data=dailydeal">CURRENT DAILY DEAL DATA</a> | <a class="jsonlink" href="/xp_calculator">CLASS XP CALCULATOR</a></span> </div>
                <span class="credits">Send credits (eth): 0xb9c8591A80A3158f7cFFf96EC3c7eA9adB7818E7</span></div>
               <p class='gsgdisclaimer'><i>This website is a third-party platform and is not affiliated, endorsed, or sponsored by Ghost Ship Games. The use of Deep Rock Galactic's in-game assets on this website is solely for illustrative purposes and does not imply any ownership or association with the game or its developers. All copyrights and trademarks belong to their respective owners. For official information about Deep Rock Galactic, please visit the official Ghost Ship Games website.</i></p></div>
         </body>
@@ -1062,6 +1061,159 @@ def serve_json():
     except Exception:
         return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404   
 
+@app.route('/xp_calculator')
+def xp_calc_form():
+    return '''<!DOCTYPE html>
+<html>
+<head>
+<link rel ="icon" href="/files/favicon.ico" type="image/x-icon">
+<link rel ="stylesheet" href="/files/styles.css" type="text/css">
+<title>DRG XP Calculator</title>
+</head>
+<body bgcolor="#303030">
+<img id="background-video" src="/files/drop_pod.jpg" type="video/webm">
+<div class="overlay"></div>
+<div class="calc-grid-container">
+<form id="xpForm">
+
+<h2><div class="mission-hover-zoom"><img class="class-iconx" src="/files/class_icons/Icon_Character_Engineer.png"></div></h2>
+<label class="classcalcsub" for="engineerLevels">Level:&nbsp;</label>
+<input placeholder="1" class="calcbox" type="number" min="1" max="25" id="engineerLevels" name="engineerLevels"><br><br>
+<label class="classcalcsub" for="engineerPromotions">Promotions:&nbsp;</label>
+<input placeholder="0" class="calcbox" type="number" min="0" id="engineerPromotions" name="engineerPromotions"><br><br>
+
+
+<h2><div class="mission-hover-zoom"><img class="class-iconx" src="/files/class_icons/Icon_Character_Scout.png"></div></h2>
+<label class="classcalcsub" for="scoutLevels">Level:&nbsp;</label>
+<input placeholder="1" class="calcbox" type="number" min="1" max="25" id="scoutLevels" name="scoutLevels"><br><br>
+<label class="classcalcsub" for="scoutPromotions">Promotions:&nbsp;</label>
+<input placeholder="0" class="calcbox" type="number" min="0" id="scoutPromotions" name="scoutPromotions"><br><br>
+
+<h2><div class="mission-hover-zoom"><img class="class-iconx" src="/files/class_icons/Icon_Character_Driller.png"></div></h2>
+<label class="classcalcsub" for="drillerLevels">Level:&nbsp;</label>
+<input placeholder="1" class="calcbox" type="number" min="1" max="25" id="drillerLevels" name="drillerLevels"><br><br>
+<label class="classcalcsub" for="drillerPromotions">Promotions:&nbsp;</label>
+<input placeholder="0" class="calcbox" type="number" min="0" id="drillerPromotions" name="drillerPromotions"><br><br>
+
+<h2><div class="mission-hover-zoom"><img class="class-iconx" src="/files/class_icons/Icon_Character_Gunner.png"></div></h2>
+<label class="classcalcsub" for="gunnerLevels">Level:&nbsp;</label>
+<input placeholder="1" class="calcbox" type="number" min="1" max="25" id="gunnerLevels" name="gunnerLevels"><br><br>
+<label class="classcalcsub" for="gunnerPromotions">Promotions:&nbsp;</label>
+<input placeholder="0" class="calcbox" type="number" min="0" id="gunnerPromotions" name="gunnerPromotions"><br><br><br>
+
+
+<label class="classcalcsub" for="hours">Hours played:&nbsp;</label>
+<input placeholder="0" class="calcbox" type="number" min="0" id="hours" name="hours"><br><br>
+<input id="calcsubmit" style="color:#303030;" class="classcalcsub" type="submit" value="Calculate XP">
+<input id="reset" style="color:#303030;" class="classcalcsub" type="reset" value="Reset">
+</form>
+<p class="calcoutput" id="output"></p>
+</div>
+<hr>
+<span class="calctitle"><i>Note: To find your Classes' number of promotions, go to Options>Save Menu ingame.</i> | <a class="jsonlink" href="/xp_calc?engineer_level=1&engineer_promos=0&scout_level=1&scout_promos=0&driller_level=1&driller_promos=0&gunner_level=1&gunner_promos=0&hrs=0">XP Calculator Endpoint</a></span><br>
+<p class='gsgdisclaimer'><i>This website is a third-party platform and is not affiliated, endorsed, or sponsored by Ghost Ship Games. The use of Deep Rock Galactic's in-game assets on this website is solely for illustrative purposes and does not imply any ownership or association with the game or its developers. All copyrights and trademarks belong to their respective owners. For official information about Deep Rock Galactic, please visit the official Ghost Ship Games website.</i></p>
+<script src="/files/xp_calculator.js"></script>
+</body>
+</html>'''
+
+global class_xp_levels
+class_xp_levels = {
+    1 : 0,
+    2 : 3000,
+    3 : 7000,
+    4 : 12000,
+    5 : 18000,
+    6 : 25000,
+    7 : 33000,
+    8 : 42000,
+    9 : 52000,
+    10 : 63000,
+    11 : 75000,
+    12 : 88000,
+    13 : 102000,
+    14 : 117000,
+    15 : 132500,
+    16 : 148500,
+    17 : 165000,
+    18 : 182000,
+    19 : 199500,
+    20 : 217500,
+    21 : 236000,
+    22 : 255000,
+    23 : 274500,
+    24 : 294500,
+    25 : 315000
+}
+class Dwarf():
+    def __init__(self):
+        self.xp = 0
+        self.level = 0
+        self.promotions = 0
+        self.total_level = 0   
+    def calculate_class_xp(self, levels):
+        self.xp = levels[self.level] + (self.promotions * 315000)
+        self.total_level = self.level + (self.promotions * 25)    
+@app.route('/xp_calc')
+def xp_calc():
+    try:
+        class_levels = {
+            'engineer' : int(request.args.get('engineer_level')),
+            'scout' : int(request.args.get('scout_level')),
+            'driller' : int(request.args.get('driller_level')),
+            'gunner' : int(request.args.get('gunner_level')),
+        }
+        promos = {
+            'engineer' : int(request.args.get('engineer_promos')),
+            'scout' : int(request.args.get('scout_promos')),
+            'driller' : int(request.args.get('driller_promos')),
+            'gunner' : int(request.args.get('gunner_promos')),
+        }
+        hours_played = int(request.args.get('hrs'))
+        
+        
+        Engineer = Dwarf()
+        Engineer.level = class_levels['engineer']
+        Engineer.promotions = promos['engineer']
+        Engineer.calculate_class_xp(class_xp_levels)
+        
+        Scout = Dwarf()
+        Scout.level = class_levels['scout']
+        Scout.promotions = promos['scout']
+        Scout.calculate_class_xp(class_xp_levels)
+        
+        Driller = Dwarf()
+        Driller.level = class_levels['driller']
+        Driller.promotions = promos['driller']
+        Driller.calculate_class_xp(class_xp_levels)
+        
+        Gunner = Dwarf()
+        Gunner.level = class_levels['gunner']
+        Gunner.promotions = promos['gunner']
+        Gunner.calculate_class_xp(class_xp_levels)
+        
+        total_promotions = sum([Engineer.promotions, Scout.promotions, Driller.promotions, Gunner.promotions])
+        player_rank = round((sum([Engineer.total_level/3, Scout.total_level/3, Driller.total_level/3, Gunner.total_level/3])-0.333), 2)
+        total_xp = sum([Engineer.xp, Scout.xp, Driller.xp, Gunner.xp])
+        if hours_played == 0:
+            xp_per_hr = 0
+        else:
+            xp_per_hr = round(total_xp/hours_played, 2)
+        
+        values = {
+            'engineer_xp' : "{:,}".format(Engineer.xp),
+            'driller_xp' : "{:,}".format(Driller.xp),
+            'scout_xp' : "{:,}".format(Scout.xp),
+            'gunner_xp' : "{:,}".format(Gunner.xp),
+            'total_xp' : "{:,}".format(total_xp),
+            'total_promotions' : str(total_promotions),
+            'player_rank' : str(player_rank),
+            'xp_per_hr' : str(xp_per_hr),
+            }
+        return jsonify(values)
+    except Exception as e:
+        print(e)
+        return '<!doctype html><html lang="en"><title>400 Bad Request</title><h1>Bad Request</h1><p>The server could not understand your request. Please make sure you have entered the correct information and try again.</p>', 400
+    
 with open('token.txt', 'r') as f:
     AUTH_TOKEN = f.read().strip()
     f.close()

@@ -124,7 +124,7 @@
   display: inline-block;
   margin-bottom: 0;
   text-align: right;
-  font-size: 15px;
+  font-size: 10px;
   color: white;
   font-family: "BebasNeue", sans-serif;
   }
@@ -157,6 +157,20 @@
   color: white;
   font-size: 35px;
   font-family: "BebasNeue", sans-serif;
+  }
+  @keyframes glowing {
+  0% {
+  color: #ffffff;
+  }
+  50% {
+  color: #ff0000;
+  }
+  100% {
+  color: #ffffff;
+  }
+  }
+  .glow-text {
+  animation: glowing 2s infinite;
   }
   span#countdown {
   white-space: nowrap;
@@ -266,4 +280,60 @@
   .daily_trade {
   border-bottom-left-radius: 3%;
   border-bottom-right-radius: 3%;
+  }
+  
+  
+  .class-icon {
+  height: 50%;
+  width: 50%;
+  }
+  .class-iconx {
+  height: 25%;
+  width: 25%;
+  }
+  .calc-grid-container {
+  display: flex;
+  grid-template-columns: auto auto;
+  gap: 50px;
+  }
+  @media (max-width: 1440px) {
+    .calc-grid-container {
+      display: grid;
+      grid-template-columns: auto;
+    }
+  }
+  .calctitle {
+  top: 0%;
+  text-align: top;
+  color: white;
+  font-family: "HammerBro101MovieThin-Regular", sans-serif;
+  font-size: 20px;
+  }
+  @media (max-width: 1440px) {
+  .calctitle {
+  display: none;
+  color: white;
+  font-family: "HammerBro101MovieThin-Regular", sans-serif;
+  font-size: 10px;
+  }
+  }
+  .calcbox {
+  color : auto;
+  font-family: "HammerBro101MovieThin-Regular", sans-serif;
+  font-size: 30px;
+  }    
+  .calcoutput {
+  color: white;
+  font-family: "HammerBro101MovieThin-Regular", sans-serif;
+  font-size: 50px;
+  }
+  .classcalc {
+  color: white;
+  font-size: 35px;
+  font-family: "BebasNeue", sans-serif;
+  }
+  .classcalcsub {
+  color: white;
+  font-size: 30px;
+  font-family: "BebasNeue", sans-serif;
   }
