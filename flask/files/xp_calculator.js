@@ -3,11 +3,11 @@ class Dwarf {
     this.xp = 0;
     this.level = 0;
     this.promotions = 0;
-    this.total_level = 0;
+    this.totalLevel = 0;
     this.type = null
   }
 
-  calculate_class_xp() {
+  calculateClassXP() {
     const levels = {
       1: 0,
       2: 3000,
@@ -36,7 +36,7 @@ class Dwarf {
       25: 315000,
     };
     this.xp = levels[this.level] + this.promotions * 315000;
-    this.total_level = this.level + this.promotions * 25;
+    this.totalLevel = this.level + this.promotions * 25;
   }
 }
 const xpForm = document.getElementById("xpForm")
@@ -76,29 +76,29 @@ const Engineer = new Dwarf();
 Engineer.type = 'Icon_Character_Engineer'
 Engineer.level = engineerLevels;
 Engineer.promotions = engineerPromotions;
-Engineer.calculate_class_xp();
+Engineer.calculateClassXP();
 
 const Scout = new Dwarf();
 Scout.type = 'Icon_Character_Scout'
 Scout.level = scoutLevels;
 Scout.promotions = scoutPromotions;
-Scout.calculate_class_xp();
+Scout.calculateClassXP();
 
 const Driller = new Dwarf();
 Driller.type = 'Icon_Character_Driller'
 Driller.level = drillerLevels;
 Driller.promotions = drillerPromotions;
-Driller.calculate_class_xp();
+Driller.calculateClassXP();
 
 const Gunner = new Dwarf();
 Gunner.type = 'Icon_Character_Gunner'
 Gunner.level = gunnerLevels;
 Gunner.promotions = gunnerPromotions;
-Gunner.calculate_class_xp();
+Gunner.calculateClassXP();
 
-const total_promotions = Engineer.promotions + Scout.promotions + Driller.promotions + Gunner.promotions;
+const totalPromotions = Engineer.promotions + Scout.promotions + Driller.promotions + Gunner.promotions;
 
-const Badges = (Engineer.total_level + Scout.total_level + Driller.total_level + Gunner.total_level) / 3;
+const Badges = (Engineer.totalLevel + Scout.totalLevel + Driller.totalLevel + Gunner.totalLevel) / 3;
 
 const total_xp = Engineer.xp + Scout.xp + Driller.xp + Gunner.xp;
 var xp_per_hr = (total_xp / hours)
@@ -137,88 +137,37 @@ if (promoNumber >= 18) {
 }
 };
 
-const tableContent = `
-<style>
-table {
-  border-collapse: collapse;
-  width: auto;
-}
+document.getElementById('tableEngineerClassRank').innerHTML = `${getPromoLevel(Engineer.promotions, Engineer.type)}`
+document.getElementById('tableEngineerClassLevel').innerHTML = `${Engineer.totalLevel.toLocaleString()}`
+document.getElementById('tableEngineerClassXP').innerHTML = `<span style="color:red;">${Engineer.xp.toLocaleString()}</span>`
 
-th, td {
-  padding: 8px;
-  text-align: center;
-  border-bottom: 1px solid #ddd;
-}
-tr {
-  height: 75px;
-}
-</style>
-<table id="outputTable" class="collapsed">
-<tr>
-  <!-- <th>Class</th> -->
-  <th>Rank</th>
-  <th>XP</th>
-  
-</tr>
-<tr>
-  <!-- <td><span style="color:#9f2c14;">Engineer</span></td> -->
-  <td style="height:50px;">${getPromoLevel(Engineer.promotions, Engineer.type)}</td>
-  <td><span style="color:red;">${Engineer.xp.toLocaleString()}</span></td>
-</tr>
-<tr>
-  <!-- <td><span style="color:#3062b1;">Scout</span></td> -->
-  <td style="height:50px;">${getPromoLevel(Scout.promotions, Scout.type)}</td>
-  <td><span style="color:red;">${Scout.xp.toLocaleString()}</span></td>
-</tr>
-<tr>
-  <!-- <td><span style="color:#bda62a;">Driller</span></td> -->
-  <td style="height:50px;">${getPromoLevel(Driller.promotions, Driller.type)}</td>
-  <td><span style="color:red;">${Driller.xp.toLocaleString()}</span></td>
-</tr>
-<tr>
- <!-- <td><span style="color:#83a637;">Gunner</span></td>  -->
-  <td style="height:50px;">${getPromoLevel(Gunner.promotions, Gunner.type)}</td>
-  <td><span style="color:red;">${Gunner.xp.toLocaleString()}</span></td>
-</tr>
-</table>
-<br>
-<h2 id="results" class="collapsed" style="font-size:40px;">
+document.getElementById('tableScoutClassRank').innerHTML = `${getPromoLevel(Scout.promotions, Scout.type)}`
+document.getElementById('tableScoutClassLevel').innerHTML = `${Scout.totalLevel.toLocaleString()}`
+document.getElementById('tableScoutClassXP').innerHTML = `<span style="color:red;">${Scout.xp.toLocaleString()}</span>`
+
+document.getElementById('tableDrillerClassRank').innerHTML = `${getPromoLevel(Driller.promotions, Driller.type)}`
+document.getElementById('tableDrillerClassLevel').innerHTML = `${Driller.totalLevel.toLocaleString()}`
+document.getElementById('tableDrillerClassXP').innerHTML = `<span style="color:red;">${Driller.xp.toLocaleString()}</span>`
+
+document.getElementById('tableGunnerClassRank').innerHTML = `${getPromoLevel(Gunner.promotions, Gunner.type)}`
+document.getElementById('tableGunnerClassLevel').innerHTML = `${Gunner.totalLevel.toLocaleString()}`
+document.getElementById('tableGunnerClassXP').innerHTML = `<span style="color:red;">${Gunner.xp.toLocaleString()}</span>`
+
+document.getElementById('results').innerHTML = `
 Total XP: <span style="color:red;">${total_xp.toLocaleString()}<br></span>
-Total Promotions: ${total_promotions.toLocaleString()}<br>
+Total Promotions: ${totalPromotions.toLocaleString()}<br>
 <img src="/files/Player_rank_icon.png">${(Badges-0.333).toFixed(2)}<br>
 XP Per Hour: ${(xp_per_hr).toLocaleString()}
-</h2>
 `;
-
-output.innerHTML = tableContent;
-
-function checkImagesLoaded() {
-const images = document.getElementsByTagName('img');
-for (let i = 0; i < images.length; i++) {
-  if (!images[i].complete) {
-    return false;
-  }
-}
-return true;
-}
-
-function toggleTable() {
-var table = document.getElementById("outputTable");
-var results = document.getElementById("results");
-table.classList.toggle("collapsed");
-results.classList.toggle("collapsed");
-}
-
-var interval = setInterval(function() {
-if (checkImagesLoaded()) {
-  toggleTable();
-  clearInterval(interval);
-}
-}, 100);
 });
+
 function startsubmit() {
 var submitButton = document.getElementById("calcsubmit");
 submitButton.click();
 };
-window.onload = function() {
-startsubmit() };
+function onLoad() {
+startsubmit();
+document.querySelector('p.loading').style.display = 'none';
+document.getElementById('scal').classList.toggle('collapsed');  
+};
+window.onload = onLoad();

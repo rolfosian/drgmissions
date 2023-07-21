@@ -11,7 +11,7 @@
   }
   .loading {
   position: fixed;
-  top: 35%;
+  top: 40%;
   left: 50%;
   transform: translate(-50%, -50%);
   color: red;
@@ -296,7 +296,7 @@
   grid-template-columns: auto auto;
   gap: 50px;
   }
-  @media (max-width: 1440px) {
+  @media screen and (max-width: 1440px) {
     .calc-grid-container {
       display: grid;
       grid-template-columns: auto;
@@ -309,7 +309,7 @@
   font-family: "HammerBro101MovieThin-Regular", sans-serif;
   font-size: 20px;
   }
-  @media (max-width: 1440px) {
+  @media screen and (max-width: 1440px) {
   .calctitle {
   display: none;
   color: white;
@@ -321,11 +321,13 @@
   color : auto;
   font-family: "HammerBro101MovieThin-Regular", sans-serif;
   font-size: 30px;
+  width: 150px;
   }    
   .calcoutput {
   color: white;
   font-family: "HammerBro101MovieThin-Regular", sans-serif;
   font-size: 50px;
+  min-height: 1010px;
   }
   .classcalc {
   color: white;

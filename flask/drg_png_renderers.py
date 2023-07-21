@@ -1,4 +1,5 @@
 from PIL import Image, ImageDraw, ImageFont
+import hashlib
 
 def scale_image(image, i):
     new_width = int(image.width * i)
@@ -603,3 +604,190 @@ def render_dd_stage(m_d):
 
 #m_d = {"CodeName":" ","Complexity":"2","Length":"2","MissionWarnings":["Lithophage Outbreak","Lethal Enemies"],"MissionMutator":"Double XP","PrimaryObjective":"Salvage Operation","SecondaryObjective":"Hollomite","id":654}
 #render_mission(m_d)
+
+def render_xp_calc_index():
+    index = {}
+    index_ = '''<!DOCTYPE html>
+<html>
+<head>
+<link rel ="icon" href="/files/favicon.ico" type="image/x-icon">
+<link rel ="stylesheet" href="/files/styles.css" type="text/css">
+<title>DRG XP Calculator</title>
+</head>
+<style>
+table {
+  border-collapse: collapse;
+  width: auto;
+}
+th, td {
+  padding: 8px;
+  text-align: center;
+  border-bottom: 1px solid #ddd;
+  min-width: 180px;
+}
+tr {
+  height: 75px;
+}
+</style>
+<body bgcolor="#303030">
+<img id="background-video" src="/files/drop_pod.jpg" type="video/webm">
+<div class="overlay"></div>
+<p class="loading">Loading</p>
+<div id="scal" class="collapsed">
+<div class="calc-grid-container">
+<form id="xpForm">
+
+<h2><div class="mission-hover-zoom"><img class="class-iconx" src="/files/class_icons/Icon_Character_Engineer.png"></div></h2>
+<label class="classcalcsub" for="engineerLevels">Level:&nbsp;</label>
+<input placeholder="1" class="calcbox" type="number" min="1" max="25" id="engineerLevels" name="engineerLevels"><br><br>
+<label class="classcalcsub" for="engineerPromotions">Promotions:&nbsp;</label>
+<input placeholder="0" class="calcbox" type="number" min="0" id="engineerPromotions" name="engineerPromotions"><br><br>
+
+<h2><div class="mission-hover-zoom"><img class="class-iconx" src="/files/class_icons/Icon_Character_Scout.png"></div></h2>
+<label class="classcalcsub" for="scoutLevels">Level:&nbsp;</label>
+<input placeholder="1" class="calcbox" type="number" min="1" max="25" id="scoutLevels" name="scoutLevels"><br><br>
+<label class="classcalcsub" for="scoutPromotions">Promotions:&nbsp;</label>
+<input placeholder="0" class="calcbox" type="number" min="0" id="scoutPromotions" name="scoutPromotions"><br><br>
+
+<h2><div class="mission-hover-zoom"><img class="class-iconx" src="/files/class_icons/Icon_Character_Driller.png"></div></h2>
+<label class="classcalcsub" for="drillerLevels">Level:&nbsp;</label>
+<input placeholder="1" class="calcbox" type="number" min="1" max="25" id="drillerLevels" name="drillerLevels"><br><br>
+<label class="classcalcsub" for="drillerPromotions">Promotions:&nbsp;</label>
+<input placeholder="0" class="calcbox" type="number" min="0" id="drillerPromotions" name="drillerPromotions"><br><br>
+
+<h2><div class="mission-hover-zoom"><img class="class-iconx" src="/files/class_icons/Icon_Character_Gunner.png"></div></h2>
+<label class="classcalcsub" for="gunnerLevels">Level:&nbsp;</label>
+<input placeholder="1" class="calcbox" type="number" min="1" max="25" id="gunnerLevels" name="gunnerLevels"><br><br>
+<label class="classcalcsub" for="gunnerPromotions">Promotions:&nbsp;</label>
+<input placeholder="0" class="calcbox" type="number" min="0" id="gunnerPromotions" name="gunnerPromotions"><br><br><br>
+
+
+<label class="classcalcsub" for="hours">Hours played:&nbsp;</label>
+<input placeholder="0" class="calcbox" type="number" min="0" id="hours" name="hours"><br><br>
+<input id="calcsubmit" style="color:#303030;" class="classcalcsub" type="submit" value="Calculate XP">
+<input id="reset" style="color:#303030;" class="classcalcsub" type="reset" value="Reset">
+</form>
+<div class="calcoutput" id="output">
+<table id="outputTable">
+<tr>
+  <!-- <th>Class</th> -->
+  <th>Rank</th>
+  <th><img title="Effective Level" src="/files/icon_class_level.png"></th>
+  <th>XP</th>
+  
+</tr>
+<tr>
+  <!-- <td><span style="color:#9f2c14;">Engineer</span></td> -->
+  <td id="tableEngineerClassRank" style="height:50px;"></td>
+  <td id="tableEngineerClassLevel"></td>
+  <td id="tableEngineerClassXP"></td>
+</tr>
+<tr>
+  <!-- <td><span style="color:#3062b1;">Scout</span></td> -->
+  <td id="tableScoutClassRank" style="height:50px;"></td>
+  <td id="tableScoutClassLevel"></td>
+  <td id="tableScoutClassXP"></td>
+</tr>
+<tr>
+  <!-- <td><span style="color:#bda62a;">Driller</span></td> -->
+  <td id="tableDrillerClassRank" style="height:50px;"></td>
+  <td id="tableDrillerClassLevel"></td>
+  <td id="tableDrillerClassXP"></td>
+</tr>
+<tr>
+ <!-- <td><span style="color:#83a637;">Gunner</span></td>  -->
+  <td id="tableGunnerClassRank" style="height:50px;"></td>
+  <td id="tableGunnerClassLevel"></td>
+  <td id="tableGunnerClassXP"></td>
+</tr>
+</table>
+<br>
+<h2 id="results" style="font-size:40px;">
+</h2>
+</div>
+</div>
+<hr>
+<span class="calctitle"><i>Note: To find your Classes' number of promotions, go to Options>Save Menu ingame.</i> | <a class="jsonlink" href="/">HOME</a> | <a class="jsonlink" href="/xp_calc?engineer_level=1&engineer_promos=0&scout_level=1&scout_promos=0&driller_level=1&driller_promos=0&gunner_level=1&gunner_promos=0&hrs=0">XP Calculator Endpoint</a></span><br>
+<p class='gsgdisclaimer'><i>This website is a third-party platform and is not affiliated, endorsed, or sponsored by Ghost Ship Games. The use of Deep Rock Galactic's in-game assets on this website is solely for illustrative purposes and does not imply any ownership or association with the game or its developers. All copyrights and trademarks belong to their respective owners. For official information about Deep Rock Galactic, please visit the official Ghost Ship Games website.</i></p>
+</div>
+<script src="/files/xp_calculator.js"></script>
+<div class="collapsed">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Engineer_Bronze_1.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Engineer_Bronze_2.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Engineer_Bronze_3.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Engineer_Silver_1.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Engineer_Silver_2.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Engineer_Silver_3.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Engineer_Gold_1.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Engineer_Gold_2.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Engineer_Gold_3.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Engineer_Platinum_1.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Engineer_Platinum_2.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Engineer_Platinum_3.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Engineer_Emerald_1.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Engineer_Emerald_2.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Engineer_Emerald_3.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Engineer_Legendary_1.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Engineer_Legendary_2.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Engineer_Legendary_3.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Scout_Bronze_1.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Scout_Bronze_2.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Scout_Bronze_3.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Scout_Silver_1.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Scout_Silver_2.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Scout_Silver_3.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Scout_Gold_1.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Scout_Gold_2.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Scout_Gold_3.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Scout_Platinum_1.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Scout_Platinum_2.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Scout_Platinum_3.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Scout_Emerald_1.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Scout_Emerald_2.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Scout_Emerald_3.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Scout_Legendary_1.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Scout_Legendary_2.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Scout_Legendary_3.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Driller_Bronze_1.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Driller_Bronze_2.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Driller_Bronze_3.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Driller_Silver_1.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Driller_Silver_2.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Driller_Silver_3.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Driller_Gold_1.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Driller_Gold_2.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Driller_Gold_3.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Driller_Platinum_1.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Driller_Platinum_2.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Driller_Platinum_3.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Driller_Emerald_1.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Driller_Emerald_2.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Driller_Emerald_3.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Driller_Legendary_1.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Driller_Legendary_2.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Driller_Legendary_3.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Gunner_Bronze_1.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Gunner_Bronze_2.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Gunner_Bronze_3.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Gunner_Silver_1.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Gunner_Silver_2.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Gunner_Silver_3.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Gunner_Gold_1.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Gunner_Gold_2.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Gunner_Gold_3.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Gunner_Platinum_1.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Gunner_Platinum_2.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Gunner_Platinum_3.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Gunner_Emerald_1.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Gunner_Emerald_2.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Gunner_Emerald_3.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Gunner_Legendary_1.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Gunner_Legendary_2.png">
+<img class="class-icon" src="/files/class_icons/Icon_Character_Gunner_Legendary_3.png">
+</div>
+</body>
+</html>'''
+    index['index'] = index_.encode()
+    etag = hashlib.md5(index['index']).hexdigest()
+    index['etag'] = etag
+    return index
