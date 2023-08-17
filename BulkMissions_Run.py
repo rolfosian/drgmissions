@@ -134,7 +134,7 @@ def main():
     start_time = time.monotonic()
     while True:
         elapsed_time = time.monotonic() - start_time
-        print(f'Estimated time until completion: {format_seconds(estimated_time_completion-elapsed_time)}', end="\r")
+        print(f'{format_seconds(timeout_seconds-elapsed_time)} until timeout\nEstimated time until completion: {format_seconds(estimated_time_completion-elapsed_time)}', end="\r")
 
         if time.monotonic() - start_time > timeout_seconds:
             print('TIMEOUT, GAME FROZE OR CRASHED BEFORE TARGET DATE REACHED. RESTARTING')

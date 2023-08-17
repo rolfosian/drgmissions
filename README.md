@@ -1,5 +1,3 @@
-# Site is now live at https://doublexp.net/
-
 ## **Deep Rock Galactic lua scripts for use with [RE-UE4SS lua API](https://github.com/UE4SS-RE/RE-UE4SS/) to fetch current mission and deep dive data for flask**
 
 - To run DRG headless, use command line arg `-nullrhi` when running the game.

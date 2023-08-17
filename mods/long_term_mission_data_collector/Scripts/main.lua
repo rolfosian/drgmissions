@@ -65,14 +65,10 @@ end
 function UnpackStandardMission(mission, master, b, missionscount)
     missionscount = missionscount + 1
     local mission1 = {}
-    -- local missionfullname = string.format("%s",mission:GetFullName())
     mission1['id'] = missionscount
-    -- local MissionName = mission:GetPropertyValue("MissionName") -- Get FText object
-    -- print(MissionName) -- CRASHES
-    -- print(MissionName:ToString()) -- RETURNS EMPTY STRING DUE TO BUG IN RE-UE4SS LUA API
-    -- MissionName = MissionName:ToString()
-    -- MissionName = GetCodeName(MissionName) -- NEED TO WAIT FOR RE-UE4SS LUA API FIX BEFORE CODENAMES CAN BE FETCHED
-    mission1['CodeName'] = ' '
+    local MissionName = mission:GetPropertyValue("MissionName")
+    MissionName = MissionName:ToString()
+    mission1['CodeName'] = MissionName
     local PrimaryObjective = mission:GetPropertyValue("PrimaryObjective")
     PrimaryObjective = string.format("%s",PrimaryObjective:GetFullName())
     local primary_objectives = {
@@ -210,8 +206,11 @@ function UnpackStandardMission(mission, master, b, missionscount)
         length = '2'
     end
     mission1['Length'] = length
+
+    -- COMPLEXITY AND LENGTH FINALIZATION FOR INDEFINITE VALUES
     local MissionDNA = mission:GetPropertyValue("MissionDNA")
     MissionDNA = string.format("%s",MissionDNA:GetFullName())
+    -- Salvage DNA
     if string.find(MissionDNA, "SalvageFractured_Complex") and complexity == 'Indefinite' and length == 'Indefinite' then
         mission1['Complexity'] = '3'
         mission1['Length'] = '3'
@@ -220,10 +219,16 @@ function UnpackStandardMission(mission, master, b, missionscount)
         mission1['Complexity'] = '2'
         mission1['Length'] = '2'
     end
+    -- Point Extraction DNA
     if string.find(MissionDNA, 'Motherlode_Short_C') and PrimaryObjective == 'Point Extraction' and length == 'Indefinite' and complexity == 'Indefinite' then
         mission1['Complexity'] = '3'
         mission1['Length'] = '2'
     end
+    if string.find(MissionDNA, 'Motherlode_Long_C') and PrimaryObjective == 'Point Extraction' and length == 'Indefinite' and complexity == 'Indefinite' then
+        mission1['Complexity'] = '3'
+        mission1['Length'] = '3'
+    end
+    -- Refinery DNA
     if string.find(MissionDNA, 'Refinery_Complex') and complexity == 'Indefinite' and length == 'Indefinite' then
         mission1['Complexity'] = '3'
         mission1['Length'] = '2'
@@ -232,6 +237,7 @@ function UnpackStandardMission(mission, master, b, missionscount)
         mission1['Complexity'] = '2'
         mission1['Length'] = '2'
     end
+    -- Mining Expedition DNA
     if string.find(MissionDNA, 'DNA_2_01_C') and complexity == 'Indefinite' and length == 'Indefinite' and PrimaryObjective == 'Mining Expedition' then
         mission1['Complexity'] = '1'
         mission1['Length'] = '1'
@@ -252,6 +258,7 @@ function UnpackStandardMission(mission, master, b, missionscount)
         mission1['Complexity'] = '3'
         mission1['Length'] = '3'
     end
+    -- Egg Hunt DNA
     if string.find(MissionDNA, '_Complex') and complexity == 'Indefinite' and length == 'Indefinite' and PrimaryObjective == 'Egg Hunt' then
         mission1['Length'] = '3'
         mission1['Complexity'] = '2'
@@ -265,6 +272,7 @@ function UnpackStandardMission(mission, master, b, missionscount)
         mission1['Complexity'] = '1'
         mission1['Length'] = '1'
     end
+    -- Elimination DNA
     if string.find(MissionDNA, 'Star_Medium_C') and PrimaryObjective == 'Elimination' then
         mission1['Complexity'] = '2'
         mission1['Length'] = '2'
@@ -273,10 +281,7 @@ function UnpackStandardMission(mission, master, b, missionscount)
         mission1['Complexity'] = '3'
         mission1['Length'] = '3' 
     end
-    if string.find(MissionDNA, 'Motherlode_Long_C') and PrimaryObjective == 'Point Extraction' and length == 'Indefinite' and complexity == 'Indefinite' then
-        mission1['Complexity'] = '3'
-        mission1['Length'] = '3'
-    end
+    -- Generic finalization
     if string.find(MissionDNA, 'MediumComplex') and complexity == 'Indefinite' then
         mission1['Length'] = '2'
         mission1['Complexity'] = '3'
@@ -327,20 +332,6 @@ function GetBiome(mission)
         end
     end
     return b
-end
-function GetCodeName(str) -- Extract CodeName from string of FText value
-    local str_parts = Split(str, ',')
-    local variables = {} 
-    for i = 1, #str_parts do
-        local var = string.match(str_parts[i], '"([^"]+)"')
-        if var then
-            table.insert(variables, var)
-        end
-    end
-    local firstname = variables[6]
-    local lastname = variables[9]
-    local name = firstname .. " " .. lastname
-    return name
 end
 function Main()
     local startmenus = nil
@@ -406,7 +397,7 @@ function Main()
                     local mission = remotemission:get()
                     table.insert(missions, mission)
                 end
-                break                   
+                break
                 ::continue::
             end
         end
@@ -466,7 +457,6 @@ function Main()
     local playercontrollers = FindAllOf('BP_PlayerController_SpaceRig_C')
     if playercontrollers then
         for index, playercontroller in pairs(playercontrollers) do
-            playercontroller = playercontroller
             local fullname = string.format("%s",playercontroller:GetFullName())
             if fullname == 'BP_PlayerController_SpaceRig_C /Game/Game/SpaceRig/BP_PlayerController_SpaceRig.Default__BP_PlayerController_SpaceRig_C' then goto continue end
             local escape_menu = playercontroller:GetEscapeMenu()

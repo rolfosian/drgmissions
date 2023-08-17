@@ -168,7 +168,10 @@ function UnpackDeepDiveMission(mission, master, t)
     mission1['Length'] = length
     local MissionDNA = mission:GetPropertyValue("MissionDNA")
     MissionDNA = string.format("%s",MissionDNA:GetFullName())
-    --Salvage DNA
+
+    -- Complexity and Length finalization
+
+    -- Salvage DNA
     -- local SalvageDNAs = {
     --     {pattern = 'SalvageFractured_Complex', result = {length = '3', complexity = '3'}},
     --     {pattern = 'SalvageFractured_Medium', result = {length = '2', complexity = '2'}},
@@ -189,7 +192,7 @@ function UnpackDeepDiveMission(mission, master, t)
         mission1['Length'] = '2'
     end
 
-    --Refinery DNA
+    -- Refinery DNA
     -- local RefineryDNAs = {
     --     {pattern = 'Refinery_Complex', result = {length = '2', complexity = '3'}},
     --     {pattern = 'Refinery_Medium_C', result = {length = '2', complexity = '2'}},
@@ -214,11 +217,14 @@ function UnpackDeepDiveMission(mission, master, t)
         mission1['Length'] = '2'
     end
     
-    --Industrial Sabotage DNA
+    -- Industrial Sabotage DNA
     if string.find(MissionDNA, 'Facility_Simple_C') and complexity == 'Indefinite' then
         mission1['Complexity'] = '2'
     end
-    --Mining Expedition DNA
+    if string.find(MissionDNA, 'Facility_Simple_C') and length == 'Indefinite' then
+        mission1['Length'] = '2'
+    end
+    -- Mining Expedition DNA
     -- local MiningExpeditionDNAs = {
     --     {pattern = 'DNA_2_01_C', result = {length = '1', complexity = '1'}},
     --     {pattern = 'DNA_2_02_C', result = {length = '2', complexity = '2'}},
@@ -255,6 +261,10 @@ function UnpackDeepDiveMission(mission, master, t)
         mission1['Complexity'] = '1'
         mission1['Length'] = '2'
     end
+    if string.find(MissionDNA, 'DNA_2_03_C') and complexity == 'Indefinite' and length == '2' then
+        mission1['Complexity'] = '1'
+        mission1['Length'] = '2'
+    end
     if string.find(MissionDNA, 'DNA_2_04_C') and complexity == 'Indefinite' and length == 'Indefinite' and PrimaryObjective == 'Mining Expedition' then
         mission1['Complexity'] = '2'
         mission1['Length'] = '3'
@@ -264,7 +274,7 @@ function UnpackDeepDiveMission(mission, master, t)
         mission1['Length'] = '3'
     end
 
-    --Egg Hunt DNA
+    -- Egg Hunt DNA
     if string.find(MissionDNA, '_Complex') and complexity == 'Indefinite' and length == 'Indefinite' and PrimaryObjective == 'Egg Hunt' then
         mission1['Length'] = '3'
         mission1['Complexity'] = '2'
@@ -281,7 +291,7 @@ function UnpackDeepDiveMission(mission, master, t)
         mission1['Complexity'] = '1'
         mission1['Length'] = '1'
     end
-    --Elimination DNA
+    -- Elimination DNA
     if string.find(MissionDNA, 'Star_Medium_C') and PrimaryObjective == 'Elimination' then
         mission1['Complexity'] = '2'
         mission1['Length'] = '2'
@@ -290,7 +300,7 @@ function UnpackDeepDiveMission(mission, master, t)
         mission1['Complexity'] = '3'
         mission1['Length'] = '3'
     end
-    --Point Extraction DNA
+    -- Point Extraction DNA
     if string.find(MissionDNA, 'Motherlode_Short_C') and PrimaryObjective == 'Point Extraction' and length == 'Indefinite' and complexity == 'Indefinite' then
         mission1['Complexity'] = '3'
         mission1['Length'] = '2'
@@ -303,7 +313,7 @@ function UnpackDeepDiveMission(mission, master, t)
         mission1['Complexity'] = '3'
         mission1['Length'] = '3'
     end
-    --Generic DNA
+    -- Generic DNA
     -- local GenericDNAs = {
     --     {pattern = 'MediumComplex', result = {length = '2', complexity = '3'}},
     --     {pattern = 'LongAverage', result = {length = '3', complexity = '2'}},
@@ -372,20 +382,6 @@ function GetBiome(mission)
     end
     return b
 end
-function GetCodeName(str) -- Extract CodeName from string of FText value
-    local str_parts = Split(str, ',')
-    local variables = {} 
-    for i = 1, #str_parts do
-        local var = string.match(str_parts[i], '"([^"]+)"')
-        if var then
-            table.insert(variables, var)
-        end
-    end
-    local firstname = variables[6]
-    local lastname = variables[9]
-    local name = firstname .. " " .. lastname
-    return name
-end
 function GetDeepDiveCodename(t) -- Get DD Codename terminal label widget assets
     local fsdlabelwidgets = FindAllOf('FSDLabelWidget')
     local text = nil
@@ -395,13 +391,11 @@ function GetDeepDiveCodename(t) -- Get DD Codename terminal label widget assets
             local fullname = string.format("%s",fsdlabelwidget:GetFullName())
             if string.find(fullname, 'Data_CodeName') and string.find(fullname, 'Normal') and t == 'Deep Dive Normal' then
                 text = fsdlabelwidget:GetPropertyValue('text')
-                text = text:ToString()
-                name = GetCodeName(text)
+                name = text:ToString()
                 break
             elseif string.find(fullname, 'Data_CodeName') and string.find(fullname, 'Hard') and t == 'Deep Dive Elite' then
                 text = fsdlabelwidget:GetPropertyValue('text')
-                text = text:ToString()
-                name = GetCodeName(text)
+                name = text:ToString()
                 break
             end
         end
@@ -465,8 +459,7 @@ function Main()
                     master['Deep Dives'][t]['Biome'] = b
                 end
                 if not HasKey(master['Deep Dives'][t], 'CodeName') then
-                    -- local codename = GetDeepDiveCodename(t) -- NEED TO WAIT FOR RE-UE4SS LUA API FIX BEFORE CODENAMES CAN BE FETCHED
-                    local codename = ' '
+                    local codename = GetDeepDiveCodename(t)
                     master['Deep Dives'][t]['CodeName'] = codename
                 end
                 UnpackDeepDiveMission(mission, master, t)
@@ -477,8 +470,7 @@ function Main()
                     master['Deep Dives'][t]['Biome'] = b
                 end
                 if not HasKey(master['Deep Dives'][t], 'CodeName') then
-                    -- local codename = GetDeepDiveCodename(t) -- NEED TO WAIT FOR RE-UE4SS LUA API FIX BEFORE CODENAMES CAN BE FETCHED
-                    local codename = ' ' 
+                    local codename = GetDeepDiveCodename(t)
                     master['Deep Dives'][t]['CodeName'] = codename
                 end
                 UnpackDeepDiveMission(mission, master, t)

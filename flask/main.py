@@ -1,26 +1,31 @@
-from drgmissionslib import render_xp_calc_index, order_dictionary_by_date, rotate_biomes, rotate_dailydeal, rotate_DDs, rotate_index, rotate_timestamp, rotate_timestamp_from_dict, wait_rotation, SERVER_READY, class_xp_levels, Dwarf
+from drgmissionslib import (
+    select_timestamp_from_dict,
+    render_xp_calc_index, 
+    order_dictionary_by_date,
+    rotate_biomes,
+    rotate_dailydeal,
+    rotate_DDs,
+    rotate_index,
+    rotate_timestamps,
+    rotate_timestamp_from_dict,
+    wait_rotation,
+    SERVER_READY,
+    class_xp_levels,
+    Dwarf
+    )
 import os
 import json
 from flask import Flask, render_template_string, request, send_file, jsonify, make_response
 import threading
 from io import BytesIO
-# import requests
-# from time import sleep
-# import time 
-# import subprocess
-# import shutil
-# from dateutil import parser
 # import queue
-# import glob
-# import hashlib
-# import gc
-# import re
-# import sys
-# from concurrent.futures import ThreadPoolExecutor, as_completed, wait
+
 
 with open('drgmissionsgod.json', 'r') as f:
     DRG = json.load(f)
     f.close()
+    #Remove past timestamps from memory
+    select_timestamp_from_dict(DRG, False)
 
 with open('drgdailydeals.json', 'r') as f:
     AllTheDeals = f.read()
@@ -29,48 +34,54 @@ AllTheDeals = AllTheDeals.replace(':01Z', ':00Z')
 AllTheDeals = json.loads(AllTheDeals)
 AllTheDeals = order_dictionary_by_date(AllTheDeals)
 
+#Current and upcoming timestamps rotator
 #tstamp = queue.Queue()
 tstamp = []
-tstampthread = threading.Thread(target=rotate_timestamp, args=(tstamp, False,))
-
 #next_tstamp = queue.Queue()
 next_tstamp = []
-next_tstampthread = threading.Thread(target=rotate_timestamp, args=(next_tstamp, True,))
+tstampthread = threading.Thread(target=rotate_timestamps, args=(tstamp, next_tstamp,))
 
+#Daily Deal timestamp rotator
 #dailydeal_tstamp = queue.Queue()
 dailydeal_tstamp = []
 dailydeal_tstampthread = threading.Thread(target=rotate_timestamp_from_dict, args=(AllTheDeals, dailydeal_tstamp, False))
 
+#Daily Deal rotator
 #dailydeal = queue.Queue()
 dailydeal = []
 dailydealthread = threading.Thread(target=rotate_dailydeal, args=(AllTheDeals, dailydeal_tstamp, dailydeal))
 
+#Current mission icons rotator
 rendering_event = threading.Event()
 #currybiomes = queue.Queue()
 currybiomes = []
 biomesthread = threading.Thread(target=rotate_biomes, args=(DRG, tstamp, currybiomes, rendering_event))
 
+#Upcoming mission icons rotator
 rendering_event_next = threading.Event()
 #nextbiomes = queue.Queue()
 nextbiomes = []
 nextbiomesthread = threading.Thread(target=rotate_biomes, args=(DRG, next_tstamp, nextbiomes, rendering_event_next))
 
+#Deep Dives rotator
 #DDs = queue.Queue()
 DDs = []
 ddsthread = threading.Thread(target=rotate_DDs, args=(DDs,))
 
+#Homepage HTML rotator, md5 hashes once to enable 304 on every 30 minute rollover and the home route doesn't need to render it again for every request and can just send copies
+#Clears index event and waits for both rendering_events to be set before proceeding and then setting index event to enable homepage requests once more
 index_event = threading.Event()
 #index_Queue = queue.Queue()
 index_Queue = []
 index_thread = threading.Thread(target=rotate_index, args=(DRG, rendering_event, rendering_event_next, tstamp, next_tstamp, DDs, index_event, index_Queue))
 
+#Listener that clears the rendering events 1.5 seconds before the 30 minute mission rollover interval so the homepage won't load for clients until the rotators are done rendering the mission icons
 wait_rotationthread = threading.Thread(target=wait_rotation, args=(rendering_event, rendering_event_next, index_event))
 
 SERVER_READY_thread = threading.Thread(target=SERVER_READY, args=(index_event,))
 
 def start_threads():
     tstampthread.start()
-    next_tstampthread.start()
     
     biomesthread.start()
     nextbiomesthread.start()
@@ -85,7 +96,6 @@ def start_threads():
     index_thread.start()
     
     SERVER_READY_thread.start()
-    #GARBAGE_thread.start()
     
 #def join_threads():
     #tstampthread.join()
@@ -98,10 +108,10 @@ def start_threads():
     #dailydealthread.join()
     #index_thread.join()
     #SERVER_READY_thread.join()
-    #GARBAGE_thread.join()
     
 app = Flask(__name__, static_folder=f'{os.getcwd()}/files')
 
+#Homepage
 @app.route('/')
 def home():
     index_event.wait()
@@ -111,6 +121,7 @@ def home():
     response.headers['ETag'] = index_Queue[0]['etag']
     return response
 
+#Sends current mission icons
 @app.route('/png')
 def serve_img():
     img_arg = request.args.get('img')
@@ -124,6 +135,7 @@ def serve_img():
     except Exception:
         return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
 
+#Sends upcoming mission icons
 @app.route('/upcoming_png')
 def serve_next_img():
     img_arg = request.args.get('img')
@@ -137,6 +149,7 @@ def serve_next_img():
     except Exception:
         return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
 
+#Sends current daily deal image
 @app.route('/dailydeal')
 def serve_dailydeal_png():
     try:
@@ -146,6 +159,8 @@ def serve_dailydeal_png():
     except Exception:
         return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
 
+#Dictionary endpoints
+#jsonify isn't very merciful when it comes to ram use for repeated requests of large dictionaries. It liked to use 300MB+ RAM as it doesn't hash what it serves and likes to keep it in memory up until a point so I took the full mission JSON out
 @app.route('/json')
 def serve_json():
     json_arg = request.args.get('data')
@@ -160,13 +175,15 @@ def serve_json():
     except Exception:
         return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404   
 
+#Class XP calculator HTML that has its own javascript. The JS doesn't use the below endpoint - it is client side, but there is a link to the endpoint on the page.
 xp_calculator_index = render_xp_calc_index()
 @app.route('/xp_calculator')
 def xp_calc_form():
     if request.headers.get('If-None-Match') == xp_calculator_index['etag']:
         return '', 304
     return send_file(BytesIO(xp_calculator_index['index']), mimetype='text/html', etag=xp_calculator_index['etag'])
-    
+
+#Class XP calculator endpoint
 @app.route('/xp_calc')
 def xp_calc():
     try:
@@ -227,11 +244,13 @@ def xp_calc():
     except Exception as e:
         print(e)
         return '<!doctype html><html lang="en"><title>400 Bad Request</title><h1>Bad Request</h1><p>The server could not understand your request. Please make sure you have entered the correct information and try again.</p>', 400
-    
+
+#This should probably involve some kind of actual cryptography beyond https requests but i cant be bothered to learn about that yet
 with open('token.txt', 'r') as f:
     AUTH_TOKEN = f.read().strip()
     f.close()
-    
+
+#Route for deployment of weekly deep dive metadata and static assets
 @app.route('/upload', methods=['GET', 'POST'])
 def upload():
     try:

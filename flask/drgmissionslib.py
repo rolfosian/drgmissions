@@ -1,4 +1,4 @@
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageFilter
 from hashlib import md5
 from time import sleep
 from io import BytesIO
@@ -9,6 +9,10 @@ import shutil
 import glob
 import json
 import gc
+# import subprocess
+#from concurrent.futures import ThreadPoolExecutor
+#from concurrent.futures import ProcessPoolExecutor
+#from os import cpu_count
 
 # MISSION ICONS AND DAILY DEAL PIL FUNCTIONS
 def scale_image(image, i):
@@ -46,7 +50,7 @@ def calc_text_center(image_width, image_height, text, font, font_size):
 
 def render_daily_deal_bubble(changepercent, dealtype):
     save_profit = {
-        'Buy':'Savings!',
+        'Buy':'Savings!', 
         'Sell':'Profit!',
         }
     
@@ -420,7 +424,124 @@ def render_mission(m_d, six):
         BACKGROUND = scale_image(BACKGROUND, 0.46)
     #BACKGROUND.save('TEST.png', format='PNG')
     #subprocess.run(['gwenview', 'TEST.png'])
-    ##mission = {'rendered_mission': BACKGROUND, 'CodeName': m_d['CodeName'], 'id': m_d['id']}
+    #mission = {'rendered_mission': BACKGROUND, 'CodeName': m_d['CodeName'], 'id': m_d['id']}
+    return BACKGROUND
+
+def add_shadowed_text_to_image(bg, text, text_color, shadow_color, font_path, font_size):
+    x = bg.width // 2
+    y = bg.height // 2
+
+    font = ImageFont.truetype(font_path, font_size)
+
+    blurred = Image.new('RGBA', bg.size)
+    draw = ImageDraw.Draw(blurred)
+    draw.text(xy=(x, y), text=text, fill=shadow_color, font=font, anchor='mm')
+    blurred = blurred.filter(ImageFilter.BoxBlur(7))
+    
+    blurred_data = blurred.getdata()
+    blurred_data = [(r, g, b, int(a * 2)) for r, g, b, a in blurred_data]
+    blurred.putdata(blurred_data)
+
+    bg.paste(blurred, (0, 0), blurred)
+
+    draw = ImageDraw.Draw(bg)
+    draw.text(xy=(x, y), text=text, fill=text_color, font=font, anchor='mm')
+    return bg
+
+def add_shadowed_text_to_image_SPLITFONTS(bg, text_and_fonts, text_color, shadow_color, font_size):
+    def get_text_width(font, text):
+        return font.getsize(text)[0]
+    
+    x = bg.width // 2
+    y = bg.height // 2
+
+    descriptor_text = text_and_fonts[0][0]
+    descriptor_font_path = text_and_fonts[0][1]
+    main_text = text_and_fonts[1][0]
+    main_font_path = text_and_fonts[1][1]
+
+    descriptor_font = ImageFont.truetype(descriptor_font_path, font_size)
+    descriptor_width = get_text_width(descriptor_font, descriptor_text)
+    
+    main_font = ImageFont.truetype(main_font_path, font_size)
+    main_width = get_text_width(main_font, main_text)
+    
+    total_width = descriptor_width + main_width
+
+    combined_x = x - (total_width // 2)
+
+    blurred = Image.new('RGBA', bg.size)
+    draw_blurred = ImageDraw.Draw(blurred)
+    draw_blurred.text(xy=(combined_x, y-26), text=descriptor_text, fill=shadow_color, font=descriptor_font)
+
+    main_x = combined_x + descriptor_width
+
+    draw_blurred.text(xy=(main_x, y-22), text=main_text, fill=shadow_color, font=main_font)
+    blurred = blurred.filter(ImageFilter.BoxBlur(7))
+    
+    blurred_data = blurred.getdata()
+    blurred_data = [(r, g, b, int(a * 2)) for r, g, b, a in blurred_data]
+    blurred.putdata(blurred_data)
+
+    bg.paste(blurred, (0, 0), blurred)
+
+    draw = ImageDraw.Draw(bg)
+    draw.text(xy=(combined_x, y-26), text=descriptor_text, fill=text_color, font=descriptor_font)
+    draw.text(xy=(main_x, y-22), text=main_text, fill=text_color, font=main_font)
+
+    return bg
+
+if __name__ == '__main__':
+    biomes = {
+        'Crystalline Caverns': './img/DeepDive_MissionBar_CrystalCaves.png',
+        'Glacial Strata': './img/DeepDive_MissionBar_GlacialStrata.png',
+        'Radioactive Exclusion Zone': './img/DeepDive_MissionBar_Radioactive.png',
+        'Fungus Bogs': './img/DeepDive_MissionBar_FungusBogs.png',
+        'Dense Biozone': './img/DeepDive_MissionBar_LushDownpour.png',
+        'Salt Pits': './img/DeepDive_MissionBar_SaltPits.png',
+        'Sandblasted Corridors': './img/DeepDive_MissionBar_Sandblasted.png',
+        'Magma Core': './img/DeepDive_MissionBar_MagmaCore.png',
+        'Azure Weald': './img/DeepDive_MissionBar_AzureWeald.png',
+        'Hollow Bough': './img/DeepDive_MissionBar_HollowBough.png'
+    }
+    
+    for biome, image in biomes.items():
+        font_path = './img/BebasNeue-Regular.ttf'
+        font_size = 45
+        font = ImageFont.truetype(font_path, font_size)
+        text_color = (255, 255, 255)
+        
+        BACKGROUND = Image.open(biomes[biome])
+        BACKGROUND = add_shadowed_text_to_image(BACKGROUND, biome, 'white', '#000000', font_path, font_size)
+        
+        BACKGROUND.save(f"./files/{biomes[biome].split('/')[-1]}", format='PNG')
+
+def render_dd_biome_codename(codename, biome):
+    biomes = {
+        'Crystalline Caverns': './img/DeepDive_MissionBar_CrystalCaves.png',
+        'Glacial Strata': './img/DeepDive_MissionBar_GlacialStrata.png',
+        'Radioactive Exclusion Zone': './img/DeepDive_MissionBar_Radioactive.png',
+        'Fungus Bogs': './img/DeepDive_MissionBar_FungusBogs.png',
+        'Dense Biozone': './img/DeepDive_MissionBar_LushDownpour.png',
+        'Salt Pits': './img/DeepDive_MissionBar_SaltPits.png',
+        'Sandblasted Corridors': './img/DeepDive_MissionBar_Sandblasted.png',
+        'Magma Core': './img/DeepDive_MissionBar_MagmaCore.png',
+        'Azure Weald': './img/DeepDive_MissionBar_AzureWeald.png',
+        'Hollow Bough': './img/DeepDive_MissionBar_HollowBough.png'
+    }
+    
+    font_path = './img/BebasNeue-Regular.ttf'
+    font_size = 45
+    font_BebasNeue = ImageFont.truetype(font_path, font_size)
+    font_path = './img/HammerBro101MovieBold-Regular.ttf'
+    text_color = (255, 255, 255)
+    
+    BACKGROUND = Image.open(biomes[biome])
+    # BACKGROUND = add_shadowed_text_to_image(BACKGROUND, codename, 'white', '#000000', font_path, font_size)
+    text_and_fonts = [('CODENAME:   ', "./img/RiftSoft-Regular.ttf"), (f'{codename}', './img/BebasNeue-Regular.ttf')]
+    BACKGROUND = add_shadowed_text_to_image_SPLITFONTS(BACKGROUND, text_and_fonts, 'white', '#000000', font_size)
+    #BACKGROUND.save('TEST.png', format='PNG')
+    #subprocess.run(['gwenview', 'TEST.png'])
     return BACKGROUND
 
 def render_dd_secondary_obj_resource(secondary_obj):
@@ -614,15 +735,16 @@ def render_dd_stage(m_d):
 
 #m_d = {"CodeName":" ","Complexity":"2","Length":"2","MissionWarnings":["Lithophage Outbreak","Lethal Enemies"],"MissionMutator":"Double XP","PrimaryObjective":"Salvage Operation","SecondaryObjective":"Hollomite","id":654}
 #render_mission(m_d)
+#-------------------------------------------------------------------------------------------------------------------------------
 
 #PRE-HASH PIL OBJECT ARRAYING
 
-#thread pools for standard missions - microscopic gains. #TODO multiprocessing pools
+#thread pools for standard missions - microscopic gains. #TODO debug multiprocessing pools, gunicorn circular import
 #def wrap_missions_executor(missions):
     #mission_futures = []
     #with ThreadPoolExecutor() as executor:
         #for mission in missions:
-            #if len(mission) > 5:
+            #if len(missions) > 5:
                 #six = True
             #else:
                 #six = False
@@ -630,7 +752,10 @@ def render_dd_stage(m_d):
             #mission_futures.append(future)
         #results = [future.result() for future in mission_futures]
         #return results
-#def wrap_biomes_executor(Biomes):
+#def wrap_biome_worker(args):
+    #biome, missions = args
+    #return biome, wrap_missions_executor(missions)
+#def wrap_biomes_executor_ThreadPool(Biomes):
     #with ThreadPoolExecutor() as executor:
         #biome_futures = {}
         #for biome, missions in Biomes.items():
@@ -638,11 +763,28 @@ def render_dd_stage(m_d):
             #biome_futures[biome] = future
         #results = {biome: future.result() for biome, future in biome_futures.items()}
         #return results
-#def render_biomes(Biomes):
-    #start_time = time.time()
-    #rendered_biomes = wrap_biomes_executor(Biomes)
-    #print(time.time() - start_time)
+#def wrap_biomes_executor_ProcessPool(Biomes):
+    #with ProcessPoolExecutor() as executor:
+        #biome_futures = {}
+        #for biome, missions in Biomes.items():
+            #future = executor.submit(wrap_missions_executor, missions)
+            #biome_futures[biome] = future
+    #results = {biome: future.result() for biome, future in biome_futures.items()}
+    #return results
+#def wrap_biomes_executor(Biomes):
+    #if cpu_count() == 1:
+        #rendered_biomes = wrap_biomes_executor_ThreadPool(Biomes)
+        #return rendered_biomes
+    #rendered_biomes = wrap_biomes_executor_ProcessPool(Biomes)
     #return rendered_biomes
+        
+#def render_biomes(Biomes):
+    ## start_time = time.time()
+    #rendered_biomes = wrap_biomes_executor(Biomes)
+    ## print(time.time() - start_time)
+    #return rendered_biomes
+
+#single threaded
 def render_biomes(Biomes):
     rendered_biomes = {}
     for biome, missions in Biomes.items():
@@ -823,6 +965,8 @@ def rotate_DDs(DDs):
             if os.path.exists(f'./files/{folder_name}'):
                 shutil.rmtree(f'./files/{folder_name}')
             os.mkdir(f'./files/{folder_name}')
+            BIOME_NORMAL = render_dd_biome_codename(f"  {dds[dd_str]['CodeName']}", dds[dd_str]['Biome'])
+            BIOME_NORMAL.save(f'./files/{folder_name}/dd_biome.png', format='PNG')
             for mission in dds[dd_str]['Stages']:
                 img_count += 1
                 fname = str(img_count)
@@ -834,12 +978,15 @@ def rotate_DDs(DDs):
             if os.path.exists(f'./files/{folder_name}'):
                 shutil.rmtree(f'./files/{folder_name}')
             os.mkdir(f'./files/{folder_name}')
+            BIOME_ELITE = render_dd_biome_codename(f"{dds[dd_str]['CodeName']}", dds[dd_str]['Biome'])
+            BIOME_ELITE.save(f'./files/{folder_name}/dd_biome.png', format='PNG')
             for mission in dds[dd_str]['Stages']:
                 img_count += 1
                 fname = str(img_count)
                 mission.save(f'./files/{folder_name}/{fname}.png')
                 mission.close()
             del dds
+            # subprocess.run(['touch', 'main.py'])
         sleep(0.25)
 #----------------------------------------------------------------
 #BASE UTILS
@@ -942,6 +1089,23 @@ def rotate_timestamp(tstamp_Queue, next_):
             tstamp_Queue.pop(0)
             timestamp = tstamp_Queue[0]
         sleep(0.25)
+
+def rotate_timestamps(tstamp_Queue, next_tstamp_Queue):
+    applicable_timestamp = select_timestamp(next_=False)
+    applicable_next_timestamp = select_timestamp(next_=True)
+    next_tstamp_Queue.append(applicable_next_timestamp)
+    tstamp_Queue.append(applicable_timestamp)
+    timestamp = tstamp_Queue[0]
+    while True:
+        applicable_timestamp = select_timestamp(next_=False)
+        if applicable_timestamp != timestamp:
+            select_timestamp(next_=True)
+            next_tstamp_Queue.append(select_timestamp(next_=True))
+            next_tstamp_Queue.pop(0)
+            tstamp_Queue.append(applicable_timestamp)
+            tstamp_Queue.pop(0)
+            timestamp = tstamp_Queue[0]
+        sleep(0.25)
         
 def rotate_timestamp_from_dict(dictionary, tstamp_Queue, next_):
     applicable_timestamp = select_timestamp_from_dict(dictionary, next_=next_)
@@ -1019,7 +1183,7 @@ def array_standard_missions(Biomes, biome_str, html, nextindex):
             fname = f'/upcoming_png?img={url_biome}_{str(mission["id"])}'
         else:
             fname = f'/png?img={url_biome}_{str(mission["id"])}'
-        html += f'          <div class="mission-hover-zoom"><img class="mission" src="{fname}"></div>\n'
+        html += f'          <div class="mission-hover-zoom"><img title="{mission["CodeName"]}" class="mission" src="{fname}"></div>\n'
     return html
 def array_dd_missions(dds, dd_str, stg_count, html):
     biomes = {
@@ -1032,14 +1196,14 @@ def array_dd_missions(dds, dd_str, stg_count, html):
         'Sandblasted Corridors': 'DeepDive_MissionBar_Sandblasted.png',
         'Magma Core': 'DeepDive_MissionBar_MagmaCore.png',
         'Azure Weald': 'DeepDive_MissionBar_AzureWeald.png',
-        'Hollow Bough': 'DeepDive_MissionBar_FungusBogs.png'
+        'Hollow Bough': 'DeepDive_MissionBar_HollowBough.png'
     }
     biome = dds[dd_str]['Biome']
     biome1 = biomes[biome]
-    html += f'         <img title="{biome}" class="dd-biome" src="/files/{biome1}">\n'
-    html += '         <br>\n'
     folder_name = dd_str.replace(' ', '_')
-    for mission in dds[dd_str]['Stages']:
+    html += f'         <img title="{biome}"  class="dd-biome" src="/files/{folder_name}/dd_biome.png">\n'
+    html += '         <br>\n'
+    for i in range(3):
         stg_count += 1
         fname = str(stg_count)
         html += f'         <div class="mission-hover-zoom"><img class="mission" title="Stage {fname}" src="/files/{folder_name}/{fname}.png"></div>\n'
@@ -1050,7 +1214,7 @@ def render_index(timestamp, next_timestamp, DDs):
     next_Biomes = next_timestamp['Biomes']
     DeepDives = DDs['Deep Dives']
     nextindex = False
-    html = '''  <!DOCTYPE html>
+    html = '''<!DOCTYPE html>
     <html>
         <head>
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
@@ -1285,7 +1449,7 @@ def render_index(timestamp, next_timestamp, DDs):
                <hr>
             </div>
               <div class="jsonc">
-             <div class="jsonlinks"><span style="color: white;font-size: 30px;font-family: "BebasNeue", sans-serif;"> <a class="jsonlink" href="/json?data=current">CURRENT MISSION DATA</a> | <a class="jsonlink" href="/json?data=next">UPCOMING MISSION DATA</a> | <a class="jsonlink" href="/json?data=DD">CURRENT DEEP DIVE DATA</a> | <a class="jsonlink" href="/json?data=dailydeal">CURRENT DAILY DEAL DATA</a> | <a class="jsonlink" href="/xp_calculator">CLASS XP CALCULATOR</a></span> </div>
+             <div class="jsonlinks"><span style="color: white;font-size: 30px;font-family: BebasNeue, sans-serif;"> <a class="jsonlink" href="/json?data=current">CURRENT MISSION DATA</a> | <a class="jsonlink" href="/json?data=next">UPCOMING MISSION DATA</a> | <a class="jsonlink" href="/json?data=DD">CURRENT DEEP DIVE DATA</a> | <a class="jsonlink" href="/json?data=dailydeal">CURRENT DAILY DEAL DATA</a> | <a class="jsonlink" href="/xp_calculator">CLASS XP CALCULATOR</a></span> </div>
                <span class="credits">Send credits (eth): 0xb9c8591A80A3158f7cFFf96EC3c7eA9adB7818E7</span></div>
               <p class='gsgdisclaimer'><i>This website is a third-party platform and is not affiliated, endorsed, or sponsored by Ghost Ship Games. The use of Deep Rock Galactic's in-game assets on this website is solely for illustrative purposes and does not imply any ownership or association with the game or its developers. All copyrights and trademarks belong to their respective owners. For official information about Deep Rock Galactic, please visit the official Ghost Ship Games website.</i></p></div>
         </body>
