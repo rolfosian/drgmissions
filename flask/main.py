@@ -245,12 +245,11 @@ def xp_calc():
         print(e)
         return '<!doctype html><html lang="en"><title>400 Bad Request</title><h1>Bad Request</h1><p>The server could not understand your request. Please make sure you have entered the correct information and try again.</p>', 400
 
-#This should probably involve some kind of actual cryptography beyond https requests but i cant be bothered to learn about that yet
 with open('token.txt', 'r') as f:
     AUTH_TOKEN = f.read().strip()
     f.close()
 
-#Route for deployment of weekly deep dive metadata and static assets
+#Route for deployment of weekly deep dive metadata
 @app.route('/upload', methods=['GET', 'POST'])
 def upload():
     try:

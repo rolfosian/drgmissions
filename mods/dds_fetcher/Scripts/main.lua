@@ -411,7 +411,7 @@ function Main()
             break
         end
     end
-    -- Execute the function that 'press any key' evokes
+    -- Execute the function that 'press any key' invokes
     if startmenus then
         for index, startmenu in pairs(startmenus) do
             startmenu:PressStart()
