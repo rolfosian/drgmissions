@@ -1,5 +1,5 @@
 local json = require("./mods/long_term_mission_data_collector/Scripts/dkjson")
-local socket = require('./mods/long_term_mission_data_collector/Scripts/x64/socket')
+local socket = require('./mods/long_term_mission_data_collector/Scripts/socket')
 
 function ReverseDateFormat(inputDate)
     local year = inputDate:sub(1, 2)
