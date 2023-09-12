@@ -868,6 +868,7 @@ def rotate_biomes(DRG, tstamp_Queue, biomes_Queue, rendering_event):
     def array_biomes(Biomes, timestamp):
         Biomes1 = {}
         for biome in Biomes.keys():
+            biome = biome.replace(' ', '-')
             Biomes1[biome] = {}
             for mission in Biomes[biome]:
                 mission0 = {}
@@ -1150,14 +1151,14 @@ def rotate_index(DRG, rendering_event, rendering_event_next, current_timestamp_Q
 
 def array_standard_missions(Biomes, biome_str, html):
     html += '         <br>\n'
-    url_biome = biome_str.replace(' ', '%20')
+    url_biome = biome_str.replace(' ', '-')
     for mission in Biomes[biome_str]:
         fname = f'/png?img={url_biome}_{str(mission["id"])}'
         html += f'          <div class="mission-hover-zoom"><img title="{mission["CodeName"]}" class="mission" src="{fname}"></div>\n'
     return html
 def array_standard_missions_next(Biomes, biome_str, html):
     html += '         <br>\n'
-    url_biome = biome_str.replace(' ', '%20')
+    url_biome = biome_str.replace(' ', '-')
     for mission in Biomes[biome_str]:
         fname = f'/upcoming_png?img={url_biome}_{str(mission["id"])}'
         html += f'          <div class="mission-hover-zoom"><img title="{mission["CodeName"]}" class="mission" src="{fname}"></div>\n'
@@ -1296,7 +1297,6 @@ def render_index(timestamp, next_timestamp):
     html += '''       </h2>
     	    </div>
     	    </div>\n'''
-    nextindex = True
     html += '''          <div id="upcoming" style="visibility: hidden;">
           <div class="grid-container">
                     <h2>

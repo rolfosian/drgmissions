@@ -127,8 +127,7 @@ def serve_img():
     img_arg = request.args.get('img')
     try:
         img_arg = img_arg.split('_')
-        biomestr = img_arg[0].replace('%20', ' ')
-        mission = currybiomes[0][biomestr][img_arg[1]]
+        mission = currybiomes[0][img_arg[0]][img_arg[1]]
         if request.headers.get('If-None-Match') == mission['etag']:
             return '', 304
         return send_file(BytesIO(mission['rendered_mission'].getvalue()), mimetype='image/png', etag=mission['etag'])
@@ -141,8 +140,7 @@ def serve_next_img():
     img_arg = request.args.get('img')
     try:
         img_arg = img_arg.split('_')
-        biomestr = img_arg[0].replace('%20', ' ')
-        mission = nextbiomes[0][biomestr][img_arg[1]]
+        mission = nextbiomes[0][img_arg[0]][img_arg[1]]
         if request.headers.get('If-None-Match') == mission['etag']:
             return '', 304
         return send_file(BytesIO(mission['rendered_mission'].getvalue()), mimetype='image/png', etag=mission['etag'])
