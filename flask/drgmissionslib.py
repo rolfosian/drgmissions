@@ -868,8 +868,8 @@ def rotate_biomes(DRG, tstamp_Queue, biomes_Queue, rendering_event):
     def array_biomes(Biomes, timestamp):
         Biomes1 = {}
         for biome in Biomes.keys():
-            biome = biome.replace(' ', '-')
-            Biomes1[biome] = {}
+            biome1 = biome.replace(' ', '-')
+            Biomes1[biome1] = {}
             for mission in Biomes[biome]:
                 mission0 = {}
                 mission0['CodeName'] = mission['CodeName']
@@ -880,7 +880,7 @@ def rotate_biomes(DRG, tstamp_Queue, biomes_Queue, rendering_event):
                 etag = md5(mission_icon.getvalue()).hexdigest()
                 mission0['etag'] = etag
                 mission0['rendered_mission'] = mission_icon
-                Biomes1[biome][str(mission['id'])] = mission0
+                Biomes1[biome1][str(mission['id'])] = mission0
         return timestamp, Biomes1
     while len(tstamp_Queue) == 0:
         continue
@@ -938,7 +938,7 @@ def rotate_DDs(DDs):
             if os.path.exists(f'./files/{folder_name}'):
                 shutil.rmtree(f'./files/{folder_name}')
             os.mkdir(f'./files/{folder_name}')
-            BIOME_NORMAL = render_dd_biome_codename(f"  {dds[dd_str]['CodeName']}", dds[dd_str]['Biome'])
+            BIOME_NORMAL = render_dd_biome_codename(f"{dds[dd_str]['CodeName']}", dds[dd_str]['Biome'])
             BIOME_NORMAL.save(f'./files/{folder_name}/dd_biome.png', format='PNG')
             for mission in dds[dd_str]['Stages']:
                 img_count += 1
