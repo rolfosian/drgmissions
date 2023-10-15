@@ -880,7 +880,7 @@ def rotate_biomes(DRG, tstamp_Queue, biomes_Queue, rendering_event):
                 etag = md5(mission_icon.getvalue()).hexdigest()
                 mission0['etag'] = etag
                 mission0['rendered_mission'] = mission_icon
-                Biomes1[biome1][str(mission['id'])] = mission0
+                Biomes1[biome1+str(mission['id'])] = mission0
         return timestamp, Biomes1
     while len(tstamp_Queue) == 0:
         continue
@@ -1127,9 +1127,9 @@ def rotate_index(DRG, rendering_event, rendering_event_next, current_timestamp_Q
     rendering_event_next.wait()
     current_timestamp = current_timestamp_Queue[0]
     index = {}
-    index_ = render_index(DRG[current_timestamp], DRG[next_timestamp_Queue[0]])
+    index_ = render_index(DRG[current_timestamp], DRG[next_timestamp_Queue[0]]).encode()
     index['index'] = index_
-    etag = md5(index_.encode()).hexdigest()
+    etag = md5(index_).hexdigest()
     index['etag'] = etag
     index_Queue.append(index)
     index_event.set()
@@ -1140,9 +1140,9 @@ def rotate_index(DRG, rendering_event, rendering_event_next, current_timestamp_Q
             rendering_event_next.wait()
             current_timestamp = current_timestamp_Queue[0]
             index = {}
-            index_ = render_index(DRG[current_timestamp], DRG[next_timestamp_Queue[0]])
+            index_ = render_index(DRG[current_timestamp], DRG[next_timestamp_Queue[0]]).encode()
             index['index'] = index_
-            etag = md5(index_.encode()).hexdigest()
+            etag = md5(index_).hexdigest()
             index['etag'] = etag
             index_Queue.append(index)
             index_Queue.pop(0)
@@ -1150,272 +1150,303 @@ def rotate_index(DRG, rendering_event, rendering_event_next, current_timestamp_Q
         sleep(0.33)
 
 def array_standard_missions(Biomes, biome_str, html):
-    html += '         <br>\n'
+    html += '<br>\n'
     url_biome = biome_str.replace(' ', '-')
     for mission in Biomes[biome_str]:
-        fname = f'/png?img={url_biome}_{str(mission["id"])}'
-        html += f'          <div class="mission-hover-zoom"><img title="{mission["CodeName"]}" class="mission" src="{fname}"></div>\n'
+        fname = f'/png?img={url_biome}{str(mission["id"])}'
+        html += f'<div class="mission-hover-zoom"><img title="{mission["CodeName"]}" class="mission" src="{fname}"></div>\n'
     return html
 def array_standard_missions_next(Biomes, biome_str, html):
-    html += '         <br>\n'
+    html += '<br>\n'
     url_biome = biome_str.replace(' ', '-')
     for mission in Biomes[biome_str]:
-        fname = f'/upcoming_png?img={url_biome}_{str(mission["id"])}'
-        html += f'          <div class="mission-hover-zoom"><img title="{mission["CodeName"]}" class="mission" src="{fname}"></div>\n'
+        fname = f'/upcoming_png?img={url_biome}{str(mission["id"])}'
+        html += f'<div class="mission-hover-zoom"><img title="{mission["CodeName"]}" class="mission" src="{fname}"></div>\n'
     return html
 def array_dd_missions(dd_str, html):
     folder_name = dd_str.replace(' ', '_')
-    html += f'         <img class="dd-biome" src="/files/{folder_name}/dd_biome.png">\n         <br>\n'
+    html += f'<img class="dd-biome" src="/files/{folder_name}/dd_biome.png">\n<br>\n'
     stg_count = 0
     for i in range(3):
         stg_count += 1
         fname = str(stg_count)
-        html += f'         <div class="mission-hover-zoom"><img class="mission" title="Stage {fname}" src="/files/{folder_name}/{fname}.png"></div>\n'
+        html += f'<div class="mission-hover-zoom"><img class="mission" title="Stage {fname}" src="/files/{folder_name}/{fname}.png"></div>\n'
     return html
 
 def render_index(timestamp, next_timestamp):
-    img_count = 0
     Biomes = timestamp['Biomes']
     next_Biomes = next_timestamp['Biomes']
     html = '''<!DOCTYPE html>
-    <html>
-        <head>
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
-        <script src="/files/homepage.js"></script>
-        <title>Current Missions from the Hoxxes IV Space Rig Mission Terminal</title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta property="og:title" content="Current and Upcoming Missions from the Hoxxes IV Mission Terminal">
-        <meta property="og:type" content="website">
-        <meta property="og:image" content="/files/Mission_control_portrait.png">
-        <meta property="og:description" content="Deep Rock Galactic Mission Tracker">
-        <link rel ="icon" href="/files/favicon.ico" type="image/x-icon">
-        <link rel ="stylesheet" href="/files/styles.css" type="text/css">
-        </head>
-        <body bgcolor="#303030">
-        <video id="background-video" autoplay muted loop><source src="/files/space_rig.webm" type="video/webm"></video>
-        <div class="overlay"></div>
-        <p class="loading">Loading</p>
-        <div id="countdowncontainer">
-        <button id="backgroundButton">Hide background</button><button id="buttonsbutton">x</button><br>
-        <div id=DAILYDEAL><div id="dailydealhead">NEW DAILY DEAL IN<br><span id="DailyDealcountdown"></span></div><img id="DailyDeal" class="daily_trade" src="/dailydeal"></div>
-        <button id="dailydealbutton">Click here to see Daily Deal</button><br>
-        <div id="missionscountdown">NEW MISSIONS IN<br>
-        <span id="countdown"></span></div><button id="slideButton">Hide countdown</button><br>
-        <button id="currentButton">Click here to see upcoming missions</button>
-        </div>
-        <div id="current">\n'''
-    html += '''      <div class="grid-container">
-            <h2>
-            <div class="biome-container">
-             <img title="Glacial Strata" class="image-container" src="/files/DeepDive_MissionBar_GlacialStrata.png">\n'''
+<html>
+<head>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+<script src="/files/homepage.js"></script>
+<title>Current Missions from the Hoxxes IV Space Rig Mission Terminal</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta property="og:title" content="Current and Upcoming Missions from the Hoxxes IV Mission Terminal">
+<meta property="og:type" content="website">
+<meta property="og:image" content="/files/Mission_control_portrait.png">
+<meta property="og:description" content="Deep Rock Galactic Mission Tracker">
+<link rel ="icon" href="/files/favicon.ico" type="image/x-icon">
+<link rel ="stylesheet" href="/files/styles.css" type="text/css">
+</head>
+
+<body bgcolor="#303030">
+<video id="background-video" autoplay muted loop><source src="/files/space_rig.webm" type="video/webm"></video>
+<div class="overlay"></div>
+
+<p class="loading">Loading</p>
+
+<div id="countdowncontainer">
+<button id="backgroundButton">Hide background</button><button id="buttonsbutton">x</button><br>
+<div id=DAILYDEAL><div id="dailydealhead">NEW DAILY DEAL IN<br><span id="DailyDealcountdown"></span></div><img id="DailyDeal" class="daily_trade" src="/dailydeal"></div>
+<button id="dailydealbutton">Click here to see Daily Deal</button><br>
+<div id="missionscountdown">NEW MISSIONS IN<br>
+<span id="countdown"></span></div><button id="slideButton">Hide countdown</button><br>
+<button id="currentButton">Click here to see upcoming missions</button>
+</div>
+
+
+<div id="current">\n'''
+    html += '''<div class="grid-container">
+<h2>
+<div class="biome-container">
+<img title="Glacial Strata" class="image-container" src="/files/DeepDive_MissionBar_GlacialStrata.png">\n'''
     if 'Glacial Strata' not in Biomes.keys():
-        html += '          <br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
+        html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
         html = array_standard_missions(Biomes, 'Glacial Strata', html)
-    html += '''        </div>
-           </h2>
-           <h2>
-            <div class="biome-container">
-             <img title="Crystalline Caverns" class="image-container" src="/files/DeepDive_MissionBar_CrystalCaves.png">\n'''
+    html += '''</div>
+</h2>
+
+<h2>
+<div class="biome-container">
+<img title="Crystalline Caverns" class="image-container" src="/files/DeepDive_MissionBar_CrystalCaves.png">\n'''
     if 'Crystalline Caverns' not in Biomes.keys():
-        html += '          <br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
+        html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
         html = array_standard_missions(Biomes, 'Crystalline Caverns', html)
-    html += '''        </div>
-       </h2>
-       <h2>
-        <div class="biome-container">
-         <img title="Salt Pits" class="image-container" src="/files/DeepDive_MissionBar_SaltPits.png">\n'''
+    html += '''</div>
+</h2>
+
+<h2>
+<div class="biome-container">
+<img title="Salt Pits" class="image-container" src="/files/DeepDive_MissionBar_SaltPits.png">\n'''
     if 'Salt Pits' not in Biomes.keys():
-        html += '          <br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
+        html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
         html = array_standard_missions(Biomes, 'Salt Pits', html)
-    html += '''        </div>
-       </h2>
-       <h2>
-        <div class="biome-container">
-         <img title="Magma Core" class="image-container" src="/files/DeepDive_MissionBar_MagmaCore.png">\n'''
+    html += '''</div>
+</h2>
+
+<h2>
+<div class="biome-container">
+<img title="Magma Core" class="image-container" src="/files/DeepDive_MissionBar_MagmaCore.png">\n'''
     if 'Magma Core' not in Biomes.keys():
-        html += '          <br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
+        html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
         html = array_standard_missions(Biomes, 'Magma Core', html)
-    html += '''        </div>
-           </h2>
-           <h2>
-            <div class ="biome-container">
-             <img title="Azure Weald" class="image-container" src="/files/DeepDive_MissionBar_AzureWeald.png">\n'''
+    html += '''</div>
+</h2>
+
+<h2>
+<div class ="biome-container">
+<img title="Azure Weald" class="image-container" src="/files/DeepDive_MissionBar_AzureWeald.png">\n'''
     if 'Azure Weald' not in Biomes.keys():
-        html += '          <br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
+        html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
         html = array_standard_missions(Biomes, 'Azure Weald', html)
-    html += '''        </div>
-           </h2>
-           <h2>
-            <div class ="biome-container">
-             <img title="Sandblasted Corridors" class="image-container" src="/files/DeepDive_MissionBar_Sandblasted.png">\n'''
+    html += '''</div>
+</h2>
+
+<h2>
+<div class="biome-container">
+<img title="Sandblasted Corridors" class="image-container" src="/files/DeepDive_MissionBar_Sandblasted.png">\n'''
     if 'Sandblasted Corridors' not in Biomes.keys():
-        html += '          <br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
+        html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
         html = array_standard_missions(Biomes, 'Sandblasted Corridors', html)
-    html += '''        </div>
-           </h2>
-           <h2>
-            <div class = "biome-container">
-             <img title="Fungus Bogs" class="image-container" src="/files/DeepDive_MissionBar_FungusBogs.png">\n'''
+    html += '''</div>
+</h2>
+
+<h2>
+<div class="biome-container">
+<img title="Fungus Bogs" class="image-container" src="/files/DeepDive_MissionBar_FungusBogs.png">\n'''
     if 'Fungus Bogs' not in Biomes.keys():
-        html += '          <br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
+        html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
         html = array_standard_missions(Biomes, 'Fungus Bogs', html)
-    html += '''        </div>
-           </h2>
-           <h2>
-            <div class ="biome-container">
-             <img title="Radioactive Exclusion Zone" class="image-container" src="/files/DeepDive_MissionBar_Radioactive.png">\n'''
+    html += '''</div>
+</h2>
+
+<h2>
+<div class="biome-container">
+<img title="Radioactive Exclusion Zone" class="image-container" src="/files/DeepDive_MissionBar_Radioactive.png">\n'''
     if 'Radioactive Exclusion Zone' not in Biomes.keys():
-        html += '          <br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
+        html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
         html = array_standard_missions(Biomes, 'Radioactive Exclusion Zone', html)
-    html += '''        </div>
-           </h2>
-           <h2>
-            <div class ="biome-container">
-             <img title="Dense Biozone" class="image-container" src="/files/DeepDive_MissionBar_LushDownpour.png">\n'''
+    html += '''</div>
+</h2>
+
+<h2>
+<div class="biome-container">
+<img title="Dense Biozone" class="image-container" src="/files/DeepDive_MissionBar_LushDownpour.png">\n'''
     if 'Dense Biozone' not in Biomes.keys():
-        html += '          <br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
+        html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
         html = array_standard_missions(Biomes, 'Dense Biozone', html)
-    html += '''        </div>
-           </h2>
-           <h2>
-            <div class ="biome-container">
-             <img title="Hollow Bough" class="image-container" src="/files/DeepDive_MissionBar_HollowBough.png">\n'''
+    html += '''</div>
+</h2>
+
+<h2>
+<div class="biome-container">
+<img title="Hollow Bough" class="image-container" src="/files/DeepDive_MissionBar_HollowBough.png">\n'''
     if 'Hollow Bough' not in Biomes.keys():
-        html += '          <br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
+        html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
         html = array_standard_missions(Biomes, 'Hollow Bough', html)
-    html += '''       </h2>
-    	    </div>
-    	    </div>\n'''
-    html += '''          <div id="upcoming" style="visibility: hidden;">
-          <div class="grid-container">
-                    <h2>
-            <div class="biome-container">
-             <img title="Glacial Strata" class="image-container" src="/files/DeepDive_MissionBar_GlacialStrata.png">\n'''
+    html += '''</div>
+</h2>
+</div>
+</div>
+
+
+
+'''
+    html += '''<div id="upcoming" style="visibility: hidden;">
+<div class="grid-container">
+<h2>
+<div class="biome-container">
+    <img title="Glacial Strata" class="image-container" src="/files/DeepDive_MissionBar_GlacialStrata.png">\n'''
     if 'Glacial Strata' not in next_Biomes.keys():
-        html += '          <br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
+        html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
         html = array_standard_missions_next(next_Biomes, 'Glacial Strata', html)
-    html += '''        </div>
-           </h2>
-           <h2>
-            <div class="biome-container">
-             <img title="Crystalline Caverns" class="image-container" src="/files/DeepDive_MissionBar_CrystalCaves.png">\n'''
+    html += '''</div>
+</h2>
+
+<h2>
+<div class="biome-container">
+<img title="Crystalline Caverns" class="image-container" src="/files/DeepDive_MissionBar_CrystalCaves.png">\n'''
     if 'Crystalline Caverns' not in next_Biomes.keys():
-        html += '          <br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
+        html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
         html = array_standard_missions_next(next_Biomes, 'Crystalline Caverns', html)
-    html += '''        </div>
-       </h2>
-       <h2>
-        <div class="biome-container">
-         <img title="Salt Pits" class="image-container" src="/files/DeepDive_MissionBar_SaltPits.png">\n'''
+    html += '''</div>
+</h2>
+
+<h2>
+<div class="biome-container">
+<img title="Salt Pits" class="image-container" src="/files/DeepDive_MissionBar_SaltPits.png">\n'''
     if 'Salt Pits' not in next_Biomes.keys():
-        html += '          <br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
+        html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
         html = array_standard_missions_next(next_Biomes, 'Salt Pits', html)
-    html += '''        </div>
-       </h2>
-       <h2>
-        <div class="biome-container">
-         <img title="Magma Core" class="image-container" src="/files/DeepDive_MissionBar_MagmaCore.png">\n'''
+    html += '''</div>
+</h2>
+
+<h2>
+<div class="biome-container">
+<img title="Magma Core" class="image-container" src="/files/DeepDive_MissionBar_MagmaCore.png">\n'''
     if 'Magma Core' not in next_Biomes.keys():
-        html += '          <br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
+        html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
         html = array_standard_missions_next(next_Biomes, 'Magma Core', html)
-    html += '''        </div>
-           </h2>
-           <h2>
-            <div class ="biome-container">
-             <img title="Azure Weald" class="image-container" src="/files/DeepDive_MissionBar_AzureWeald.png">\n'''
+    html += '''</div>
+</h2>
+<h2>
+<div class="biome-container">
+<img title="Azure Weald" class="image-container" src="/files/DeepDive_MissionBar_AzureWeald.png">\n'''
     if 'Azure Weald' not in next_Biomes.keys():
-        html += '          <br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
+        html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
         html = array_standard_missions_next(next_Biomes, 'Azure Weald', html)
-    html += '''        </div>
-           </h2>
-           <h2>
-            <div class ="biome-container">
-             <img title="Sandblasted Corridors" class="image-container" src="/files/DeepDive_MissionBar_Sandblasted.png">\n'''
+    html += '''</div>
+</h2>
+
+<h2>
+<div class="biome-container">
+<img title="Sandblasted Corridors" class="image-container" src="/files/DeepDive_MissionBar_Sandblasted.png">\n'''
     if 'Sandblasted Corridors' not in next_Biomes.keys():
-        html += '          <br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
+        html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
         html = array_standard_missions_next(next_Biomes, 'Sandblasted Corridors', html)
-    html += '''        </div>
-           </h2>
-           <h2>
-            <div class = "biome-container">
-             <img title="Fungus Bogs" class="image-container" src="/files/DeepDive_MissionBar_FungusBogs.png">\n'''
+    html += '''</div>
+</h2>
+
+<h2>
+<div class="biome-container">
+<img title="Fungus Bogs" class="image-container" src="/files/DeepDive_MissionBar_FungusBogs.png">\n'''
     if 'Fungus Bogs' not in next_Biomes.keys():
-        html += '          <br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
+        html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
         html = array_standard_missions_next(next_Biomes, 'Fungus Bogs', html)
-    html += '''        </div>
-           </h2>
-           <h2>
-            <div class ="biome-container">
-             <img title="Radioactive Exclusion Zone" class="image-container" src="/files/DeepDive_MissionBar_Radioactive.png">\n'''
+    html += '''</div>
+</h2>
+
+<h2>
+<div class="biome-container">
+<img title="Radioactive Exclusion Zone" class="image-container" src="/files/DeepDive_MissionBar_Radioactive.png">\n'''
     if 'Radioactive Exclusion Zone' not in next_Biomes.keys():
-        html += '          <br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
+        html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
         html = array_standard_missions_next(next_Biomes, 'Radioactive Exclusion Zone', html)
-    html += '''        </div>
-           </h2>
-           <h2>
-            <div class ="biome-container">
-             <img title="Dense Biozone" class="image-container" src="/files/DeepDive_MissionBar_LushDownpour.png">\n'''
+    html += '''</div>
+</h2>
+
+<h2>
+<div class="biome-container">
+<img title="Dense Biozone" class="image-container" src="/files/DeepDive_MissionBar_LushDownpour.png">\n'''
     if 'Dense Biozone' not in next_Biomes.keys():
-        html += '          <br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
+        html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
         html = array_standard_missions_next(next_Biomes, 'Dense Biozone', html)
-    html += '''        </div>
-           </h2>
-           <h2>
-            <div class ="biome-container">
-             <img title="Hollow Bough" class="image-container" src="/files/DeepDive_MissionBar_HollowBough.png">\n'''
+    html += '''</div>
+</h2>
+
+<h2>
+<div class="biome-container">
+<img title="Hollow Bough" class="image-container" src="/files/DeepDive_MissionBar_HollowBough.png">\n'''
     if 'Hollow Bough' not in next_Biomes.keys():
-        html += '          <br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
+        html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
         html = array_standard_missions_next(next_Biomes, 'Hollow Bough', html)
 
-    html += '''       </h2>
-         </div>
-         </div>
-           <div class="grid-container">
-            <div class="dd-container">
-               <h2>
-              <img class="image-container" src="/files/dd.png">\n'''
+    html += '''</div>
+</h2>
+</div>
+</div>
+
+
+<div class="grid-container">
+<div class="dd-container">
+<h2>
+<img class="image-container" src="/files/dd.png">\n'''
     html = array_dd_missions('Deep Dive Normal', html)
-    html += '''         </h2>
-            </div>
-            <div class="dd-container">
-               <h2>
-              <img class="image-container" src="/files/edd.png">\n'''
+    html += '''</h2>
+</div>
+<div class="dd-container">
+<h2>
+<img class="image-container" src="/files/edd.png">\n'''
     html = array_dd_missions('Deep Dive Elite', html)
-    html += '''           </h2>
-            </div>
-    	    </div>
-              <div>
-               <div class="ddscountdown">NEW DEEP DIVES IN</div>
-              <span id="ddcountdown"></span>
-               <hr>
-            </div>
-              <div class="jsonc">
-             <div class="jsonlinks"><span style="color: white;font-size: 30px;font-family: BebasNeue, sans-serif;"> <a class="jsonlink" href="/json?data=current">CURRENT MISSION DATA</a> | <a class="jsonlink" href="/json?data=next">UPCOMING MISSION DATA</a> | <a class="jsonlink" href="/json?data=DD">CURRENT DEEP DIVE DATA</a> | <a class="jsonlink" href="/json?data=dailydeal">CURRENT DAILY DEAL DATA</a> | <a class="jsonlink" href="/xp_calculator">CLASS XP CALCULATOR</a> | <a class="jsonlink" href="https://github.com/rolfosian/drgmissions/">GITHUB</a></span> </div>
-               <span class="credits">Send credits (eth): 0xb9c8591A80A3158f7cFFf96EC3c7eA9adB7818E7</span></div>
-              <p class='gsgdisclaimer'><i>This website is a third-party platform and is not affiliated, endorsed, or sponsored by Ghost Ship Games. The use of Deep Rock Galactic's in-game assets on this website is solely for illustrative purposes and does not imply any ownership or association with the game or its developers. All copyrights and trademarks belong to their respective owners. For official information about Deep Rock Galactic, please visit the official Ghost Ship Games website.</i></p></div>
-        </body>
-    </html>'''
+    html += '''</h2>
+</div>
+</div>
+
+
+<div>
+<div class="ddscountdown">NEW DEEP DIVES IN</div>
+<span id="ddcountdown"></span>
+<hr>
+</div>
+<div class="jsonc">
+<div class="jsonlinks"><span style="color: white;font-size: 30px;font-family: BebasNeue, sans-serif;"> <a class="jsonlink" href="/json?data=current">CURRENT MISSION DATA</a> | <a class="jsonlink" href="/json?data=next">UPCOMING MISSION DATA</a> | <a class="jsonlink" href="/json?data=DD">CURRENT DEEP DIVE DATA</a> | <a class="jsonlink" href="/json?data=dailydeal">CURRENT DAILY DEAL DATA</a> | <a class="jsonlink" href="/xp_calculator">CLASS XP CALCULATOR</a> | <a class="jsonlink" href="https://github.com/rolfosian/drgmissions/">GITHUB</a></span> </div>
+<span class="credits">Send credits (eth): 0xb9c8591A80A3158f7cFFf96EC3c7eA9adB7818E7</span></div>
+<p class='gsgdisclaimer'><i>This website is a third-party platform and is not affiliated, endorsed, or sponsored by Ghost Ship Games. The use of Deep Rock Galactic's in-game assets on this website is solely for illustrative purposes and does not imply any ownership or association with the game or its developers. All copyrights and trademarks belong to their respective owners. For official information about Deep Rock Galactic, please visit the official Ghost Ship Games website.</i></p></div>
+</body>
+</html>'''
     return html
 
 #CLASS XP CALCULATOR

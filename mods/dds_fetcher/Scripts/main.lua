@@ -165,12 +165,23 @@ function UnpackDeepDiveMission(mission, master, t)
     elseif string.find(DurationLimit, 'Duration_Normal') then
         length = '2'
     end
-    mission1['Length'] = length
     local MissionDNA = mission:GetPropertyValue("MissionDNA")
     MissionDNA = string.format("%s",MissionDNA:GetFullName())
 
     -- Complexity and Length finalization
-
+    if length == 'Indefinite' then
+        local twolength_objs = {
+            "On-Site Refining",
+            "Industrial Sabotage",
+        }
+        for _, obj in pairs(twolength_objs) do
+            if obj == PrimaryObjective then
+                length = '2'
+                break
+            end
+        end
+    end
+    mission1['Length'] = length
     -- Salvage DNA
     -- local SalvageDNAs = {
     --     {pattern = 'SalvageFractured_Complex', result = {length = '3', complexity = '3'}},

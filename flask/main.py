@@ -15,7 +15,7 @@ from drgmissionslib import (
     )
 import os
 import json
-from flask import Flask, render_template_string, request, send_file, jsonify, make_response
+from flask import Flask, request, send_file, jsonify
 import threading
 from io import BytesIO
 # import queue
@@ -117,30 +117,26 @@ def home():
     index_event.wait()
     if request.headers.get('If-None-Match') == index_Queue[0]['etag']:
         return '', 304
-    response = make_response(render_template_string(index_Queue[0]['index']))
-    response.headers['ETag'] = index_Queue[0]['etag']
-    return response
+    return send_file(BytesIO(index_Queue[0]['index']), mimetype='text/html', etag=index_Queue[0]['etag'])
 
-#Sends current mission icons
+#Sends current mission icons, arg format f"?img={Biome.replace(' ', '-')}{mission['id']}" - see rotate_biomes in drgmissionslib.py
 @app.route('/png')
 def serve_img():
     img_arg = request.args.get('img')
     try:
-        img_arg = img_arg.split('_')
-        mission = currybiomes[0][img_arg[0]][img_arg[1]]
+        mission = currybiomes[0][img_arg]
         if request.headers.get('If-None-Match') == mission['etag']:
             return '', 304
         return send_file(BytesIO(mission['rendered_mission'].getvalue()), mimetype='image/png', etag=mission['etag'])
     except Exception:
         return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
 
-#Sends upcoming mission icons
+#Sends upcoming mission icons, arg format f"?img={Biome.replace(' ', '-')}{mission['id']}" - see rotate_biomes in drgmissionslib.py
 @app.route('/upcoming_png')
 def serve_next_img():
     img_arg = request.args.get('img')
     try:
-        img_arg = img_arg.split('_')
-        mission = nextbiomes[0][img_arg[0]][img_arg[1]]
+        mission = nextbiomes[0][img_arg]
         if request.headers.get('If-None-Match') == mission['etag']:
             return '', 304
         return send_file(BytesIO(mission['rendered_mission'].getvalue()), mimetype='image/png', etag=mission['etag'])
