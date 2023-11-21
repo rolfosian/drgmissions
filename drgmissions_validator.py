@@ -46,7 +46,7 @@ def reconstruct_dictionary(dictionary):
                     god[key][nested_key][biome] = missions1
     return god
 
-def find_duplicates(dictionary):
+def find_duplicates(dictionary, invalid_keys):
     god = {}
     for key, value in dictionary.items():
         god[key] = json.dumps(value)
@@ -58,17 +58,19 @@ def find_duplicates(dictionary):
             else:
                 string_count[value] = [key]
         duplicate_strings = {value: keys for value, keys in string_count.items() if len(keys) > 1}
-        
         return duplicate_strings
+    
     duplicate_strings = find_duplicate_strings(god)
     if duplicate_strings:
         print("Duplicate strings found:")
         for value, keys in duplicate_strings.items():
             print("Keys:", keys)
+            for key in keys:
+                invalid_keys.append(key)
     else:
         print("No duplicate strings found.")
 
-def check_sum_of_missions(dictionary):
+def check_sum_of_missions(dictionary, invalid_keys):
     missions_keys = []
     for key, value in dictionary.items():
         mission_count = 0
@@ -77,8 +79,9 @@ def check_sum_of_missions(dictionary):
             biomes.append(biome)
         for biome in biomes:
             mission_count += len(value['Biomes'][biome])
-        if mission_count < 22 or mission_count > 23:
+        if mission_count != 19:
             missions_keys.append(key)
+            invalid_keys.append(key)
     if missions_keys:
         print('Invalid number of missions in:')
         for key in missions_keys:
@@ -86,7 +89,7 @@ def check_sum_of_missions(dictionary):
     else:
         print('No sum of missions outside range')
         
-def check_missions_keys(dictionary):
+def check_missions_keys(dictionary, invalid_keys):
     missions_keys = []
     for key, value in dictionary.items():
         biomes = []
@@ -97,6 +100,7 @@ def check_missions_keys(dictionary):
                 key_count = len(list(mission.keys()))
                 if key_count not in [6, 7, 8]:
                     missions_keys.append(f'{key}: {biome}')
+                    invalid_keys.append(key)
     if missions_keys:
         print('Invalid number of keys in:')
         for key in missions_keys:
@@ -104,7 +108,7 @@ def check_missions_keys(dictionary):
     else:
         print('No sum of missions keys outside range')
 
-def check_missions_length_complexity(dictionary):
+def check_missions_length_complexity(dictionary, invalid_keys):
     missions_keys = []
     for key, value in dictionary.items():
         biomes = []
@@ -113,7 +117,8 @@ def check_missions_length_complexity(dictionary):
         for biome in biomes:
             for mission in value['Biomes'][biome]:
                 if mission['Complexity'] == 'Indefinite' or mission['Length'] == 'Indefinite':
-                    missions_keys.append(f'{key}: {biome}')       
+                    missions_keys.append(f'{key}: {biome}')
+                    invalid_keys.append(key)
     if missions_keys:
         print('Indefinite complexity or length for mission(s) in:')
         for key_biome in missions_keys:
@@ -128,7 +133,10 @@ if __name__ == '__main__':
 
     DRG = order_dictionary_by_date(DRG)
     DRG = reconstruct_dictionary(DRG)
+    
+    invalid_keys = []
 
-    find_duplicates(DRG)
-    check_sum_of_missions(DRG)
-    check_missions_keys(DRG)
+    check_missions_length_complexity(DRG, invalid_keys)
+    find_duplicates(DRG, invalid_keys)  
+    check_sum_of_missions(DRG, invalid_keys)
+    check_missions_keys(DRG, invalid_keys)

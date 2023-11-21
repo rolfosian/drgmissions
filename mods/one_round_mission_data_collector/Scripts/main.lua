@@ -1,4 +1,14 @@
-local json = require("./mods/dds_fetcher/Scripts/dkjson")
+local json = require("./mods/long_term_mission_data_collector/Scripts/dkjson")
+local socket = require('./mods/long_term_mission_data_collector/Scripts/socket')
+function ReverseDateFormat(inputDate)
+    local year = inputDate:sub(1, 2)
+    local month = inputDate:sub(4, 5)
+    local day = inputDate:sub(7, 8)
+    
+    local reversedDate = day .. "-" .. month .. "-" .. year
+    
+    return reversedDate
+  end
 function TableToString(table, indent)
     indent = indent or ""
     local str = "{\n"
@@ -23,14 +33,13 @@ end
 function HasKey(table, key)
     return table[key] ~= nil
 end
-function UnpackDeepDiveMission(mission, master, t)
+function UnpackStandardMission(mission, master, b, missionscount)
+    missionscount = missionscount + 1
     local mission1 = {}
-    local missionfullname = string.format("%s",mission:GetFullName())
-    local missionfullname_parts = Split(missionfullname, '_')
-    local missionid_string = missionfullname_parts[#missionfullname_parts]
-    missionid_string = string.sub(missionid_string, -3)
-    local missionid = tonumber(missionid_string)
-    mission1['id'] = missionid
+    mission1['id'] = missionscount
+    local MissionName = mission:GetPropertyValue("MissionName")
+    MissionName = MissionName:ToString()
+    mission1['CodeName'] = MissionName
     local PrimaryObjective = mission:GetPropertyValue("PrimaryObjective")
     PrimaryObjective = string.format("%s",PrimaryObjective:GetFullName())
     local primary_objectives = {
@@ -54,11 +63,14 @@ function UnpackDeepDiveMission(mission, master, t)
     local SecondaryObjective = mission:GetPropertyValue("SecondaryObjectives")[1]
     SecondaryObjective = string.format("%s",SecondaryObjective:GetFullName())
     local secondary_objectives = {
-        {pattern = "RepairMinimules", result = "Repair Minimules"},
-        {pattern = "Elimination_Eggs", result = "Eliminate Dreadnought"},
-        {pattern = "DD_Morkite", result = "Mine Morkite"},
-        {pattern = "AlienEggs", result = "Get Alien Eggs"},
-        {pattern = "DD_Defense", result = "Black Box"},
+        {pattern = "Gunkseed", result = "Gunk Seeds"},
+        {pattern = "Ebonut", result = "Ebonuts"},
+        {pattern = "ApocaBloom", result = "ApocaBlooms"},
+        {pattern = "BooloCap", result = "Boolo Caps"},
+        {pattern = "Fossil", result = "Fossils"},
+        {pattern = "Hollomite", result = "Hollomite"},
+        {pattern = "KillFleas", result = "Fester Fleas"},
+        {pattern = "Dystrum", result = "Dystrum"}
     }
     for _, obj in ipairs(secondary_objectives) do
         if string.find(SecondaryObjective, obj.pattern) then
@@ -113,12 +125,11 @@ function UnpackDeepDiveMission(mission, master, t)
                 break
             end
         end
-        --print(MissionWarning2)
         mission1['MissionWarnings'] = {MissionWarning1, MissionWarning2}
     end
     local MissionMutator = mission:GetPropertyValue("MissionMutator")
     if MissionMutator then 
-        local MissionMutator = string.format("%s",MissionMutator:GetFullName())
+        MissionMutator = string.format("%s",MissionMutator:GetFullName())
         if MissionMutator == 'nil' then
             mission1['MissionMutator'] = nil
         else
@@ -165,35 +176,9 @@ function UnpackDeepDiveMission(mission, master, t)
     elseif string.find(DurationLimit, 'Duration_Normal') then
         length = '2'
     end
+    mission1['Length'] = length
     local MissionDNA = mission:GetPropertyValue("MissionDNA")
     MissionDNA = string.format("%s",MissionDNA:GetFullName())
-
-    -- Complexity and Length finalization
-    if length == 'Indefinite' then
-        local twolength_objs = {
-            "On-Site Refining",
-            "Industrial Sabotage",
-        }
-        for _, obj in pairs(twolength_objs) do
-            if obj == PrimaryObjective then
-                length = '2'
-                break
-            end
-        end
-    end
-    mission1['Length'] = length
-    -- Salvage DNA
-    -- local SalvageDNAs = {
-    --     {pattern = 'SalvageFractured_Complex', result = {length = '3', complexity = '3'}},
-    --     {pattern = 'SalvageFractured_Medium', result = {length = '2', complexity = '2'}},
-    -- }
-    -- for _, pattern in pairs(SalvageDNAs) do
-    --     if string.find(MissionDNA, pattern.pattern) and complexity == 'Indefinite' and length == 'Indefinite' then
-    --         mission1['Length'] = pattern.result.length
-    --         mission1['Complexity'] = pattern.result.complexity
-    --         break
-    --     end
-    -- end
     if string.find(MissionDNA, "SalvageFractured_Complex") and complexity == 'Indefinite' and length == 'Indefinite' then
         mission1['Complexity'] = '3'
         mission1['Length'] = '3'
@@ -202,62 +187,16 @@ function UnpackDeepDiveMission(mission, master, t)
         mission1['Complexity'] = '2'
         mission1['Length'] = '2'
     end
-
-    -- Refinery DNA
-    -- local RefineryDNAs = {
-    --     {pattern = 'Refinery_Complex', result = {length = '2', complexity = '3'}},
-    --     {pattern = 'Refinery_Medium_C', result = {length = '2', complexity = '2'}},
-    -- }
-    -- for _, pattern in pairs(RefineryDNAs) do
-    --     if string.find(MissionDNA, pattern.pattern) and complexity == 'Indefinite' and length == 'Indefinite' then
-    --         mission1['Length'] = pattern.result.length
-    --         mission1['Complexity'] = pattern.result.complexity
-    --         break
-    --     end
-    -- end
+    if string.find(MissionDNA, 'Motherlode_Short_C') and PrimaryObjective == 'Point Extraction' and length == 'Indefinite' and complexity == 'Indefinite' then
+        mission1['Complexity'] = '3'
+        mission1['Length'] = '2'
+    end
     if string.find(MissionDNA, 'Refinery_Complex') and complexity == 'Indefinite' and length == 'Indefinite' then
         mission1['Complexity'] = '3'
         mission1['Length'] = '2'
     end
     if string.find(MissionDNA, 'Refinery_Medium_C') and complexity == 'Indefinite' and length == 'Indefinite' then
         mission1['Complexity'] = '2'
-        mission1['Length'] = '2'
-    end
-    if string.find(MissionDNA, 'Refinery_Medium_C') and mission1['Complexity'] == 'Indefinite' then
-        mission1['Complexity'] = '2'
-        mission1['Length'] = '2'
-    end
-    
-    -- Industrial Sabotage DNA
-    if string.find(MissionDNA, 'Facility_Simple_C') and complexity == 'Indefinite' then
-        mission1['Complexity'] = '2'
-    end
-    if string.find(MissionDNA, 'Facility_Simple_C') and length == 'Indefinite' then
-        mission1['Length'] = '2'
-    end
-    -- Mining Expedition DNA
-    -- local MiningExpeditionDNAs = {
-    --     {pattern = 'DNA_2_01_C', result = {length = '1', complexity = '1'}},
-    --     {pattern = 'DNA_2_02_C', result = {length = '2', complexity = '2'}},
-    --     {pattern = 'DNA_2_03_C', result = {length = '2', complexity = '1'}},
-    --     {pattern = 'DNA_2_04_C', result = {length = '3', complexity = '2'}},
-    --     {pattern = 'DNA_2_05_C', result = {length = '3', complexity = '3'}},
-    -- }
-    -- for _, pattern in pairs(MiningExpeditionDNAs) do
-    --     if string.find(MissionDNA, pattern.pattern) and complexity == 'Indefinite' and length == 'Indefinite' then
-    --         mission1['Length'] = pattern.result.length
-    --         mission1['Complexity'] = pattern.result.complexity
-    --         break
-    --     end
-    -- end
-    if string.find(MissionDNA, 'DNA_2_01_C') and complexity == 'Indefinite' and length == '1' and PrimaryObjective == 'Mining Expedition' then
-        mission1['Complexity'] = '1'
-        mission1['Length'] = '1'
-    end
-    if string.find(MissionDNA, 'DNA_2_02_C') and complexity == 'Indefinite' and length == '2' then
-        mission1['Complexity'] = '2'
-    end
-    if string.find(MissionDNA, 'DNA_2_02_C') and complexity == '2' and length == 'Indefinite' then
         mission1['Length'] = '2'
     end
     if string.find(MissionDNA, 'DNA_2_01_C') and complexity == 'Indefinite' and length == 'Indefinite' and PrimaryObjective == 'Mining Expedition' then
@@ -272,10 +211,6 @@ function UnpackDeepDiveMission(mission, master, t)
         mission1['Complexity'] = '1'
         mission1['Length'] = '2'
     end
-    if string.find(MissionDNA, 'DNA_2_03_C') and complexity == 'Indefinite' and length == '2' then
-        mission1['Complexity'] = '1'
-        mission1['Length'] = '2'
-    end
     if string.find(MissionDNA, 'DNA_2_04_C') and complexity == 'Indefinite' and length == 'Indefinite' and PrimaryObjective == 'Mining Expedition' then
         mission1['Complexity'] = '2'
         mission1['Length'] = '3'
@@ -284,8 +219,6 @@ function UnpackDeepDiveMission(mission, master, t)
         mission1['Complexity'] = '3'
         mission1['Length'] = '3'
     end
-
-    -- Egg Hunt DNA
     if string.find(MissionDNA, '_Complex') and complexity == 'Indefinite' and length == 'Indefinite' and PrimaryObjective == 'Egg Hunt' then
         mission1['Length'] = '3'
         mission1['Complexity'] = '2'
@@ -294,50 +227,23 @@ function UnpackDeepDiveMission(mission, master, t)
     if string.find(MissionDNA, 'Fractured_Medium_C') and PrimaryObjective == 'Egg Hunt' and length == 'Indefinite' and complexity == 'Indefinite' then
         mission1['Length'] = '2'
         mission1['Complexity'] = '2'
-    end
-    if string.find(MissionDNA, 'Fractured_Medium_C') and PrimaryObjective == 'Egg Hunt' and length == '2' and complexity == 'Indefinite' then
-        mission1['Complexity'] = '2'
     end 
     if string.find(MissionDNA, 'FracturedSimple_C') and PrimaryObjective == 'Egg Hunt' then
         mission1['Complexity'] = '1'
         mission1['Length'] = '1'
     end
-    -- Elimination DNA
     if string.find(MissionDNA, 'Star_Medium_C') and PrimaryObjective == 'Elimination' then
         mission1['Complexity'] = '2'
         mission1['Length'] = '2'
     end
     if string.find(MissionDNA, 'Star_Complex_C') and PrimaryObjective == 'Elimination' then
         mission1['Complexity'] = '3'
-        mission1['Length'] = '3'
-    end
-    -- Point Extraction DNA
-    if string.find(MissionDNA, 'Motherlode_Short_C') and PrimaryObjective == 'Point Extraction' and length == 'Indefinite' and complexity == 'Indefinite' then
-        mission1['Complexity'] = '3'
-        mission1['Length'] = '2'
-    end
-    if string.find(MissionDNA, 'Motherlode_Short_C') and PrimaryObjective == 'Point Extraction' and length == '2' and complexity == 'Indefinite' then
-        mission1['Complexity'] = '3'
-        mission1['Length'] = '2'
+        mission1['Length'] = '3' 
     end
     if string.find(MissionDNA, 'Motherlode_Long_C') and PrimaryObjective == 'Point Extraction' and length == 'Indefinite' and complexity == 'Indefinite' then
         mission1['Complexity'] = '3'
         mission1['Length'] = '3'
     end
-    -- Generic DNA
-    -- local GenericDNAs = {
-    --     {pattern = 'MediumComplex', result = {length = '2', complexity = '3'}},
-    --     {pattern = 'LongAverage', result = {length = '3', complexity = '2'}},
-    --     {pattern = 'LongComplex', result = {length = '3', complexity = '3'}},
-    --     {pattern = 'MediumAverage', result = {length = '2', complexity = '2'}},
-    -- }
-    -- for _, pattern in pairs(GenericDNAs) do
-    --     if string.find(MissionDNA, pattern.pattern) and complexity == 'Indefinite' then
-    --         mission1['Length'] = pattern.result.length
-    --         mission1['Complexity'] = pattern.result.complexity
-    --         break
-    --     end
-    -- end
     if string.find(MissionDNA, 'MediumComplex') and complexity == 'Indefinite' then
         mission1['Length'] = '2'
         mission1['Complexity'] = '3'
@@ -360,15 +266,11 @@ function UnpackDeepDiveMission(mission, master, t)
     if string.find(MissionDNA, '_Complex') and complexity == 'Indefinite' then
         mission1['Complexity'] = '3'
     end
-    table.insert(master['Deep Dives'][t]['Stages'], mission1)
-end
-function GetMissions()
-    local missions = FindAllOf("GeneratedMission")
-    if missions then
-        return missions
-    else
-        return nil
-    end
+    -- if mission1['Length'] == 'Indefinite' or mission1['Complexity'] == 'Indefinite' then
+    --     print(missionfullname)
+    -- end
+    table.insert(master['Biomes'][b], mission1)
+    return missionscount
 end
 function GetBiome(mission)
     local b = mission:GetPropertyValue('Biome')
@@ -393,26 +295,6 @@ function GetBiome(mission)
     end
     return b
 end
-function GetDeepDiveCodename(t) -- Get DD Codename terminal label widget assets
-    local fsdlabelwidgets = FindAllOf('FSDLabelWidget')
-    local text = nil
-    local name
-    if fsdlabelwidgets then
-        for index, fsdlabelwidget in pairs(fsdlabelwidgets) do
-            local fullname = string.format("%s",fsdlabelwidget:GetFullName())
-            if string.find(fullname, 'Data_CodeName') and string.find(fullname, 'Normal') and t == 'Deep Dive Normal' then
-                text = fsdlabelwidget:GetPropertyValue('text')
-                name = text:ToString()
-                break
-            elseif string.find(fullname, 'Data_CodeName') and string.find(fullname, 'Hard') and t == 'Deep Dive Elite' then
-                text = fsdlabelwidget:GetPropertyValue('text')
-                name = text:ToString()
-                break
-            end
-        end
-        return name
-    end
-end
 function Main()
     local startmenus = nil
     -- Wait for start menu to load
@@ -423,10 +305,8 @@ function Main()
         end
     end
     -- Execute the function that 'press any key' invokes
-    if startmenus then
-        for index, startmenu in pairs(startmenus) do
-            startmenu:PressStart()
-        end
+    for index, startmenu in pairs(startmenus) do
+        startmenu:PressStart()
     end
     local waiting_for_load = true
     -- Wait for Space Rig to load
@@ -445,79 +325,87 @@ function Main()
             end
         end
     end
-    local currentDateTime = os.date("!%Y-%m-%dT%H-%M-%SZ")
-    currentDateTime = 'DD_'..currentDateTime
-    -- Initialize Table
-    local master = {}
-    master['Deep Dives'] = {}
-    master['Deep Dives']['Deep Dive Normal'] = {}
-    master['Deep Dives']['Deep Dive Elite'] = {}
-    master['Deep Dives']['Deep Dive Normal']['Stages'] = {}
-    master['Deep Dives']['Deep Dive Elite']['Stages'] = {}
-    -- Get GeneratedMission UObjects
-    local missions = GetMissions()
-    local MissionStructure = nil
-    local t = nil
-    local b = nil
-    if missions then
-        for index, mission in pairs(missions) do
-            -- Check if Mission is a DD Stage or not
-            MissionStructure = mission:GetPropertyValue("MissionStructure")
 
-            if MissionStructure == 1 then
-                t = 'Deep Dive Normal'
-                if not HasKey(master['Deep Dives'][t], 'Biome') then
-                    b = GetBiome(mission)
-                    master['Deep Dives'][t]['Biome'] = b
-                end
-                if not HasKey(master['Deep Dives'][t], 'CodeName') then
-                    local codename = GetDeepDiveCodename(t)
-                    master['Deep Dives'][t]['CodeName'] = codename
-                end
-                UnpackDeepDiveMission(mission, master, t)
-
-            elseif MissionStructure == 2 then
-                t = 'Deep Dive Elite'
-                if not HasKey(master['Deep Dives'][t], 'Biome') then
-                    b = GetBiome(mission)
-                    master['Deep Dives'][t]['Biome'] = b
-                end
-                if not HasKey(master['Deep Dives'][t], 'CodeName') then
-                    local codename = GetDeepDiveCodename(t)
-                    master['Deep Dives'][t]['CodeName'] = codename
-                end
-                UnpackDeepDiveMission(mission, master, t)
-
-            end
+    local invalid_keys = io.open("invalid_keys.txt", "r")
+    local timestamps = {}
+    if invalid_keys then
+        for line in invalid_keys:lines() do
+            line = line:gsub("\n", "")
+            if line == "" then goto continue end
+            table.insert(timestamps, line)
+            ::continue::
         end
+        invalid_keys:close()
+    end
+    
+    local god = {}
+    for _, timestamp in pairs(timestamps) do
 
-        -- local indent = "    "
-        -- local master_str = TableToString(master, indent)
-        -- print(master_str)
+        -- Change System Clock
+        local datetime = Split(timestamp, 'T')
+        datetime[2] = datetime[2]:gsub('Z', '')
+        local command = 'date '..ReverseDateFormat(datetime[1])..' & time '..datetime[2]
+        os.execute(command)
+        socket.sleep(2.5)
 
-        -- Press X to json
-        local options = {
-            indent = "  ",
-          }
-        master = json.encode(master, options)
-        local file = io.open(currentDateTime..'.json', 'w')
-        if file then
-            file:write(master)
-            file:close()
-        end
-        -- Get the current instance of the Escape Menu (This doesn't actually really load the menu)
-        local playercontrollers = FindAllOf('BP_PlayerController_SpaceRig_C')
-        if playercontrollers then
-            for index, playercontroller in pairs(playercontrollers) do
-                playercontroller = playercontroller
-                local fullname = string.format("%s",playercontroller:GetFullName())
-                if fullname == 'BP_PlayerController_SpaceRig_C /Game/Game/SpaceRig/BP_PlayerController_SpaceRig.Default__BP_PlayerController_SpaceRig_C' then goto continue end
-                local escape_menu = playercontroller:GetEscapeMenu()
-                -- Execute function to quit the game 'organically' rather than terminate externally
-                escape_menu:Yes_1ADE94D8445F020C5D27B8822516025E()
+        -- Initialize Table
+        local master = {}
+        local missionscount = 0
+        master['Biomes'] = {}
+
+        -- Get GeneratedMission UObjects
+        local b = nil
+        local missions = {}
+        local MissionGenerationManagers = FindAllOf('MissionGenerationManager')
+        if MissionGenerationManagers then
+            for index, manager in pairs(MissionGenerationManagers) do
+                local fullname = string.format("%s",manager:GetFullName())
+                if fullname == 'MissionGenerationManager /Script/FSD.Default__MissionGenerationManager' then goto continue end
+                local remotemissions = manager:GetAvailableMissions()
+                for index, remotemission in pairs(remotemissions) do
+                    local mission = remotemission:get()
+                    table.insert(missions, mission)
+                end
                 break
                 ::continue::
             end
+        end
+        if missions then
+            master['timestamp'] = timestamp
+            for index, mission in pairs(missions) do
+                b = GetBiome(mission)
+                if not HasKey(master['Biomes'], b) then
+                    master['Biomes'][b] = {}
+                end
+                missionscount = UnpackStandardMission(mission, master, b, missionscount)
+            end
+            -- local indent = "    "
+            -- local master_str = TableToString(master, indent)
+            -- print(master_str)
+            god[timestamp] = master
+
+        end
+    end
+    -- local options = {
+    --     indent = "  ",
+    -- }
+    god = json.encode(god)
+    local file = io.open('redonemissions.json', 'w')
+    if file then
+        file:write(god)
+        file:close()
+    end
+    -- Get the current instance of the Escape Menu (This doesn't actually really load the menu)
+    local playercontrollers = FindAllOf('BP_PlayerController_SpaceRig_C')
+    if playercontrollers then
+        for index, playercontroller in pairs(playercontrollers) do
+            local fullname = string.format("%s",playercontroller:GetFullName())
+            if fullname == 'BP_PlayerController_SpaceRig_C /Game/Game/SpaceRig/BP_PlayerController_SpaceRig.Default__BP_PlayerController_SpaceRig_C' then goto continue end
+            local escape_menu = playercontroller:GetEscapeMenu()
+            -- Execute function to quit the game 'organically' rather than terminate externally
+            escape_menu:Yes_1ADE94D8445F020C5D27B8822516025E()
+            break
+            ::continue::
         end
     end
 end

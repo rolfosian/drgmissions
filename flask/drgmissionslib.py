@@ -520,14 +520,14 @@ def render_dd_secondary_obj_resource(secondary_obj):
     text_color = (255, 255, 255)
     secondary_objs = {
         'Repair Minimules': './img/Icon_Salvage_Mules_Objective.png',
-        'Kill Dreadnought(s)': './img/Kill_Dreadnought_Objective_icon.png',
+        'Eliminate Dreadnought': './img/Kill_Dreadnought_Objective_icon.png',
         'Mine Morkite': './img/Morkite_icon.png',
         'Get Alien Eggs': './img/Alien_egg_icon.png',
         'Black Box': './img/Blackbox_icon.png'
             }
     values = {
         'Repair Minimules': '2',
-        'Kill Dreadnought(s)': '1',
+        'Eliminate Dreadnought': '1',
         'Mine Morkite': '150',
         'Get Alien Eggs':'2',
         'Black Box':'1',
@@ -1210,6 +1210,7 @@ def render_index(timestamp, next_timestamp):
 
 <div id="current">\n'''
     html += '''<div class="grid-container">
+    
 <h2>
 <div class="biome-container">
 <img title="Glacial Strata" class="image-container" src="/files/DeepDive_MissionBar_GlacialStrata.png">\n'''
@@ -1317,6 +1318,7 @@ def render_index(timestamp, next_timestamp):
 '''
     html += '''<div id="upcoming" style="visibility: hidden;">
 <div class="grid-container">
+
 <h2>
 <div class="biome-container">
     <img title="Glacial Strata" class="image-container" src="/files/DeepDive_MissionBar_GlacialStrata.png">\n'''
@@ -1356,6 +1358,7 @@ def render_index(timestamp, next_timestamp):
         html = array_standard_missions_next(next_Biomes, 'Magma Core', html)
     html += '''</div>
 </h2>
+
 <h2>
 <div class="biome-container">
 <img title="Azure Weald" class="image-container" src="/files/DeepDive_MissionBar_AzureWeald.png">\n'''
@@ -1422,6 +1425,7 @@ def render_index(timestamp, next_timestamp):
 
 <div class="grid-container">
 <div class="dd-container">
+
 <h2>
 <img class="image-container" src="/files/dd.png">\n'''
     html = array_dd_missions('Deep Dive Normal', html)
