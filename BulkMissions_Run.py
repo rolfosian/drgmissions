@@ -84,14 +84,9 @@ def main():
         sleep(2)
         
     #Set mods.txt for BulkMissions collector
-    with open('./mods/mods.txt', 'r') as f:
-        mods = f.read()
-        mods = mods.replace('dds_fetcher : 1', 'dds_fetcher : 0')
-        mods = mods.replace('GetDailyDeals : 1', 'GetDailyDeals: 0')
-        mods = mods.replace('long_term_mission_data_collector : 0', 'long_term_mission_data_collector : 1')
-        f.close()
+
     with open('./mods/mods.txt', 'w') as f:
-        f.write(mods)
+        f.write('long_term_mission_data_collector : 1')
         f.close()
         
     #Get target date from user input
@@ -162,13 +157,7 @@ def main():
         sleep(0.1)
         
     #Reset mods.txt
-    with open('./mods/mods.txt', 'r') as f:
-        mods = f.read()
-        mods = mods.replace('long_term_mission_data_collector : 1', 'long_term_mission_data_collector : 0')
-        f.close()
-
     with open('./mods/mods.txt', 'w') as f:
-        f.write(mods)
         f.close()
         
     #Enable automatic time sync
@@ -180,7 +169,10 @@ def main():
         DRG = re.sub(r':\d{2}Z', ':00Z', DRG)
         DRG = json.loads(DRG)
         f.close()
-
+        
+    for timestamp, dict in DRG.items():
+        DRG[timestamp]['timestamp'] = timestamp
+        
     DRG = order_dictionary_by_date(DRG)
     DRG = reconstruct_dictionary(DRG)
     with open('drgmissionsgod.json', 'w') as f:
@@ -249,6 +241,7 @@ def main():
         
         for timestamp, dict in redone_missions.items():
             DRG[timestamp] = dict
+            DRG[timestamp]['timestamp'] = timestamp
         
         toggle_system_time()
         os.remove('invalid_keys.txt')

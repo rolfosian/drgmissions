@@ -773,11 +773,13 @@ def render_biomes(Biomes):
 
 def render_deepdives(DeepDives):
     rendered_deepdives = {}
+    
     for t, deepdive in DeepDives.items():
         rendered_deepdives[t] = {}
         rendered_deepdives[t]['Biome'] = DeepDives[t]['Biome']
         rendered_deepdives[t]['Stages'] = []
         rendered_deepdives[t]['CodeName'] = DeepDives[t]['CodeName']
+        
         has_id_999 = False
         has_id_0 = False
         for stage in deepdive['Stages']:
@@ -789,10 +791,12 @@ def render_deepdives(DeepDives):
             if has_id_999 and has_id_0:
                 if stage['id'] == 999:
                     stage['id'] = -1
+                    
         sorted_stages = sorted(deepdive['Stages'], key=lambda x: x['id'], reverse=True)
         for stage in sorted_stages:
             stage_png = render_dd_stage(stage)
             rendered_deepdives[t]['Stages'].append(stage_png)
+            
     return rendered_deepdives
 
 #----------------------------------------------------------------
@@ -1213,7 +1217,7 @@ def render_index(timestamp, next_timestamp):
     
 <h2>
 <div class="biome-container">
-<img title="Glacial Strata" class="image-container" src="/files/DeepDive_MissionBar_GlacialStrata.png">\n'''
+<img title="Abundant: Magnite; Scarce: Umanite" class="image-container" src="/files/DeepDive_MissionBar_GlacialStrata.png">\n'''
     if 'Glacial Strata' not in Biomes.keys():
         html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
@@ -1223,7 +1227,7 @@ def render_index(timestamp, next_timestamp):
 
 <h2>
 <div class="biome-container">
-<img title="Crystalline Caverns" class="image-container" src="/files/DeepDive_MissionBar_CrystalCaves.png">\n'''
+<img title="Abundant: Jadiz; Scarce: Bismor" class="image-container" src="/files/DeepDive_MissionBar_CrystalCaves.png">\n'''
     if 'Crystalline Caverns' not in Biomes.keys():
         html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
@@ -1233,7 +1237,7 @@ def render_index(timestamp, next_timestamp):
 
 <h2>
 <div class="biome-container">
-<img title="Salt Pits" class="image-container" src="/files/DeepDive_MissionBar_SaltPits.png">\n'''
+<img title="Abundant: Enor Pearl; Scarce: Bismor" class="image-container" src="/files/DeepDive_MissionBar_SaltPits.png">\n'''
     if 'Salt Pits' not in Biomes.keys():
         html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
@@ -1243,7 +1247,7 @@ def render_index(timestamp, next_timestamp):
 
 <h2>
 <div class="biome-container">
-<img title="Magma Core" class="image-container" src="/files/DeepDive_MissionBar_MagmaCore.png">\n'''
+<img title="Abundant: Magnite; Scarce: Croppa" class="image-container" src="/files/DeepDive_MissionBar_MagmaCore.png">\n'''
     if 'Magma Core' not in Biomes.keys():
         html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
@@ -1253,7 +1257,7 @@ def render_index(timestamp, next_timestamp):
 
 <h2>
 <div class ="biome-container">
-<img title="Azure Weald" class="image-container" src="/files/DeepDive_MissionBar_AzureWeald.png">\n'''
+<img title="Abundant: Croppa; Scarce: Umanite" class="image-container" src="/files/DeepDive_MissionBar_AzureWeald.png">\n'''
     if 'Azure Weald' not in Biomes.keys():
         html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
@@ -1263,7 +1267,7 @@ def render_index(timestamp, next_timestamp):
 
 <h2>
 <div class="biome-container">
-<img title="Sandblasted Corridors" class="image-container" src="/files/DeepDive_MissionBar_Sandblasted.png">\n'''
+<img title="Abundant: Enor Pearl; Scarce: Bismor" class="image-container" src="/files/DeepDive_MissionBar_Sandblasted.png">\n'''
     if 'Sandblasted Corridors' not in Biomes.keys():
         html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
@@ -1273,7 +1277,7 @@ def render_index(timestamp, next_timestamp):
 
 <h2>
 <div class="biome-container">
-<img title="Fungus Bogs" class="image-container" src="/files/DeepDive_MissionBar_FungusBogs.png">\n'''
+<img title="Abundant: Croppa; Scarce: Jadiz" class="image-container" src="/files/DeepDive_MissionBar_FungusBogs.png">\n'''
     if 'Fungus Bogs' not in Biomes.keys():
         html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
@@ -1283,7 +1287,7 @@ def render_index(timestamp, next_timestamp):
 
 <h2>
 <div class="biome-container">
-<img title="Radioactive Exclusion Zone" class="image-container" src="/files/DeepDive_MissionBar_Radioactive.png">\n'''
+<img title="Abundant: Umanite; Scarce: Enor Pearl" class="image-container" src="/files/DeepDive_MissionBar_Radioactive.png">\n'''
     if 'Radioactive Exclusion Zone' not in Biomes.keys():
         html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
@@ -1293,7 +1297,7 @@ def render_index(timestamp, next_timestamp):
 
 <h2>
 <div class="biome-container">
-<img title="Dense Biozone" class="image-container" src="/files/DeepDive_MissionBar_LushDownpour.png">\n'''
+<img title="Abundant: Bismor; Scarce: Umanite" class="image-container" src="/files/DeepDive_MissionBar_LushDownpour.png">\n'''
     if 'Dense Biozone' not in Biomes.keys():
         html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
@@ -1303,7 +1307,7 @@ def render_index(timestamp, next_timestamp):
 
 <h2>
 <div class="biome-container">
-<img title="Hollow Bough" class="image-container" src="/files/DeepDive_MissionBar_HollowBough.png">\n'''
+<img title="Abundant: Jadiz; Scarce: Bismor" class="image-container" src="/files/DeepDive_MissionBar_HollowBough.png">\n'''
     if 'Hollow Bough' not in Biomes.keys():
         html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
@@ -1321,7 +1325,7 @@ def render_index(timestamp, next_timestamp):
 
 <h2>
 <div class="biome-container">
-    <img title="Glacial Strata" class="image-container" src="/files/DeepDive_MissionBar_GlacialStrata.png">\n'''
+    <img title="Abundant: Magnite; Scarce: Umanite" class="image-container" src="/files/DeepDive_MissionBar_GlacialStrata.png">\n'''
     if 'Glacial Strata' not in next_Biomes.keys():
         html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
@@ -1331,7 +1335,7 @@ def render_index(timestamp, next_timestamp):
 
 <h2>
 <div class="biome-container">
-<img title="Crystalline Caverns" class="image-container" src="/files/DeepDive_MissionBar_CrystalCaves.png">\n'''
+<img title="Abundant: Jadiz; Scarce: Bismor" class="image-container" src="/files/DeepDive_MissionBar_CrystalCaves.png">\n'''
     if 'Crystalline Caverns' not in next_Biomes.keys():
         html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
@@ -1341,7 +1345,7 @@ def render_index(timestamp, next_timestamp):
 
 <h2>
 <div class="biome-container">
-<img title="Salt Pits" class="image-container" src="/files/DeepDive_MissionBar_SaltPits.png">\n'''
+<img title="Abundant: Enor Pearl; Scarce: Bismor" class="image-container" src="/files/DeepDive_MissionBar_SaltPits.png">\n'''
     if 'Salt Pits' not in next_Biomes.keys():
         html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
@@ -1351,7 +1355,7 @@ def render_index(timestamp, next_timestamp):
 
 <h2>
 <div class="biome-container">
-<img title="Magma Core" class="image-container" src="/files/DeepDive_MissionBar_MagmaCore.png">\n'''
+<img title="Abundant: Magnite; Scarce: Croppa" class="image-container" src="/files/DeepDive_MissionBar_MagmaCore.png">\n'''
     if 'Magma Core' not in next_Biomes.keys():
         html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
@@ -1361,7 +1365,7 @@ def render_index(timestamp, next_timestamp):
 
 <h2>
 <div class="biome-container">
-<img title="Azure Weald" class="image-container" src="/files/DeepDive_MissionBar_AzureWeald.png">\n'''
+<img title="Abundant: Croppa; Scarce: Umanite" class="image-container" src="/files/DeepDive_MissionBar_AzureWeald.png">\n'''
     if 'Azure Weald' not in next_Biomes.keys():
         html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
@@ -1371,7 +1375,7 @@ def render_index(timestamp, next_timestamp):
 
 <h2>
 <div class="biome-container">
-<img title="Sandblasted Corridors" class="image-container" src="/files/DeepDive_MissionBar_Sandblasted.png">\n'''
+<img title="Abundant: Enor Pearl; Scarce: Bismor" class="image-container" src="/files/DeepDive_MissionBar_Sandblasted.png">\n'''
     if 'Sandblasted Corridors' not in next_Biomes.keys():
         html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
@@ -1381,7 +1385,7 @@ def render_index(timestamp, next_timestamp):
 
 <h2>
 <div class="biome-container">
-<img title="Fungus Bogs" class="image-container" src="/files/DeepDive_MissionBar_FungusBogs.png">\n'''
+<img title="Abundant: Croppa; Scarce: Jadiz" class="image-container" src="/files/DeepDive_MissionBar_FungusBogs.png">\n'''
     if 'Fungus Bogs' not in next_Biomes.keys():
         html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
@@ -1391,7 +1395,7 @@ def render_index(timestamp, next_timestamp):
 
 <h2>
 <div class="biome-container">
-<img title="Radioactive Exclusion Zone" class="image-container" src="/files/DeepDive_MissionBar_Radioactive.png">\n'''
+<img title="Abundant: Umanite; Scarce: Enor Pearl" class="image-container" src="/files/DeepDive_MissionBar_Radioactive.png">\n'''
     if 'Radioactive Exclusion Zone' not in next_Biomes.keys():
         html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
@@ -1401,7 +1405,7 @@ def render_index(timestamp, next_timestamp):
 
 <h2>
 <div class="biome-container">
-<img title="Dense Biozone" class="image-container" src="/files/DeepDive_MissionBar_LushDownpour.png">\n'''
+<img title="Abundant: Bismor; Scarce: Umanite" class="image-container" src="/files/DeepDive_MissionBar_LushDownpour.png">\n'''
     if 'Dense Biozone' not in next_Biomes.keys():
         html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:
@@ -1411,7 +1415,7 @@ def render_index(timestamp, next_timestamp):
 
 <h2>
 <div class="biome-container">
-<img title="Hollow Bough" class="image-container" src="/files/DeepDive_MissionBar_HollowBough.png">\n'''
+<img title="Abundant: Jadiz; Scarce: Bismor" class="image-container" src="/files/DeepDive_MissionBar_HollowBough.png">\n'''
     if 'Hollow Bough' not in next_Biomes.keys():
         html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
     else:

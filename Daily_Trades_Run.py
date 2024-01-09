@@ -168,14 +168,8 @@ def main():
         sleep(2)
     
     #Set mods.txt for GetDailyDeals
-    with open('./mods/mods.txt', 'r') as f:
-        mods = f.read()
-        mods = mods.replace('dds_fetcher : 1', 'dds_fetcher : 0')
-        mods = mods.replace('long_term_mission_data_collector : 1', 'long_term_mission_data_collector : 0')
-        mods = mods.replace('GetDailyDeals : 0', 'GetDailyDeals : 1')
-        f.close()
     with open('./mods/mods.txt', 'w') as f:
-        f.write(mods)
+        f.write('GetDailyDeals : 1')
         f.close()
 
     # Get the current UTC date
@@ -212,12 +206,7 @@ def main():
     print(f'Total time elapsed: {format_seconds(time.monotonic() - start_time)}')
     sleep(2)
     #Reset mods.txt
-    with open('./mods/mods.txt', 'r') as f:
-        mods = f.read()
-        mods = mods.replace('GetDailyDeals : 1', 'GetDailyDeals : 0')
-        f.close()
     with open('./mods/mods.txt', 'w') as f:
-        f.write(mods)
         f.close()
     
     #Write AllTheDeals JSON

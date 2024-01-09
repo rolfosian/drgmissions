@@ -33,15 +33,9 @@ def kill_process_by_name_starts_with(start_string):
 def main():
     print(os.getcwd())
     wait_until_next_hour()
-    
-    with open('./mods/mods.txt', 'r') as f:
-        mods = f.read()
-        mods = mods.replace('GetDailyDeals : 1', 'GetDailyDeals: 0')
-        mods = mods.replace('long_term_mission_data_collector : 1', 'long_term_mission_data_collector : 0')
-        mods = mods.replace('dds_fetcher : 0', 'dds_fetcher : 1')
-        f.close()
+
     with open('./mods/mods.txt', 'w') as f:
-        f.write(mods)
+        f.write('dds_fetcher : 1')
         f.close()
         
     subprocess.Popen(['start', 'steam://run/548430//-nullrhi'], shell=True)
@@ -73,12 +67,7 @@ def main():
             break
         time.sleep(0.5)
 
-    with open('./mods/mods.txt', 'r') as f:
-        mods = f.read()
-        mods = mods.replace('dds_fetcher : 1', 'dds_fetcher : 0')
-        f.close()
     with open('./mods/mods.txt', 'w') as f:
-        f.write(mods)
         f.close()
 
     subprocess.Popen(["rundll32.exe", "powrprof.dll,SetSuspendState", "Sleep"], shell=True)
