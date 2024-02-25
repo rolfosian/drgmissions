@@ -66,7 +66,8 @@ def find_duplicates(dictionary, invalid_keys):
         for value, keys in duplicate_strings.items():
             print("Keys:", keys)
             for key in keys:
-                invalid_keys.append(key)
+                if key not in invalid_keys:
+                    invalid_keys.append(key)
     else:
         print("No duplicate strings found.")
 
@@ -81,7 +82,8 @@ def check_sum_of_missions(dictionary, invalid_keys):
             mission_count += len(value['Biomes'][biome])
         if mission_count != 19:
             missions_keys.append(key)
-            invalid_keys.append(key)
+            if key not in invalid_keys:
+                invalid_keys.append(key)
     if missions_keys:
         print('Invalid number of missions in:')
         for key in missions_keys:
@@ -100,7 +102,8 @@ def check_missions_keys(dictionary, invalid_keys):
                 key_count = len(list(mission.keys()))
                 if key_count not in [6, 7, 8]:
                     missions_keys.append(f'{key}: {biome}')
-                    invalid_keys.append(key)
+                    if key not in invalid_keys:
+                        invalid_keys.append(key)
     if missions_keys:
         print('Invalid number of keys in:')
         for key in missions_keys:
@@ -118,7 +121,8 @@ def check_missions_length_complexity(dictionary, invalid_keys):
             for mission in value['Biomes'][biome]:
                 if mission['Complexity'] == 'Indefinite' or mission['Length'] == 'Indefinite':
                     missions_keys.append(f'{key}: {biome}')
-                    invalid_keys.append(key)
+                    if key not in invalid_keys:
+                        invalid_keys.append(key)
     if missions_keys:
         print('Indefinite complexity or length for mission(s) in:')
         for key_biome in missions_keys:
@@ -140,3 +144,4 @@ if __name__ == '__main__':
     find_duplicates(DRG, invalid_keys)  
     check_sum_of_missions(DRG, invalid_keys)
     check_missions_keys(DRG, invalid_keys)
+    input('')

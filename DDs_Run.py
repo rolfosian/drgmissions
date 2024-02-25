@@ -5,6 +5,7 @@ import time
 import psutil
 import os
 import requests
+import winreg
 
 def upload_file(url, file_path, bearer_token):
     headers = {
@@ -15,6 +16,20 @@ def upload_file(url, file_path, bearer_token):
         files = {'file': file}
         response = requests.post(url, headers=headers, files=files)
     return response
+
+def enable_system_time():
+    try:
+        print('-------------------------------------------------------------------------')
+        key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r'SYSTEM\\CurrentControlSet\\Services\\W32Time\\Parameters', 0, winreg.KEY_WRITE)
+        winreg.SetValueEx(key, 'Type', 0, winreg.REG_SZ, 'NTP')
+        winreg.CloseKey(key)
+        subprocess.run(['sc', 'config', 'w32time', 'start=', 'auto'], shell=True)
+        subprocess.run(['net', 'start', 'w32time'], shell=True)
+        time.sleep(2)
+        subprocess.run(['w32tm', '/resync'], stderr=subprocess.PIPE, shell=True)
+        print("Automatic system time enabled.\n-------------------------------------------------------------------------\n")
+    except Exception as e:
+        print(f"Error: {e}")
 
 def wait_until_next_hour():
     now = datetime.datetime.now()
@@ -32,6 +47,12 @@ def kill_process_by_name_starts_with(start_string):
             proc.kill()
 def main():
     print(os.getcwd())
+    time_service_query = subprocess.check_output('sc query w32time', stderr=subprocess.PIPE, shell=True).decode('utf-8')
+    if 'RUNNING' not in time_service_query:
+        enable_system_time()
+        time.sleep(2)
+    else:
+        subprocess.run(['w32tm', '/resync'], stderr=subprocess.PIPE, shell=True)
     wait_until_next_hour()
 
     with open('./mods/mods.txt', 'w') as f:

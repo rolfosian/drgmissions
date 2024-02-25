@@ -1441,6 +1441,7 @@ def render_index(timestamp, next_timestamp):
     html = array_dd_missions('Deep Dive Elite', html)
     html += '''</h2>
 </div>
+
 </div>
 
 
