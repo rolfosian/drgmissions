@@ -116,6 +116,9 @@ height: 60%;
 width: 60%;
 height: 60%;
 }
+a:link:hover {
+    color: #5AC8FF;
+}
 .jsonc {
 display: flex;
 justify-content: space-between;

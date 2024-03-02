@@ -9,7 +9,6 @@ from drgmissionslib import (
     rotate_timestamps,
     rotate_timestamp_from_dict,
     wait_rotation,
-    SERVER_READY,
     class_xp_levels,
     Dwarf
     )
@@ -51,17 +50,13 @@ dailydeal_tstampthread = threading.Thread(target=rotate_timestamp_from_dict, arg
 dailydeal = []
 dailydealthread = threading.Thread(target=rotate_dailydeal, args=(AllTheDeals, dailydeal_tstamp, dailydeal))
 
-#Current mission icons rotator
+#Mission icons rotator
 rendering_event = threading.Event()
 #currybiomes = queue.Queue()
-currybiomes = []
-biomesthread = threading.Thread(target=rotate_biomes, args=(DRG, tstamp, currybiomes, rendering_event))
-
-#Upcoming mission icons rotator
-rendering_event_next = threading.Event()
 #nextbiomes = queue.Queue()
+currybiomes = []
 nextbiomes = []
-nextbiomesthread = threading.Thread(target=rotate_biomes, args=(DRG, next_tstamp, nextbiomes, rendering_event_next))
+biomesthread = threading.Thread(target=rotate_biomes, args=(DRG, tstamp, next_tstamp, nextbiomes, currybiomes, rendering_event))
 
 #Deep Dives rotator
 #DDs = queue.Queue()
@@ -69,22 +64,19 @@ DDs = []
 ddsthread = threading.Thread(target=rotate_DDs, args=(DDs,))
 
 #Homepage HTML rotator, md5 hashes once to enable 304 on every 30 minute rollover and the home route doesn't need to render it again for every request and can just send copies
-#Clears index event and waits for both rendering_events to be set before proceeding and then setting index event to enable homepage requests once more
+#Clears index event and waits for rendering_event to be set before proceeding and then sets index event to enable homepage requests once more
 index_event = threading.Event()
 #index_Queue = queue.Queue()
 index_Queue = []
-index_thread = threading.Thread(target=rotate_index, args=(DRG, rendering_event, rendering_event_next, tstamp, next_tstamp, DDs, index_event, index_Queue))
+index_thread = threading.Thread(target=rotate_index, args=(DRG, rendering_event, tstamp, next_tstamp, index_event, index_Queue))
 
-#Listener that clears the rendering events 1.5 seconds before the 30 minute mission rollover interval so the homepage won't load for clients until the rotators are done rendering the mission icons
-wait_rotationthread = threading.Thread(target=wait_rotation, args=(rendering_event, rendering_event_next, index_event))
-
-SERVER_READY_thread = threading.Thread(target=SERVER_READY, args=(index_event,))
+#Listener that clears the rendering event 1.5 seconds before the 30 minute mission rollover interval so the homepage won't load for clients until the rotators are done rendering the mission icons
+wait_rotationthread = threading.Thread(target=wait_rotation, args=(rendering_event, index_event))
 
 def start_threads():
     tstampthread.start()
     
     biomesthread.start()
-    nextbiomesthread.start()
     
     ddsthread.start()
     
@@ -95,19 +87,14 @@ def start_threads():
     
     index_thread.start()
     
-    SERVER_READY_thread.start()
-    
 #def join_threads():
     #tstampthread.join()
-    #next_tstampthread.join()
     #biomesthread.join()
-    #nextbiomesthread.join()
     #ddsthread.join()
     #wait_rotationthread.join()
     #dailydeal_tstampthread.join()
     #dailydealthread.join()
     #index_thread.join()
-    #SERVER_READY_thread.join()
     
 app = Flask(__name__, static_folder=f'{os.getcwd()}/files')
 
@@ -122,25 +109,23 @@ def home():
 #Sends current mission icons, arg format f"?img={Biome.replace(' ', '-')}{mission['id']}" - see rotate_biomes in drgmissionslib.py
 @app.route('/png')
 def serve_img():
-    img_arg = request.args.get('img')
     try:
-        mission = currybiomes[0][img_arg]
+        mission = currybiomes[0][request.args['img']]
         if request.headers.get('If-None-Match') == mission['etag']:
             return '', 304
         return send_file(BytesIO(mission['rendered_mission'].getvalue()), mimetype='image/png', etag=mission['etag'])
-    except Exception:
+    except:
         return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
 
 #Sends upcoming mission icons, arg format f"?img={Biome.replace(' ', '-')}{mission['id']}" - see rotate_biomes in drgmissionslib.py
 @app.route('/upcoming_png')
 def serve_next_img():
-    img_arg = request.args.get('img')
     try:
-        mission = nextbiomes[0][img_arg]
+        mission = nextbiomes[0][request.args['img']]
         if request.headers.get('If-None-Match') == mission['etag']:
             return '', 304
         return send_file(BytesIO(mission['rendered_mission'].getvalue()), mimetype='image/png', etag=mission['etag'])
-    except Exception:
+    except:
         return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
 
 #Sends current daily deal image
@@ -150,14 +135,13 @@ def serve_dailydeal_png():
         if request.headers.get('If-None-Match') == dailydeal[0]['etag']:
             return '', 304
         return send_file(BytesIO(dailydeal[0]['rendered_dailydeal'].getvalue()), mimetype='image/png', etag=dailydeal[0]['etag'])
-    except Exception:
+    except:
         return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
 
 #Dictionary endpoints
 #jsonify isn't very merciful when it comes to ram use for repeated requests of large dictionaries. It liked to use 300MB+ RAM as it doesn't hash what it serves and likes to keep it in memory up until a point so I took the full mission JSON out
 @app.route('/json')
 def serve_json():
-    json_arg = request.args.get('data')
     try:
         json_args = {
             'DD': DDs[0],
@@ -165,8 +149,8 @@ def serve_json():
             'next': DRG[next_tstamp[0]],
             'dailydeal': AllTheDeals[dailydeal_tstamp[0]]
         }
-        return jsonify(json_args[json_arg])
-    except Exception:
+        return jsonify(json_args[request.args['data']])
+    except:
         return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404   
 
 #Class XP calculator HTML that has its own javascript. The JS doesn't use the below endpoint - it is client side, but there is a link to the endpoint on the page.
@@ -182,38 +166,30 @@ def xp_calc_form():
 def xp_calc():
     try:
         class_levels = {
-            'engineer' : int(request.args.get('engineer_level')),
-            'scout' : int(request.args.get('scout_level')),
-            'driller' : int(request.args.get('driller_level')),
-            'gunner' : int(request.args.get('gunner_level')),
+            'engineer' : int(request.args['engineer_level']),
+            'scout' : int(request.args['scout_level']),
+            'driller' : int(request.args['driller_level']),
+            'gunner' : int(request.args['gunner_level']),
         }
         promos = {
-            'engineer' : int(request.args.get('engineer_promos')),
-            'scout' : int(request.args.get('scout_promos')),
-            'driller' : int(request.args.get('driller_promos')),
-            'gunner' : int(request.args.get('gunner_promos')),
+            'engineer' : int(request.args['engineer_promos']),
+            'scout' : int(request.args['scout_promos']),
+            'driller' : int(request.args['driller_promos']),
+            'gunner' : int(request.args['gunner_promos']),
         }
-        hours_played = int(request.args.get('hrs'))
+        hours_played = int(request.args['hrs'])
         
         
-        Engineer = Dwarf()
-        Engineer.level = class_levels['engineer']
-        Engineer.promotions = promos['engineer']
+        Engineer = Dwarf(class_levels['engineer'], promos['engineer'])
         Engineer.calculate_class_xp(class_xp_levels)
         
-        Scout = Dwarf()
-        Scout.level = class_levels['scout']
-        Scout.promotions = promos['scout']
+        Scout = Dwarf(class_levels['scout'], promos['scout'])
         Scout.calculate_class_xp(class_xp_levels)
         
-        Driller = Dwarf()
-        Driller.level = class_levels['driller']
-        Driller.promotions = promos['driller']
+        Driller = Dwarf(class_levels['driller'], promos['driller'])
         Driller.calculate_class_xp(class_xp_levels)
         
-        Gunner = Dwarf()
-        Gunner.level = class_levels['gunner']
-        Gunner.promotions = promos['gunner']
+        Gunner = Dwarf(class_levels['gunner'], promos['gunner'])
         Gunner.calculate_class_xp(class_xp_levels)
         
         total_promotions = sum([Engineer.promotions, Scout.promotions, Driller.promotions, Gunner.promotions])
@@ -268,4 +244,4 @@ def upload():
 
 if __name__ == '__main__':
     start_threads()
-    app.run(threaded=True, host='127.0.0.1', port=5000)
+    app.run(threaded=True, host='127.0.0.1', debug=True, port=5000)

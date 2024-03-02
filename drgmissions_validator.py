@@ -1,5 +1,7 @@
 import json
 from dateutil import parser
+from datetime import datetime, timedelta
+import re
 
 def sort_dictionary(dictionary, custom_order):
     sorted_dict = {}
@@ -15,6 +17,26 @@ def order_dictionary_by_date(dictionary):
     sorted_keys = sorted(dictionary.keys(), key=lambda x: parser.isoparse(x))
     ordered_dictionary = {}
     for key in sorted_keys:
+        ordered_dictionary[key] = dictionary[key]
+    return ordered_dictionary
+
+def order_dictionary_by_date_FIRST(dictionary):
+    def round_time_down(date_string):
+        dt_object = datetime.strptime(date_string, '%Y-%m-%dT%H:%M:%SZ')
+        rounded_time = dt_object - timedelta(minutes=dt_object.minute % 30)
+        rounded_time = rounded_time.replace(second=0)
+        rounded_time_str = rounded_time.strftime("%Y-%m-%dT%H:%M:%SZ")
+        return rounded_time_str
+    
+    sorted_keys = sorted(dictionary.keys(), key=lambda x: parser.isoparse(x))
+    ordered_dictionary = {}
+    for i, key in enumerate(sorted_keys):
+        if i == 0:
+            if not re.findall(key[14:16], r'00|30'):
+                new_key = round_time_down(key)
+                dictionary[new_key] = dictionary[key]
+                del dictionary[key]
+                key = new_key
         ordered_dictionary[key] = dictionary[key]
     return ordered_dictionary
 
@@ -44,7 +66,28 @@ def reconstruct_dictionary(dictionary):
                         mission1 = sort_dictionary(mission1, list_order)
                         missions1.append(mission1)
                     god[key][nested_key][biome] = missions1
+                    
+    for timestamp, dict in god.items():
+        god[timestamp]['timestamp'] = timestamp
+        
     return god
+
+def find_missing_timestamps(DRG, invalid_keys):
+    timestamps = [datetime.fromisoformat(timestamp[:-1]) for timestamp in DRG.keys()]
+    expected_diff = timedelta(minutes=30)
+    missing_timestamps = []
+    
+    for i in range(len(timestamps) - 1):
+        while timestamps[i + 1] - timestamps[i] > expected_diff:
+            missing_timestamps.append(timestamps[i] + expected_diff)
+            timestamps[i] += expected_diff
+    if missing_timestamps:
+        print('Missing timestamps found:')
+        for timestamp in missing_timestamps:
+            print(timestamp)
+            invalid_keys.append(f'{timestamp.isoformat()}Z')
+    else:
+        print('No missing timestamps found.')
 
 def find_duplicates(dictionary, invalid_keys):
     god = {}
@@ -89,7 +132,7 @@ def check_sum_of_missions(dictionary, invalid_keys):
         for key in missions_keys:
             print(f'Key:{key}')
     else:
-        print('No sum of missions outside range')
+        print('No sum of missions outside range.')
         
 def check_missions_keys(dictionary, invalid_keys):
     missions_keys = []
@@ -109,7 +152,7 @@ def check_missions_keys(dictionary, invalid_keys):
         for key in missions_keys:
             print(f'Key:{key}')
     else:
-        print('No sum of missions keys outside range')
+        print('No sum of missions keys outside range.')
 
 def check_missions_length_complexity(dictionary, invalid_keys):
     missions_keys = []
@@ -132,15 +175,16 @@ def check_missions_length_complexity(dictionary, invalid_keys):
 
 if __name__ == '__main__':
     with open('drgmissionsgod.json', 'r') as f:
-        DRG = f.read()
-        DRG = json.loads(DRG)
+        DRG = json.load(f)
+        f.close()
 
-    DRG = order_dictionary_by_date(DRG)
+    DRG = order_dictionary_by_date_FIRST(DRG)
     DRG = reconstruct_dictionary(DRG)
     
     invalid_keys = []
-
+    
     check_missions_length_complexity(DRG, invalid_keys)
+    find_missing_timestamps(DRG, invalid_keys)
     find_duplicates(DRG, invalid_keys)  
     check_sum_of_missions(DRG, invalid_keys)
     check_missions_keys(DRG, invalid_keys)

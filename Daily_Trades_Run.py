@@ -210,8 +210,9 @@ def main():
         f.close()
     
     #Write AllTheDeals JSON
+    AllTheDeals = re.sub(r':\d{2}Z', ':00Z', json.dumps(AllTheDeals))
     with open('drgdailydeals.json', 'w') as f:
-        f.write(json.dumps(AllTheDeals))
+        f.write(AllTheDeals)
         f.close()
     
     #Enable Automatic system time

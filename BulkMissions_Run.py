@@ -7,11 +7,13 @@ import datetime
 import json
 from drgmissions_validator import (
     order_dictionary_by_date,
+    order_dictionary_by_date_FIRST,
     reconstruct_dictionary,
     find_duplicates,
     check_sum_of_missions,
     check_missions_keys,
-    check_missions_length_complexity
+    check_missions_length_complexity,
+    find_missing_timestamps
     )
 import winreg
 import re
@@ -82,6 +84,7 @@ def validate_drgmissions(DRG, patched):
     DRG = reconstruct_dictionary(DRG)
     
     invalid_keys = []
+    find_missing_timestamps(DRG, invalid_keys)
     check_missions_keys(DRG, invalid_keys)
     find_duplicates(DRG, invalid_keys)
     check_sum_of_missions(DRG, invalid_keys)   
@@ -245,7 +248,6 @@ def main():
     #Enable automatic time sync
     toggle_system_time()
 
-    #Validate JSON
     with open('drgmissionsgod.json', 'r') as f:
         DRG = f.read()
         DRG = re.sub(r':\d{2}Z', ':00Z', DRG)
@@ -254,13 +256,14 @@ def main():
         
     for timestamp, dict in DRG.items():
         DRG[timestamp]['timestamp'] = timestamp
-        
-    DRG = order_dictionary_by_date(DRG)
+
+    DRG = order_dictionary_by_date_FIRST(DRG)
     DRG = reconstruct_dictionary(DRG)
     with open('drgmissionsgod.json', 'w') as f:
         f.write(json.dumps(DRG))
         f.close()
     
+    #Validate JSON
     patched = False
     DRG, patched = validate_drgmissions(DRG, patched)
     if patched:

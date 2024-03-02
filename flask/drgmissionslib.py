@@ -837,7 +837,7 @@ def rotate_dailydeal(AllTheDeals, tstamp_Queue, deal_Queue):
             timestamp = applicable_timestamp
         sleep(0.75)
     
-def rotate_biomes(DRG, tstamp_Queue, biomes_Queue, rendering_event):
+def rotate_biomes(DRG, tstamp_Queue, next_tstamp_Queue, nextbiomes_Queue, biomes_Queue, rendering_event):
     #order = ['Glacial Strata', 'Crystalline Caverns', 'Salt Pits', 'Magma Core', 'Azure Weald', 'Sandblasted Corridors', 'Fungus Bogs', 'Radioactive Exclusion Zone', 'Dense Biozone', 'Hollow Bough']
     #thread pools for saving and hashing PIL objects - microscopic gains. #TODO multiprocessing pools
     #def process_mission(mission):
@@ -886,26 +886,29 @@ def rotate_biomes(DRG, tstamp_Queue, biomes_Queue, rendering_event):
                 mission0['rendered_mission'] = mission_icon
                 Biomes1[biome1+str(mission['id'])] = mission0
         return timestamp, Biomes1
-    while len(tstamp_Queue) == 0:
+    while len(tstamp_Queue) == 0 and len(next_tstamp_Queue) == 0:
         continue
-    Biomes = DRG[tstamp_Queue[0]]['Biomes']
-    Biomes = render_biomes(Biomes)
-    #Biomes = sort_dictionary(Biomes, order)
-    timestamp, Biomes = array_biomes(Biomes, tstamp_Queue[0])
+    Biomes = render_biomes(DRG[tstamp_Queue[0]]['Biomes'])
+    _, Biomes = array_biomes(Biomes, tstamp_Queue[0])
     biomes_Queue.append(Biomes)
+    NextBiomes = render_biomes(DRG[next_tstamp_Queue[0]]['Biomes'])
+    timestamp_next, NextBiomes = array_biomes(NextBiomes, next_tstamp_Queue[0])
+    nextbiomes_Queue.append(NextBiomes)
     rendering_event.set()
     del Biomes
+    del NextBiomes
+    del _
     while True:
-        applicable_timestamp = tstamp_Queue[0]
-        if applicable_timestamp != timestamp:
-                Biomes = DRG[applicable_timestamp]['Biomes']
-                Biomes = render_biomes(Biomes)
-                #Biomes = sort_dictionary(Biomes, order)
-                timestamp, Biomes = array_biomes(Biomes, applicable_timestamp)
-                biomes_Queue.append(Biomes)
-                biomes_Queue.pop(0)
-                rendering_event.set()
-                del Biomes
+        applicable_timestamp = next_tstamp_Queue[0]
+        if applicable_timestamp != timestamp_next:
+            NextBiomes = render_biomes(DRG[applicable_timestamp]['Biomes'])
+            timestamp_next, NextBiomes = array_biomes(NextBiomes, applicable_timestamp)
+            biomes_Queue.append(nextbiomes_Queue[0])
+            biomes_Queue.pop(0)
+            nextbiomes_Queue.append(NextBiomes)
+            nextbiomes_Queue.pop(0)
+            rendering_event.set()
+            del NextBiomes
         sleep(0.25)
 
 def rotate_DDs(DDs):
@@ -1097,7 +1100,7 @@ def rotate_timestamp_from_dict(dictionary, tstamp_Queue, next_):
             timestamp = tstamp_Queue[0]
         sleep(0.25)
 
-def wait_rotation(rendering_event, rendering_event_next, index_event):
+def wait_rotation(rendering_event, index_event):
     target_minutes_59 = [29, 59]
     while True:
         current_time = datetime.now().time()
@@ -1105,7 +1108,6 @@ def wait_rotation(rendering_event, rendering_event_next, index_event):
         current_second = current_time.second + current_time.microsecond / 1e6
         if current_second > 58.50 and current_minute in target_minutes_59:
             rendering_event.clear()
-            rendering_event_next.clear()
             index_event.clear()
         sleep(0.2)
         
@@ -1126,9 +1128,8 @@ def SERVER_READY(index_event):
 #HTML STRING RENDERERS
 
 #HOMEPAGE
-def rotate_index(DRG, rendering_event, rendering_event_next, current_timestamp_Queue, next_timestamp_Queue, DDs_Queue, index_event, index_Queue):
+def rotate_index(DRG, rendering_event, current_timestamp_Queue, next_timestamp_Queue, index_event, index_Queue):
     rendering_event.wait()
-    rendering_event_next.wait()
     current_timestamp = current_timestamp_Queue[0]
     index = {}
     index_ = render_index(DRG[current_timestamp], DRG[next_timestamp_Queue[0]]).encode()
@@ -1141,10 +1142,8 @@ def rotate_index(DRG, rendering_event, rendering_event_next, current_timestamp_Q
         applicable_timestamp = current_timestamp_Queue[0]
         if applicable_timestamp != current_timestamp:
             rendering_event.wait()
-            rendering_event_next.wait()
-            current_timestamp = current_timestamp_Queue[0]
             index = {}
-            index_ = render_index(DRG[current_timestamp], DRG[next_timestamp_Queue[0]]).encode()
+            index_ = render_index(DRG[current_timestamp_Queue[0]], DRG[next_timestamp_Queue[0]]).encode()
             index['index'] = index_
             etag = md5(index_).hexdigest()
             index['etag'] = etag
@@ -1675,10 +1674,10 @@ class_xp_levels = {
     25 : 315000
 }
 class Dwarf():
-    def __init__(self):
+    def __init__(self, levels, promotions):
         self.xp = 0
-        self.level = 0
-        self.promotions = 0
+        self.level = levels
+        self.promotions = promotions
         self.total_level = 0   
     def calculate_class_xp(self, levels):
         self.xp = levels[self.level] + (self.promotions * 315000)

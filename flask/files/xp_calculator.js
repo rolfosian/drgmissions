@@ -1,10 +1,10 @@
 class Dwarf {
-  constructor() {
+  constructor(type, levels, promotions) {
     this.xp = 0;
-    this.level = 0;
-    this.promotions = 0;
+    this.level = levels;
+    this.promotions = promotions;
     this.totalLevel = 0;
-    this.type = null
+    this.type = type
   }
 
   calculateClassXP() {
@@ -72,34 +72,20 @@ const drillerLevels = drillerLevelsInput.value !== "" ? parseInt(drillerLevelsIn
 const gunnerPromotions = gunnerPromotionsInput.value !== "" ? parseInt(gunnerPromotionsInput.value) : 0;
 const gunnerLevels = gunnerLevelsInput.value !== "" ? parseInt(gunnerLevelsInput.value) : 1;
 
-const Engineer = new Dwarf();
-Engineer.type = 'Icon_Character_Engineer'
-Engineer.level = engineerLevels;
-Engineer.promotions = engineerPromotions;
+const Engineer = new Dwarf('Icon_Character_Engineer', engineerLevels, engineerPromotions);
 Engineer.calculateClassXP();
 
-const Scout = new Dwarf();
-Scout.type = 'Icon_Character_Scout'
-Scout.level = scoutLevels;
-Scout.promotions = scoutPromotions;
+const Scout = new Dwarf('Icon_Character_Scout', scoutLevels, scoutPromotions);
 Scout.calculateClassXP();
 
-const Driller = new Dwarf();
-Driller.type = 'Icon_Character_Driller'
-Driller.level = drillerLevels;
-Driller.promotions = drillerPromotions;
+const Driller = new Dwarf('Icon_Character_Driller', drillerLevels, drillerPromotions);
 Driller.calculateClassXP();
 
-const Gunner = new Dwarf();
-Gunner.type = 'Icon_Character_Gunner'
-Gunner.level = gunnerLevels;
-Gunner.promotions = gunnerPromotions;
+const Gunner = new Dwarf('Icon_Character_Gunner', gunnerLevels, gunnerPromotions);
 Gunner.calculateClassXP();
 
 const totalPromotions = Engineer.promotions + Scout.promotions + Driller.promotions + Gunner.promotions;
-
 const Badges = (Engineer.totalLevel + Scout.totalLevel + Driller.totalLevel + Gunner.totalLevel) / 3;
-
 const total_xp = Engineer.xp + Scout.xp + Driller.xp + Gunner.xp;
 var xp_per_hr = (total_xp / hours)
 if (isNaN(xp_per_hr)) {
