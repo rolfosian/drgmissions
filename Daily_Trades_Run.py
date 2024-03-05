@@ -1,29 +1,20 @@
 import datetime
 import subprocess
 import time
-import psutil
 import os
 import json
-from time import sleep
-import winreg
 import re
-
-def calculate_average_float(float_list):
-    total = 0.0
-    count = 0
-    for num in float_list:
-        total += num
-        count += 1
-    if count == 0:
-        return 0.0
-    average = total / count
-    return round(average, 2)
-
-def kill_process_by_name_starts_with(start_string):
-    for proc in psutil.process_iter(['pid', 'name']):
-        if proc.info['name'].startswith(start_string):
-            print(f"Terminating process: {proc.info['name']} (PID: {proc.info['pid']})")
-            proc.kill()
+from time import sleep
+from drgmissions_scraper_utils import (
+    kill_process_by_name_starts_with,
+    calculate_average_float,
+    enable_system_time,
+    toggle_system_time,
+    user_input_set_target_date,
+    format_seconds,
+    sanitize_datetime,
+    reverse_date_format
+)
 
 def increment_datetime(datetime_str):
     year, month, day, hour, min, sec = map(int, datetime_str[:10].split("-") + datetime_str[11:19].split(":"))
@@ -39,72 +30,6 @@ def increment_datetime(datetime_str):
         year += 1
     updated_datetime = "{:02d}-{:02d}-{:02d}T{:02d}:{:02d}:{:02d}Z".format(day, month, year %100, hour, min, sec)
     return updated_datetime
-
-def sanitize_datetime(datetime_str):
-    year, month, day, hour, min, sec = map(int, datetime_str[:10].split("-") + datetime_str[11:19].split(":"))
-    sanitized_datetime = "{:02d}-{:02d}-{:02d}T{:02d}:{:02d}:{:02d}Z".format(day, month, year %100, hour, min, sec)
-    return sanitized_datetime
-
-def reverse_date_format(input_date):
-    year, month, day = input_date.split('-')
-    input_date = f"{day}-{month}-{year[2:]}"
-    return input_date
-
-def format_seconds(seconds):
-    timedelta = datetime.timedelta(seconds=seconds)
-    hours = int(timedelta.total_seconds() // 3600)
-    minutes = int((timedelta.total_seconds() % 3600) // 60)
-    remaining_seconds = timedelta.total_seconds() % 60
-    formatted_time = "{:02d}:{:02d}:{:05.2f}".format(hours, minutes, remaining_seconds)
-    return formatted_time
-
-def enable_system_time():
-    try:
-        print('-------------------------------------------------------------------------')
-        key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r'SYSTEM\\CurrentControlSet\\Services\\W32Time\\Parameters', 0, winreg.KEY_WRITE)
-        winreg.SetValueEx(key, 'Type', 0, winreg.REG_SZ, 'NTP')
-        winreg.CloseKey(key)
-        subprocess.run(['sc', 'config', 'w32time', 'start=', 'auto'], shell=True)
-        subprocess.run(['net', 'start', 'w32time'], shell=True)
-        sleep(2)
-        subprocess.run(['w32tm', '/resync'], stderr=subprocess.PIPE, shell=True)
-        print("Automatic system time enabled.\n-------------------------------------------------------------------------\n")
-    except Exception as e:
-        print(f"Error: {e}")
-def disable_system_time():
-    try:
-        print('-------------------------------------------------------------------------')
-        key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r'SYSTEM\\CurrentControlSet\\Services\\W32Time\\Parameters', 0, winreg.KEY_WRITE)
-        winreg.SetValueEx(key, 'Type', 0, winreg.REG_SZ, 'NoSync')
-        winreg.CloseKey(key)
-        subprocess.run(['sc', 'config', 'w32time', 'start=', 'disabled'], shell=True)
-        subprocess.run(['net', 'stop', 'w32time'], shell=True)
-        print("Automatic system time disabled.\n-------------------------------------------------------------------------\n")
-    except Exception as e:
-        print(f"Error: {e}")
-def toggle_system_time():
-    try:
-        output = subprocess.check_output('sc query w32time', stderr=subprocess.PIPE, shell=True).decode('utf-8')
-        if 'RUNNING' in output:
-            disable_system_time()
-        else:
-            enable_system_time()        
-    except Exception as e:
-        print(f"Error {e}")
-        
-def user_input_set_target_date(current_time):
-    while True:
-        user_input = input("Enter the target date (YYYY-MM-DD): ")
-        try:
-            user_date = datetime.datetime.strptime(user_input, "%Y-%m-%d")
-            if user_date > current_time:
-                break
-            else:
-                print("Please enter a date and time ahead of the current time.")
-        except Exception:
-            print("Invalid date format. Please enter the date in the format (YYYY-MM-DD).")
-    print('\n')
-    return user_date
 
 def main_loop(total_increments, current_time, AllTheDeals):
     game_times = []

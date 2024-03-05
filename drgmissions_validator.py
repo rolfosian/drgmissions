@@ -1,5 +1,4 @@
 import json
-from dateutil import parser
 from datetime import datetime, timedelta
 import re
 
@@ -14,7 +13,7 @@ def sort_dictionary(dictionary, custom_order):
     return sorted_dict
 
 def order_dictionary_by_date(dictionary):
-    sorted_keys = sorted(dictionary.keys(), key=lambda x: parser.isoparse(x))
+    sorted_keys = sorted(dictionary.keys(), key=lambda x: datetime.fromisoformat(x.replace('Z', '')))
     ordered_dictionary = {}
     for key in sorted_keys:
         ordered_dictionary[key] = dictionary[key]
@@ -28,7 +27,7 @@ def order_dictionary_by_date_FIRST(dictionary):
         rounded_time_str = rounded_time.strftime("%Y-%m-%dT%H:%M:%SZ")
         return rounded_time_str
     
-    sorted_keys = sorted(dictionary.keys(), key=lambda x: parser.isoparse(x))
+    sorted_keys = sorted(dictionary.keys(), key=lambda x: datetime.fromisoformat(x.replace('Z', '')))
     ordered_dictionary = {}
     for i, key in enumerate(sorted_keys):
         if i == 0:
@@ -46,6 +45,7 @@ def reconstruct_dictionary(dictionary):
     biome_order = ['Glacial Strata', 'Crystalline Caverns', 'Salt Pits', 'Magma Core', 'Azure Weald', 'Sandblasted Corridors', 'Fungus Bogs', 'Radioactive Exclusion Zone', 'Dense Biozone', 'Hollow Bough']
     for key, value in dictionary.items():
         god[key] = {}
+        god[key]['timestamp'] = key
         value = sort_dictionary(value, ['Biomes', 'timestamp'])
         for nested_key, nested_value in value.items():
             if nested_key == 'Biomes':
@@ -66,10 +66,7 @@ def reconstruct_dictionary(dictionary):
                         mission1 = sort_dictionary(mission1, list_order)
                         missions1.append(mission1)
                     god[key][nested_key][biome] = missions1
-                    
-    for timestamp, dict in god.items():
-        god[timestamp]['timestamp'] = timestamp
-        
+
     return god
 
 def find_missing_timestamps(DRG, invalid_keys):

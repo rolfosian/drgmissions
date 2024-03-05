@@ -4,7 +4,6 @@ from time import sleep
 from io import BytesIO
 import os
 from datetime import datetime, timedelta
-from dateutil import parser
 import shutil
 import glob
 import json
@@ -981,7 +980,7 @@ def sort_dictionary(dictionary, custom_order):
     return sorted_dict
 
 def order_dictionary_by_date(dictionary):
-    sorted_keys = sorted(dictionary.keys(), key=lambda x: parser.isoparse(x))
+    sorted_keys = sorted(dictionary.keys(), key=lambda x: datetime.fromisoformat(x.replace('Z', '')))
     ordered_dictionary = {}
     for key in sorted_keys:
         ordered_dictionary[key] = dictionary[key]

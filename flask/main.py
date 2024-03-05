@@ -102,8 +102,6 @@ app = Flask(__name__, static_folder=f'{os.getcwd()}/files')
 @app.route('/')
 def home():
     index_event.wait()
-    if request.headers.get('If-None-Match') == index_Queue[0]['etag']:
-        return '', 304
     return send_file(BytesIO(index_Queue[0]['index']), mimetype='text/html', etag=index_Queue[0]['etag'])
 
 #Sends current mission icons, arg format f"?img={Biome.replace(' ', '-')}{mission['id']}" - see rotate_biomes in drgmissionslib.py
@@ -111,8 +109,6 @@ def home():
 def serve_img():
     try:
         mission = currybiomes[0][request.args['img']]
-        if request.headers.get('If-None-Match') == mission['etag']:
-            return '', 304
         return send_file(BytesIO(mission['rendered_mission'].getvalue()), mimetype='image/png', etag=mission['etag'])
     except:
         return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
@@ -122,8 +118,6 @@ def serve_img():
 def serve_next_img():
     try:
         mission = nextbiomes[0][request.args['img']]
-        if request.headers.get('If-None-Match') == mission['etag']:
-            return '', 304
         return send_file(BytesIO(mission['rendered_mission'].getvalue()), mimetype='image/png', etag=mission['etag'])
     except:
         return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
@@ -132,8 +126,6 @@ def serve_next_img():
 @app.route('/dailydeal')
 def serve_dailydeal_png():
     try:
-        if request.headers.get('If-None-Match') == dailydeal[0]['etag']:
-            return '', 304
         return send_file(BytesIO(dailydeal[0]['rendered_dailydeal'].getvalue()), mimetype='image/png', etag=dailydeal[0]['etag'])
     except:
         return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
@@ -157,8 +149,6 @@ def serve_json():
 xp_calculator_index = render_xp_calc_index()
 @app.route('/xp_calculator')
 def xp_calc_form():
-    if request.headers.get('If-None-Match') == xp_calculator_index['etag']:
-        return '', 304
     return send_file(BytesIO(xp_calculator_index['index']), mimetype='text/html', etag=xp_calculator_index['etag'])
 
 #Class XP calculator endpoint
