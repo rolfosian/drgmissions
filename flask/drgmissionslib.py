@@ -986,46 +986,46 @@ def order_dictionary_by_date(dictionary):
         ordered_dictionary[key] = dictionary[key]
     return ordered_dictionary
 
-#grug timedelta
-#def round_time(current_time, next_):
-    #rounded_time = current_time.replace(second=0, microsecond=0)
-    #current_year, current_month, current_day, current_hour, current_minute, current_second = current_time.year, current_time.month, current_time.day, current_time.hour, current_time.minute, current_time.second
-    #days_in_month = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-    #if next_:
-        #if rounded_time.minute < 30:
-            #rounded_time = rounded_time.replace(minute=30)
-        #else:
-            #if rounded_time.hour == 23:
-                #try:
-                    #rounded_time = rounded_time.replace(minute=0, hour=(rounded_time.hour + 1) % 24, day=(rounded_time.day + 1))
-                #except ValueError:
-                    #rounded_time = rounded_time.replace(minute=0, hour=(rounded_time.hour + 1) % 24)
-                    #current_day += 1
-                    #current_month += 1
-                    #if current_month > 12:
-                        #rounded_time = rounded_time.replace(month=current_month-12, year=current_year+1, day=1)
-                    #else:
-                        #if rounded_time.month == 2 and current_year % 4 == 0 and (current_year % 100 != 0 or current_year % 400 == 0):
-                            #days_in_month[1] = 29
-                        #if current_day > days_in_month[rounded_time.month - 1]:
-                            #current_day = rounded_time.day - days_in_month[rounded_time.month - 1]
-                            #rounded_time = rounded_time.replace(day=1)
-                            #rounded_time = rounded_time.replace(month=current_month)
+# grug timedelta
+# def round_time(current_time, next_):
+#     rounded_time = current_time.replace(second=0, microsecond=0)
+#     current_year, current_month, current_day, current_hour, current_minute, current_second = current_time.year, current_time.month, current_time.day, current_time.hour, current_time.minute, current_time.second
+#     days_in_month = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+#     if next_:
+#         if rounded_time.minute < 30:
+#             rounded_time = rounded_time.replace(minute=30)
+#         else:
+#             if rounded_time.hour == 23:
+#                 try:
+#                     rounded_time = rounded_time.replace(minute=0, hour=(rounded_time.hour + 1) % 24, day=(rounded_time.day + 1))
+#                 except ValueError:
+#                     rounded_time = rounded_time.replace(minute=0, hour=(rounded_time.hour + 1) % 24)
+#                     current_day += 1
+#                     current_month += 1
+#                     if current_month > 12:
+#                         rounded_time = rounded_time.replace(month=current_month-12, year=current_year+1, day=1)
+#                     else:
+#                         if rounded_time.month == 2 and current_year % 4 == 0 and (current_year % 100 != 0 or current_year % 400 == 0):
+#                             days_in_month[1] = 29
+#                         if current_day > days_in_month[rounded_time.month - 1]:
+#                             current_day = rounded_time.day - days_in_month[rounded_time.month - 1]
+#                             rounded_time = rounded_time.replace(day=1)
+#                             rounded_time = rounded_time.replace(month=current_month)
                     
-            #else:
-                #rounded_time = rounded_time.replace(minute=0, hour=(rounded_time.hour + 1) % 24)
-    #else:
-        #if current_time.minute < 30:
-            #rounded_time = rounded_time.replace(minute=0)
-        #else:
-            #rounded_time = rounded_time.replace(minute=30)
+#             else:
+#                 rounded_time = rounded_time.replace(minute=0, hour=(rounded_time.hour + 1) % 24)
+#     else:
+#         if current_time.minute < 30:
+#             rounded_time = rounded_time.replace(minute=0)
+#         else:
+#             rounded_time = rounded_time.replace(minute=30)
         
-    #rounded_time_str = rounded_time.strftime("%Y-%m-%dT%H:%M:%SZ")
-    #return rounded_time_str
-#def select_timestamp(next_):
-    #current_time = datetime.utcnow()
-    #rounded_time_str = round_time(current_time, next_)
-    #return rounded_time_str
+#     rounded_time_str = rounded_time.strftime("%Y-%m-%dT%H:%M:%SZ")
+#     return rounded_time_str
+# def select_timestamp(next_):
+#     current_time = datetime.utcnow()
+#     rounded_time_str = round_time(current_time, next_)
+#     return rounded_time_str
 
 def round_time(current_time, next_):
     if next_:

@@ -5,11 +5,9 @@ import os
 import datetime
 import json
 import re
-from drgmissions_validator import (
-    order_dictionary_by_date_FIRST,
-    reconstruct_dictionary,
-    )
 from drgmissions_scraper_utils import(
+    order_dictionary_by_date_FIRST_KEY_ROUNDING,
+    reconstruct_dictionary,
     toggle_system_time,
     enable_system_time,
     format_seconds,
@@ -69,7 +67,7 @@ def main():
     toggle_system_time()
     sleep(1)
     #Run Deep Rock Galactic headless
-    subprocess.Popen(['start', 'steam://run/548430//-nullrhi'], shell=True)
+    subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
 
     #Wait for JSON
     files = []
@@ -83,7 +81,7 @@ def main():
             kill_process_by_name_starts_with('FSD')
             kill_process_by_name_starts_with('Unreal')
             sleep(4)
-            subprocess.Popen(['start', 'steam://run/548430//-nullrhi'], shell=True)
+            subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
             start_time = time.monotonic()
         for filename in os.listdir():
             if filename == 'drgmissionsgod.json':
@@ -113,7 +111,7 @@ def main():
     for timestamp, dict in DRG.items():
         DRG[timestamp]['timestamp'] = timestamp
 
-    DRG = order_dictionary_by_date_FIRST(DRG)
+    DRG = order_dictionary_by_date_FIRST_KEY_ROUNDING(DRG)
     DRG = reconstruct_dictionary(DRG)
     with open('drgmissionsgod.json', 'w') as f:
         f.write(json.dumps(DRG))

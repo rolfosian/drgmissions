@@ -23,7 +23,7 @@ def main():
         f.write('dds_fetcher : 1')
         f.close()
         
-    subprocess.Popen(['start', 'steam://run/548430//-nullrhi'], shell=True)
+    subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
 
     with open('token.txt') as f:
         token = f.read().strip()

@@ -1,28 +1,5 @@
 local json = require("./mods/dds_fetcher/Scripts/dkjson")
-function TableToString(table, indent)
-    indent = indent or ""
-    local str = "{\n"
-    for key, value in pairs(table) do
-      if type(value) == "table" then
-        str = str .. indent .. "[" .. tostring(key) .. "] = " .. TableToString(value, indent .. "  ") .. ",\n"
-      else
-        str = str .. indent .. "[" .. tostring(key) .. "] = " .. tostring(value) .. ",\n"
-      end
-    end
-    str = str .. indent:sub(1, -3) .. "}"
-    return str
-end
-function Split(str, separator)
-    local result = {}
-    local pattern = string.format("([^%s]+)", separator)
-    for match in string.gmatch(str, pattern) do
-        table.insert(result, match)
-    end
-    return result
-end
-function HasKey(table, key)
-    return table[key] ~= nil
-end
+local utils = require('./mods/long_term_mission_data_collector/Scripts/bulkmissions_funcs')
 function UnpackDeepDiveMission(mission, master, t)
     local mission1 = {}
     local missionfullname = string.format("%s",mission:GetFullName())
@@ -466,11 +443,11 @@ function Main()
 
             if MissionStructure == 1 then
                 t = 'Deep Dive Normal'
-                if not HasKey(master['Deep Dives'][t], 'Biome') then
-                    b = GetBiome(mission)
+                if not utils.HasKey(master['Deep Dives'][t], 'Biome') then
+                    b = utils.GetBiome(mission)
                     master['Deep Dives'][t]['Biome'] = b
                 end
-                if not HasKey(master['Deep Dives'][t], 'CodeName') then
+                if not utils.HasKey(master['Deep Dives'][t], 'CodeName') then
                     local codename = GetDeepDiveCodename(t)
                     master['Deep Dives'][t]['CodeName'] = codename
                 end
@@ -478,11 +455,11 @@ function Main()
 
             elseif MissionStructure == 2 then
                 t = 'Deep Dive Elite'
-                if not HasKey(master['Deep Dives'][t], 'Biome') then
-                    b = GetBiome(mission)
+                if not utils.HasKey(master['Deep Dives'][t], 'Biome') then
+                    b = utils.GetBiome(mission)
                     master['Deep Dives'][t]['Biome'] = b
                 end
-                if not HasKey(master['Deep Dives'][t], 'CodeName') then
+                if not utils.HasKey(master['Deep Dives'][t], 'CodeName') then
                     local codename = GetDeepDiveCodename(t)
                     master['Deep Dives'][t]['CodeName'] = codename
                 end
@@ -491,15 +468,8 @@ function Main()
             end
         end
 
-        -- local indent = "    "
-        -- local master_str = TableToString(master, indent)
-        -- print(master_str)
-
         -- Press X to json
-        local options = {
-            indent = "  ",
-          }
-        master = json.encode(master, options)
+        master = json.encode(master)
         local file = io.open(currentDateTime..'.json', 'w')
         if file then
             file:write(master)

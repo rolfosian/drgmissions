@@ -13,7 +13,8 @@ from drgmissions_scraper_utils import (
     user_input_set_target_date,
     format_seconds,
     sanitize_datetime,
-    reverse_date_format
+    reverse_date_format,
+    order_dictionary_by_date
 )
 
 def increment_datetime(datetime_str):
@@ -36,7 +37,7 @@ def main_loop(total_increments, current_time, AllTheDeals):
     for i in range(total_increments+1):
         sleep(2)
         #Start the game
-        subprocess.Popen(['start', 'steam://run/548430//-nullrhi'], shell=True)
+        subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
         game_start_time = time.monotonic()
         timestamp = current_time.strftime("%Y-%m-%dT%H:%M:%SZ")
         timestamp = re.sub(r':\d{2}Z', ':00Z', timestamp)
@@ -128,6 +129,8 @@ def main():
     # Loop for the increments
     start_time = time.monotonic()
     AllTheDeals = main_loop(total_increments, current_time, AllTheDeals)
+    AllTheDeals = order_dictionary_by_date(AllTheDeals)
+    AllTheDeals = re.sub(r':\d{2}Z', ':00Z', json.dumps(AllTheDeals))
     print(f'Total time elapsed: {format_seconds(time.monotonic() - start_time)}')
     sleep(2)
     #Reset mods.txt
@@ -135,7 +138,6 @@ def main():
         f.close()
     
     #Write AllTheDeals JSON
-    AllTheDeals = re.sub(r':\d{2}Z', ':00Z', json.dumps(AllTheDeals))
     with open('drgdailydeals.json', 'w') as f:
         f.write(AllTheDeals)
         f.close()

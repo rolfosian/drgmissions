@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime, timedelta
 import subprocess
 import time
 import psutil
@@ -7,15 +7,178 @@ import requests
 import winreg
 import json
 import re
-from drgmissions_validator import (
-    order_dictionary_by_date,
-    reconstruct_dictionary,
-    find_duplicates,
-    find_missing_timestamps,
-    check_missions_keys,
-    check_missions_length_complexity,
-    check_sum_of_missions
-)
+
+#Validation
+#-----------------------
+def sort_dictionary(dictionary, custom_order):
+    sorted_dict = {}
+    for key in custom_order:
+        if key in dictionary:
+            sorted_dict[key] = dictionary[key]
+            del dictionary[key]
+
+    sorted_dict.update(dictionary)
+    return sorted_dict
+
+def order_dictionary_by_date(dictionary):
+    sorted_keys = sorted(dictionary.keys(), key=lambda x: datetime.fromisoformat(x.replace('Z', '')))
+    ordered_dictionary = {}
+    for key in sorted_keys:
+        ordered_dictionary[key] = dictionary[key]
+    return ordered_dictionary
+
+def order_dictionary_by_date_FIRST_KEY_ROUNDING(dictionary):    
+    sorted_keys = sorted(dictionary.keys(), key=lambda x: datetime.fromisoformat(x.replace('Z', '')))
+    
+    first_key = sorted_keys[0]
+    first_key_minutes = int(first_key[14:16])
+    if first_key_minutes >= 30:
+        new_key = first_key[:14] + '30' + first_key[16:]
+        dictionary[new_key] = dictionary[first_key]
+        del dictionary[first_key]
+        sorted_keys[0] = new_key
+    else:
+        new_key = first_key[:14] + '00' + first_key[16:]
+        dictionary[new_key] = dictionary[first_key]
+        del dictionary[first_key]
+        sorted_keys[0] = new_key
+        
+    ordered_dictionary = {}
+    for key in sorted_keys:
+        ordered_dictionary[key] = dictionary[key]
+    return ordered_dictionary
+
+def reconstruct_dictionary(dictionary):
+    god = {}
+    list_order = ['PrimaryObjective', 'SecondaryObjective', 'MissionWarnings', 'MissionMutator', 'Complexity', 'Length', 'CodeName', 'id']
+    biome_order = ['Glacial Strata', 'Crystalline Caverns', 'Salt Pits', 'Magma Core', 'Azure Weald', 'Sandblasted Corridors', 'Fungus Bogs', 'Radioactive Exclusion Zone', 'Dense Biozone', 'Hollow Bough']
+    for key, value in dictionary.items():
+        god[key] = {}
+        god[key]['timestamp'] = key
+        value = sort_dictionary(value, ['Biomes', 'timestamp'])
+        for nested_key, nested_value in value.items():
+            if nested_key == 'Biomes':
+                god[key][nested_key] = sort_dictionary(nested_value, biome_order)
+            else:
+                pass
+    for key, value in god.items():
+        for nested_key, nested_value in value.items():
+            if nested_key == 'Biomes':
+                for biome, missions in nested_value.items():
+                    missions1 = []
+                    for mission in missions:
+                        mission1 = mission
+                        if 'MissionWarnings' in mission.keys():
+                            for missionkey, missionvalue in mission.items():
+                                if isinstance(missionvalue, list):
+                                    mission1[missionkey] = sorted(missionvalue)
+                        mission1 = sort_dictionary(mission1, list_order)
+                        missions1.append(mission1)
+                    god[key][nested_key][biome] = missions1
+
+    return god
+
+def find_missing_timestamps(DRG, invalid_keys):
+    timestamps = [datetime.fromisoformat(timestamp[:-1]) for timestamp in DRG.keys()]
+    expected_diff = timedelta(minutes=30)
+    missing_timestamps = []
+    
+    for i in range(len(timestamps) - 1):
+        while timestamps[i + 1] - timestamps[i] > expected_diff:
+            missing_timestamps.append(timestamps[i] + expected_diff)
+            timestamps[i] += expected_diff
+    if missing_timestamps:
+        print('Missing timestamps found:')
+        for timestamp in missing_timestamps:
+            print(timestamp)
+            invalid_keys.append((f'{timestamp.isoformat()}Z', find_missing_timestamps.__name__))
+    else:
+        print('No missing timestamps found.')
+
+def find_duplicates(dictionary, invalid_keys):
+    god = {}
+    for key, value in dictionary.items():
+        god[key] = json.dumps(value)
+    def find_duplicate_strings(dictionary):
+        string_count = {}
+        for key, value in dictionary.items():
+            if value in string_count:
+                string_count[value].append(key)
+            else:
+                string_count[value] = [key]
+        duplicate_strings = {value: keys for value, keys in string_count.items() if len(keys) > 1}
+        return duplicate_strings
+    
+    duplicate_strings = find_duplicate_strings(god)
+    if duplicate_strings:
+        print("Duplicate strings found:")
+        for value, keys in duplicate_strings.items():
+            print("Keys:", keys)
+            for key in keys:
+                if key not in invalid_keys:
+                    invalid_keys.append((key, find_duplicates.__name__))
+    else:
+        print("No duplicate strings found.")
+
+def check_sum_of_missions(dictionary, invalid_keys):
+    missions_keys = []
+    for key, value in dictionary.items():
+        mission_count = 0
+        biomes = []
+        for biome, missions in value['Biomes'].items():
+            biomes.append(biome)
+        for biome in biomes:
+            mission_count += len(value['Biomes'][biome])
+        if mission_count != 19:
+            missions_keys.append(key)
+            if key not in invalid_keys:
+                invalid_keys.append((key, check_sum_of_missions.__name__))
+    if missions_keys:
+        print('Invalid number of missions in:')
+        for key in missions_keys:
+            print(f'Key:{key}')
+    else:
+        print('No sum of missions outside range.')
+        
+def check_missions_keys(dictionary, invalid_keys):
+    missions_keys = []
+    for key, value in dictionary.items():
+        biomes = []
+        for biome, missions in value['Biomes'].items():
+            biomes.append(biome)
+        for biome in biomes:
+            for mission in value['Biomes'][biome]:
+                key_count = len(list(mission.keys()))
+                if key_count not in [6, 7, 8]:
+                    missions_keys.append(f'{key}: {biome}')
+                    if key not in invalid_keys:
+                        invalid_keys.append((key, check_missions_keys.__name__))
+    if missions_keys:
+        print('Invalid number of keys in:')
+        for key in missions_keys:
+            print(f'Key:{key}')
+    else:
+        print('No sum of missions keys outside range.')
+
+def check_missions_length_complexity(dictionary, invalid_keys):
+    missions_keys = []
+    for key, value in dictionary.items():
+        biomes = []
+        for biome, missions in value['Biomes'].items():
+            biomes.append(biome)
+        for biome in biomes:
+            for mission in value['Biomes'][biome]:
+                if mission['Complexity'] == 'Indefinite' or mission['Length'] == 'Indefinite':
+                    missions_keys.append(f'{key}: {biome}')
+                    if key not in invalid_keys:
+                        invalid_keys.append((key, check_missions_length_complexity.__name__))
+    if missions_keys:
+        print('Indefinite complexity or length for mission(s) in:')
+        for key_biome in missions_keys:
+            print(f'Key and Biome: {key_biome}')
+    else:
+        print('No indefinite complexities or lengths found.')
+#------------------------------------------------------------------------------------------------------
 
 def upload_file(url, file_path, bearer_token):
     headers = {
@@ -28,7 +191,7 @@ def upload_file(url, file_path, bearer_token):
     return response
 
 def wait_until_next_hour():
-    now = datetime.datetime.now()
+    now = datetime.now()
     if now.hour == 23:
         next_hour = now.replace(hour=0, minute=0, second=0, microsecond=0) + datetime.timedelta(days=1)
     else:
@@ -109,7 +272,7 @@ def user_input_set_target_date(current_time):
     while True:
         user_input = input("Enter the target date (YYYY-MM-DD): ")
         try:
-            user_date = datetime.datetime.strptime(user_input, "%Y-%m-%d")
+            user_date = datetime.strptime(user_input, "%Y-%m-%d")
             if user_date > current_time:
                 break
             else:
@@ -130,9 +293,14 @@ def validate_drgmissions(DRG, patched):
     check_missions_length_complexity(DRG, invalid_keys)
     
     if invalid_keys:
-        print('Invalid timestamps:')
-        for timestamp in invalid_keys:
-            print(timestamp)
+        print('Invalid timestamps found...')
+        with open('invalid_timestamps_log.txt', 'w') as f:
+            s = ''
+            for key, func in invalid_keys:
+                s += f'{key} found invalid using {func} function\n'
+            f.write(s)
+            f.close()
+            
         patched = True
         
         toggle_system_time()
@@ -140,16 +308,16 @@ def validate_drgmissions(DRG, patched):
         
         with open('invalid_keys.txt', 'w') as f:
             filestr = ''
-            for key in invalid_keys:
+            for key, func_name in invalid_keys:
                 filestr += f'{key}\n'
             f.write(filestr.strip())
             f.close()
 
         with open('./mods/mods.txt', 'w') as f:
-            f.write('one_round_mission_data_collector : 1')
+            f.write('invalid_timestamps_redoer : 1')
             f.close()
         
-        subprocess.Popen(['start', 'steam://run/548430//-nullrhi'], shell=True)
+        subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
         files = []
         timeout_seconds = (len(invalid_keys) * 1.6) + 120
         estimated_time_completion = (len(invalid_keys) *1.5) + 25
@@ -163,7 +331,7 @@ def validate_drgmissions(DRG, patched):
                 kill_process_by_name_starts_with('FSD')
                 kill_process_by_name_starts_with('Unreal')
                 time.sleep(4)
-                subprocess.Popen(['start', 'steam://run/548430//-nullrhi'], shell=True)
+                subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
                 start_time = time.monotonic()
             for filename in os.listdir():
                 if filename == 'redonemissions.json':

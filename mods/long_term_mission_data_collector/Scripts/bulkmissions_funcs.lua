@@ -1,13 +1,39 @@
-local json = require("./mods/long_term_mission_data_collector/Scripts/dkjson")
-local socket = require('./mods/long_term_mission_data_collector/Scripts/socket')
 function ReverseDateFormat(inputDate)
-    local oldDate = Split(inputDate, "-")
-    local year = oldDate[1]
-    local month = oldDate[2]
-    local day = oldDate[3]
+    local year = inputDate:sub(1, 2)
+    local month = inputDate:sub(4, 5)
+    local day = inputDate:sub(7, 8)
     
     local reversedDate = day .. "-" .. month .. "-" .. year
+    
     return reversedDate
+  end
+function IncrementDatetime(datetime)
+    local year, month, day, hour, min, sec = datetime:match("(%d+)-(%d+)-(%d+) (%d+):(%d+):(%d+)")
+    year, month, day, hour, min, sec = tonumber(year), tonumber(month), tonumber(day), tonumber(hour), tonumber(min), tonumber(sec)
+    min = min + 30
+    if min > 59 then
+      min = min - 60
+      hour = hour + 1
+    end
+    if hour > 23 then
+      hour = hour - 24
+      day = day + 1
+    end
+    local daysInMonth = {31,28,31,30,31,30,31,31,30,31,30,31}
+    
+    if month == 2 and year % 4 == 0 and (year % 100 ~= 0 or year % 400 == 0) then
+      daysInMonth[2] = 29
+    end
+    if day > daysInMonth[month] then
+      day = day - daysInMonth[month]
+      month = month + 1
+    end
+    if month > 12 then
+      month = month - 12
+      year = year + 1
+    end
+    local updatedDatetime = string.format("%02d-%02d-%02d %02d:%02d:%02d", year % 100, month, day, hour, min, sec)
+    return updatedDatetime
   end
 function TableToString(table, indent)
     indent = indent or ""
@@ -177,8 +203,11 @@ function UnpackStandardMission(mission, master, b, missionscount)
         length = '2'
     end
     mission1['Length'] = length
+
+    -- COMPLEXITY AND LENGTH FINALIZATION FOR INDEFINITE VALUES
     local MissionDNA = mission:GetPropertyValue("MissionDNA")
     MissionDNA = string.format("%s",MissionDNA:GetFullName())
+    -- Salvage DNA
     if string.find(MissionDNA, "SalvageFractured_Complex") and complexity == 'Indefinite' and length == 'Indefinite' then
         mission1['Complexity'] = '3'
         mission1['Length'] = '3'
@@ -187,10 +216,16 @@ function UnpackStandardMission(mission, master, b, missionscount)
         mission1['Complexity'] = '2'
         mission1['Length'] = '2'
     end
+    -- Point Extraction DNA
     if string.find(MissionDNA, 'Motherlode_Short_C') and PrimaryObjective == 'Point Extraction' and length == 'Indefinite' and complexity == 'Indefinite' then
         mission1['Complexity'] = '3'
         mission1['Length'] = '2'
     end
+    if string.find(MissionDNA, 'Motherlode_Long_C') and PrimaryObjective == 'Point Extraction' and length == 'Indefinite' and complexity == 'Indefinite' then
+        mission1['Complexity'] = '3'
+        mission1['Length'] = '3'
+    end
+    -- Refinery DNA
     if string.find(MissionDNA, 'Refinery_Complex') and complexity == 'Indefinite' and length == 'Indefinite' then
         mission1['Complexity'] = '3'
         mission1['Length'] = '2'
@@ -199,6 +234,7 @@ function UnpackStandardMission(mission, master, b, missionscount)
         mission1['Complexity'] = '2'
         mission1['Length'] = '2'
     end
+    -- Mining Expedition DNA
     if string.find(MissionDNA, 'DNA_2_01_C') and complexity == 'Indefinite' and length == 'Indefinite' and PrimaryObjective == 'Mining Expedition' then
         mission1['Complexity'] = '1'
         mission1['Length'] = '1'
@@ -219,6 +255,7 @@ function UnpackStandardMission(mission, master, b, missionscount)
         mission1['Complexity'] = '3'
         mission1['Length'] = '3'
     end
+    -- Egg Hunt DNA
     if string.find(MissionDNA, '_Complex') and complexity == 'Indefinite' and length == 'Indefinite' and PrimaryObjective == 'Egg Hunt' then
         mission1['Length'] = '3'
         mission1['Complexity'] = '2'
@@ -232,6 +269,7 @@ function UnpackStandardMission(mission, master, b, missionscount)
         mission1['Complexity'] = '1'
         mission1['Length'] = '1'
     end
+    -- Elimination DNA
     if string.find(MissionDNA, 'Star_Medium_C') and PrimaryObjective == 'Elimination' then
         mission1['Complexity'] = '2'
         mission1['Length'] = '2'
@@ -240,10 +278,7 @@ function UnpackStandardMission(mission, master, b, missionscount)
         mission1['Complexity'] = '3'
         mission1['Length'] = '3' 
     end
-    if string.find(MissionDNA, 'Motherlode_Long_C') and PrimaryObjective == 'Point Extraction' and length == 'Indefinite' and complexity == 'Indefinite' then
-        mission1['Complexity'] = '3'
-        mission1['Length'] = '3'
-    end
+    -- Generic finalization
     if string.find(MissionDNA, 'MediumComplex') and complexity == 'Indefinite' then
         mission1['Length'] = '2'
         mission1['Complexity'] = '3'
@@ -295,118 +330,3 @@ function GetBiome(mission)
     end
     return b
 end
-function Main()
-    local startmenus = nil
-    -- Wait for start menu to load
-    while true do
-        startmenus = FindAllOf('Bp_StartMenu_PlayerController_C')
-        if startmenus then
-            break
-        end
-    end
-    -- Execute the function that 'press any key' invokes
-    for index, startmenu in pairs(startmenus) do
-        startmenu:PressStart()
-    end
-    local waiting_for_load = true
-    -- Wait for Space Rig to load
-    while waiting_for_load do
-        local count = 0
-        local umgsequenceplayers = FindAllOf('UMGSequencePlayer')
-        if umgsequenceplayers then
-            for index, sequenceplayer in ipairs(umgsequenceplayers) do
-                local fullname = string.format("%s",sequenceplayer:GetFullName())
-                if string.match(fullname, 'UMGSequencePlayer /Engine/Transient%.GameEngine_.*:BP_GameInstance_C_.*%.ConsoleScreen_Crafting_C_.*%.UMGSequencePlayer_.*') then
-                    count = count + 1
-                    if count > 11 then
-                        waiting_for_load = false
-                    end
-                end
-            end
-        end
-    end
-
-    local invalid_keys = io.open("invalid_keys.txt", "r")
-    local timestamps = {}
-    if invalid_keys then
-        for line in invalid_keys:lines() do
-            line = line:gsub("\n", "")
-            if line == "" then goto continue end
-            table.insert(timestamps, line)
-            ::continue::
-        end
-        invalid_keys:close()
-    end
-    
-    local god = {}
-    for _, timestamp in pairs(timestamps) do
-
-        -- Change System Clock
-        local datetime = Split(timestamp, 'T')
-        datetime[2] = datetime[2]:gsub('Z', '')
-        local command = 'date '..ReverseDateFormat(datetime[1])..' & time '..datetime[2]
-        os.execute(command)
-        socket.sleep(2.5)
-
-        -- Initialize Table
-        local master = {}
-        local missionscount = 0
-        master['Biomes'] = {}
-
-        -- Get GeneratedMission UObjects
-        local b = nil
-        local missions = {}
-        local MissionGenerationManagers = FindAllOf('MissionGenerationManager')
-        if MissionGenerationManagers then
-            for index, manager in pairs(MissionGenerationManagers) do
-                local fullname = string.format("%s",manager:GetFullName())
-                if fullname == 'MissionGenerationManager /Script/FSD.Default__MissionGenerationManager' then goto continue end
-                local remotemissions = manager:GetAvailableMissions()
-                for index, remotemission in pairs(remotemissions) do
-                    local mission = remotemission:get()
-                    table.insert(missions, mission)
-                end
-                break
-                ::continue::
-            end
-        end
-        if missions then
-            master['timestamp'] = timestamp
-            for index, mission in pairs(missions) do
-                b = GetBiome(mission)
-                if not HasKey(master['Biomes'], b) then
-                    master['Biomes'][b] = {}
-                end
-                missionscount = UnpackStandardMission(mission, master, b, missionscount)
-            end
-            -- local indent = "    "
-            -- local master_str = TableToString(master, indent)
-            -- print(master_str)
-            god[timestamp] = master
-
-        end
-    end
-    -- local options = {
-    --     indent = "  ",
-    -- }
-    god = json.encode(god)
-    local file = io.open('redonemissions.json', 'w')
-    if file then
-        file:write(god)
-        file:close()
-    end
-    -- Get the current instance of the Escape Menu (This doesn't actually really load the menu)
-    local playercontrollers = FindAllOf('BP_PlayerController_SpaceRig_C')
-    if playercontrollers then
-        for index, playercontroller in pairs(playercontrollers) do
-            local fullname = string.format("%s",playercontroller:GetFullName())
-            if fullname == 'BP_PlayerController_SpaceRig_C /Game/Game/SpaceRig/BP_PlayerController_SpaceRig.Default__BP_PlayerController_SpaceRig_C' then goto continue end
-            local escape_menu = playercontroller:GetEscapeMenu()
-            -- Execute function to quit the game 'organically' rather than terminate externally
-            escape_menu:Yes_1ADE94D8445F020C5D27B8822516025E()
-            break
-            ::continue::
-        end
-    end
-end
-Main()
