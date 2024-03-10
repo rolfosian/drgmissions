@@ -1,10 +1,10 @@
 function ReverseDateFormat(inputDate)
-    local year = inputDate:sub(1, 2)
-    local month = inputDate:sub(4, 5)
-    local day = inputDate:sub(7, 8)
+    local oldDate = Split(inputDate, "-")
+    local year = oldDate[1]
+    local month = oldDate[2]
+    local day = oldDate[3]
     
     local reversedDate = day .. "-" .. month .. "-" .. year
-    
     return reversedDate
   end
 function IncrementDatetime(datetime)
@@ -330,3 +330,13 @@ function GetBiome(mission)
     end
     return b
 end
+
+return {
+    ReverseDateFormat = ReverseDateFormat,
+    IncrementDatetime = IncrementDatetime, 
+    TableToString = TableToString, 
+    Split = Split, 
+    HasKey = HasKey, 
+    UnpackStandardMission = UnpackStandardMission, 
+    GetBiome = GetBiome
+}
