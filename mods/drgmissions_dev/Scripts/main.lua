@@ -3,20 +3,6 @@ local socket = require('./mods/long_term_mission_data_collector/Scripts/socket')
 local utils = require('./mods/long_term_mission_data_collector/Scripts/bulkmissions_funcs')
 
 function Main()
-    local startmenus = nil
-    local currytime = nil
-
-    -- Wait for start menu to load
-    while true do
-        startmenus = FindAllOf('Bp_StartMenu_PlayerController_C')
-        if startmenus then
-            break
-        end
-    end
-    -- Execute the function that 'press any key' invokes
-    for index, startmenu in pairs(startmenus) do
-        startmenu:PressStart()
-    end
     local waiting_for_load = true
     -- Wait for Space Rig to load
     while waiting_for_load do
@@ -35,12 +21,17 @@ function Main()
         end
     end
 
+    -- Set desired season content
+    local desired_season = nil
+    utils.SetSeason(desired_season)
+    socket.sleep(1.4)
+
     -- Initialize Table
-    local god = {}
-    local count = 0
     local missionscount = 0
     local master = {}
     master['Biomes'] = {}
+    master['Season'] = desired_season
+    
     -- Get GeneratedMission UObjects
     local b = nil
     local missions = {}
@@ -71,6 +62,7 @@ function Main()
         local indent = "    "
         local master_str = utils.TableToString(master, indent)
         print(master_str)
+        print('\nNo. of missions: '..tostring(missionscount))
     end
 end
 

@@ -45,6 +45,12 @@ function Main()
     -- Calculate total amount of 30 minute increments between current time and the target date
     local total_increments = math.floor(diff_seconds / 1800)
     total_increments = total_increments + 1
+
+    -- Set desired season content
+    local desired_season = nil
+    utils.SetSeason(desired_season)
+    socket.sleep(1.4)
+
     -- Initialize Table
     local god = {}
     local count = 0
@@ -116,19 +122,6 @@ function Main()
     if file then
         file:write(god)
         file:close()
-    end
-    -- Get the current instance of the Escape Menu (This doesn't actually really load the menu)
-    local playercontrollers = FindAllOf('BP_PlayerController_SpaceRig_C')
-    if playercontrollers then
-        for index, playercontroller in pairs(playercontrollers) do
-            local fullname = string.format("%s",playercontroller:GetFullName())
-            if fullname == 'BP_PlayerController_SpaceRig_C /Game/Game/SpaceRig/BP_PlayerController_SpaceRig.Default__BP_PlayerController_SpaceRig_C' then goto continue end
-            local escape_menu = playercontroller:GetEscapeMenu()
-            -- Execute function to quit the game 'organically' rather than terminate externally
-            escape_menu:Yes_1ADE94D8445F020C5D27B8822516025E()
-            break
-            ::continue::
-        end
     end
 end
 Main()

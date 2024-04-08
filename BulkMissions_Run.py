@@ -16,7 +16,7 @@ from drgmissions_scraper_utils import(
     validate_drgmissions
 )
 
-def main():
+def main(desired_season, user_date):
     time_service_query = subprocess.check_output('sc query w32time', stderr=subprocess.PIPE, shell=True).decode('utf-8')
     if 'RUNNING' not in time_service_query:
         enable_system_time()
@@ -27,13 +27,15 @@ def main():
     with open('./mods/mods.txt', 'w') as f:
         f.write('long_term_mission_data_collector : 1')
         f.close()
-        
-    #Get target date from user input
-    current_time = datetime.datetime.now()
-    user_date = user_input_set_target_date(current_time)
+    
+    if not user_date:
+        #Get target date from user input
+        current_time = datetime.datetime.now()
+        user_date = user_input_set_target_date(current_time)
             
     target_date_format = user_date.strftime("    local target_date = os.time{year=%Y, month=%m, day=%d, hour=%H, min=%M, sec=%S}\n")
-    #Set the target date in the lua script
+    desired_season_format = f'    local desired_season = {desired_season}\n'
+    #Set the target date and desired season in the lua script
     with open('./mods/long_term_mission_data_collector/Scripts/main.lua', 'r') as f:
         main = f.readlines()
         f.close()
@@ -41,6 +43,9 @@ def main():
     for line in main:
         if line.startswith('    local target_date'):
             line = line.replace(line, target_date_format)
+            main_lines.append(line)
+        elif line.startswith('    local desired_season'):
+            line = line.replace(line, desired_season_format)
             main_lines.append(line)
         else:
             main_lines.append(line)
@@ -119,19 +124,20 @@ def main():
     
     #Validate JSON
     patched = False
-    DRG, patched = validate_drgmissions(DRG, patched)
+    DRG, patched = validate_drgmissions(DRG, patched, desired_season)
     if patched:
         with open('drgmissionsgod.json', 'w') as f:
             f.write(json.dumps(DRG))
             f.close()
-    #Pause to allow user to check terminal for output
-    input('Press enter to exit...')
-    
-try:
-    if os.path.isfile('drgmissionsgod.json'):
-        os.remove('drgmissionsgod.json')
-    print(os.getcwd(), '\n')
-    main()
-except Exception as e:
-    print(f'ERROR: {e}')
-    input('Press enter to exit...')
+    return DRG
+            
+if __name__ == '__main__':
+    try:
+        if os.path.isfile('drgmissionsgod.json'):
+            os.remove('drgmissionsgod.json')
+        print(os.getcwd(), '\n')
+        main(desired_season='noSeason', user_date=None)
+        input('Press enter to exit...')
+    except Exception as e:
+        print(f'ERROR: {e}')
+        input('Press enter to exit...')

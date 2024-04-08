@@ -59,6 +59,19 @@ end
 function HasKey(table, key)
     return table[key] ~= nil
 end
+function SetSeason(desired_season)
+    -- function is currently defunct, investigation of season toggles required
+    -- local season_terminals = FindAllOf('')
+
+    -- if season_terminals then
+    --     for _, season_terminal in ipairs(season_terminals) do
+    --         local fullname = string.format("%s",season_terminal:GetFullName())
+    --         if fullname == '' then goto continue end
+            
+    --         ::continue::
+    --     end
+    -- end
+end
 function UnpackStandardMission(mission, master, b, missionscount)
     missionscount = missionscount + 1
     local mission1 = {}
@@ -330,6 +343,20 @@ function GetBiome(mission)
     end
     return b
 end
+function Exit()
+    local playercontrollers = FindAllOf('BP_PlayerController_SpaceRig_C')
+    if playercontrollers then
+        for index, playercontroller in pairs(playercontrollers) do
+            local fullname = string.format("%s",playercontroller:GetFullName())
+            if fullname == 'BP_PlayerController_SpaceRig_C /Game/Game/SpaceRig/BP_PlayerController_SpaceRig.Default__BP_PlayerController_SpaceRig_C' then goto continue end
+            local escape_menu = playercontroller:GetEscapeMenu()
+            -- Execute function to quit the game 'organically' rather than terminate externally
+            escape_menu:Yes_1ADE94D8445F020C5D27B8822516025E()
+            break
+            ::continue::
+        end
+    end
+end
 
 return {
     ReverseDateFormat = ReverseDateFormat,
@@ -337,6 +364,8 @@ return {
     TableToString = TableToString, 
     Split = Split, 
     HasKey = HasKey, 
-    UnpackStandardMission = UnpackStandardMission, 
-    GetBiome = GetBiome
+    UnpackStandardMission = UnpackStandardMission,
+    GetBiome = GetBiome,
+    SetAndGetSeason = SetAndGetSeason,
+    Exit = Exit
 }

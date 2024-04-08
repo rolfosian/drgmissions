@@ -281,7 +281,32 @@ def user_input_set_target_date(current_time):
             print("Invalid date format. Please enter the date in the format (YYYY-MM-DD).")
     return user_date
 
-def validate_drgmissions(DRG, patched):
+def user_input_set_target_seasons():
+    valid_seasons = ['noSeason', 'season1', 'season2', 'season3', 'season4', 'season5']
+    season_list = []
+    
+    print('Select target seasons from list:' +str(valid_seasons) +'\n')
+    while True:
+        choice = input("Select a season to add to target list, or enter 'go' to continue: ")
+        if choice in valid_seasons:
+            if choice in season_list:
+                print('Invalid input. Season already in selection.')
+                continue
+            season_list.append(choice)
+        elif choice == 'go':
+            if not season_list:
+                print('Please select at least one season.')
+                continue
+            print('')
+            break
+        else:
+            print("Invalid input. Please select a valid season.")
+    
+    season_list.sort()
+    print('Selected seasons: ', season_list)
+    return season_list
+
+def validate_drgmissions(DRG, patched, desired_season):
     DRG = order_dictionary_by_date(DRG)
     DRG = reconstruct_dictionary(DRG)
     
@@ -306,6 +331,21 @@ def validate_drgmissions(DRG, patched):
         toggle_system_time()
         print('\nPatching invalid timestamps...')
         
+        desired_season_format = f'    local desired_season = {desired_season}\n'
+        with open('./mods/invalid_timestamps_redoer/Scripts/main.lua', 'r') as f:
+            main = f.readlines()
+            f.close()
+        main_lines = []
+        for line in main:
+            if line.startswith('    local desired_season'):
+                line = line.replace(line, desired_season_format)
+                main_lines.append(line)
+            else:
+                main_lines.append(line)
+        with open('./mods/invalid_timestamps_redoer/Scripts/main.lua', 'w') as f:
+            f.writelines(main_lines)
+            f.close()
+
         with open('invalid_keys.txt', 'w') as f:
             filestr = ''
             for key, func_name in invalid_keys:

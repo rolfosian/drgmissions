@@ -475,20 +475,8 @@ function Main()
             file:write(master)
             file:close()
         end
-        -- Get the current instance of the Escape Menu (This doesn't actually really load the menu)
-        local playercontrollers = FindAllOf('BP_PlayerController_SpaceRig_C')
-        if playercontrollers then
-            for index, playercontroller in pairs(playercontrollers) do
-                playercontroller = playercontroller
-                local fullname = string.format("%s",playercontroller:GetFullName())
-                if fullname == 'BP_PlayerController_SpaceRig_C /Game/Game/SpaceRig/BP_PlayerController_SpaceRig.Default__BP_PlayerController_SpaceRig_C' then goto continue end
-                local escape_menu = playercontroller:GetEscapeMenu()
-                -- Execute function to quit the game 'organically' rather than terminate externally
-                escape_menu:Yes_1ADE94D8445F020C5D27B8822516025E()
-                break
-                ::continue::
-            end
-        end
+        
+        utils.Exit()
     end
 end
 Main()

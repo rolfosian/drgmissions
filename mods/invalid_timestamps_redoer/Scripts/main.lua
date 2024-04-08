@@ -1,15 +1,6 @@
 local json = require("./mods/long_term_mission_data_collector/Scripts/dkjson")
 local socket = require('./mods/long_term_mission_data_collector/Scripts/socket')
 local utils = require('./mods/long_term_mission_data_collector/Scripts/bulkmissions_funcs')
-function ReverseDateFormat(inputDate)
-    local oldDate = Split(inputDate, "-")
-    local year = oldDate[1]
-    local month = oldDate[2]
-    local day = oldDate[3]
-    
-    local reversedDate = day .. "-" .. month .. "-" .. year
-    return reversedDate
-  end
 
 function Main()
     local startmenus = nil
@@ -54,13 +45,19 @@ function Main()
         invalid_keys:close()
     end
     
+    -- Set desired season content
+    local desired_season = nil
+    utils.SetSeason(desired_season)
+    socket.sleep(1.4)
+
+    -- Initialize Table
     local god = {}
     for _, timestamp in pairs(timestamps) do
 
         -- Change System Clock
         local datetime = utils.Split(timestamp, 'T')
         datetime[2] = datetime[2]:gsub('Z', '')
-        local command = 'date '..ReverseDateFormat(datetime[1])..' & time '..datetime[2]
+        local command = 'date '..utils.ReverseDateFormat(datetime[1])..' & time '..datetime[2]
         os.execute(command)
         socket.sleep(2.5)
 
@@ -105,18 +102,7 @@ function Main()
         file:write(god)
         file:close()
     end
-    -- Get the current instance of the Escape Menu (This doesn't actually really load the menu)
-    local playercontrollers = FindAllOf('BP_PlayerController_SpaceRig_C')
-    if playercontrollers then
-        for index, playercontroller in pairs(playercontrollers) do
-            local fullname = string.format("%s",playercontroller:GetFullName())
-            if fullname == 'BP_PlayerController_SpaceRig_C /Game/Game/SpaceRig/BP_PlayerController_SpaceRig.Default__BP_PlayerController_SpaceRig_C' then goto continue end
-            local escape_menu = playercontroller:GetEscapeMenu()
-            -- Execute function to quit the game 'organically' rather than terminate externally
-            escape_menu:Yes_1ADE94D8445F020C5D27B8822516025E()
-            break
-            ::continue::
-        end
-    end
+
+    utils.Exit()
 end
 Main()

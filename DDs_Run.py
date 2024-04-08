@@ -2,6 +2,7 @@
 import subprocess
 import time
 import os
+import re
 from drgmissions_scraper_utils import (
     upload_file,
     enable_system_time,
@@ -41,8 +42,10 @@ def main():
             continue
         for filename in os.listdir():
             if filename.startswith('DD_') and filename.endswith('.json'):
+                new_filename = re.sub(r'\d{2}:\d{2}Z', '00:00Z', filename)
+                os.rename(filename, new_filename)
                 time.sleep(2)
-                files.append(filename)
+                files.append(new_filename)
                 kill_process_by_name_starts_with('FSD')
                 kill_process_by_name_starts_with('Unreal')
         if files:
