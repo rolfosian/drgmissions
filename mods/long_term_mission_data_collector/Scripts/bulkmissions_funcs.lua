@@ -59,20 +59,78 @@ end
 function HasKey(table, key)
     return table[key] ~= nil
 end
-function SetSeason(desired_season)
-    -- function is currently defunct, investigation of season toggles required
-    -- local season_terminals = FindAllOf('')
-
-    -- if season_terminals then
-    --     for _, season_terminal in ipairs(season_terminals) do
-    --         local fullname = string.format("%s",season_terminal:GetFullName())
-    --         if fullname == '' then goto continue end
-            
-    --         ::continue::
-    --     end
-    -- end
+function HasOptedOutSeasonContent()
+    local subsystems = FindAllOf('SeasonsSubsystem')
+    local bool = nil
+    if subsystems then
+        for i, subsystem in pairs(subsystems) do
+            local fullname = string.format("%s",subsystem:GetFullName())
+            if fullname == 'SeasonsSubsystem /Script/FSD.Default__SeasonsSubsystem' then goto continue end
+            bool = subsystem:HasOptedOutOfSeasonContent()
+            break
+            ::continue::
+        end
+    end
+    return bool
 end
-function UnpackStandardMission(mission, master, b, missionscount)
+function S4Off()
+    local subsystems = FindAllOf('SeasonsSubsystem')
+    if subsystems then
+        for i, subsystem in pairs(subsystems) do
+            local fullname = string.format("%s",subsystem:GetFullName())
+            if fullname == 'SeasonsSubsystem /Script/FSD.Default__SeasonsSubsystem' then goto continue end
+            subsystem:SetHasOptedOutOfSeasonContent(true)
+            break
+            ::continue::
+        end
+    end
+end
+function S4On()
+    local subsystems = FindAllOf('SeasonsSubsystem')
+    if subsystems then
+        for i, subsystem in pairs(subsystems) do
+            local fullname = string.format("%s",subsystem:GetFullName())
+            if fullname == 'SeasonsSubsystem /Script/FSD.Default__SeasonsSubsystem' then goto continue end
+            subsystem:SetHasOptedOutOfSeasonContent(false)
+            break
+            ::continue::
+        end
+    end
+end
+function GetMissions()--(desired_season)
+    local remotemissions = nil
+    local missions = {}
+
+    local MissionGenerationManagers = FindAllOf('MissionGenerationManager')
+    if MissionGenerationManagers then
+        for index, manager in pairs(MissionGenerationManagers) do
+            local fullname = string.format("%s",manager:GetFullName())
+            if fullname == 'MissionGenerationManager /Script/FSD.Default__MissionGenerationManager' then goto continue end
+            -- if desired_season == 's0' then
+            --     S4Off()
+                remotemissions = manager:GetAvailableMissions()
+            -- elseif desired_season == 's4' then
+            --     S4On()
+                -- remotemissions = manager:GetAvailableMissions()
+                -- if HasOptedOutSeasonContent() then
+                --     remotemissions = manager:GetAvailableMissionsWithSeasonContentCheck(false)
+                -- else
+                --     remotemissions = manager:GetAvailableMissionsWithSeasonContentCheck(true)
+                -- end
+            -- end
+            if remotemissions then
+                for index, remotemission in pairs(remotemissions) do
+                    local mission = remotemission:get()
+                    table.insert(missions, mission)
+                end
+            end
+            break
+            ::continue::
+        end
+    end
+    return missions
+end
+function UnpackStandardMission(mission, master, b, missionscount, season)
     missionscount = missionscount + 1
     local mission1 = {}
     mission1['id'] = missionscount
@@ -317,7 +375,7 @@ function UnpackStandardMission(mission, master, b, missionscount)
     -- if mission1['Length'] == 'Indefinite' or mission1['Complexity'] == 'Indefinite' then
     --     print(missionfullname)
     -- end
-    table.insert(master['Biomes'][b], mission1)
+    table.insert(master[season]['Biomes'][b], mission1)
     return missionscount
 end
 function GetBiome(mission)
@@ -366,6 +424,6 @@ return {
     HasKey = HasKey, 
     UnpackStandardMission = UnpackStandardMission,
     GetBiome = GetBiome,
-    SetAndGetSeason = SetAndGetSeason,
-    Exit = Exit
+    Exit = Exit,
+    GetMissions = GetMissions
 }

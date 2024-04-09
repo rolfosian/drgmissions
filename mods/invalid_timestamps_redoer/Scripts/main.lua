@@ -45,9 +45,6 @@ function Main()
         invalid_keys:close()
     end
     
-    -- Set desired season content
-    local desired_season = nil
-    utils.SetSeason(desired_season)
     socket.sleep(1.4)
 
     -- Initialize Table
@@ -68,21 +65,7 @@ function Main()
 
         -- Get GeneratedMission UObjects
         local b = nil
-        local missions = {}
-        local MissionGenerationManagers = FindAllOf('MissionGenerationManager')
-        if MissionGenerationManagers then
-            for index, manager in pairs(MissionGenerationManagers) do
-                local fullname = string.format("%s",manager:GetFullName())
-                if fullname == 'MissionGenerationManager /Script/FSD.Default__MissionGenerationManager' then goto continue end
-                local remotemissions = manager:GetAvailableMissions()
-                for index, remotemission in pairs(remotemissions) do
-                    local mission = remotemission:get()
-                    table.insert(missions, mission)
-                end
-                break
-                ::continue::
-            end
-        end
+        local missions = utils.GetMissions()
         if missions then
             master['timestamp'] = timestamp
             for index, mission in pairs(missions) do

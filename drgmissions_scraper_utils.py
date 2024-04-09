@@ -306,7 +306,7 @@ def user_input_set_target_seasons():
     print('Selected seasons: ', season_list)
     return season_list
 
-def validate_drgmissions(DRG, patched, desired_season):
+def validate_drgmissions(DRG, patched):
     DRG = order_dictionary_by_date(DRG)
     DRG = reconstruct_dictionary(DRG)
     
@@ -331,20 +331,20 @@ def validate_drgmissions(DRG, patched, desired_season):
         toggle_system_time()
         print('\nPatching invalid timestamps...')
         
-        desired_season_format = f'    local desired_season = {desired_season}\n'
-        with open('./mods/invalid_timestamps_redoer/Scripts/main.lua', 'r') as f:
-            main = f.readlines()
-            f.close()
-        main_lines = []
-        for line in main:
-            if line.startswith('    local desired_season'):
-                line = line.replace(line, desired_season_format)
-                main_lines.append(line)
-            else:
-                main_lines.append(line)
-        with open('./mods/invalid_timestamps_redoer/Scripts/main.lua', 'w') as f:
-            f.writelines(main_lines)
-            f.close()
+        # desired_season_format = f'    local desired_season = {desired_season}\n'
+        # with open('./mods/invalid_timestamps_redoer/Scripts/main.lua', 'r') as f:
+        #     main = f.readlines()
+        #     f.close()
+        # main_lines = []
+        # for line in main:
+        #     if line.startswith('    local desired_season'):
+        #         line = line.replace(line, desired_season_format)
+        #         main_lines.append(line)
+        #     else:
+        #         main_lines.append(line)
+        # with open('./mods/invalid_timestamps_redoer/Scripts/main.lua', 'w') as f:
+        #     f.writelines(main_lines)
+        #     f.close()
 
         with open('invalid_keys.txt', 'w') as f:
             filestr = ''
