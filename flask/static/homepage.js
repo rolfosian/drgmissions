@@ -208,7 +208,7 @@ if (window.matchMedia("(min-width: 1440px)").matches) {
     const gridItems = document.querySelectorAll('.biome-container');
     let maxHeight = 0;
     gridItems.forEach(item => {
-    maxHeight = Math.max(maxHeight, item.offsetHeight) - 2;
+    maxHeight = Math.max(maxHeight, item.offsetHeight) - 6;
     });
     gridItems.forEach(item => {
     item.style.height = `${maxHeight}px`;

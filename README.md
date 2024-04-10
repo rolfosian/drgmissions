@@ -20,14 +20,16 @@
 
 - ~~Consider using [SteamCMD](https://developer.valvesoftware.com/wiki/SteamCMD) for even less overhead and easier automation for updates etc~~ - Doesn't work, the game just says it can't find the Steam service and won't load the start menu.
 
+- Run `split_timestamps_to_individual_json.py` to accomodate json for new static website
+
 
 
 ## **TODO**
 - **Public Enemy Number One**: Check and Update Deep Dive scraper weekly to accomodate currently unknown configurations, **contingencies for if Steam misbehaves on wake**
-- New flask endpoints, modified index HTML, UE4SS scripts, and multiple virtual machines startup scripts to scrape multiple different sets of mission data concurrently to accomodate different season content toggles
 - Figure out a solution to reduce required delay between iterations for accurate data to be collected by the 30 minute incrementer
 - Figure out how to manipulate wine(?) system clock with hook on linux
 - Clean up and convert Complexity/Length finalization to table lookup
+- ~~New flask endpoints, modified index HTML, UE4SS scripts, and multiple virtual machines startup scripts to scrape multiple different sets of mission data concurrently to accomodate different season content toggles~~
 - ~~Contingencies for if the game doesn't terminate gracefully on 'organic' exit~~ Refer to kill process function in [this script](https://github.com/rolfosian/drgmissions/blob/main/DDs_Run.py)
 - ~~Contingencies for if the game crashes~~ Refer to timeout logic in `.*_Run.py` scripts.
 - ~~Scripts to actually launch the game and upload DD data to flask host weekly~~
