@@ -208,7 +208,7 @@ if (window.matchMedia("(min-width: 1440px)").matches) {
     const gridItems = document.querySelectorAll('.biome-container');
     let maxHeight = 0;
     gridItems.forEach(item => {
-    maxHeight = Math.max(maxHeight, item.offsetHeight) - 6;
+    maxHeight = Math.max(maxHeight, item.offsetHeight) - 7;
     });
     gridItems.forEach(item => {
     item.style.height = `${maxHeight}px`;
@@ -224,7 +224,7 @@ function toggleButtons() {
     let missionscountdown = document.getElementById('missionscountdown');
     let DAILYDEAL = document.getElementById('DAILYDEAL');
     let dailydealbutton = document.getElementById('dailydealbutton');
-    let seasonBox = document.getElementById('season')
+    let seasonBox = document.getElementById('seasonSelect')
 
     if (slideButton.style.display === "none") {
         backgroundbutton.style.display = "inline-block";
@@ -272,7 +272,11 @@ function onLoad() {
     $("#missionscountdown").slideToggle();
 
     document.getElementById('buttonsbutton').setAttribute('onclick', 'toggleButtons()');
-    document.getElementById('season').setAttribute('onchange', 'changeSeason(biomes, this.value)');
+    
+    // document.getElementById('season').setAttribute('onchange', 'changeSeason(biomes, this.value)');
+    document.getElementById('season').setAttribute('onchange', "toggleSeason4(biomes, this.checked)");
+    document.getElementById('seasonClick').setAttribute('onclick', "document.getElementById('season').click()");
     document.getElementById('currentButton').setAttribute('onclick', 'toggleCollapse()');
     document.getElementById('backgroundButton').setAttribute('onclick', 'toggleBackground()');
+    document.getElementById('loading').textContent = 'An error occured, please refresh the page.'
 };

@@ -478,6 +478,16 @@ function changeSeason(Biomes, season) {
     };
 }
 
+function toggleSeason4(Biomes, bool) {
+    if (bool) {
+        document.getElementById("season").value = 's4'
+        arrayBiomes(Biomes, 's4');
+    } else {
+        document.getElementById("season").value = 's0'
+        arrayBiomes(Biomes, 's0');
+    }
+}
+
 async function refreshBiomes() {
     biomes = await getBiomes();
     arrayBiomes(biomes, document.getElementById("season").value);
@@ -984,8 +994,11 @@ async function initialize() {
     <span id="countdown"></span></div><button id="slideButton">Hide countdown</button><br>
     <button id="currentButton">Click here to see upcoming missions</button>
     <br>
-    <select id="season" name="season" class="seasonBox">
-    </select>
+    <div id="seasonSelect" class="seasonselect">
+    <button id="seasonClick" class="seasonBox">Season 4 Toggle</button>
+    <input type="checkbox" id="season" class="seasonBox" value="s0">
+    <!-- <select id="season" name="season" class="seasonBox"></select> -->
+    </div>
     </div>
     
     

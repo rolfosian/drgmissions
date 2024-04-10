@@ -7,7 +7,8 @@ import requests
 import winreg
 import json
 import re
-
+import threading
+import random
 #Validation
 #-----------------------
 def sort_dictionary(dictionary, custom_order):
@@ -373,3 +374,45 @@ def validate_drgmissions(DRG, patched):
     
     print('No invalid timestamps found.')
     return DRG, patched
+
+# def poll_file_modification_rate(file_path, list_, total_increments):
+#     last_modification_time = os.path.getmtime(file_path)
+#     count = None
+#     time_per_count_list = []
+    
+#     while True:
+#         current_modification_time = os.path.getmtime(file_path)
+#         list_.append(current_modification_time)
+#         time_difference = current_modification_time - last_modification_time
+#         time_per_count_list.append(time_difference)
+        
+#         if current_modification_time != last_modification_time:
+#             with open(file_path, 'r') as f:
+#                 remaining_count = total_increments - int(f.read().strip())
+#                 average_time_per_count = sum(time_per_count_list) / len(time_per_count_list)
+#                 estimated_time_remaining = average_time_per_count * remaining_count
+#                 list_.pop(0)
+#                 list_.append(estimated_time_remaining)
+        
+#         if time_difference > 10:
+#             break
+
+# import threading
+# import time
+
+# list_ = []
+# file_path = 'C:\\example.json'
+# total_increments = 3941
+# thread = threading.Thread(target=poll_file_modification_rate, args=(file_path, list_))
+# thread.start()
+
+# while not list_:
+#     continue
+# count = 0
+# while True:
+#     estimated_time_remaining = list_[0]
+#     print(estimated_time_remaining)
+#     time.sleep(1)
+#     count += random.randint(1, 4)
+#     with open('C:\\example.json', 'w') as f:
+#         f.write(count)

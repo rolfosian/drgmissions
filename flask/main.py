@@ -8,6 +8,7 @@ from drgmissionslib import (
     rotate_index,
     rotate_timestamps,
     rotate_timestamp_from_dict,
+    rotate_split_jsons,
     wait_rotation,
     class_xp_levels,
     Dwarf
@@ -81,6 +82,9 @@ index_thread = threading.Thread(target=rotate_index, args=(DRG, rendering_events
 #Listener that clears the rendering event 1.5 seconds before the 30 minute mission rollover interval so the homepage won't load for clients until the rotators are done rendering the mission icons
 wait_rotationthread = threading.Thread(target=wait_rotation, args=(rendering_events, index_event))
 
+#json splitting mechanism for static site, set to update the ./static/json/bulkmissions folder every 7 days just so i dont have to look at a directory with 5000 files in it
+# json_thread = threading.Thread(target=rotate_split_jsons, args=(7))
+
 def start_threads():
     tstampthread.start()
     
@@ -88,6 +92,7 @@ def start_threads():
         thread.start()
     
     ddsthread.start()
+    # json_thread.start()
     
     wait_rotationthread.start()
     
@@ -123,7 +128,7 @@ def serve_img(s):
     except:
         return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
 
-#Sends upcoming mission icons, arg format f"?img={Biome.replace(' ', '-')}{mission['id']}" - see rotate_biomes in drgmissionslib.py
+#Sends upcoming mission icons, <s> format = s0 or s4; arg format f"?img={Biome.replace(' ', '-')}{mission['id']}" - see rotate_biomes in drgmissionslib.py
 @app.route('/upcoming_png/<s>')
 def serve_next_img(s):
     try:
