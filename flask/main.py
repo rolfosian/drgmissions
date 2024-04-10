@@ -128,7 +128,7 @@ def serve_img(s):
 def serve_next_img(s):
     try:
         index_event.wait()
-        mission = biomes_lists[s][1][request.args['img']]
+        mission = biomes_lists[s][1][0][request.args['img']]
         return send_file(BytesIO(mission['rendered_mission'].getvalue()), mimetype='image/png', etag=mission['etag'])
     except:
         return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
