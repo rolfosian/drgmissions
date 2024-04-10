@@ -1,10 +1,14 @@
 @font-face {
 font-family: "BebasNeue";
-src: url("/files/BebasNeue-Regular.woff2");
+src: url("/static/BebasNeue-Regular.woff2");
 }
 @font-face {
 font-family: "HammerBro101MovieThin-Regular";
-src: url("/files/HammerBro101MovieThin-Regular.woff");
+src: url("/static/HammerBro101MovieThin-Regular.woff");
+}
+@font-face {
+font-family: "RiftSoft-Regular";
+src : url("/static/img/RiftSoft-Regular.woff2");
 }
 body::-webkit-scrollbar {
 display: none;
@@ -43,7 +47,7 @@ top: 0;
 left: 0;
 width: auto;
 height: auto;
-background-image: url('/files/space_rig_thumb.jpg');
+background-image: url('/static/space_rig_thumb.jpg');
 background-size: cover;
 object-fit: contain;
 z-index: -2;
@@ -93,17 +97,23 @@ height: auto;
 .mission-hover-zoom {
 display: inline-block
 }
-.mission-hover-zoom img {
+.mission-hover-zoom canvas {
 transition: transform .6s ease;
 }
-.mission-hover-zoom:hover img {
+.mission-hover-zoom:hover canvas {
 transform: scale(1.7);
 }
 .mission {
 display: inline-block;
+margin-left: 15px;
+margin-right: 15px;
 height: 70%;
 width: 70%;
 z-index: 9999;
+}
+.missions {
+    display:inline-block;
+    /* font-size: 0; */
 }
 .fade-in {
 opacity: 1;
@@ -114,7 +124,10 @@ height: 60%;
 }
 .dd-biome {
 width: 60%;
-height: 60%;
+height: auto;
+}
+.dd-missions{
+    display: inline-block;
 }
 a:link:hover {
     color: #5AC8FF;
@@ -224,6 +237,9 @@ font-size: 15px;
 font-family: "BebasNeue", sans-serif;
 width: 194px;
 }
+#DAILYDEAL{
+display: none;
+}
 #dailydealbutton {
 position: relative;
 left: 50%;
@@ -249,6 +265,7 @@ font-size: 15px;
 font-family: "BebasNeue", sans-serif;
 }
 #missionscountdown {
+display: none;
 text-align: center;
 color: white;
 font-size: 35px;
@@ -280,6 +297,15 @@ background-color: #303030;
 color: white;
 font-size: 15px;
 font-family: sans-serif;
+}
+.seasonBox {
+position: relative;
+left: 50%;
+transform: translateX(-50%);
+background-color: #303030;
+color: white;
+font-size: 15px;
+font-family: "BebasNeue", sans-serif;
 }
 .daily_trade {
 border-bottom-left-radius: 3%;

@@ -54,10 +54,10 @@ def render_daily_deal_bubble(changepercent, dealtype):
         'Sell':'Profit!',
         }
     
-    BUBBLE = Image.open('./img/Icon_TradeTerminal_SaleBubble.png')
+    BUBBLE = Image.open('./static/img/Icon_TradeTerminal_SaleBubble.png')
     BUBBLE = scale_image(BUBBLE, 0.8)
     
-    font_path = './img/Bungee-Regular.ttf'
+    font_path = './static/img/Bungee-Regular.ttf'
     font_size = 75
     font = ImageFont.truetype(font_path, font_size)
     text = str(round(changepercent))
@@ -94,7 +94,7 @@ def render_daily_deal_resource_and_amount(resources, resource, resourceamount):
     RESOURCE = Image.open(resources[resource])
     RESOURCE = scale_image(RESOURCE, 0.3)
     text = str(resourceamount)
-    font_path = './img/Bungee-Regular.ttf'
+    font_path = './static/img/Bungee-Regular.ttf'
     font_size = 75
     font = ImageFont.truetype(font_path, font_size)
     text_width = len(text) * font_size
@@ -113,10 +113,10 @@ def render_daily_deal_resource_and_amount(resources, resource, resourceamount):
     return BACKGROUND
 
 def render_daily_deal_credits(credits):
-    CREDITS = Image.open('./img/Credit.png')
+    CREDITS = Image.open('./static/img/Credit.png')
     CREDITS = scale_image(CREDITS, 0.4)
     text = str(credits)
-    font_path = './img/Bungee-Regular.ttf'
+    font_path = './static/img/Bungee-Regular.ttf'
     font_size = 75
     font = ImageFont.truetype(font_path, font_size)
     text_width = len(text) * font_size
@@ -139,18 +139,18 @@ def render_daily_deal_credits(credits):
     return BACKGROUND
 
 def render_dailydeal(deal_dict):
-    font_path = './img/HammerBro101MovieBold-Regular.ttf'
+    font_path = './static/img/HammerBro101MovieBold-Regular.ttf'
     font_size = 45
     font = ImageFont.truetype(font_path, font_size)
     resources = {
-        'Bismor': './img/Bismor_icon.png',
-        'Croppa': './img/Croppa_icon.png',
-        'Enor Pearl': './img/Enor_pearl_icon.png',
-        'Jadiz': './img/Jadiz_icon.png',
-        'Magnite': './img/Magnite_icon.png',
-        'Umanite': './img/Umanite_icon.png',
+        'Bismor': './static/img/Bismor_icon.png',
+        'Croppa': './static/img/Croppa_icon.png',
+        'Enor Pearl': './static/img/Enor_pearl_icon.png',
+        'Jadiz': './static/img/Jadiz_icon.png',
+        'Magnite': './static/img/Magnite_icon.png',
+        'Umanite': './static/img/Umanite_icon.png',
         
-        'Credits': './img/Credit.png',
+        'Credits': './static/img/Credit.png',
             }
     buy_or_get = {
         'Buy' : 'Pay',
@@ -169,7 +169,7 @@ def render_dailydeal(deal_dict):
     BACKGROUND_TITLE.text((text_x, text_y-295), text, font=font, fill=(0, 0, 0))
     del BACKGROUND_TITLE
 
-    font_path = './img/Bungee-Regular.ttf'
+    font_path = './static/img/Bungee-Regular.ttf'
     font_size = 60
     font = ImageFont.truetype(font_path, font_size)
     
@@ -215,19 +215,19 @@ def render_dailydeal(deal_dict):
     return BACKGROUND
 
 def render_mission_obj_resource(primary_obj, complexity, length):
-    font_path = './img/HammerBro101MovieBold-Regular.ttf'
+    font_path = './static/img/HammerBro101MovieBold-Regular.ttf'
     font_size = 45
     font = ImageFont.truetype(font_path, font_size)
     text_color = (255, 255, 255)
     primary_objs = {
-        'Mining Expedition': './img/Morkite_icon.png',
-        'Egg Hunt': './img/Alien_egg_icon.png',
-        'On-Site Refining': './img/Icon_PumpingJack_Core_Simplified_Workfile.png',
-        'Salvage Operation': './img/Icon_Salvage_Mules_Objective.png',
-        'Escort Duty': './img/Icon_FuelCannister_Simplified.png',
-        'Point Extraction': './img/Icons_Resources_Outline_Aquarq.png',
-        'Elimination': './img/Kill_Dreadnought_Objective_icon.png',
-        'Industrial Sabotage': './img/Icon_Facility_DataRack.png'
+        'Mining Expedition': './static/img/Morkite_icon.png',
+        'Egg Hunt': './static/img/Alien_egg_icon.png',
+        'On-Site Refining': './static/img/Icon_PumpingJack_Core_Simplified_Workfile.png',
+        'Salvage Operation': './static/img/Icon_Salvage_Mules_Objective.png',
+        'Escort Duty': './static/img/Icon_FuelCannister_Simplified.png',
+        'Point Extraction': './static/img/Icons_Resources_Outline_Aquarq.png',
+        'Elimination': './static/img/Kill_Dreadnought_Objective_icon.png',
+        'Industrial Sabotage': './static/img/Icon_Facility_DataRack.png'
             }
     values = {
         ('Mining Expedition', '1', '1'): '200',
@@ -251,7 +251,7 @@ def render_mission_obj_resource(primary_obj, complexity, length):
     }
     
     BACKGROUND = Image.new("RGBA", (256, 256), (0,0,0,0))
-    HEXAGON = Image.open('./img/hexagon.png')
+    HEXAGON = Image.open('./static/img/hexagon.png')
     HEXAGON = scale_image(HEXAGON, 0.4)
     #x, y = calc_center(HEXAGON, BACKGROUND)
     #print(f'HEXAGON X: {str(x)}')
@@ -285,59 +285,59 @@ def render_mission_obj_resource(primary_obj, complexity, length):
 
 def render_mission(m_d, six):
     primary_objs = {
-        'Mining Expedition': './img/Mining_expedition_icon.png',
-        'Egg Hunt': './img/Egg_collection_icon.png',
-        'On-Site Refining': './img/Refining_icon.png',
-        'Salvage Operation': './img/Salvage_icon.png',
-        'Escort Duty': './img/Escort_icon.png',
-        'Point Extraction': './img/Point_extraction_icon.png',
-        'Elimination': './img/Elimination_icon.png',
-        'Industrial Sabotage': './img/Sabotage_icon.png'
+        'Mining Expedition': './static/img/Mining_expedition_icon.png',
+        'Egg Hunt': './static/img/Egg_collection_icon.png',
+        'On-Site Refining': './static/img/Refining_icon.png',
+        'Salvage Operation': './static/img/Salvage_icon.png',
+        'Escort Duty': './static/img/Escort_icon.png',
+        'Point Extraction': './static/img/Point_extraction_icon.png',
+        'Elimination': './static/img/Elimination_icon.png',
+        'Industrial Sabotage': './static/img/Sabotage_icon.png'
             }
     secondary_objs = {
-        'ApocaBlooms': './img/Apoca_bloom_icon.png',
-        'Fossils': './img/Fossil_icon.png',
-        'Boolo Caps': './img/Boolo_cap_icon.png',
-        'Dystrum': './img/Dystrum_icon.png',
-        'Ebonuts': './img/Ebonut_icon.png',
-        'Fester Fleas': './img/Fleas_icon.png',
-        'Gunk Seeds': './img/Gunk_seed_icon.png',
-        'Hollomite': './img/Hollomite_icon.png'
+        'ApocaBlooms': './static/img/Apoca_bloom_icon.png',
+        'Fossils': './static/img/Fossil_icon.png',
+        'Boolo Caps': './static/img/Boolo_cap_icon.png',
+        'Dystrum': './static/img/Dystrum_icon.png',
+        'Ebonuts': './static/img/Ebonut_icon.png',
+        'Fester Fleas': './static/img/Fleas_icon.png',
+        'Gunk Seeds': './static/img/Gunk_seed_icon.png',
+        'Hollomite': './static/img/Hollomite_icon.png'
             }
     complexities = {
-        '1': './img/Icons_complexity_1.png',
-        '2': './img/Icons_complexity_2.png',
-        '3': './img/Icons_complexity_3.png'
+        '1': './static/img/Icons_complexity_1.png',
+        '2': './static/img/Icons_complexity_2.png',
+        '3': './static/img/Icons_complexity_3.png'
             }
     lengths = {
-        '1': './img/Icons_length_1.png',
-        '2': './img/Icons_length_2.png',
-        '3': './img/Icons_length_3.png'
+        '1': './static/img/Icons_length_1.png',
+        '2': './static/img/Icons_length_2.png',
+        '3': './static/img/Icons_length_3.png'
             }
     mutators = {
-        'Critical Weakness': './img/Mutator_critical_weakness_icon.png',
-        'Gold Rush': './img/Mutator_gold_rush_icon.png',
-        'Double XP': './img/Mutator_triple_xp_icon.png',
-        'Golden Bugs': './img/Mutator_golden_bugs_icon.png',
-        'Low Gravity': './img/Mutator_no_fall_damage_icon.png',
-        'Mineral Mania': './img/Mutator_mineral_mania_icon.png',
-        'Rich Atmosphere': './img/Mutator_rich_atmosphere_icon.png',
-        'Volatile Guts': './img/Mutator_volatile_guts_icon.png'
+        'Critical Weakness': './static/img/Mutator_critical_weakness_icon.png',
+        'Gold Rush': './static/img/Mutator_gold_rush_icon.png',
+        'Double XP': './static/img/Mutator_triple_xp_icon.png',
+        'Golden Bugs': './static/img/Mutator_golden_bugs_icon.png',
+        'Low Gravity': './static/img/Mutator_no_fall_damage_icon.png',
+        'Mineral Mania': './static/img/Mutator_mineral_mania_icon.png',
+        'Rich Atmosphere': './static/img/Mutator_rich_atmosphere_icon.png',
+        'Volatile Guts': './static/img/Mutator_volatile_guts_icon.png'
             }
     warnings = {
-        'Cave Leech Cluster': './img/Warning_cave_leech_cluster_icon.png',
-        'Exploder Infestation': './img/Warning_exploder_infestation_icon.png',
-        'Haunted Cave': './img/Warning_haunted_cave_icon.png',
-        'Lethal Enemies': './img/Warning_lethal_enemies_icon.png',
-        'Low Oxygen': './img/Warning_low_oxygen_icon.png',
-        'Mactera Plague': './img/Warning_mactera_plague_icon.png',
-        'Parasites': './img/Warning_parasites_icon.png',
-        'Regenerative Bugs': './img/Warning_regenerative_bugs_icon.png',
-        'Shield Disruption': './img/Warning_shield_disruption_icon.png',
-        'Elite Threat': './img/Warning_elite_threat_icon.png',
-        'Swarmageddon': './img/Warning_swarmageddon_icon.png',
-        'Lithophage Outbreak': './img/Warning_lithophage_outbreak_icon.png',
-        'Rival Presence': './img/Warning_rival_presence_icon.png'
+        'Cave Leech Cluster': './static/img/Warning_cave_leech_cluster_icon.png',
+        'Exploder Infestation': './static/img/Warning_exploder_infestation_icon.png',
+        'Haunted Cave': './static/img/Warning_haunted_cave_icon.png',
+        'Lethal Enemies': './static/img/Warning_lethal_enemies_icon.png',
+        'Low Oxygen': './static/img/Warning_low_oxygen_icon.png',
+        'Mactera Plague': './static/img/Warning_mactera_plague_icon.png',
+        'Parasites': './static/img/Warning_parasites_icon.png',
+        'Regenerative Bugs': './static/img/Warning_regenerative_bugs_icon.png',
+        'Shield Disruption': './static/img/Warning_shield_disruption_icon.png',
+        'Elite Threat': './static/img/Warning_elite_threat_icon.png',
+        'Swarmageddon': './static/img/Warning_swarmageddon_icon.png',
+        'Lithophage Outbreak': './static/img/Warning_lithophage_outbreak_icon.png',
+        'Rival Presence': './static/img/Warning_rival_presence_icon.png'
             }
     
     BACKGROUND = Image.new("RGBA", (350, 300), (0,0,0,0))
@@ -492,37 +492,37 @@ def add_shadowed_text_to_image_SPLITFONTS(bg, text_and_fonts, text_color, shadow
 
 def render_dd_biome_codename(codename, biome):
     biomes = {
-        'Crystalline Caverns': './img/DeepDive_MissionBar_CrystalCaves.png',
-        'Glacial Strata': './img/DeepDive_MissionBar_GlacialStrata.png',
-        'Radioactive Exclusion Zone': './img/DeepDive_MissionBar_Radioactive.png',
-        'Fungus Bogs': './img/DeepDive_MissionBar_FungusBogs.png',
-        'Dense Biozone': './img/DeepDive_MissionBar_LushDownpour.png',
-        'Salt Pits': './img/DeepDive_MissionBar_SaltPits.png',
-        'Sandblasted Corridors': './img/DeepDive_MissionBar_Sandblasted.png',
-        'Magma Core': './img/DeepDive_MissionBar_MagmaCore.png',
-        'Azure Weald': './img/DeepDive_MissionBar_AzureWeald.png',
-        'Hollow Bough': './img/DeepDive_MissionBar_HollowBough.png'
+        'Crystalline Caverns': './static/img/DeepDive_MissionBar_CrystalCaves.png',
+        'Glacial Strata': './static/img/DeepDive_MissionBar_GlacialStrata.png',
+        'Radioactive Exclusion Zone': './static/img/DeepDive_MissionBar_Radioactive.png',
+        'Fungus Bogs': './static/img/DeepDive_MissionBar_FungusBogs.png',
+        'Dense Biozone': './static/img/DeepDive_MissionBar_LushDownpour.png',
+        'Salt Pits': './static/img/DeepDive_MissionBar_SaltPits.png',
+        'Sandblasted Corridors': './static/img/DeepDive_MissionBar_Sandblasted.png',
+        'Magma Core': './static/img/DeepDive_MissionBar_MagmaCore.png',
+        'Azure Weald': './static/img/DeepDive_MissionBar_AzureWeald.png',
+        'Hollow Bough': './static/img/DeepDive_MissionBar_HollowBough.png'
     }
     
     BACKGROUND = Image.open(biomes[biome])
     # BACKGROUND = add_shadowed_text_to_image(BACKGROUND, codename, 'white', '#000000', font_path, font_size)
-    text_and_fonts = [('CODENAME: ', "./img/RiftSoft-Regular.ttf"), (f'{codename}', './img/BebasNeue-Regular.ttf')]
+    text_and_fonts = [('CODENAME: ', "./static/img/RiftSoft-Regular.ttf"), (f'{codename}', './static/img/BebasNeue-Regular.ttf')]
     BACKGROUND = add_shadowed_text_to_image_SPLITFONTS(BACKGROUND, text_and_fonts, 'white', '#000000', font_size=45)
     #BACKGROUND.save('TEST.png', format='PNG')
     #subprocess.run(['gwenview', 'TEST.png'])
     return BACKGROUND
 
 def render_dd_secondary_obj_resource(secondary_obj):
-    font_path = './img/HammerBro101MovieBold-Regular.ttf'
+    font_path = './static/img/HammerBro101MovieBold-Regular.ttf'
     font_size = 45
     font = ImageFont.truetype(font_path, font_size)
     text_color = (255, 255, 255)
     secondary_objs = {
-        'Repair Minimules': './img/Icon_Salvage_Mules_Objective.png',
-        'Eliminate Dreadnought': './img/Kill_Dreadnought_Objective_icon.png',
-        'Mine Morkite': './img/Morkite_icon.png',
-        'Get Alien Eggs': './img/Alien_egg_icon.png',
-        'Black Box': './img/Blackbox_icon.png'
+        'Repair Minimules': './static/img/Icon_Salvage_Mules_Objective.png',
+        'Eliminate Dreadnought': './static/img/Kill_Dreadnought_Objective_icon.png',
+        'Mine Morkite': './static/img/Morkite_icon.png',
+        'Get Alien Eggs': './static/img/Alien_egg_icon.png',
+        'Black Box': './static/img/Blackbox_icon.png'
             }
     values = {
         'Repair Minimules': '2',
@@ -533,7 +533,7 @@ def render_dd_secondary_obj_resource(secondary_obj):
     }
 
     BACKGROUND = Image.new("RGBA", (256, 256), (0,0,0,0))
-    HEXAGON = Image.open('./img/hexagon.png')
+    HEXAGON = Image.open('./static/img/hexagon.png')
     HEXAGON = scale_image(HEXAGON, 0.4)
     #x, y = calc_center(HEXAGON, BACKGROUND)
     #print(f'HEXAGON X: {str(x)}')
@@ -567,49 +567,49 @@ def render_dd_secondary_obj_resource(secondary_obj):
 
 def render_dd_stage(m_d):
     primary_objs = {
-        'Mining Expedition': './img/Mining_expedition_icon.png',
-        'Egg Hunt': './img/Egg_collection_icon.png',
-        'On-Site Refining': './img/Refining_icon.png',
-        'Salvage Operation': './img/Salvage_icon.png',
-        'Escort Duty': './img/Escort_icon.png',
-        'Point Extraction': './img/Point_extraction_icon.png',
-        'Elimination': './img/Elimination_icon.png',
-        'Industrial Sabotage': './img/Sabotage_icon.png'
+        'Mining Expedition': './static/img/Mining_expedition_icon.png',
+        'Egg Hunt': './static/img/Egg_collection_icon.png',
+        'On-Site Refining': './static/img/Refining_icon.png',
+        'Salvage Operation': './static/img/Salvage_icon.png',
+        'Escort Duty': './static/img/Escort_icon.png',
+        'Point Extraction': './static/img/Point_extraction_icon.png',
+        'Elimination': './static/img/Elimination_icon.png',
+        'Industrial Sabotage': './static/img/Sabotage_icon.png'
             }
     complexities = {
-        '1': './img/Icons_complexity_1.png',
-        '2': './img/Icons_complexity_2.png',
-        '3': './img/Icons_complexity_3.png'
+        '1': './static/img/Icons_complexity_1.png',
+        '2': './static/img/Icons_complexity_2.png',
+        '3': './static/img/Icons_complexity_3.png'
             }
     lengths = {
-        '1': './img/Icons_length_1.png',
-        '2': './img/Icons_length_2.png',
-        '3': './img/Icons_length_3.png'
+        '1': './static/img/Icons_length_1.png',
+        '2': './static/img/Icons_length_2.png',
+        '3': './static/img/Icons_length_3.png'
             }
     mutators = {
-        'Critical Weakness': './img/Mutator_critical_weakness_icon.png',
-        'Gold Rush': './img/Mutator_gold_rush_icon.png',
-        'Double XP': './img/Mutator_triple_xp_icon.png',
-        'Golden Bugs': './img/Mutator_golden_bugs_icon.png',
-        'Low Gravity': './img/Mutator_no_fall_damage_icon.png',
-        'Mineral Mania': './img/Mutator_mineral_mania_icon.png',
-        'Rich Atmosphere': './img/Mutator_rich_atmosphere_icon.png',
-        'Volatile Guts': './img/Mutator_volatile_guts_icon.png'
+        'Critical Weakness': './static/img/Mutator_critical_weakness_icon.png',
+        'Gold Rush': './static/img/Mutator_gold_rush_icon.png',
+        'Double XP': './static/img/Mutator_triple_xp_icon.png',
+        'Golden Bugs': './static/img/Mutator_golden_bugs_icon.png',
+        'Low Gravity': './static/img/Mutator_no_fall_damage_icon.png',
+        'Mineral Mania': './static/img/Mutator_mineral_mania_icon.png',
+        'Rich Atmosphere': './static/img/Mutator_rich_atmosphere_icon.png',
+        'Volatile Guts': './static/img/Mutator_volatile_guts_icon.png'
             }
     warnings = {
-        'Cave Leech Cluster': './img/Warning_cave_leech_cluster_icon.png',
-        'Exploder Infestation': './img/Warning_exploder_infestation_icon.png',
-        'Haunted Cave': './img/Warning_haunted_cave_icon.png',
-        'Lethal Enemies': './img/Warning_lethal_enemies_icon.png',
-        'Low Oxygen': './img/Warning_low_oxygen_icon.png',
-        'Mactera Plague': './img/Warning_mactera_plague_icon.png',
-        'Parasites': './img/Warning_parasites_icon.png',
-        'Regenerative Bugs': './img/Warning_regenerative_bugs_icon.png',
-        'Shield Disruption': './img/Warning_shield_disruption_icon.png',
-        'Elite Threat': './img/Warning_elite_threat_icon.png',
-        'Swarmageddon': './img/Warning_swarmageddon_icon.png',
-        'Lithophage Outbreak': './img/Warning_lithophage_outbreak_icon.png',
-        'Rival Presence': './img/Warning_rival_presence_icon.png'
+        'Cave Leech Cluster': './static/img/Warning_cave_leech_cluster_icon.png',
+        'Exploder Infestation': './static/img/Warning_exploder_infestation_icon.png',
+        'Haunted Cave': './static/img/Warning_haunted_cave_icon.png',
+        'Lethal Enemies': './static/img/Warning_lethal_enemies_icon.png',
+        'Low Oxygen': './static/img/Warning_low_oxygen_icon.png',
+        'Mactera Plague': './static/img/Warning_mactera_plague_icon.png',
+        'Parasites': './static/img/Warning_parasites_icon.png',
+        'Regenerative Bugs': './static/img/Warning_regenerative_bugs_icon.png',
+        'Shield Disruption': './static/img/Warning_shield_disruption_icon.png',
+        'Elite Threat': './static/img/Warning_elite_threat_icon.png',
+        'Swarmageddon': './static/img/Warning_swarmageddon_icon.png',
+        'Lithophage Outbreak': './static/img/Warning_lithophage_outbreak_icon.png',
+        'Rival Presence': './static/img/Warning_rival_presence_icon.png'
             }
     
     BACKGROUND = Image.new("RGBA", (350, 300), (0,0,0,0))
@@ -835,8 +835,8 @@ def rotate_dailydeal(AllTheDeals, tstamp_Queue, deal_Queue):
             del dailydeal
             timestamp = applicable_timestamp
         sleep(0.75)
-    
-def rotate_biomes(DRG, tstamp_Queue, next_tstamp_Queue, nextbiomes_Queue, biomes_Queue, rendering_event):
+
+def rotate_biomes(DRG, season, tstamp_Queue, next_tstamp_Queue, biomes_lists, rendering_event):
     #order = ['Glacial Strata', 'Crystalline Caverns', 'Salt Pits', 'Magma Core', 'Azure Weald', 'Sandblasted Corridors', 'Fungus Bogs', 'Radioactive Exclusion Zone', 'Dense Biozone', 'Hollow Bough']
     #thread pools for saving and hashing PIL objects - microscopic gains. #TODO multiprocessing pools
     #def process_mission(mission):
@@ -868,11 +868,13 @@ def rotate_biomes(DRG, tstamp_Queue, next_tstamp_Queue, nextbiomes_Queue, biomes
     #def array_biomes(Biomes, timestamp):
         #Biomes1 = wrap_biomes_executor(Biomes)
         #return timestamp, Biomes1
+    def read_biomes(timestamp, season):
+        return timestamp, DRG[timestamp][season]
+            
     def array_biomes(Biomes, timestamp):
         Biomes1 = {}
         for biome in Biomes.keys():
             biome1 = biome.replace(' ', '-')
-            Biomes1[biome1] = {}
             for mission in Biomes[biome]:
                 mission0 = {}
                 mission0['CodeName'] = mission['CodeName']
@@ -887,11 +889,16 @@ def rotate_biomes(DRG, tstamp_Queue, next_tstamp_Queue, nextbiomes_Queue, biomes
         return timestamp, Biomes1
     while len(tstamp_Queue) == 0 and len(next_tstamp_Queue) == 0:
         continue
-    Biomes = render_biomes(DRG[tstamp_Queue[0]]['Biomes'])
-    _, Biomes = array_biomes(Biomes, tstamp_Queue[0])
+    biomes_Queue = biomes_lists[season][0]
+    nextbiomes_Queue = biomes_lists[season][1]
+    
+    _, Biomes = read_biomes(tstamp_Queue[0], season)
+    Biomes = render_biomes(Biomes['Biomes'])
+    _, Biomes = array_biomes(Biomes, _)
     biomes_Queue.append(Biomes)
-    NextBiomes = render_biomes(DRG[next_tstamp_Queue[0]]['Biomes'])
-    timestamp_next, NextBiomes = array_biomes(NextBiomes, next_tstamp_Queue[0])
+    timestamp_next, NextBiomes = read_biomes(next_tstamp_Queue[0], season)
+    NextBiomes = render_biomes(NextBiomes['Biomes'])
+    timestamp_next, NextBiomes = array_biomes(NextBiomes, timestamp_next)
     nextbiomes_Queue.append(NextBiomes)
     rendering_event.set()
     del Biomes
@@ -900,7 +907,8 @@ def rotate_biomes(DRG, tstamp_Queue, next_tstamp_Queue, nextbiomes_Queue, biomes
     while True:
         applicable_timestamp = next_tstamp_Queue[0]
         if applicable_timestamp != timestamp_next:
-            NextBiomes = render_biomes(DRG[applicable_timestamp]['Biomes'])
+            timestamp_next, NextBiomes = read_biomes(applicable_timestamp, season)
+            NextBiomes = render_biomes(NextBiomes['Biomes'])
             timestamp_next, NextBiomes = array_biomes(NextBiomes, applicable_timestamp)
             biomes_Queue.append(nextbiomes_Queue[0])
             biomes_Queue.pop(0)
@@ -941,29 +949,29 @@ def rotate_DDs(DDs):
             dd_str = 'Deep Dive Normal'
             img_count = 0
             folder_name = dd_str.replace(' ', '_')
-            if os.path.exists(f'./files/{folder_name}'):
-                shutil.rmtree(f'./files/{folder_name}')
-            os.mkdir(f'./files/{folder_name}')
+            if os.path.exists(f'./static/{folder_name}'):
+                shutil.rmtree(f'./static/{folder_name}')
+            os.mkdir(f'./static/{folder_name}')
             BIOME_NORMAL = render_dd_biome_codename(f"{dds[dd_str]['CodeName']}", dds[dd_str]['Biome'])
-            BIOME_NORMAL.save(f'./files/{folder_name}/dd_biome.png', format='PNG')
+            BIOME_NORMAL.save(f'./static/{folder_name}/dd_biome.png', format='PNG')
             for mission in dds[dd_str]['Stages']:
                 img_count += 1
                 fname = str(img_count)
-                mission.save(f'./files/{folder_name}/{fname}.png')
+                mission.save(f'./static/{folder_name}/{fname}.png')
                 mission.close()
                 
             dd_str = 'Deep Dive Elite'
             img_count = 0
             folder_name = dd_str.replace(' ', '_')
-            if os.path.exists(f'./files/{folder_name}'):
-                shutil.rmtree(f'./files/{folder_name}')
-            os.mkdir(f'./files/{folder_name}')
+            if os.path.exists(f'./static/{folder_name}'):
+                shutil.rmtree(f'./static/{folder_name}')
+            os.mkdir(f'./static/{folder_name}')
             BIOME_ELITE = render_dd_biome_codename(f"{dds[dd_str]['CodeName']}", dds[dd_str]['Biome'])
-            BIOME_ELITE.save(f'./files/{folder_name}/dd_biome.png', format='PNG')
+            BIOME_ELITE.save(f'./static/{folder_name}/dd_biome.png', format='PNG')
             for mission in dds[dd_str]['Stages']:
                 img_count += 1
                 fname = str(img_count)
-                mission.save(f'./files/{folder_name}/{fname}.png')
+                mission.save(f'./static/{folder_name}/{fname}.png')
                 mission.close()
             del dds
         sleep(0.25)
@@ -1099,14 +1107,15 @@ def rotate_timestamp_from_dict(dictionary, tstamp_Queue, next_):
             timestamp = tstamp_Queue[0]
         sleep(0.25)
 
-def wait_rotation(rendering_event, index_event):
+def wait_rotation(rendering_events, index_event):
     target_minutes_59 = [29, 59]
     while True:
         current_time = datetime.now().time()
         current_minute = current_time.minute
         current_second = current_time.second + current_time.microsecond / 1e6
         if current_second > 58.50 and current_minute in target_minutes_59:
-            rendering_event.clear()
+            for s in rendering_events:
+                rendering_events[s].clear()
             index_event.clear()
         sleep(0.2)
         
@@ -1127,333 +1136,298 @@ def SERVER_READY(index_event):
 #HTML STRING RENDERERS
 
 #HOMEPAGE
-def rotate_index(DRG, rendering_event, current_timestamp_Queue, next_timestamp_Queue, index_event, index_Queue):
-    rendering_event.wait()
+def rotate_index(DRG, rendering_events, current_timestamp_Queue, next_timestamp_Queue, index_event, index_Queue):
+    for s in rendering_events.keys():
+        rendering_events[s].wait()
     current_timestamp = current_timestamp_Queue[0]
-    index = {}
-    index_ = render_index(DRG[current_timestamp], DRG[next_timestamp_Queue[0]]).encode()
-    index['index'] = index_
-    etag = md5(index_).hexdigest()
-    index['etag'] = etag
-    index_Queue.append(index)
+    # index = {}
+    # index_ = render_index().encode()
+    # index['index'] = index_
+    # etag = md5(index_).hexdigest()
+    # index['etag'] = etag
+    # index_Queue.append(index)
     index_event.set()
     while True:
         applicable_timestamp = current_timestamp_Queue[0]
         if applicable_timestamp != current_timestamp:
-            rendering_event.wait()
-            index = {}
-            index_ = render_index(DRG[current_timestamp_Queue[0]], DRG[next_timestamp_Queue[0]]).encode()
-            index['index'] = index_
-            etag = md5(index_).hexdigest()
-            index['etag'] = etag
-            index_Queue.append(index)
-            index_Queue.pop(0)
+            for s in rendering_events.keys():
+                rendering_events[s].wait()
+            # index = {}
+            # index_ = render_index().encode()
+            # index['index'] = index_
+            # etag = md5(index_).hexdigest()
+            # index['etag'] = etag
+            # index_Queue.append(index)
+            # index_Queue.pop(0)
             index_event.set()
         sleep(0.33)
 
-def array_standard_missions(Biomes, biome_str, html):
-    html += '<br>\n'
-    url_biome = biome_str.replace(' ', '-')
-    for mission in Biomes[biome_str]:
-        fname = f'/png?img={url_biome}{str(mission["id"])}'
-        html += f'<div class="mission-hover-zoom"><img title="{mission["CodeName"]}" class="mission" src="{fname}"></div>\n'
-    return html
-def array_standard_missions_next(Biomes, biome_str, html):
-    html += '<br>\n'
-    url_biome = biome_str.replace(' ', '-')
-    for mission in Biomes[biome_str]:
-        fname = f'/upcoming_png?img={url_biome}{str(mission["id"])}'
-        html += f'<div class="mission-hover-zoom"><img title="{mission["CodeName"]}" class="mission" src="{fname}"></div>\n'
-    return html
-def array_dd_missions(dd_str, html):
-    folder_name = dd_str.replace(' ', '_')
-    html += f'<img class="dd-biome" src="/files/{folder_name}/dd_biome.png">\n<br>\n'
-    stg_count = 0
-    for i in range(3):
-        stg_count += 1
-        fname = str(stg_count)
-        html += f'<div class="mission-hover-zoom"><img class="mission" title="Stage {fname}" src="/files/{folder_name}/{fname}.png"></div>\n'
-    return html
+# def array_standard_missions(Biomes, biome_str, html):
+#     html += '<br>\n'
+#     url_biome = biome_str.replace(' ', '-')
+#     for mission in Biomes[biome_str]:
+#         fname = f'/png?img={url_biome}{str(mission["id"])}'
+#         html += f'<div class="mission-hover-zoom"><img title="{mission["CodeName"]}" class="mission" src="{fname}"></div>\n'
+#     return html
+# def array_standard_missions_next(Biomes, biome_str, html):
+#     html += '<br>\n'
+#     url_biome = biome_str.replace(' ', '-')
+#     for mission in Biomes[biome_str]:
+#         fname = f'/upcoming_png?img={url_biome}{str(mission["id"])}'
+#         html += f'<div class="mission-hover-zoom"><img title="{mission["CodeName"]}" class="mission" src="{fname}"></div>\n'
+#     return html
+# def array_dd_missions(dd_str, html):
+#     folder_name = dd_str.replace(' ', '_')
+#     html += f'<img class="dd-biome" src="/files/{folder_name}/dd_biome.png">\n<br>\n'
+#     stg_count = 0
+#     for i in range(3):
+#         stg_count += 1
+#         fname = str(stg_count)
+#         html += f'<div class="mission-hover-zoom"><img class="mission" title="Stage {fname}" src="/files/{folder_name}/{fname}.png"></div>\n'
+#     return html
 
-def render_index(timestamp, next_timestamp):
-    Biomes = timestamp['Biomes']
-    next_Biomes = next_timestamp['Biomes']
-    html = '''<!DOCTYPE html>
+def render_index():
+    html = '''''<!doctype html>
 <html>
 <head>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
-<script src="/files/homepage.js"></script>
 <title>Current Missions from the Hoxxes IV Space Rig Mission Terminal</title>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta property="og:title" content="Current and Upcoming Missions from the Hoxxes IV Mission Terminal">
 <meta property="og:type" content="website">
-<meta property="og:image" content="/files/Mission_control_portrait.png">
+<meta property="og:image" content="/static/Mission_control_portrait.png">
 <meta property="og:description" content="Deep Rock Galactic Mission Tracker">
-<link rel ="icon" href="/files/favicon.ico" type="image/x-icon">
-<link rel ="stylesheet" href="/files/styles.css" type="text/css">
+<link rel ="icon" href="/static/favicon.ico" type="image/x-icon">
+<link rel ="stylesheet" href="/static/styles.css" type="text/css">
+<script src="/static/index.js"></script>
 </head>
-
 <body bgcolor="#303030">
-<video id="background-video" autoplay muted loop><source src="/files/space_rig.webm" type="video/webm"></video>
+<video id="background-video" autoplay muted loop><source src="/static/space_rig.webm" type="video/webm"></video>
 <div class="overlay"></div>
-
 <p class="loading">Loading</p>
-
+<div id="mainContent">
 <div id="countdowncontainer">
 <button id="backgroundButton">Hide background</button><button id="buttonsbutton">x</button><br>
-<div id=DAILYDEAL><div id="dailydealhead">NEW DAILY DEAL IN<br><span id="DailyDealcountdown"></span></div><img id="DailyDeal" class="daily_trade" src="/dailydeal"></div>
+<div id=DAILYDEAL><div id="dailydealhead">NEW DAILY DEAL IN<br><span id="DailyDealcountdown"></span></div><div id="DailyDeal" class="daily_deal_container"></div></div>
 <button id="dailydealbutton">Click here to see Daily Deal</button><br>
 <div id="missionscountdown">NEW MISSIONS IN<br>
 <span id="countdown"></span></div><button id="slideButton">Hide countdown</button><br>
 <button id="currentButton">Click here to see upcoming missions</button>
+<br>
+<select id="season" name="season" class="seasonBox">
+</select>
 </div>
 
 
-<div id="current">\n'''
-    html += '''<div class="grid-container">
-    
+<div id="current">
+<div class="grid-container">
+
 <h2>
 <div class="biome-container">
-<img title="Abundant: Magnite; Scarce: Umanite" class="image-container" src="/files/DeepDive_MissionBar_GlacialStrata.png">\n'''
-    if 'Glacial Strata' not in Biomes.keys():
-        html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
-    else:
-        html = array_standard_missions(Biomes, 'Glacial Strata', html)
-    html += '''</div>
+<img title="Abundant: Magnite; Scarce: Umanite" class="image-container" src="/static/DeepDive_MissionBar_GlacialStrata.png">
+<br><div id="Glacial Strata" class="missions">
+</div>
+</div>
 </h2>
 
 <h2>
 <div class="biome-container">
-<img title="Abundant: Jadiz; Scarce: Bismor" class="image-container" src="/files/DeepDive_MissionBar_CrystalCaves.png">\n'''
-    if 'Crystalline Caverns' not in Biomes.keys():
-        html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
-    else:
-        html = array_standard_missions(Biomes, 'Crystalline Caverns', html)
-    html += '''</div>
+<img title="Abundant: Jadiz; Scarce: Bismor" class="image-container" src="/static/DeepDive_MissionBar_CrystalCaves.png">
+<br><div id="Crystalline Caverns" class="missions">
+</div>
+</div>
 </h2>
 
 <h2>
 <div class="biome-container">
-<img title="Abundant: Enor Pearl; Scarce: Bismor" class="image-container" src="/files/DeepDive_MissionBar_SaltPits.png">\n'''
-    if 'Salt Pits' not in Biomes.keys():
-        html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
-    else:
-        html = array_standard_missions(Biomes, 'Salt Pits', html)
-    html += '''</div>
+<img title="Abundant: Enor Pearl; Scarce: Bismor" class="image-container" src="/static/DeepDive_MissionBar_SaltPits.png">
+<br><div id="Salt Pits">
+</div>
+</div>
 </h2>
 
 <h2>
 <div class="biome-container">
-<img title="Abundant: Magnite; Scarce: Croppa" class="image-container" src="/files/DeepDive_MissionBar_MagmaCore.png">\n'''
-    if 'Magma Core' not in Biomes.keys():
-        html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
-    else:
-        html = array_standard_missions(Biomes, 'Magma Core', html)
-    html += '''</div>
+<img title="Abundant: Magnite; Scarce: Croppa" class="image-container" src="/static/DeepDive_MissionBar_MagmaCore.png">
+<br><div id="Magma Core" class="missions">
+</div>
+</div>
 </h2>
 
 <h2>
 <div class ="biome-container">
-<img title="Abundant: Croppa; Scarce: Umanite" class="image-container" src="/files/DeepDive_MissionBar_AzureWeald.png">\n'''
-    if 'Azure Weald' not in Biomes.keys():
-        html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
-    else:
-        html = array_standard_missions(Biomes, 'Azure Weald', html)
-    html += '''</div>
+<img title="Abundant: Croppa; Scarce: Umanite" class="image-container" src="/static/DeepDive_MissionBar_AzureWeald.png">
+<br><div id="Azure Weald" class="missions">
+</div>
+</div>
 </h2>
 
 <h2>
 <div class="biome-container">
-<img title="Abundant: Enor Pearl; Scarce: Bismor" class="image-container" src="/files/DeepDive_MissionBar_Sandblasted.png">\n'''
-    if 'Sandblasted Corridors' not in Biomes.keys():
-        html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
-    else:
-        html = array_standard_missions(Biomes, 'Sandblasted Corridors', html)
-    html += '''</div>
+<img title="Abundant: Enor Pearl; Scarce: Bismor" class="image-container" src="/static/DeepDive_MissionBar_Sandblasted.png">
+<br><div id="Sandblasted Corridors" class="missions">
+</div>
+</div>
 </h2>
 
 <h2>
 <div class="biome-container">
-<img title="Abundant: Croppa; Scarce: Jadiz" class="image-container" src="/files/DeepDive_MissionBar_FungusBogs.png">\n'''
-    if 'Fungus Bogs' not in Biomes.keys():
-        html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
-    else:
-        html = array_standard_missions(Biomes, 'Fungus Bogs', html)
-    html += '''</div>
+<img title="Abundant: Croppa; Scarce: Jadiz" class="image-container" src="/static/DeepDive_MissionBar_FungusBogs.png">
+<br><div id="Fungus Bogs" class="missions">
+</div>
+</div>
 </h2>
 
 <h2>
 <div class="biome-container">
-<img title="Abundant: Umanite; Scarce: Enor Pearl" class="image-container" src="/files/DeepDive_MissionBar_Radioactive.png">\n'''
-    if 'Radioactive Exclusion Zone' not in Biomes.keys():
-        html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
-    else:
-        html = array_standard_missions(Biomes, 'Radioactive Exclusion Zone', html)
-    html += '''</div>
+<img title="Abundant: Umanite; Scarce: Enor Pearl" class="image-container" src="/static/DeepDive_MissionBar_Radioactive.png">
+<br><div id="Radioactive Exclusion Zone" class="missions">
+</div>
+</div>
 </h2>
 
 <h2>
 <div class="biome-container">
-<img title="Abundant: Bismor; Scarce: Umanite" class="image-container" src="/files/DeepDive_MissionBar_LushDownpour.png">\n'''
-    if 'Dense Biozone' not in Biomes.keys():
-        html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
-    else:
-        html = array_standard_missions(Biomes, 'Dense Biozone', html)
-    html += '''</div>
+<img title="Abundant: Bismor; Scarce: Umanite" class="image-container" src="/static/DeepDive_MissionBar_LushDownpour.png">
+<br><div id="Dense Biozone" class="missions">
+</div>
+</div>
 </h2>
 
 <h2>
 <div class="biome-container">
-<img title="Abundant: Jadiz; Scarce: Bismor" class="image-container" src="/files/DeepDive_MissionBar_HollowBough.png">\n'''
-    if 'Hollow Bough' not in Biomes.keys():
-        html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
-    else:
-        html = array_standard_missions(Biomes, 'Hollow Bough', html)
-    html += '''</div>
+<img title="Abundant: Jadiz; Scarce: Bismor" class="image-container" src="/static/DeepDive_MissionBar_HollowBough.png">
+<br><div id="Hollow Bough" class="missions">
+</div>
+</div>
 </h2>
+
 </div>
 </div>
 
 
-
-'''
-    html += '''<div id="upcoming" style="visibility: hidden;">
+<div id="upcoming" style="visibility: hidden;">
 <div class="grid-container">
 
 <h2>
 <div class="biome-container">
-    <img title="Abundant: Magnite; Scarce: Umanite" class="image-container" src="/files/DeepDive_MissionBar_GlacialStrata.png">\n'''
-    if 'Glacial Strata' not in next_Biomes.keys():
-        html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
-    else:
-        html = array_standard_missions_next(next_Biomes, 'Glacial Strata', html)
-    html += '''</div>
+<img title="Abundant: Magnite; Scarce: Umanite" class="image-container" src="/static/DeepDive_MissionBar_GlacialStrata.png">
+<br><div id="nextGlacial Strata" class="missions">
+</div>
+
+</div>
 </h2>
 
 <h2>
 <div class="biome-container">
-<img title="Abundant: Jadiz; Scarce: Bismor" class="image-container" src="/files/DeepDive_MissionBar_CrystalCaves.png">\n'''
-    if 'Crystalline Caverns' not in next_Biomes.keys():
-        html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
-    else:
-        html = array_standard_missions_next(next_Biomes, 'Crystalline Caverns', html)
-    html += '''</div>
+<img title="Abundant: Jadiz; Scarce: Bismor" class="image-container" src="/static/DeepDive_MissionBar_CrystalCaves.png">
+<br><div id="nextCrystalline Caverns" class="missions">
+</div>
+</div>
 </h2>
 
 <h2>
 <div class="biome-container">
-<img title="Abundant: Enor Pearl; Scarce: Bismor" class="image-container" src="/files/DeepDive_MissionBar_SaltPits.png">\n'''
-    if 'Salt Pits' not in next_Biomes.keys():
-        html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
-    else:
-        html = array_standard_missions_next(next_Biomes, 'Salt Pits', html)
-    html += '''</div>
+<img title="Abundant: Enor Pearl; Scarce: Bismor" class="image-container" src="/static/DeepDive_MissionBar_SaltPits.png">
+<br><div id="nextSalt Pits" class="missions">
+</div>
+</div>
 </h2>
 
 <h2>
 <div class="biome-container">
-<img title="Abundant: Magnite; Scarce: Croppa" class="image-container" src="/files/DeepDive_MissionBar_MagmaCore.png">\n'''
-    if 'Magma Core' not in next_Biomes.keys():
-        html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
-    else:
-        html = array_standard_missions_next(next_Biomes, 'Magma Core', html)
-    html += '''</div>
+<img title="Abundant: Magnite; Scarce: Croppa" class="image-container" src="/static/DeepDive_MissionBar_MagmaCore.png">
+<br><div id="nextMagma Core" class="missions">
+</div>
+</div>
+</h2>
+
+<h2>
+<div class ="biome-container">
+<img title="Abundant: Croppa; Scarce: Umanite" class="image-container" src="/static/DeepDive_MissionBar_AzureWeald.png">
+<br><div id="nextAzure Weald" class="missions">
+</div>
+
+</div>
 </h2>
 
 <h2>
 <div class="biome-container">
-<img title="Abundant: Croppa; Scarce: Umanite" class="image-container" src="/files/DeepDive_MissionBar_AzureWeald.png">\n'''
-    if 'Azure Weald' not in next_Biomes.keys():
-        html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
-    else:
-        html = array_standard_missions_next(next_Biomes, 'Azure Weald', html)
-    html += '''</div>
+<img title="Abundant: Enor Pearl; Scarce: Bismor" class="image-container" src="/static/DeepDive_MissionBar_Sandblasted.png">
+<br><div id="nextSandblasted Corridors">
+</div>
 </h2>
 
 <h2>
 <div class="biome-container">
-<img title="Abundant: Enor Pearl; Scarce: Bismor" class="image-container" src="/files/DeepDive_MissionBar_Sandblasted.png">\n'''
-    if 'Sandblasted Corridors' not in next_Biomes.keys():
-        html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
-    else:
-        html = array_standard_missions_next(next_Biomes, 'Sandblasted Corridors', html)
-    html += '''</div>
+<img title="Abundant: Croppa; Scarce: Jadiz" class="image-container" src="/static/DeepDive_MissionBar_FungusBogs.png">
+<br><div id="nextFungus Bogs" class="missions">
+</div>
+</div>
 </h2>
 
 <h2>
 <div class="biome-container">
-<img title="Abundant: Croppa; Scarce: Jadiz" class="image-container" src="/files/DeepDive_MissionBar_FungusBogs.png">\n'''
-    if 'Fungus Bogs' not in next_Biomes.keys():
-        html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
-    else:
-        html = array_standard_missions_next(next_Biomes, 'Fungus Bogs', html)
-    html += '''</div>
+<img title="Abundant: Umanite; Scarce: Enor Pearl" class="image-container" src="/static/DeepDive_MissionBar_Radioactive.png">
+<br><div id="nextRadioactive Exclusion Zone" class="missions">
+</div>
+</div>
 </h2>
 
 <h2>
 <div class="biome-container">
-<img title="Abundant: Umanite; Scarce: Enor Pearl" class="image-container" src="/files/DeepDive_MissionBar_Radioactive.png">\n'''
-    if 'Radioactive Exclusion Zone' not in next_Biomes.keys():
-        html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
-    else:
-        html = array_standard_missions_next(next_Biomes, 'Radioactive Exclusion Zone', html)
-    html += '''</div>
+<img title="Abundant: Bismor; Scarce: Umanite" class="image-container" src="/static/DeepDive_MissionBar_LushDownpour.png">
+<br><div id="nextDense Biozone" class="missions">
+</div>
+</div>
 </h2>
 
 <h2>
 <div class="biome-container">
-<img title="Abundant: Bismor; Scarce: Umanite" class="image-container" src="/files/DeepDive_MissionBar_LushDownpour.png">\n'''
-    if 'Dense Biozone' not in next_Biomes.keys():
-        html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
-    else:
-        html = array_standard_missions_next(next_Biomes, 'Dense Biozone', html)
-    html += '''</div>
+<img title="Abundant: Jadiz; Scarce: Bismor" class="image-container" src="/static/DeepDive_MissionBar_HollowBough.png">
+<br><div id="nextHollow Bough" class="missions">
+</div>
+</div>
 </h2>
 
-<h2>
-<div class="biome-container">
-<img title="Abundant: Jadiz; Scarce: Bismor" class="image-container" src="/files/DeepDive_MissionBar_HollowBough.png">\n'''
-    if 'Hollow Bough' not in next_Biomes.keys():
-        html += '<br><span class="scanners">// SCANNERS OUT OF RANGE \\\\</span>\n'
-    else:
-        html = array_standard_missions_next(next_Biomes, 'Hollow Bough', html)
-
-    html += '''</div>
-</h2>
 </div>
 </div>
 
 
 <div class="grid-container">
-<div class="dd-container">
 
-<h2>
-<img class="image-container" src="/files/dd.png">\n'''
-    html = array_dd_missions('Deep Dive Normal', html)
-    html += '''</h2>
-</div>
 <div class="dd-container">
 <h2>
-<img class="image-container" src="/files/edd.png">\n'''
-    html = array_dd_missions('Deep Dive Elite', html)
-    html += '''</h2>
+<img class="image-container" src="/static/dd.png">
+<div id="Deep Dive Normal" class="dd-missions">
+</div>
+</h2>
+</div>
+
+<div class="dd-container">
+<h2>
+<img class="image-container" src="/static/edd.png">
+<div id="Deep Dive Elite" class="dd-missions">
+</div>
+</h2>
 </div>
 
 </div>
-
 
 <div>
+
 <div class="ddscountdown">NEW DEEP DIVES IN</div>
 <span id="ddcountdown"></span>
 <hr>
 </div>
+
 <div class="jsonc">
 <div class="jsonlinks"><span style="color: white;font-size: 30px;font-family: BebasNeue, sans-serif;"> <a class="jsonlink" href="/json?data=current">CURRENT MISSION DATA</a> | <a class="jsonlink" href="/json?data=next">UPCOMING MISSION DATA</a> | <a class="jsonlink" href="/json?data=DD">CURRENT DEEP DIVE DATA</a> | <a class="jsonlink" href="/json?data=dailydeal">CURRENT DAILY DEAL DATA</a> | <a class="jsonlink" href="/xp_calculator">CLASS XP CALCULATOR</a> | <a class="jsonlink" href="https://github.com/rolfosian/drgmissions/">GITHUB</a></span> </div>
-<span class="credits">Send credits (eth): 0xb9c8591A80A3158f7cFFf96EC3c7eA9adB7818E7</span></div>
+<span class="credits">Send credits (eth): 0xb9c8591A80A3158f7cFFf96EC3c7eA9adB7818E7</span>
+</div>
 <p class='gsgdisclaimer'><i>This website is a third-party platform and is not affiliated, endorsed, or sponsored by Ghost Ship Games. The use of Deep Rock Galactic's in-game assets on this website is solely for illustrative purposes and does not imply any ownership or association with the game or its developers. All copyrights and trademarks belong to their respective owners. For official information about Deep Rock Galactic, please visit the official Ghost Ship Games website.</i></p></div>
-</body>
-</html>'''
+</div>
+</body></html>'''
     return html
 
 #CLASS XP CALCULATOR

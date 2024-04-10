@@ -45,7 +45,7 @@ function Main()
         invalid_keys:close()
     end
     
-    socket.sleep(1.4)
+    local seasons = {'s0', 's4'}
 
     -- Initialize Table
     local god = {}
@@ -61,22 +61,25 @@ function Main()
         -- Initialize Table
         local master = {}
         local missionscount = 0
-        master['Biomes'] = {}
-
-        -- Get GeneratedMission UObjects
-        local b = nil
-        local missions = utils.GetMissions()
-        if missions then
-            master['timestamp'] = timestamp
-            for index, mission in pairs(missions) do
-                b = utils.GetBiome(mission)
-                if not utils.HasKey(master['Biomes'], b) then
-                    master['Biomes'][b] = {}
+        for _, season in pairs(seasons) do
+            master[season] = {}
+            master[season]['Biomes'] = {}
+            -- Get GeneratedMission UObjects
+            local b = nil
+            local missions = utils.GetMissions(season)
+            if missions then
+                timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
+                master[season]['timestamp'] = timestamp
+                for index, mission in pairs(missions) do
+                    b = utils.GetBiome(mission)
+                    if not utils.HasKey(master[season]['Biomes'], b) then
+                        master[season]['Biomes'][b] = {}
+                    end
+                    missionscount = utils.UnpackStandardMission(mission, master, b, missionscount, season)
                 end
-                missionscount = utils.UnpackStandardMission(mission, master, b, missionscount)
             end
-            god[timestamp] = master
         end
+        god[timestamp] = master
     end
 
     god = json.encode(god)
@@ -85,7 +88,5 @@ function Main()
         file:write(god)
         file:close()
     end
-
-    utils.Exit()
 end
 Main()

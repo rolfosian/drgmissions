@@ -96,28 +96,28 @@ xp_per_hr = 0;
 
 function getPromoLevel(promoNumber, type) {
   const promos = {
-  0: `<div class="mission-hover-zoom"><img class="class-icon" src="/files/class_icons/${type}.png"></div>`,
-  1: `<div class="mission-hover-zoom"><img class="class-icon" src="/files/class_icons/${type}_Bronze_1.png"></div>`,
-  2: `<div class="mission-hover-zoom"><img class="class-icon"src="/files/class_icons/${type}_Bronze_2.png"></div>`,
-  3: `<div class="mission-hover-zoom"><img class="class-icon" src="/files/class_icons/${type}_Bronze_3.png"></div>`,
-  4: `<div class="mission-hover-zoom"><img class="class-icon" src="/files/class_icons/${type}_Silver_1.png"></div>`,
-  5: `<div class="mission-hover-zoom"><img class="class-icon" src="/files/class_icons/${type}_Silver_2.png"></div>`,
-  6: `<div class="mission-hover-zoom"><img class="class-icon" src="/files/class_icons/${type}_Silver_3.png"></div>`,
-  7: `<div class="mission-hover-zoom"><img class="class-icon" src="/files/class_icons/${type}_Gold_1.png"></div>`,
-  8: `<div class="mission-hover-zoom"><img class="class-icon" src="/files/class_icons/${type}_Gold_2.png"></div>`,
-  9: `<div class="mission-hover-zoom"><img class="class-icon" src="/files/class_icons/${type}_Gold_3.png"></div>`,
-  10: `<div class="mission-hover-zoom"><img class="class-icon" src="/files/class_icons/${type}_Platinum_1.png"></div>`,
-  11: `<div class="mission-hover-zoom"><img class="class-icon" src="/files/class_icons/${type}_Platinum_2.png"></div>`,
-  12: `<div class="mission-hover-zoom"><img class="class-icon" src="/files/class_icons/${type}_Platinum_3.png"></div>`,
-  13: `<div class="mission-hover-zoom"><img class="class-icon" src="/files/class_icons/${type}_Emerald_1.png"></div>`,
-  14: `<div class="mission-hover-zoom"><img class="class-icon" src="/files/class_icons/${type}_Emerald_2.png"></div>`,
-  15: `<div class="mission-hover-zoom"><img class="class-icon" src="/files/class_icons/${type}_Emerald_3.png"></div>`,
-  16: `<div class="mission-hover-zoom"><img class="class-icon" src="/files/class_icons/${type}_Legendary_1.png"></div>`,
-  17: `<div class="mission-hover-zoom"><img class="class-icon" src="/files/class_icons/${type}_Legendary_2.png"></div>`,
-  18: `<div class="mission-hover-zoom"><img class="class-icon" src="/files/class_icons/${type}_Legendary_3.png"></div>`
+  0: `<div class="mission-hover-zoom"><img class="class-icon" src="/static/class_icons/${type}.png"></div>`,
+  1: `<div class="mission-hover-zoom"><img class="class-icon" src="/static/class_icons/${type}_Bronze_1.png"></div>`,
+  2: `<div class="mission-hover-zoom"><img class="class-icon"src="/static/class_icons/${type}_Bronze_2.png"></div>`,
+  3: `<div class="mission-hover-zoom"><img class="class-icon" src="/static/class_icons/${type}_Bronze_3.png"></div>`,
+  4: `<div class="mission-hover-zoom"><img class="class-icon" src="/static/class_icons/${type}_Silver_1.png"></div>`,
+  5: `<div class="mission-hover-zoom"><img class="class-icon" src="/static/class_icons/${type}_Silver_2.png"></div>`,
+  6: `<div class="mission-hover-zoom"><img class="class-icon" src="/static/class_icons/${type}_Silver_3.png"></div>`,
+  7: `<div class="mission-hover-zoom"><img class="class-icon" src="/static/class_icons/${type}_Gold_1.png"></div>`,
+  8: `<div class="mission-hover-zoom"><img class="class-icon" src="/static/class_icons/${type}_Gold_2.png"></div>`,
+  9: `<div class="mission-hover-zoom"><img class="class-icon" src="/static/class_icons/${type}_Gold_3.png"></div>`,
+  10: `<div class="mission-hover-zoom"><img class="class-icon" src="/static/class_icons/${type}_Platinum_1.png"></div>`,
+  11: `<div class="mission-hover-zoom"><img class="class-icon" src="/static/class_icons/${type}_Platinum_2.png"></div>`,
+  12: `<div class="mission-hover-zoom"><img class="class-icon" src="/static/class_icons/${type}_Platinum_3.png"></div>`,
+  13: `<div class="mission-hover-zoom"><img class="class-icon" src="/static/class_icons/${type}_Emerald_1.png"></div>`,
+  14: `<div class="mission-hover-zoom"><img class="class-icon" src="/static/class_icons/${type}_Emerald_2.png"></div>`,
+  15: `<div class="mission-hover-zoom"><img class="class-icon" src="/static/class_icons/${type}_Emerald_3.png"></div>`,
+  16: `<div class="mission-hover-zoom"><img class="class-icon" src="/static/class_icons/${type}_Legendary_1.png"></div>`,
+  17: `<div class="mission-hover-zoom"><img class="class-icon" src="/static/class_icons/${type}_Legendary_2.png"></div>`,
+  18: `<div class="mission-hover-zoom"><img class="class-icon" src="/static/class_icons/${type}_Legendary_3.png"></div>`
   };
 if (promoNumber >= 18) {
-  return `<div class="mission-hover-zoom"><img class="class-icon" src="/files/class_icons/${type}_Legendary_3.png"></div>`;
+  return `<div class="mission-hover-zoom"><img class="class-icon" src="/static/class_icons/${type}_Legendary_3.png"></div>`;
 } else {
   return promos[promoNumber];
 }
@@ -142,7 +142,7 @@ document.getElementById('tableGunnerClassXP').innerHTML = `<span style="color:re
 document.getElementById('results').innerHTML = `
 Total XP: <span style="color:red;">${total_xp.toLocaleString()}<br></span>
 Total Promotions: ${totalPromotions.toLocaleString()}<br>
-<img src="/files/Player_rank_icon.png">${(Badges-0.333).toFixed(2)}<br>
+<img src="/static/Player_rank_icon.png">${(Badges-0.333).toFixed(2)}<br>
 XP Per Hour: ${(xp_per_hr).toLocaleString()}
 `;
 });

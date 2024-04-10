@@ -5,7 +5,9 @@ from drgmissions_scraper_utils import (
     find_missing_timestamps,
     check_missions_keys,
     check_missions_length_complexity,
-    check_sum_of_missions
+    check_sum_of_missions,
+    validate_drgmissions,
+    yes_or_no
 )
 import json
 
@@ -13,6 +15,15 @@ if __name__ == '__main__':
     with open('drgmissionsgod.json', 'r') as f:
         DRG = json.load(f)
         f.close()
+
+    if yes_or_no('Run JSON patcher? Y/N: '):
+        patched = False
+        DRG, patched = validate_drgmissions(DRG, patched)
+        if patched:
+            with open('drgmissionsgod.json', 'w') as f:
+                json.dump(DRG, f)
+        input('Press enter to exit...')
+        quit()
 
     DRG = order_dictionary_by_date_FIRST_KEY_ROUNDING(DRG)
     DRG = reconstruct_dictionary(DRG)

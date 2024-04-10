@@ -12,13 +12,26 @@ from drgmissionslib import (
     class_xp_levels,
     Dwarf
     )
-import os
 import json
 from flask import Flask, request, send_file, jsonify
 import threading
 from io import BytesIO
 # import queue
 
+def create_mission_icons_rotators(DRG, tstamp, next_tstamp):
+    # seasons = ['s0', 's1','s2', 's3','s4', 's5']
+    seasons = ['s0', 's4']
+    threads = []
+    rendering_events = {}
+    biomes_lists = {}
+    
+    for season in seasons:
+        biomes_lists[season] = [[], []]
+        rendering_events[season] = threading.Event()
+        
+        threads.append(threading.Thread(target=rotate_biomes, args=(DRG, season, tstamp, next_tstamp, biomes_lists, rendering_events[season])))
+        
+    return threads, rendering_events, biomes_lists
 
 with open('drgmissionsgod.json', 'r') as f:
     DRG = json.load(f)
@@ -50,13 +63,8 @@ dailydeal_tstampthread = threading.Thread(target=rotate_timestamp_from_dict, arg
 dailydeal = []
 dailydealthread = threading.Thread(target=rotate_dailydeal, args=(AllTheDeals, dailydeal_tstamp, dailydeal))
 
-#Mission icons rotator
-rendering_event = threading.Event()
-#currybiomes = queue.Queue()
-#nextbiomes = queue.Queue()
-currybiomes = []
-nextbiomes = []
-biomesthread = threading.Thread(target=rotate_biomes, args=(DRG, tstamp, next_tstamp, nextbiomes, currybiomes, rendering_event))
+#Mission icons rotators
+biome_rotator_threads, rendering_events, biomes_lists = create_mission_icons_rotators(DRG, tstamp, next_tstamp)
 
 #Deep Dives rotator
 #DDs = queue.Queue()
@@ -68,15 +76,16 @@ ddsthread = threading.Thread(target=rotate_DDs, args=(DDs,))
 index_event = threading.Event()
 #index_Queue = queue.Queue()
 index_Queue = []
-index_thread = threading.Thread(target=rotate_index, args=(DRG, rendering_event, tstamp, next_tstamp, index_event, index_Queue))
+index_thread = threading.Thread(target=rotate_index, args=(DRG, rendering_events, tstamp, next_tstamp, index_event, index_Queue))
 
 #Listener that clears the rendering event 1.5 seconds before the 30 minute mission rollover interval so the homepage won't load for clients until the rotators are done rendering the mission icons
-wait_rotationthread = threading.Thread(target=wait_rotation, args=(rendering_event, index_event))
+wait_rotationthread = threading.Thread(target=wait_rotation, args=(rendering_events, index_event))
 
 def start_threads():
     tstampthread.start()
     
-    biomesthread.start()
+    for thread in biome_rotator_threads:
+        thread.start()
     
     ddsthread.start()
     
@@ -96,28 +105,30 @@ def start_threads():
     #dailydealthread.join()
     #index_thread.join()
     
-app = Flask(__name__, static_folder=f'{os.getcwd()}/files')
+app = Flask(__name__, static_folder='./static')
 
 #Homepage
 @app.route('/')
 def home():
-    index_event.wait()
-    return send_file(BytesIO(index_Queue[0]['index']), mimetype='text/html', etag=index_Queue[0]['etag'])
+    # return send_file(BytesIO(index_Queue[0]['index']), mimetype='text/html', etag=index_Queue[0]['etag'])
+    return send_file('./static/index.html')
 
 #Sends current mission icons, arg format f"?img={Biome.replace(' ', '-')}{mission['id']}" - see rotate_biomes in drgmissionslib.py
-@app.route('/png')
-def serve_img():
+@app.route('/png/<s>')
+def serve_img(s):
     try:
-        mission = currybiomes[0][request.args['img']]
+        index_event.wait()
+        mission = biomes_lists[s][0][0][request.args['img']]
         return send_file(BytesIO(mission['rendered_mission'].getvalue()), mimetype='image/png', etag=mission['etag'])
     except:
         return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
 
 #Sends upcoming mission icons, arg format f"?img={Biome.replace(' ', '-')}{mission['id']}" - see rotate_biomes in drgmissionslib.py
-@app.route('/upcoming_png')
-def serve_next_img():
+@app.route('/upcoming_png/<s>')
+def serve_next_img(s):
     try:
-        mission = nextbiomes[0][request.args['img']]
+        index_event.wait()
+        mission = biomes_lists[s][1][request.args['img']]
         return send_file(BytesIO(mission['rendered_mission'].getvalue()), mimetype='image/png', etag=mission['etag'])
     except:
         return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
@@ -219,14 +230,14 @@ def upload():
         if 'file' not in request.files:
             return "No file in the request", 400
         file_ = request.files['file']
-        cwd = os.getcwd()
         filename = file_.filename
         if filename.endswith('.json') or filename.endswith('.py'):
-            file_.save(f'{cwd}/{filename}')
+            file_.save(f'./{filename}')
+            file_.save(f'./static/json/{filename}')
         elif filename.endswith('icon.png'):
-            file_.save(f'{cwd}/img/{filename}')
+            file_.save(f'./static/img/{filename}')
         else:
-            file_.save(f'{cwd}/files/{filename}')
+            file_.save(f'./static/{filename}')
         response_data = {'message': 'Success'}
         return jsonify(response_data)
     except Exception:
