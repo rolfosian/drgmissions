@@ -1104,11 +1104,14 @@ def split_json(num_days, DRG):
     with open (f'./static/json/bulkmissions/{fname}.json', 'w') as f:
         json.dump(bs, f)
 
-def rotate_split_jsons(num_days, DRG):
+def rotate_split_jsons(num_days, DRG, index_event):
     split_json(num_days, DRG)
+    index_event.set()
     while True:
         sleep(num_days*86400-3600)
+        index_event.clear()
         split_json(num_days)
+        index_event.set()
 
 def sort_dictionary(dictionary, custom_order):
     sorted_dict = {}

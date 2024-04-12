@@ -105,16 +105,16 @@ def flatten_seasons(DRG):
 
     return god
 
-# with open('drgdailydeals.json', 'r') as f:
-#     DRG = json.load(f)
+with open('drgdailydeals.json', 'r') as f:
+    DRG = json.load(f)
 
-# shutil.rmtree('./static/json/dailydeals')
-# os.mkdir('./static/json/dailydeals')
+shutil.rmtree('./static/json/dailydeals')
+os.mkdir('./static/json/dailydeals')
 
-# for timestamp, deal in DRG.items():
-#     fname = timestamp.replace(':', '-')
-#     with open(f'./static/json/dailydeals/{fname}.json', 'w') as f:
-#         json.dump(deal, f)
+for timestamp, deal in DRG.items():
+    fname = timestamp.replace(':', '-')
+    with open(f'./static/json/dailydeals/{fname}.json', 'w') as f:
+        json.dump(deal, f)
         
 # today = datetime.today()
 # today_midnight = today.replace(hour=0, minute=0, second=0, microsecond=0)

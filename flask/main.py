@@ -2,7 +2,6 @@ from drgmissionslib import (
     select_timestamp_from_dict,
     render_xp_calc_index, 
     order_dictionary_by_date,
-    rotate_biomes,
     rotate_biomes_FLAT,
     rotate_dailydeal,
     rotate_DDs,
@@ -12,7 +11,6 @@ from drgmissionslib import (
     rotate_split_jsons,
     wait_rotation,
     flatten_seasons,
-    find_duplicates_in_string_list,
     class_xp_levels,
     Dwarf
     )
@@ -84,18 +82,22 @@ biomesthread = threading.Thread(target=rotate_biomes_FLAT, args=(DRG, tstamp, ne
 DDs = []
 ddsthread = threading.Thread(target=rotate_DDs, args=(DDs,))
 
+
+#Obsolete but kept the index event and rotation stuff just cause im not going to fix what isnt broken and i cant be bothered rewriting more stuff
 #Homepage HTML rotator, md5 hashes once to enable 304 on every 30 minute rollover and the home route doesn't need to render it again for every request and can just send copies
 #Clears index event and waits for rendering_event to be set before proceeding and then sets index event to enable homepage requests once more
+
 index_event = threading.Event()
 #index_Queue = queue.Queue()
-index_Queue = []
-index_thread = threading.Thread(target=rotate_index, args=(DRG, rendering_events, tstamp, next_tstamp, index_event, index_Queue))
+# index_Queue = []
+# index_thread = threading.Thread(target=rotate_index, args=(DRG, rendering_events, tstamp, next_tstamp, index_event, index_Queue))
 
+#Obsolete but kept the index event and rotation stuff just cause im not going to fix what isnt broken and i cant be bothered rewriting more stuff
 #Listener that clears the rendering event 1.5 seconds before the 30 minute mission rollover interval so the homepage won't load for clients until the rotators are done rendering the mission icons
 wait_rotationthread = threading.Thread(target=wait_rotation, args=(rendering_events, index_event))
 
 #json splitting mechanism for static site, set to update the ./static/json/bulkmissions folder every 4 days just so i dont have to look at a directory with 5000 files in it
-json_thread = threading.Thread(target=rotate_split_jsons, args=(4, DRG))
+json_thread = threading.Thread(target=rotate_split_jsons, args=(4, DRG, index_event))
 
 def start_threads():
     tstampthread.start()
@@ -111,7 +113,7 @@ def start_threads():
     dailydeal_tstampthread.start()
     dailydealthread.start()
     
-    index_thread.start()
+    # index_thread.start()
     
 #def join_threads():
     #tstampthread.join()
@@ -127,6 +129,7 @@ app = Flask(__name__, static_folder='./static')
 #Homepage
 @app.route('/')
 def home():
+    index_event.wait()
     # return send_file(BytesIO(index_Queue[0]['index']), mimetype='text/html', etag=index_Queue[0]['etag'])
     return send_file('./static/index.html')
 
@@ -134,7 +137,6 @@ def home():
 @app.route('/png')
 def serve_img():
     try:
-        index_event.wait()
         # mission = biomes_lists[s][0][0][request.args['img']]
         mission = currybiomes[0][request.args['img']]
         return send_file(BytesIO(mission['rendered_mission'].getvalue()), mimetype='image/png', etag=mission['etag'])
@@ -146,7 +148,6 @@ def serve_img():
 @app.route('/upcoming_png')
 def serve_next_img():
     try:
-        index_event.wait()
         # mission = biomes_lists[s][1][0][request.args['img']]
         mission = nextbiomes[0][request.args['img']]
         return send_file(BytesIO(mission['rendered_mission'].getvalue()), mimetype='image/png', etag=mission['etag'])
@@ -265,4 +266,4 @@ def upload():
 
 if __name__ == '__main__':
     start_threads()
-    app.run(threaded=True, host='127.0.0.1', debug=False, port=5000)
+    app.run(threaded=True, host='127.0.0.1', debug=True, port=5000)

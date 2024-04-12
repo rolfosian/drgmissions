@@ -114,6 +114,15 @@ var dailyDealResources = {
 };
 var dailyDealResourcesImages = {};
 
+var fontNamesAndUrls = {
+    'HammerBro101MovieBold-Regular' : '/static/img/HammerBro101MovieBold-Regular.ttf',
+    'Bungee-Regular' : '/static/img/Bungee-Regular.ttf',
+    'RiftSoft-Regular' : '/static/img/RiftSoft-Regular.ttf',
+    'BebasNeue' : '/static/img/BebasNeue-Regular.woff2'
+};
+
+
+
 async function preloadImages(imageObj, imageCache) {
     let promises = [];
     for (let key in imageObj) {
@@ -143,13 +152,6 @@ async function preloadImagesAll() {
     ]);
 }
 
-var fontNamesAndUrls = {
-    'HammerBro101MovieBold-Regular' : '/static/img/HammerBro101MovieBold-Regular.ttf',
-    'Bungee-Regular' : '/static/img/Bungee-Regular.ttf',
-    'RiftSoft-Regular' : '/static/img/RiftSoft-Regular.ttf',
-    'BebasNeue' : '/static/img/BebasNeue-Regular.woff2'
-};
-
 async function preloadFonts(){
     let promises = [];
     let fonts = [];
@@ -160,10 +162,23 @@ async function preloadFonts(){
         promises.push(promise);
         fonts.push(font);
     }
-
     await Promise.all(promises);
     for (let i = 0; i < fonts.length; i++) {
         document.fonts.add(fonts[i]);
+    }
+}
+
+async function preloadAll() {
+    try {
+        return await Promise.all([preloadImagesAll(), preloadFonts()])
+    } catch {
+        return new Promise((resolve, reject) => {
+            setTimeout(() => {
+                Promise.all([preloadImagesAll(), preloadFonts()])
+                    .then(() => resolve())
+                    .catch(() => preloadAll().then(() => resolve()));
+            }, 2000);
+        });
     }
 }
 
@@ -255,14 +270,29 @@ function roundTimeDown(datetimeString) {
     return newDatetime;
 }
 
-async function loadJSON(filePath) {
-    try {
-      const response = await fetch(filePath);
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      throw error;
+// async function loadJSON(filePath) {
+//     try {
+//       const response = await fetch(filePath);
+//       const data = await response.json();
+//       return data;
+//     } catch (error) {
+//       throw error;
+//     }
+// }
+
+async function loadJSON(filePath, maxRetries = 3, retryDelay = 2000) {
+    let retries = 0;
+    while (retries < maxRetries) {
+        try {
+            const response = await fetch(filePath);
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            retries++;
+            await new Promise(resolve => setTimeout(resolve, retryDelay));
+        }
     }
+    throw new Error(`Failed to load JSON data from ${filePath} after ${maxRetries} attempts.`);
 }
 
 function getDomainURL(){
@@ -669,6 +699,7 @@ function processDuplicates(duplicates, season, biomeDiv, biomeMissions) {
         } catch {
         }
     }
+    
     for (let i = 0; i < biomeMissions.length; i++) {
         let mission = biomeMissions[i];
 
@@ -680,19 +711,22 @@ function processDuplicates(duplicates, season, biomeDiv, biomeMissions) {
         if (season == 's0' && mission['season'] != 's0') {
             continue
         }
-
-        seen.forEach((codename, index) => {
-            try {
-                if (codename == biomeMissions[i-1]['CodeName']) {
-                    biomeMissions[i] = biomeMissions[i-1]
-                    biomeMissions[i-1] = mission
-                } else if (codename == biomeMissions[i+1]['CodeName']) {
-                    biomeMissions[i] = biomeMissions[i+1]
-                    biomeMissions[i+1] = mission
+        
+        if (season != 's0') {
+            seen.forEach((codename, index) => {
+                try {
+                    if (codename == biomeMissions[i-1]['CodeName']) {
+                        biomeMissions[i] = biomeMissions[i-1]
+                        biomeMissions[i-1] = mission
+                    } else if (codename == biomeMissions[i+1]['CodeName']) {
+                        biomeMissions[i] = biomeMissions[i+1]
+                        biomeMissions[i+1] = mission
+                    }
+                } catch {
                 }
-            } catch {
-            }
-        });
+            });
+        }
+
         biomeDiv.appendChild(mission['rendered_mission']);
     };
     biomeMissions = biomeMissionsOriginal; 

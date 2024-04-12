@@ -5,5 +5,5 @@ def post_worker_init(worker):
 worker_class = 'gthread'
 reload_extra_files = ['drgmissionsgod.json']
 reload = True
-threads = 12
+threads = 8
 bind = '127.0.0.1:5000'
