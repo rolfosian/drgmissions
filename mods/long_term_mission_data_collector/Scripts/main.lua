@@ -46,60 +46,65 @@ function Main()
     local total_increments = math.floor(diff_seconds / 1800)
     total_increments = total_increments + 1
 
+    local seasons = {'s0', 's4'}
+
     -- Initialize Table
     local god = {}
     local count = 0
     local missionscount = 0
+    local timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
     -- Loop for the increments
     for i = 1, total_increments do
         local master = {}
-        master['Biomes'] = {}
-        -- Get GeneratedMission UObjects
-        local b = nil
-        local missions = utils.GetMissions()
-        if missions then
-            local timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
-            master['timestamp'] = timestamp
-            for index, mission in pairs(missions) do
-                b = utils.GetBiome(mission)
-                if not utils.HasKey(master['Biomes'], b) then
-                    master['Biomes'][b] = {}
+        for _, season in pairs(seasons) do
+            master[season] = {}
+            master[season]['Biomes'] = {}
+            -- Get GeneratedMission UObjects
+            local b = nil
+            local missions = utils.GetMissions(season)
+            if missions then
+                timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
+                master[season]['timestamp'] = timestamp
+                for index, mission in pairs(missions) do
+                    b = utils.GetBiome(mission)
+                    if not utils.HasKey(master[season]['Biomes'], b) then
+                        master[season]['Biomes'][b] = {}
+                    end
+                    missionscount = utils.UnpackStandardMission(mission, master, b, missionscount, season)
                 end
-                missionscount = utils.UnpackStandardMission(mission, master, b, missionscount)
             end
-            
-            god[timestamp] = master
-
-            --Get 'current' time
-            local currytime = os.date("%Y-%m-%d %H:%M:%S")
-            local year, month, day, hour, minute, second = currytime:match("(%d+)-(%d+)-(%d+) (%d+):(%d+):(%d+)")
-            minute = tonumber(minute)
-            -- Round down to the nearest half-hour
-            if minute >= 30 then
-                minute = 30
-            else
-                minute = 0
-            end
-            -- Set the second to 1
-            second = 1
-            currytime = string.format("%04d-%02d-%02d %02d:%02d:%02d", year, month, day, hour, minute, second)
-            -- Increment currytime forward by 30 minutes
-            local newtime = utils.IncrementDatetime(currytime)
-            newtime = utils.Split(newtime, ' ')
-            -- Remove ReverseDateFormat function and just use newtime[1] if your system date format is YY-MM-DD
-            local command = 'date '..utils.ReverseDateFormat(newtime[1])..' & time '..newtime[2]
-            -- Set time forward 30 minutes
-            print(command..'\n')
-            count = count + 1
-            print(tostring(count)..'\n')
-            os.execute(command)
-
-            socket.sleep(1.3)
         end
+        god[timestamp] = master
+        --Get 'current' time
+        local currytime = os.date("%Y-%m-%d %H:%M:%S")
+        local year, month, day, hour, minute, second = currytime:match("(%d+)-(%d+)-(%d+) (%d+):(%d+):(%d+)")
+        minute = tonumber(minute)
+        -- Round down to the nearest half-hour
+        if minute >= 30 then
+            minute = 30
+        else
+            minute = 0
+        end
+        -- Set the second to 1
+        second = 1
+        currytime = string.format("%04d-%02d-%02d %02d:%02d:%02d", year, month, day, hour, minute, second)
+        -- Increment currytime forward by 30 minutes
+        local newtime = utils.IncrementDatetime(currytime)
+        newtime = utils.Split(newtime, ' ')
+        -- Remove ReverseDateFormat function and just use newtime[1] if your system date format is YY-MM-DD
+        local command = 'date '..utils.ReverseDateFormat(newtime[1])..' & time '..newtime[2]
+        -- Set time forward 30 minutes
+        print(command..'\n')
+        count = count + 1
+        print(tostring(count)..'\n')
+        os.execute(command)
+
+        socket.sleep(1.4)
+        
     end
 
     god = json.encode(god)
-    local file = io.open('drgmissionsgod.json', 'w')
+    local file = io.open('redonemissions.json', 'w')
     if file then
         file:write(god)
         file:close()

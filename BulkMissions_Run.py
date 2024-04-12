@@ -33,8 +33,7 @@ def main():
     user_date = user_input_set_target_date(current_time)
             
     target_date_format = user_date.strftime("    local target_date = os.time{year=%Y, month=%m, day=%d, hour=%H, min=%M, sec=%S}\n")
-    # desired_season_format = f'    local desired_season = {desired_season}\n'
-    #Set the target date and desired season in the lua script
+    #Set the target date in the lua script
     with open('./mods/long_term_mission_data_collector/Scripts/main.lua', 'r') as f:
         main = f.readlines()
         f.close()
@@ -43,9 +42,6 @@ def main():
         if line.startswith('    local target_date'):
             line = line.replace(line, target_date_format)
             main_lines.append(line)
-        # elif line.startswith('    local desired_season'):
-        #     line = line.replace(line, desired_season_format)
-        #     main_lines.append(line)
         else:
             main_lines.append(line)
     with open('./mods/long_term_mission_data_collector/Scripts/main.lua', 'w') as f:
@@ -111,23 +107,19 @@ def main():
         DRG = re.sub(r':\d{2}Z', ':00Z', DRG)
         DRG = json.loads(DRG)
         f.close()
-        
-    for timestamp, dict in DRG.items():
-        DRG[timestamp]['timestamp'] = timestamp
 
     DRG = order_dictionary_by_date_FIRST_KEY_ROUNDING(DRG)
     DRG = reconstruct_dictionary(DRG)
     with open('drgmissionsgod.json', 'w') as f:
-        f.write(json.dumps(DRG))
-        f.close()
+        json.dump(DRG, f)
     
     #Validate JSON
     patched = False
     DRG, patched = validate_drgmissions(DRG, patched)
     if patched:
         with open('drgmissionsgod.json', 'w') as f:
-            f.write(json.dumps(DRG))
-            f.close()
+            json.dump(DRG, f)
+
     return DRG
             
 if __name__ == '__main__':
