@@ -167,6 +167,10 @@ async function preloadFonts(){
     }
 }
 
+function inList(myList, itemToCheck) {
+    return myList.indexOf(itemToCheck) !== -1;
+}
+
 function replaceCharactersAtIndices(inputString, replacements) {
     let result = inputString;
     replacements.forEach(([index, newCharacter]) => {
@@ -310,7 +314,7 @@ async function getDeepDiveData() {
     return data
 }
 
-function renderMission(m_d, six) {
+function renderMission(m_d) {
     const div = document.createElement('div');
     div.classList.add('mission-hover-zoom')
     div.classList.add('mission')
@@ -428,7 +432,7 @@ function resizeCanvas(div, canvas, x, y) {
     div.style.height = `${newHeight.toString()}px`;
 }
 
-async function renderBiomes(dictionary) {
+async function renderBiomes_(dictionary) {
     let renderedBiomes = {};
 
     for (var season in dictionary) {
@@ -440,8 +444,6 @@ async function renderBiomes(dictionary) {
             let biomeMissions = Biomes[biome];
             let biome1 = [];
 
-            let six = biomeMissions.length > 5;
-
             for (let i = 0; i < biomeMissions.length; i++) {
                 let mission = biomeMissions[i];
                 let mission1 = {};
@@ -449,7 +451,7 @@ async function renderBiomes(dictionary) {
                 mission1['CodeName'] = mission['CodeName'];
                 mission1['id'] = mission['id'];
 
-                let mission_icon_canvas_div = renderMission(mission, six);
+                let mission_icon_canvas_div = renderMission(mission);
                 mission1['rendered_mission'] = mission_icon_canvas_div;
 
                 biome1.push(mission1);
@@ -462,13 +464,59 @@ async function renderBiomes(dictionary) {
     return renderedBiomes;
 }
 
+async function renderBiomesFlat(dictionary) {
+    let renderedBiomes = {};
+
+    var Biomes = dictionary['Biomes']
+    renderedBiomes['Biomes'] = {}
+
+    for (let biome in Biomes) {
+        let biomeMissions = Biomes[biome];
+        let biome1 = [];
+
+        for (let i = 0; i < biomeMissions.length; i++) {
+            let mission = biomeMissions[i];
+            let mission1 = {};
+
+            mission1['CodeName'] = mission['CodeName'];
+            mission1['id'] = mission['id'];
+            mission1['season'] = mission['season']
+            // mission_icon_canvas_div.name = biome+mission1['CodeName']+mission1['season']
+
+            let mission_icon_canvas_div = renderMission(mission);
+            mission1['rendered_mission'] = mission_icon_canvas_div;
+
+            // biome1[mission_icon_canvas_div.name] = mission1
+            biome1.push(mission1);
+        }
+
+        renderedBiomes['Biomes'][biome] = biome1;
+        };
+    return renderedBiomes;
+}
+async function renderBiomes(dictionary) {
+    if (dictionary.hasOwnProperty('s0')) {
+        return await renderBiomes_(dictionary)
+    } else {
+        return await renderBiomesFlat(dictionary)
+    }
+}
+
 async function getBiomes() {
+    if (biomes) {
+        currentBiomes = biomes[1]
+        var dictionary_ = await getUpcomingMissionData();
+        var upcomingBiomes = await renderBiomes(dictionary_);
+        return [currentBiomes, upcomingBiomes];
+    } else {
     var dictionary = await getCurrentMissionData();
     var currentBiomes = await renderBiomes(dictionary);
     var dictionary_ = await getUpcomingMissionData();
     var upcomingBiomes = await renderBiomes(dictionary_);
-
     return [currentBiomes, upcomingBiomes];
+    }
+
+    
 }
 
 function changeSeason(Biomes, season) {
@@ -535,7 +583,7 @@ function arrayDailyDeal(dailyDeal) {
     dailyDealDiv.appendChild(dailyDealCanvas)
 }
 
-function arrayBiomes(Biomes, season) {
+function arrayBiomes_(Biomes, season) {
     var currentBiomes = Biomes[0][season]['Biomes']
     var nextBiomes = Biomes[1][season]['Biomes']
     
@@ -577,6 +625,146 @@ function arrayBiomes(Biomes, season) {
             };
         };
     };
+}
+
+function findDuplicates(dictList, ignoreKeys) {
+    const duplicates = [];
+    for (let i = 0; i < dictList.length; i++) {
+        const dict1 = dictList[i];
+        for (let j = i + 1; j < dictList.length; j++) {
+            const dict2 = dictList[j];
+            let isEqual = true;
+            for (const key in dict1) {
+                if (!ignoreKeys.includes(key)) {
+                    if (dict1[key] !== dict2[key]) {
+                        isEqual = false;
+                        break;
+                    }
+                }
+            }
+            if (isEqual) {
+                duplicates.push([dict1, dict2]);
+            }
+        }
+    }
+    if (duplicates.length === 0) {
+        return false;
+    }
+    return duplicates;
+}
+function processDuplicates(duplicates, season, biomeDiv, biomeMissions) {
+    let skip = [];
+    let seen = [];
+    let biomeMissionsOriginal = [...biomeMissions];
+
+    for (let i = 0; i < duplicates.length; i++) {
+        let len = duplicates[i].length
+        try {
+            for (let j = 0; j < len; j++) {
+                let mission = duplicates[i][j]
+                if (mission['season'] != season) {
+                    skip.push(`${mission['id']}${mission['season']}`)
+                }
+            }
+        } catch {
+        }
+    }
+    for (let i = 0; i < biomeMissions.length; i++) {
+        let mission = biomeMissions[i];
+
+        if (inList(skip, `${mission['id']}${mission['season']}`)) {
+            seen.push(mission['CodeName'])
+            continue;
+        }
+
+        if (season == 's0' && mission['season'] != 's0') {
+            continue
+        }
+
+        seen.forEach((codename, index) => {
+            try {
+                if (codename == biomeMissions[i-1]['CodeName']) {
+                    biomeMissions[i] = biomeMissions[i-1]
+                    biomeMissions[i-1] = mission
+                } else if (codename == biomeMissions[i+1]['CodeName']) {
+                    biomeMissions[i] = biomeMissions[i+1]
+                    biomeMissions[i+1] = mission
+                }
+            } catch {
+            }
+        });
+        biomeDiv.appendChild(mission['rendered_mission']);
+    };
+    biomeMissions = biomeMissionsOriginal; 
+}
+function processSeasonBiome(duplicates, season, biomeDiv, biomeMissions) {
+    if (duplicates) {
+        processDuplicates(duplicates, season, biomeDiv, biomeMissions);
+    } else {
+        for (let i = 0; i < biomeMissions.length; i++) {
+            let mission = biomeMissions[i];
+            if (season == 's0') {
+                if (mission['season'] != 's0') {
+                    // console.log(mission['CodeName'])
+                    continue
+                }
+            }
+            biomeDiv.appendChild(mission['rendered_mission']);
+        }
+    }
+}
+
+function arrayBiomesFlat(Biomes, season) {
+    let currentBiomes = Biomes[0]['Biomes']
+    let nextBiomes = Biomes[1]['Biomes']
+    let biomeMissions;
+    let duplicates;
+    
+    let biomes_ = ['Crystalline Caverns', 'Glacial Strata', 'Radioactive Exclusion Zone', 'Fungus Bogs', 'Dense Biozone', 'Salt Pits', 'Sandblasted Corridors', 'Magma Core', 'Azure Weald', 'Hollow Bough'];
+    for (let i_ = 0; i_ < biomes_.length; i_++) {
+        let biome = biomes_[i_];
+
+        let biomeDiv = document.getElementById(biome);
+        while(biomeDiv.hasChildNodes()) {
+            biomeDiv.removeChild(biomeDiv.lastChild);
+        };
+        let nextBiomeDiv = document.getElementById(`next${biome}`)
+        while(nextBiomeDiv.hasChildNodes()) {
+            nextBiomeDiv.removeChild(nextBiomeDiv.lastChild);
+        };
+
+        if (!(biome in currentBiomes)) {
+            let spanElement = document.createElement("span");
+            spanElement.className = "scanners";
+            spanElement.textContent = "// SCANNERS OUT OF RANGE \\\\";
+            biomeDiv.appendChild(spanElement)
+        } else {
+            biomeMissions = currentBiomes[biome];
+            duplicates = findDuplicates(biomeMissions, ignoreKeys=['id', 'season', 'rendered_mission'])
+            processSeasonBiome(duplicates, season, biomeDiv, biomeMissions)
+        }
+
+        if (!(biome in nextBiomes)) {
+            let spanElement = document.createElement("span");
+            spanElement.className = "scanners";
+            spanElement.textContent = "// SCANNERS OUT OF RANGE \\\\";
+            nextBiomeDiv.appendChild(spanElement)
+        } else {
+            biomeMissions = nextBiomes[biome];
+            duplicates = findDuplicates(biomeMissions, ignoreKeys=['id', 'season', 'rendered_mission'])
+            processSeasonBiome(duplicates, season, nextBiomeDiv, biomeMissions)
+        };
+    };
+}
+
+function arrayBiomes(Biomes, season) {
+    if (Biomes[0].hasOwnProperty('s0')) {
+        arrayBiomes_(Biomes, season)
+        equalizeGridItems()
+    } else {
+        arrayBiomesFlat(Biomes, season)
+        equalizeGridItems()
+    }
 }
 
 function addShadowedTextToImage(canvas, texts, textColor, shadowColor, fontSize) {
@@ -817,7 +1005,8 @@ async function arrayDeepDives(deepDiveData) {
             stageDiv = renderDeepDiveStage(stage, stageCount);
             deepDiveEliteDiv.appendChild(stageDiv);
         };
-    } catch {
+    } catch (error) {
+        console.log(error)
         // deepDiveData is undefined
     }
 }
@@ -945,7 +1134,63 @@ function renderDailyDeal(dealDict) {
     div.appendChild(canvas)
     return div
 }
+function mostCommonNumber(arr) {
+    const filteredArr = arr.filter(num => num !== 0);
+    const countMap = filteredArr.reduce((map, num) => (map.set(num, (map.get(num) || 0) + 1), map), new Map());
+    return [...countMap.entries()].reduce((a, b) => b[1] > a[1] ? b : a, [0, 0])[0];
+}
+function checkOverflowAndFixScanners(containers) {
+    let overflowing_containers = [];
+    let scanners = [];
+    let heights = [];
 
+    containers.forEach(container => {
+        let children_ = container.children;
+        for (var i = 0; i < children_.length; i++) {
+            if (children_[i].tagName.toLowerCase() === 'div') {
+                if (children_[i].children.length == 1) {
+                    scanners.push(container);
+                }
+            }
+        }
+    });
+    containers.forEach(container => {
+        container.style.height = "auto"
+        let height = container.offsetHeight
+        if (height != 0) {
+            container.style.height = `${height-10}px`
+            if (!(inList(scanners, container))) {
+                heights.push(height)
+            }
+        }
+    });
+
+    scanners.forEach(container => {
+        container.style.height = `${mostCommonNumber(heights)-10}px`
+    })
+
+    containers.forEach(container => {
+      if (container.scrollHeight > container.clientHeight+10) {
+        overflowing_containers.push(container);
+      }
+    });
+    if (overflowing_containers.length != 0) {
+        overflowing_containers.forEach(container => {
+            container.style.height = "auto";
+        });
+    }
+}
+function equalizeGridItems() {
+    if (window.matchMedia("(min-width: 1440px)").matches) {
+        const gridItems = document.querySelectorAll('.biome-container');
+        checkOverflowAndFixScanners(gridItems)
+    }
+}
+window.addEventListener('resize', function(event) {
+    if (initialized) {
+        equalizeGridItems()
+    }
+});
 async function initialize() {
     let biomes_;
     let ddData_;
@@ -1214,23 +1459,23 @@ async function initialize() {
     let mainContent = document.getElementById('mainContent')
     mainContent.innerHTML = html
 
-    let seasonBoxValues = {
-        's0' : 'No Season',
-        's1': 'Season 1',
-        's2': 'Season 2', 
-        's3': 'Season 3', 
-        's4': 'Season 4', 
-        's5': 'Season 5'
-    }
-    let seasonBox = document.getElementById('season')
-    for (let season in seasonBoxValues) {
-        if (season in biomes_[0]) {
-            let option = document.createElement('option');
-            option.value = season;
-            option.textContent = seasonBoxValues[season];
-            seasonBox.appendChild(option);
-        }
-    }
+    // let seasonBoxValues = {
+    //     's0' : 'No Season',
+    //     's1': 'Season 1',
+    //     's2': 'Season 2', 
+    //     's3': 'Season 3', 
+    //     's4': 'Season 4', 
+    //     's5': 'Season 5'
+    // }
+    // let seasonBox = document.getElementById('season')
+    // for (let season in seasonBoxValues) {
+    //     if (season in biomes_[0]) {
+    //         let option = document.createElement('option');
+    //         option.value = season;
+    //         option.textContent = seasonBoxValues[season];
+    //         seasonBox.appendChild(option);
+    //     }
+    // }
 
     return [biomes_, dailyDeal_, ddData_]
 }

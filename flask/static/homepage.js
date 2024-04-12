@@ -184,6 +184,7 @@ function toggleCollapse() {
         currentButton.textContent = "Click here to see upcoming missions";
         document.title = "Current Missions from the Hoxxes IV Mission Terminal";
     }
+    equalizeGridItems()
 };
 
 function toggleBackground() {
@@ -201,19 +202,6 @@ function toggleBackground() {
         backgroundbutton.textContent = "Show background";
         video.pause();
     }
-};
-
-function equalizeGridItems() {
-if (window.matchMedia("(min-width: 1440px)").matches) {
-    const gridItems = document.querySelectorAll('.biome-container');
-    let maxHeight = 0;
-    gridItems.forEach(item => {
-    maxHeight = Math.max(maxHeight, item.offsetHeight) - 7;
-    });
-    gridItems.forEach(item => {
-    item.style.height = `${maxHeight}px`;
-    });
-}
 };
 
 function toggleButtons() {
@@ -257,7 +245,6 @@ function onLoad() {
     initialized = true
 
     document.querySelector('p.loading').style.display = 'none';
-    equalizeGridItems();
     document.getElementById("current").classList.toggle("collapsed");
     toggleCollapse();
     document.getElementById("upcoming").style.visibility = 'visible';

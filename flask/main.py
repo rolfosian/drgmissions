@@ -3,6 +3,7 @@ from drgmissionslib import (
     render_xp_calc_index, 
     order_dictionary_by_date,
     rotate_biomes,
+    rotate_biomes_FLAT,
     rotate_dailydeal,
     rotate_DDs,
     rotate_index,
@@ -10,6 +11,8 @@ from drgmissionslib import (
     rotate_timestamp_from_dict,
     rotate_split_jsons,
     wait_rotation,
+    flatten_seasons,
+    find_duplicates_in_string_list,
     class_xp_levels,
     Dwarf
     )
@@ -19,26 +22,28 @@ import threading
 from io import BytesIO
 # import queue
 
-def create_mission_icons_rotators(DRG, tstamp, next_tstamp):
-    # seasons = ['s0', 's1','s2', 's3','s4', 's5']
-    seasons = ['s0', 's4']
-    threads = []
-    rendering_events = {}
-    biomes_lists = {}
+# def create_mission_icons_rotators(DRG, tstamp, next_tstamp):
+#     # seasons = ['s0', 's1','s2', 's3','s4', 's5']
+#     seasons = ['s0', 's4']
+#     threads = []
+#     rendering_events = {}
+#     biomes_lists = {}
     
-    for season in seasons:
-        biomes_lists[season] = [[], []]
-        rendering_events[season] = threading.Event()
+#     for season in seasons:
+#         biomes_lists[season] = [[], []]
+#         rendering_events[season] = threading.Event()
         
-        threads.append(threading.Thread(target=rotate_biomes, args=(DRG, season, tstamp, next_tstamp, biomes_lists, rendering_events[season])))
+#         threads.append(threading.Thread(target=rotate_biomes, args=(DRG, season, tstamp, next_tstamp, biomes_lists, rendering_events[season])))
         
-    return threads, rendering_events, biomes_lists
+#     return threads, rendering_events, biomes_lists
 
 with open('drgmissionsgod.json', 'r') as f:
     DRG = json.load(f)
     f.close()
     #Remove past timestamps from memory
     select_timestamp_from_dict(DRG, False)
+    
+    DRG = flatten_seasons(DRG)
 
 with open('drgdailydeals.json', 'r') as f:
     AllTheDeals = f.read()
@@ -65,7 +70,14 @@ dailydeal = []
 dailydealthread = threading.Thread(target=rotate_dailydeal, args=(AllTheDeals, dailydeal_tstamp, dailydeal))
 
 #Mission icons rotators
-biome_rotator_threads, rendering_events, biomes_lists = create_mission_icons_rotators(DRG, tstamp, next_tstamp)
+# biome_rotator_threads, rendering_events, biomes_lists = create_mission_icons_rotators(DRG, tstamp, next_tstamp)
+
+rendering_events = {'e' : threading.Event()}
+#currybiomes = queue.Queue()
+#nextbiomes = queue.Queue()
+currybiomes = []
+nextbiomes = []
+biomesthread = threading.Thread(target=rotate_biomes_FLAT, args=(DRG, tstamp, next_tstamp, nextbiomes, currybiomes, rendering_events))
 
 #Deep Dives rotator
 #DDs = queue.Queue()
@@ -83,17 +95,17 @@ index_thread = threading.Thread(target=rotate_index, args=(DRG, rendering_events
 wait_rotationthread = threading.Thread(target=wait_rotation, args=(rendering_events, index_event))
 
 #json splitting mechanism for static site, set to update the ./static/json/bulkmissions folder every 7 days just so i dont have to look at a directory with 5000 files in it
-# json_thread = threading.Thread(target=rotate_split_jsons, args=(7))
+# json_thread = threading.Thread(target=rotate_split_jsons, args=(7, DRG))
 
 def start_threads():
     tstampthread.start()
     
-    for thread in biome_rotator_threads:
-        thread.start()
+    # for thread in biome_rotator_threads:
+    #     thread.start()
+    biomesthread.start()
     
     ddsthread.start()
     # json_thread.start()
-    
     wait_rotationthread.start()
     
     dailydeal_tstampthread.start()
@@ -119,21 +131,26 @@ def home():
     return send_file('./static/index.html')
 
 #Sends current mission icons, arg format f"?img={Biome.replace(' ', '-')}{mission['id']}" - see rotate_biomes in drgmissionslib.py
-@app.route('/png/<s>')
-def serve_img(s):
+#Sends current mission icons, <s> format = s0 or s4; arg format f"?img={Biome.replace(' ', '-')}{mission['CodeName'].replace(' ', '-')}{mission['season']}" - see rotate_biomes_FLAT in drgmissionslib.py
+@app.route('/png')
+def serve_img():
     try:
         index_event.wait()
-        mission = biomes_lists[s][0][0][request.args['img']]
+        # mission = biomes_lists[s][0][0][request.args['img']]
+        mission = currybiomes[0][request.args['img']]
         return send_file(BytesIO(mission['rendered_mission'].getvalue()), mimetype='image/png', etag=mission['etag'])
-    except:
+    except Exception as e:
+        print(e)
         return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
 
 #Sends upcoming mission icons, <s> format = s0 or s4; arg format f"?img={Biome.replace(' ', '-')}{mission['id']}" - see rotate_biomes in drgmissionslib.py
-@app.route('/upcoming_png/<s>')
-def serve_next_img(s):
+#Sends upcoming mission icons, <s> format = s0 or s4; arg format f"?img={Biome.replace(' ', '-')}{mission['CodeName'].replace(' ', '-')}{mission['season']}" - see rotate_biomes_FLAT in drgmissionslib.py
+@app.route('/upcoming_png')
+def serve_next_img():
     try:
         index_event.wait()
-        mission = biomes_lists[s][1][0][request.args['img']]
+        # mission = biomes_lists[s][1][0][request.args['img']]
+        mission = nextbiomes[0][request.args['img']]
         return send_file(BytesIO(mission['rendered_mission'].getvalue()), mimetype='image/png', etag=mission['etag'])
     except:
         return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
@@ -250,4 +267,4 @@ def upload():
 
 if __name__ == '__main__':
     start_threads()
-    app.run(threaded=True, host='127.0.0.1', debug=True, port=5000)
+    app.run(threaded=True, host='127.0.0.1', debug=False, port=5000)

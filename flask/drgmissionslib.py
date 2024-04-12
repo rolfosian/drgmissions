@@ -770,6 +770,24 @@ def render_biomes(Biomes):
         rendered_biomes[biome] = biome1
     return rendered_biomes
 
+def render_biomes_FLAT(Biomes):
+    rendered_biomes = {}
+    for biome, missions in Biomes.items():
+        biome1 = []
+        if len(missions) > 5:
+            six = True
+        else:
+            six = False
+        for mission in missions:
+            mission1 = {}
+            mission1['CodeName'] = mission['CodeName']
+            mission1['season'] = mission['season']
+            mission1['id'] = mission['id']
+            mission1['rendered_mission'] = render_mission(mission, six)
+            biome1.append(mission1)
+        rendered_biomes[biome] = biome1
+    return rendered_biomes
+
 def render_deepdives(DeepDives):
     rendered_deepdives = {}
     
@@ -887,6 +905,7 @@ def rotate_biomes(DRG, season, tstamp_Queue, next_tstamp_Queue, biomes_lists, re
                 mission0['rendered_mission'] = mission_icon
                 Biomes1[biome1+str(mission['id'])] = mission0
         return timestamp, Biomes1
+    
     while len(tstamp_Queue) == 0 and len(next_tstamp_Queue) == 0:
         continue
     biomes_Queue = biomes_lists[season][0]
@@ -918,6 +937,89 @@ def rotate_biomes(DRG, season, tstamp_Queue, next_tstamp_Queue, biomes_lists, re
             del NextBiomes
         sleep(0.25)
 
+def find_duplicates_in_string_list(string_list):
+    for i, str1 in enumerate(string_list):
+        for str2 in string_list[i+1:]:
+            if str1[:-2] == str2[:-2]:
+                return True
+    return False
+def rotate_biomes_FLAT(DRG, tstamp_Queue, next_tstamp_Queue, nextbiomes_Queue, biomes_Queue, rendering_events):
+    #order = ['Glacial Strata', 'Crystalline Caverns', 'Salt Pits', 'Magma Core', 'Azure Weald', 'Sandblasted Corridors', 'Fungus Bogs', 'Radioactive Exclusion Zone', 'Dense Biozone', 'Hollow Bough']
+    #thread pools for saving and hashing PIL objects - microscopic gains. #TODO multiprocessing pools
+    #def process_mission(mission):
+        #mission0 = {}
+        #mission0['CodeName'] = mission['CodeName']
+        #mission_icon = BytesIO()
+        #mission['rendered_mission'].save(mission_icon, format='PNG')
+        #mission_icon.seek(0)
+        #etag = hashlib.md5(mission_icon.getvalue()).hexdigest()
+        #mission0['etag'] = etag
+        #mission0['rendered_mission'] = mission_icon
+        #return mission0
+    #def wrap_missions_executor(missions):
+        #mission_futures = []
+        #with ThreadPoolExecutor() as executor:
+            #for mission in missions:
+                #future = executor.submit(process_mission, mission)
+                #mission_futures.append(future)
+            #results = [future.result() for future in mission_futures]
+            #return results
+    #def wrap_biomes_executor(Biomes):
+        #with ThreadPoolExecutor() as executor:
+            #biome_futures = {}
+            #for biome, missions in Biomes.items():
+                #future = executor.submit(wrap_missions_executor, missions)
+                #biome_futures[biome] = future
+            #results = {biome: future.result() for biome, future in biome_futures.items()}
+            #return results
+    #def array_biomes(Biomes, timestamp):
+        #Biomes1 = wrap_biomes_executor(Biomes)
+        #return timestamp, Biomes1
+    def array_biomes(Biomes, timestamp):
+        Biomes1 = {}
+        for biome in Biomes.keys():
+            biome1 = biome.replace(' ', '-')
+            Biomes1[biome1] = {}
+            for mission in Biomes[biome]:
+                mission0 = {}
+                mission0['CodeName'] = mission['CodeName']
+                mission_icon = BytesIO()
+                mission['rendered_mission'].save(mission_icon, format='PNG')
+                mission['rendered_mission'].close()
+                mission_icon.seek(0)
+                etag = md5(mission_icon.getvalue()).hexdigest()
+                mission0['etag'] = etag
+                mission0['rendered_mission'] = mission_icon
+                Biomes1[biome1+mission['CodeName'].replace(' ', '-')+mission['season']] = mission0
+        return timestamp, Biomes1
+    
+    while len(tstamp_Queue) == 0 and len(next_tstamp_Queue) == 0:
+        continue
+    Biomes = render_biomes_FLAT(DRG[tstamp_Queue[0]]['Biomes'])
+    _, Biomes = array_biomes(Biomes, tstamp_Queue[0])
+    biomes_Queue.append(Biomes)
+    NextBiomes = render_biomes_FLAT(DRG[next_tstamp_Queue[0]]['Biomes'])
+    timestamp_next, NextBiomes = array_biomes(NextBiomes, next_tstamp_Queue[0])
+    nextbiomes_Queue.append(NextBiomes)
+    for event in rendering_events:
+        rendering_events[event].set()
+    del Biomes
+    del NextBiomes
+    del _
+    while True:
+        applicable_timestamp = next_tstamp_Queue[0]
+        if applicable_timestamp != timestamp_next:
+            NextBiomes = render_biomes_FLAT(DRG[applicable_timestamp]['Biomes'])
+            timestamp_next, NextBiomes = array_biomes(NextBiomes, applicable_timestamp)
+            biomes_Queue.append(nextbiomes_Queue[0])
+            biomes_Queue.pop(0)
+            nextbiomes_Queue.append(NextBiomes)
+            nextbiomes_Queue.pop(0)
+            for event in rendering_events:
+                rendering_events[event].set()
+            del NextBiomes
+        sleep(0.25)
+
 def rotate_DDs(DDs):
     def sort_dd_json_list_by_timestamp(json_pattern):
         json_list = glob.glob(json_pattern)
@@ -929,7 +1031,7 @@ def rotate_DDs(DDs):
         json_list = sort_dd_json_list_by_timestamp(json_pattern)
         if current_json != json_list[0]:
             current_json = json_list[0]
-            with open(f'{json_list[0]}', 'r') as f:
+            with open(f'./{json_list[0]}', 'r') as f:
                 dds = json.load(f)
             if len(DDs) == 0:
                 DDs.append(dds)
@@ -978,31 +1080,33 @@ def rotate_DDs(DDs):
 #----------------------------------------------------------------
 #UTILS
 
-def extract_days_from_json(json_file_path, num_days):
-    with open(json_file_path, 'r') as f:
-        data = json.load(f)
+def extract_days_from_json(data, num_days):
     timestamps = {datetime.fromisoformat(key.replace('Z', '')): value for key, value in data.items()}
-    current_datetime = datetime.now()
+    current_datetime = datetime.utcnow()
 
     days_from_now = current_datetime + timedelta(days=num_days)
-    relevant_days = {key+'Z': value for key, value in timestamps.items() if current_datetime <= key < days_from_now}
+    relevant_days = {f"{str(key).replace(' ', 'T')}Z": value for key, value in timestamps.items() if current_datetime <= key < days_from_now}
     return relevant_days
 
-def split_json(num_days):
+def split_json(num_days, DRG):
     shutil.rmtree('./static/json/bulkmissions')
     os.mkdir('./static/json/bulkmissions')
-    DRG = extract_days_from_json('drgmissionsgod.json', num_days)
+    DRG = extract_days_from_json(DRG, num_days)
     
     for timestamp, dictionary in (DRG.items()):
         fname = timestamp.replace(':','-')
         with open(f'./static/json/bulkmissions/{fname}.json', 'w') as f:
-            f.write(json.dumps(dictionary))
-            f.close()
+            json.dump(dictionary, f)
 
-def rotate_split_jsons(num_days):
-    split_json(num_days)
+    bs = DRG[round_time_down(datetime.utcnow().isoformat())]
+    fname = round_time_down(datetime.utcnow().isoformat()).replace(':', '-')
+    with open (f'./static/json/bulkmissions/{fname}.json', 'w') as f:
+        json.dump(bs, f)
+
+def rotate_split_jsons(num_days, DRG):
+    split_json(num_days, DRG)
     while True:
-        time.sleep(num_days*23)
+        sleep(num_days*23)
         split_json(num_days)
 
 def sort_dictionary(dictionary, custom_order):
@@ -1134,6 +1238,86 @@ def rotate_timestamp_from_dict(dictionary, tstamp_Queue, next_):
             timestamp = tstamp_Queue[0]
         sleep(0.25)
 
+def round_time_down(datetime_string):
+    datetime_minutes = int(datetime_string[14:16])
+    if datetime_minutes >= 30:
+        new_datetime = datetime_string[:14] + '30:00Z'
+    else:
+        new_datetime = datetime_string[:14] + '00:00Z'
+    return new_datetime
+def flatten_seasons(DRG):
+    combined_biomes = {}
+    missions_count = 0
+    missions_per_season = {}
+    for season in list(DRG.items())[1][1].keys():
+        missions_per_season[season] = 0
+        
+    for timestamp, seasons_dict in DRG.items():
+        combined_biomes[timestamp] = {}
+        combined_biomes[timestamp]['timestamp'] = timestamp
+        combined_biomes[timestamp]['Biomes'] = {biome : [] for biome in seasons_dict['s0']['Biomes'].keys()}
+        combined_missions = []
+        for season, season_dict  in seasons_dict.items():
+            for biome, missions in season_dict['Biomes'].items():
+                
+                for mission in missions:
+                    id = mission['id']
+                    del mission['id']
+                    md5_ = md5(json.dumps(mission).encode()).hexdigest()
+                    mission['id'] = id
+                    mission['season'] = season
+                    
+                    combined_missions.append((timestamp, season, biome, mission, md5_))
+                    missions_count += 1
+                    missions_per_season[season] += 1
+                        
+        combined_biomes[timestamp]['Biomes'][biome] = sorted(combined_missions, key=lambda x: x[1])
+
+    # amount_of_timestamps = len(list(DRG.keys()))
+    
+    # print(missions_per_season['s0'])
+    # missions_per_timestamp = missions_per_season['s0'] / amount_of_timestamps
+    # print(missions_per_timestamp)
+    
+    # print(missions_per_season['s4'])
+    # missions_per_timestamp = missions_per_season['s4'] / amount_of_timestamps
+    # print(missions_per_timestamp)
+    
+    # print(missions_count)
+    missions_count = 0
+
+    god = {}
+    for timestamp, biomes in combined_biomes.items():
+        god[timestamp] = {}
+        god[timestamp]['Biomes'] = {}
+        god[timestamp]['timestamp'] = timestamp
+        md5s = []
+        
+        for biome, missions in biomes['Biomes'].items():
+            god[timestamp]['Biomes'][biome] = []
+            
+            for timestamp_, season, biome, mission, mission_md5 in missions:
+                if season == 's0':
+                    md5s.append(timestamp+mission_md5)
+                    god[timestamp_]['Biomes'][biome].append(mission)
+                    missions_count += 1
+                elif timestamp+mission_md5 in md5s:
+                    continue
+                else:
+                    god[timestamp_]['Biomes'][biome].append(mission)
+                    missions_count += 1
+    # print(missions_count)
+
+    # missions_per_timestamp = missions_count / amount_of_timestamps
+    # print(missions_per_timestamp)
+    
+    # for b, ms in bs.items():
+    #     print(b)
+    #     for m in ms:
+    #         print(json.dumps(m, indent=4))
+
+    return god
+
 def wait_rotation(rendering_events, index_event):
     target_minutes_59 = [29, 59]
     while True:
@@ -1179,6 +1363,7 @@ def rotate_index(DRG, rendering_events, current_timestamp_Queue, next_timestamp_
         if applicable_timestamp != current_timestamp:
             for s in rendering_events.keys():
                 rendering_events[s].wait()
+                
             # index = {}
             # index_ = render_index().encode()
             # index['index'] = index_
@@ -1214,7 +1399,7 @@ def rotate_index(DRG, rendering_events, current_timestamp_Queue, next_timestamp_
 #     return html
 
 def render_index():
-    html = '''''<!doctype html>
+    html = '''<!doctype html>
 <html>
 <head>
 <title>Current Missions from the Hoxxes IV Space Rig Mission Terminal</title>
