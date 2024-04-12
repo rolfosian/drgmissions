@@ -1091,6 +1091,8 @@ def extract_days_from_json(data, num_days):
 def split_json(num_days, DRG):
     shutil.rmtree('./static/json/bulkmissions')
     os.mkdir('./static/json/bulkmissions')
+    
+    bs = DRG[round_time_down(datetime.utcnow().isoformat())]
     DRG = extract_days_from_json(DRG, num_days)
     
     for timestamp, dictionary in (DRG.items()):
@@ -1098,7 +1100,6 @@ def split_json(num_days, DRG):
         with open(f'./static/json/bulkmissions/{fname}.json', 'w') as f:
             json.dump(dictionary, f)
 
-    bs = DRG[round_time_down(datetime.utcnow().isoformat())]
     fname = round_time_down(datetime.utcnow().isoformat()).replace(':', '-')
     with open (f'./static/json/bulkmissions/{fname}.json', 'w') as f:
         json.dump(bs, f)
@@ -1106,7 +1107,7 @@ def split_json(num_days, DRG):
 def rotate_split_jsons(num_days, DRG):
     split_json(num_days, DRG)
     while True:
-        sleep(num_days*23)
+        sleep(num_days*86400-3600)
         split_json(num_days)
 
 def sort_dictionary(dictionary, custom_order):

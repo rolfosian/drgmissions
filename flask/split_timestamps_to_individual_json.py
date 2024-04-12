@@ -105,26 +105,33 @@ def flatten_seasons(DRG):
 
     return god
 
-def find_duplicates(dict_list, ignore_keys):
-    for i, dict1 in enumerate(dict_list):
-        for dict2 in dict_list[i+1:]:
-            if all(dict1.get(k) == dict2.get(k) for k in dict1 if k not in ignore_keys):
-                return True
-    return False
+# with open('drgdailydeals.json', 'r') as f:
+#     DRG = json.load(f)
 
+# shutil.rmtree('./static/json/dailydeals')
+# os.mkdir('./static/json/dailydeals')
 
-with open('drgmissionsgod.json', 'r') as f:
-    DRG = json.load(f)
+# for timestamp, deal in DRG.items():
+#     fname = timestamp.replace(':', '-')
+#     with open(f'./static/json/dailydeals/{fname}.json', 'w') as f:
+#         json.dump(deal, f)
+        
+# today = datetime.today()
+# today_midnight = today.replace(hour=0, minute=0, second=0, microsecond=0)
+# iso_timestamp = today_midnight.isoformat().replace(':', '-')+'Z'
+# print(iso_timestamp)
 
-flat_or_not = input('Flat or not: ')
-if flat_or_not.lower() == 'flat':
-    DRG, bs = flatten_seasons(DRG)  
+# with open('drgmissionsgod.json', 'r') as f:
+#     DRG = json.load(f)
+# flat_or_not = input('Flat or not: ')
+# if flat_or_not.lower() == 'flat':
+#     DRG, bs = flatten_seasons(DRG)  
 
-split_json(7, DRG)
-bs = DRG[round_time_down(datetime.utcnow().isoformat())]
-fname = round_time_down(datetime.utcnow().isoformat()).replace(':', '-')
-with open (f'./static/json/bulkmissions/{fname}.json', 'w') as f:
-    json.dump(bs, f)
+# split_json(7, DRG)
+# bs = DRG[round_time_down(datetime.utcnow().isoformat())]
+# fname = round_time_down(datetime.utcnow().isoformat()).replace(':', '-')
+# with open (f'./static/json/bulkmissions/{fname}.json', 'w') as f:
+#     json.dump(bs, f)
 
 # def poll_file_modification_rate(file_path, list_, total_increments):
 #     last_modification_time = os.path.getmtime(file_path)

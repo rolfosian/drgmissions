@@ -705,7 +705,6 @@ function processSeasonBiome(duplicates, season, biomeDiv, biomeMissions) {
             let mission = biomeMissions[i];
             if (season == 's0') {
                 if (mission['season'] != 's0') {
-                    // console.log(mission['CodeName'])
                     continue
                 }
             }
@@ -714,7 +713,17 @@ function processSeasonBiome(duplicates, season, biomeDiv, biomeMissions) {
     }
 }
 
-function arrayBiomesFlat(Biomes, season) {
+function arrayBiomes(Biomes, season) { // dev
+    if (Biomes[0].hasOwnProperty('s0')) {
+        arrayBiomes_(Biomes, season)
+        equalizeGridItems()
+    } else {
+        arrayBiomesFlat(Biomes, season)
+        equalizeGridItems()
+    }
+}
+
+function arrayBiomes(Biomes, season) {
     let currentBiomes = Biomes[0]['Biomes']
     let nextBiomes = Biomes[1]['Biomes']
     let biomeMissions;
@@ -755,16 +764,7 @@ function arrayBiomesFlat(Biomes, season) {
             processSeasonBiome(duplicates, season, nextBiomeDiv, biomeMissions)
         };
     };
-}
-
-function arrayBiomes(Biomes, season) {
-    if (Biomes[0].hasOwnProperty('s0')) {
-        arrayBiomes_(Biomes, season)
-        equalizeGridItems()
-    } else {
-        arrayBiomesFlat(Biomes, season)
-        equalizeGridItems()
-    }
+    equalizeGridItems()
 }
 
 function addShadowedTextToImage(canvas, texts, textColor, shadowColor, fontSize) {
@@ -1164,10 +1164,15 @@ function checkOverflowAndFixScanners(containers) {
             }
         }
     });
-
-    scanners.forEach(container => {
-        container.style.height = `${mostCommonNumber(heights)-10}px`
-    })
+    if (window.matchMedia("(min-width: 1440px)").matches) {
+        scanners.forEach(container => {
+            container.style.height = `${mostCommonNumber(heights)-10}px`
+        })
+    } else {
+        scanners.forEach(container => {
+            container.style.height = `auto`
+        })
+    }
 
     containers.forEach(container => {
       if (container.scrollHeight > container.clientHeight+10) {
@@ -1181,10 +1186,8 @@ function checkOverflowAndFixScanners(containers) {
     }
 }
 function equalizeGridItems() {
-    if (window.matchMedia("(min-width: 1440px)").matches) {
-        const gridItems = document.querySelectorAll('.biome-container');
-        checkOverflowAndFixScanners(gridItems)
-    }
+    const gridItems = document.querySelectorAll('.biome-container');
+    checkOverflowAndFixScanners(gridItems)
 }
 window.addEventListener('resize', function(event) {
     if (initialized) {

@@ -94,8 +94,8 @@ index_thread = threading.Thread(target=rotate_index, args=(DRG, rendering_events
 #Listener that clears the rendering event 1.5 seconds before the 30 minute mission rollover interval so the homepage won't load for clients until the rotators are done rendering the mission icons
 wait_rotationthread = threading.Thread(target=wait_rotation, args=(rendering_events, index_event))
 
-#json splitting mechanism for static site, set to update the ./static/json/bulkmissions folder every 7 days just so i dont have to look at a directory with 5000 files in it
-# json_thread = threading.Thread(target=rotate_split_jsons, args=(7, DRG))
+#json splitting mechanism for static site, set to update the ./static/json/bulkmissions folder every 4 days just so i dont have to look at a directory with 5000 files in it
+json_thread = threading.Thread(target=rotate_split_jsons, args=(4, DRG))
 
 def start_threads():
     tstampthread.start()
@@ -105,7 +105,7 @@ def start_threads():
     biomesthread.start()
     
     ddsthread.start()
-    # json_thread.start()
+    json_thread.start()
     wait_rotationthread.start()
     
     dailydeal_tstampthread.start()
@@ -130,8 +130,7 @@ def home():
     # return send_file(BytesIO(index_Queue[0]['index']), mimetype='text/html', etag=index_Queue[0]['etag'])
     return send_file('./static/index.html')
 
-#Sends current mission icons, arg format f"?img={Biome.replace(' ', '-')}{mission['id']}" - see rotate_biomes in drgmissionslib.py
-#Sends current mission icons, <s> format = s0 or s4; arg format f"?img={Biome.replace(' ', '-')}{mission['CodeName'].replace(' ', '-')}{mission['season']}" - see rotate_biomes_FLAT in drgmissionslib.py
+#Sends current mission icons, arg format f"?img={Biome.replace(' ', '-')}{mission['CodeName'].replace(' ', '-')}{mission['season']}" - see rotate_biomes_FLAT in drgmissionslib.py
 @app.route('/png')
 def serve_img():
     try:
@@ -143,8 +142,7 @@ def serve_img():
         print(e)
         return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
 
-#Sends upcoming mission icons, <s> format = s0 or s4; arg format f"?img={Biome.replace(' ', '-')}{mission['id']}" - see rotate_biomes in drgmissionslib.py
-#Sends upcoming mission icons, <s> format = s0 or s4; arg format f"?img={Biome.replace(' ', '-')}{mission['CodeName'].replace(' ', '-')}{mission['season']}" - see rotate_biomes_FLAT in drgmissionslib.py
+#Sends upcoming mission icons, arg format f"?img={Biome.replace(' ', '-')}{mission['CodeName'].replace(' ', '-')}{mission['season']}" - see rotate_biomes_FLAT in drgmissionslib.py
 @app.route('/upcoming_png')
 def serve_next_img():
     try:
