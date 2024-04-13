@@ -1080,38 +1080,95 @@ def rotate_DDs(DDs):
 #----------------------------------------------------------------
 #UTILS
 
-def extract_days_from_json(data, num_days):
-    timestamps = {datetime.fromisoformat(key.replace('Z', '')): value for key, value in data.items()}
-    current_datetime = datetime.utcnow()
+# def extract_days_from_json(data, num_days):
+#     timestamps = {datetime.fromisoformat(key.replace('Z', '')): value for key, value in data.items()}
+#     current_datetime = datetime.utcnow()
 
+#     days_from_now = current_datetime + timedelta(days=num_days)
+#     relevant_days = {f"{str(key).replace(' ', 'T')}Z": value for key, value in timestamps.items() if current_datetime <= key < days_from_now}
+#     return relevant_days
+
+# def split_json(num_days, DRG):
+#     shutil.rmtree('./static/json/bulkmissions')
+#     os.mkdir('./static/json/bulkmissions')
+    
+#     bs = DRG[round_time_down(datetime.utcnow().isoformat())]
+#     DRG = extract_days_from_json(DRG, num_days)
+    
+#     for timestamp, dictionary in (DRG.items()):
+#         fname = timestamp.replace(':','-')
+#         with open(f'./static/json/bulkmissions/{fname}.json', 'w') as f:
+#             json.dump(dictionary, f)
+
+#     fname = round_time_down(datetime.utcnow().isoformat()).replace(':', '-')
+#     with open (f'./static/json/bulkmissions/{fname}.json', 'w') as f:
+#         json.dump(bs, f)
+
+# def rotate_split_jsons(num_days, DRG, index_event):
+#     split_json(num_days, DRG)
+#     index_event.set()
+#     while True:
+#         sleep(num_days*86400-3600)
+#         index_event.clear()
+#         split_json(num_days)
+#         index_event.set()
+
+def group_json_by_days(DRG):
+    timestamps_dt = [datetime.fromisoformat(ts[:-1]) for ts in DRG.keys()]
+    
+    grouped_by_days = {}
+    for timestamp in timestamps_dt:
+        date = timestamp.date().strftime('%Y-%m-%d')
+        if date not in grouped_by_days:
+            grouped_by_days[date] = {}
+        timestamp = timestamp.strftime("%Y-%m-%dT%H:%M:%SZ")
+        grouped_by_days[date][timestamp] = DRG[timestamp]
+        
+    return grouped_by_days
+
+def extract_days_from_json(data, num_days):
+    timestamps = {datetime.strptime(key, '%Y-%m-%d'): value for key, value in data.items()}
+    sorted_timestamps = sorted(timestamps.items())
+
+    start_date = sorted_timestamps[0][0]
+    end_date = sorted_timestamps[-1][0]
+    
+    complete_dates = [start_date + timedelta(days=i) for i in range((end_date - start_date).days + 1)]
+    complete_data = {date.strftime('%Y-%m-%d'): timestamps.get(date, 0) for date in complete_dates}
+    
+    current_datetime = datetime.utcnow()
     days_from_now = current_datetime + timedelta(days=num_days)
-    relevant_days = {f"{str(key).replace(' ', 'T')}Z": value for key, value in timestamps.items() if current_datetime <= key < days_from_now}
+    relevant_days = {key: value for key, value in complete_data.items() if current_datetime <= datetime.strptime(key, '%Y-%m-%d') < days_from_now}
+    
     return relevant_days
 
-def split_json(num_days, DRG):
-    shutil.rmtree('./static/json/bulkmissions')
+def rotate_jsons_days(DRG, num_days):
+    completed = []
+    days = group_json_by_days(DRG)
+    days = extract_days_from_json(DRG, num_days)
+    if os.path.isdir('./static/json/bulkmissions'):
+        shutil.rmtree('./static/json/bulkmissions')
     os.mkdir('./static/json/bulkmissions')
-    
-    bs = DRG[round_time_down(datetime.utcnow().isoformat())]
-    DRG = extract_days_from_json(DRG, num_days)
-    
-    for timestamp, dictionary in (DRG.items()):
-        fname = timestamp.replace(':','-')
-        with open(f'./static/json/bulkmissions/{fname}.json', 'w') as f:
-            json.dump(dictionary, f)
-
-    fname = round_time_down(datetime.utcnow().isoformat()).replace(':', '-')
-    with open (f'./static/json/bulkmissions/{fname}.json', 'w') as f:
-        json.dump(bs, f)
-
-def rotate_split_jsons(num_days, DRG, index_event):
-    split_json(num_days, DRG)
-    index_event.set()
+    for day, timestamp in days.items():
+        path = f'./static/json/bulkmissions/{day}.json'
+        completed.append(path)
+        with open(path, 'w') as f:
+            json.dump(timestamp, f)
+            
     while True:
         sleep(num_days*86400-3600)
-        index_event.clear()
-        split_json(num_days)
-        index_event.set()
+        days = group_json_by_days(DRG)
+        days = extract_days_from_json(days, num_days)
+        
+        for path in completed:
+            os.remove(path)
+            completed.remove(path)
+            
+        for day, timestamp in days.items():
+            path = f'./static/json/bulkmissions/{day}.json'
+            completed.append(path)
+            with open(path, 'w') as f:
+                json.dump(timestamp, f)
 
 def sort_dictionary(dictionary, custom_order):
     sorted_dict = {}
@@ -1352,7 +1409,8 @@ def SERVER_READY(index_event):
 
 #HOMEPAGE
 def rotate_index(DRG, rendering_events, current_timestamp_Queue, next_timestamp_Queue, index_event, index_Queue):
-    for s in rendering_events.keys():
+    seasons = rendering_events.keys()
+    for s in seasons:
         rendering_events[s].wait()
     current_timestamp = current_timestamp_Queue[0]
     # index = {}
@@ -1365,7 +1423,7 @@ def rotate_index(DRG, rendering_events, current_timestamp_Queue, next_timestamp_
     while True:
         applicable_timestamp = current_timestamp_Queue[0]
         if applicable_timestamp != current_timestamp:
-            for s in rendering_events.keys():
+            for s in seasons:
                 rendering_events[s].wait()
                 
             # index = {}

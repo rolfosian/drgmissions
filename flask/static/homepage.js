@@ -90,7 +90,7 @@ function topMissionsCountdown() {
                 $(".biome-container").each(function() {
                     $(this).css("opacity", "0");
                     });
-                refreshBiomes().then(startCountdown);
+                refreshBiomes(targetTime).then(startCountdown);
                 $(".biome-container").each(function() {
                     $(this).css("opacity", "1");
                     });

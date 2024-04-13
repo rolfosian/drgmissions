@@ -8,7 +8,7 @@ from drgmissionslib import (
     rotate_index,
     rotate_timestamps,
     rotate_timestamp_from_dict,
-    rotate_split_jsons,
+    # rotate_split_jsons,
     wait_rotation,
     flatten_seasons,
     class_xp_levels,
@@ -89,15 +89,15 @@ ddsthread = threading.Thread(target=rotate_DDs, args=(DDs,))
 
 index_event = threading.Event()
 #index_Queue = queue.Queue()
-# index_Queue = []
-# index_thread = threading.Thread(target=rotate_index, args=(DRG, rendering_events, tstamp, next_tstamp, index_event, index_Queue))
+index_Queue = []
+index_thread = threading.Thread(target=rotate_index, args=(DRG, rendering_events, tstamp, next_tstamp, index_event, index_Queue))
 
 #Obsolete but kept the index event and rotation stuff just cause im not going to fix what isnt broken and i cant be bothered rewriting more stuff
 #Listener that clears the rendering event 1.5 seconds before the 30 minute mission rollover interval so the homepage won't load for clients until the rotators are done rendering the mission icons
 wait_rotationthread = threading.Thread(target=wait_rotation, args=(rendering_events, index_event))
 
 #json splitting mechanism for static site, set to update the ./static/json/bulkmissions folder every 4 days just so i dont have to look at a directory with 5000 files in it
-json_thread = threading.Thread(target=rotate_split_jsons, args=(4, DRG, index_event))
+# json_thread = threading.Thread(target=rotate_split_jsons, args=(4, DRG, index_event))
 
 def start_threads():
     tstampthread.start()
@@ -107,13 +107,13 @@ def start_threads():
     biomesthread.start()
     
     ddsthread.start()
-    json_thread.start()
+    # json_thread.start()
     wait_rotationthread.start()
     
     dailydeal_tstampthread.start()
     dailydealthread.start()
     
-    # index_thread.start()
+    index_thread.start()
     
 #def join_threads():
     #tstampthread.join()
