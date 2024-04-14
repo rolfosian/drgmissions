@@ -220,7 +220,6 @@ function getCurrentDateTimeUTC() {
                                utcSeconds + 'Z';
     return formattedUTCDateTime;
 }
-
 function getCurrentDateMidnightUTC() {
     var now = new Date();
 
@@ -241,22 +240,26 @@ function getCurrentDateMidnightUTC() {
 }
 
 function getNextDateMidnightUTC() {
-    var now = new Date();
-    now.setDate(now.getUTCDate()+1)
+    let now = new Date();
+    let sysYear = now.getFullYear()
+    let sysMonth = now.getMonth()
+    let sysDate = now.getDate()
+    let nows = new Date(Date.UTC(sysYear, sysMonth,  sysDate, 0, 0, 0, 0))
+    nows.setUTCDate(nows.getUTCDate()+1);
 
-    var utcYear = now.getUTCFullYear();
-    var utcMonth = ('0' + (now.getUTCMonth() + 1)).slice(-2);
-    var utcDay = ('0' + now.getUTCDate()).slice(-2);
-    var utcHours = '00';
-    var utcMinutes = '00';
-    var utcSeconds = '00';
+    let utcYear = nows.getUTCFullYear();
+    let utcMonth = ('0' + (nows.getUTCMonth() + 1)).slice(-2);
+    let utcDay = ('0' + nows.getUTCDate()).slice(-2);
+    let utcHours = '00';
+    let utcMinutes = '00';
+    let utcSeconds = '00';
 
-    var formattedUTCDateTime = utcYear + '-' + 
-                               utcMonth + '-' + 
-                               utcDay + 'T' +
-                               utcHours + ':' +
-                               utcMinutes + ':' +
-                               utcSeconds + 'Z';
+    var formattedUTCDateTime = utcYear + '-' +
+        utcMonth + '-' +
+        utcDay + 'T' +
+        utcHours + ':' +
+        utcMinutes + ':' +
+        utcSeconds + 'Z';
     return formattedUTCDateTime;
 }
 
@@ -560,6 +563,7 @@ async function renderBiomesFlat(dictionary) {
 
     var Biomes = dictionary['Biomes']
     renderedBiomes['Biomes'] = {}
+    renderedBiomes['timestamp'] = dictionary['timestamp']
 
     for (let biome in Biomes) {
         let biomeMissions = Biomes[biome];
@@ -586,47 +590,28 @@ async function renderBiomesFlat(dictionary) {
     return renderedBiomes;
 }
 async function renderBiomes(dictionary) {
+    let bs;
     if (dictionary.hasOwnProperty('s0')) {
-        return await renderBiomes_(dictionary)
+        bs = renderBiomes_(dictionary)
     } else {
-        return await renderBiomesFlat(dictionary)
+        bs = renderBiomesFlat(dictionary)
     }
+    console.log(bs[0]['timestamp'])
+    console.log(bs[1]['timestamp'])
 }
-function getBiomesToday(currentDaysJson) {
-    if (biomes) {
-        currentBiomes = biomes[1]
-        let dictionary_ = getUpcomingMissionData(currentDaysJson);
-        let upcomingBiomes = renderBiomes(dictionary_);
-        return [currentBiomes, upcomingBiomes];
-    } else {
-    let dictionary = getCurrentMissionData(currentDaysJson);
-    let currentBiomes = renderBiomes(dictionary);
-    let dictionary_ = getUpcomingMissionData(currentDaysJson);
-    let upcomingBiomes = renderBiomes(dictionary_);
-    return [currentBiomes, upcomingBiomes];
-    }
-}
+
 function isMidnightUpcoming(date) {
     return roundTimeDown(date.toISOString()).slice(11, 19) == '23:30:00'
 }
-function isMidnightJustPast(date) {
-    return roundTimeDown(date.toISOString()).slice(11, 19) == '00:00:00'
-}
-async function getBiomesMidnight(date, isMidnightUpcoming_) {
-    let midnight;
-    if (isMidnightUpcoming_) {
-        midnight = getCurrentDateMidnightUTC();
-    } else {
-        midnight = getNextDateMidnightUTC();
-    }
-    let nextDay = midnight.split('T')[0];
+
+async function getBiomesMidnight(date) {
+    let upcomingMidnight = getNextDateMidnightUTC();
+    let nextDay = upcomingMidnight.split('T')[0];
 
     if (biomes) {
         let currentBiomes = biomes[1];
-        if (isMidnightUpcoming_ === false) {
-            currentDaysJson = await loadJSON(getDomainURL()+`/static/json/bulkmissions/${nextDay}.json`);
-        }
-        let upcomingBiomes = await renderBiomes(currentDaysJson[midnight]);
+        currentDaysJson = await loadJSON(getDomainURL()+`/static/json/bulkmissions/${nextDay}.json`);
+        let upcomingBiomes = await renderBiomes(currentDaysJson[upcomingMidnight]);
         return [currentBiomes, upcomingBiomes];
     } else {
         let results = await Promise.all([
@@ -635,7 +620,7 @@ async function getBiomesMidnight(date, isMidnightUpcoming_) {
         ])
         let currentBiomes = await renderBiomes(results[0][roundTimeDown(date.toISOString())]);
         currentDaysJson = results[1];
-        let upcomingBiomes = await renderBiomes(currentDaysJson[midnight]);
+        let upcomingBiomes = await renderBiomes(currentDaysJson[upcomingMidnight]);
         return [currentBiomes, upcomingBiomes];
     }   
 }
@@ -673,10 +658,8 @@ function toggleSeason4(Biomes, bool) {
 }
 
 async function refreshBiomes(date) {
-    if (isMidnightJustPast(date)) {
-        biomes = await getBiomesMidnight(date, true);
-    } else if (isMidnightUpcoming(date)) {
-        biomes = await getBiomesMidnight(date, false);
+    if (isMidnightUpcoming(date)) {
+        biomes = await getBiomesMidnight(date);
     } else {
         biomes = await getBiomes(currentDaysJson);
     }
@@ -1349,7 +1332,7 @@ async function initialize() {
     let date = new Date();
     if (isMidnightUpcoming(date)) {
         let results = await Promise.all([
-            getBiomesMidnight(date, true),
+            getBiomesMidnight(date),
             getDeepDiveData(),
             getDailyDealData()
         ])
@@ -1394,7 +1377,7 @@ async function initialize() {
     // currentDatetime = replaceCharactersAtIndices(currentDatetime, [[13, '-'], [16,'-']]);
     let currentDateTimeHREF = getDomainURL()+'/static/json/bulkmissions/'+currentDatetime+'.json';
 
-    let nextDatetime = getTomorrowDate(date);
+    let nextDatetime = getNextDateMidnightUTC().split('T')[0];
     // nextDatetime = replaceCharactersAtIndices(nextDatetime, [[13, '-'], [16,'-']]);
     let nextDateTimeHREF = getDomainURL()+'/static/json/bulkmissions/'+nextDatetime+'.json';
 
