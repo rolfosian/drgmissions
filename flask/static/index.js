@@ -116,6 +116,7 @@ var dailyDealResourcesImages = {};
 
 var fontNamesAndUrls = {
     'HammerBro101MovieBold-Regular' : '/static/img/HammerBro101MovieBold-Regular.ttf',
+    'HammerBro101MovieThin-Regular' : '/static/HammerBro101MovieThin-Regular.woff',
     'Bungee-Regular' : '/static/img/Bungee-Regular.ttf',
     'RiftSoft-Regular' : '/static/img/RiftSoft-Regular.ttf',
     'BebasNeue' : '/static/img/BebasNeue-Regular.woff2'
@@ -145,7 +146,7 @@ async function preloadImagesAll() {
         preloadImages(mutators, mutatorsImages),
         preloadImages(warnings, warningsImages),
         preloadImages(secondaryObjsDD, secondaryObjsDDImages),
-        preloadImages(biomesDD, biomesDDImages),
+        // preloadImages(biomesDD, biomesDDImages),
         preloadImages(dailyDealResources, dailyDealResourcesImages)
     ]);
 }
@@ -194,32 +195,6 @@ function replaceCharactersAtIndices(inputString, replacements) {
     return result;
 }
 
-function getISOWeek(date) {
-    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
-    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-    const weekNumber = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-    return weekNumber;
-}
-
-function getCurrentDateTimeUTC() {
-    var now = new Date();
-
-    var utcYear = now.getUTCFullYear();
-    var utcMonth = ('0' + (now.getUTCMonth() + 1)).slice(-2);
-    var utcDay = ('0' + now.getUTCDate()).slice(-2);
-    var utcHours = ('0' + now.getUTCHours()).slice(-2);
-    var utcMinutes = ('0' + now.getUTCMinutes()).slice(-2);
-    var utcSeconds = ('0' + now.getUTCSeconds()).slice(-2);
-
-    var formattedUTCDateTime = utcYear + '-' + 
-                               utcMonth + '-' + 
-                               utcDay + 'T' +
-                               utcHours + ':' +
-                               utcMinutes + ':' +
-                               utcSeconds + 'Z';
-    return formattedUTCDateTime;
-}
 function getCurrentDateMidnightUTC() {
     var now = new Date();
 
@@ -263,10 +238,53 @@ function getNextDateMidnightUTC() {
     return formattedUTCDateTime;
 }
 
+function getCurrentDateTimeUTC() {
+    var now = new Date();
+
+    var utcYear = now.getUTCFullYear();
+    var utcMonth = ('0' + (now.getUTCMonth() + 1)).slice(-2);
+    var utcDay = ('0' + now.getUTCDate()).slice(-2);
+    var utcHours = ('0' + now.getUTCHours()).slice(-2);
+    var utcMinutes = ('0' + now.getUTCMinutes()).slice(-2);
+    var utcSeconds = ('0' + now.getUTCSeconds()).slice(-2);
+
+    var formattedUTCDateTime = utcYear + '-' + 
+                               utcMonth + '-' + 
+                               utcDay + 'T' +
+                               utcHours + ':' +
+                               utcMinutes + ':' +
+                               utcSeconds + 'Z';
+    return formattedUTCDateTime;
+}
+
 function getCurrentDateTimeUTC_UNIX() {
     return Math.floor(new Date(getCurrentDateTimeUTC()).getTime() / 1000);
 }
 
+function roundTimeUpNextUpcoming(datetimeString) {
+    var datetimeMinutes = parseInt(datetimeString.slice(14, 16));
+    var datetime_unix = getCurrentDateTimeUTC_UNIX();
+    var nextHour = datetime_unix - (datetime_unix % 3600) + 3600;
+
+    var nextHourDate = new Date(nextHour * 1000);
+    
+    var newYear = nextHourDate.getUTCFullYear();
+    var newMonth = ('0' + (nextHourDate.getUTCMonth() + 1)).slice(-2);
+    var newDay = ('0' + nextHourDate.getUTCDate()).slice(-2);
+    var newHour = ('0' + nextHourDate.getUTCHours()).slice(-2);
+    var newMinutes = ':00:00Z'
+
+    if (datetimeMinutes >= 30) {
+        newMinutes = ':30:00Z'
+    }
+
+    var newDatetime = newYear + '-' + 
+                      newMonth + '-' + 
+                      newDay + 'T' +
+                      newHour + newMinutes;
+
+    return newDatetime;
+}
 function roundTimeUp(datetimeString) {
     var datetimeMinutes = parseInt(datetimeString.slice(14, 16));
     if (datetimeMinutes >= 30) {
@@ -313,15 +331,20 @@ function getTomorrowDate(date) {
     return formattedTomorrow;
 }
 
-function waitRotation() {
+async function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+async function waitRotation() {
     while (true) {
         const targetMinutes59 = [29, 59];
         const currentDate = new Date();
         const currentMinute = currentDate.getMinutes();
         const currentSecond = currentDate.getSeconds() + currentDate.getMilliseconds() / 1000;
         if (currentSecond > 58.50 && inList(targetMinutes59, currentMinute)) {
-            break
+            await sleep(1500)
+            continue
         }
+        break
     }
 }
 
@@ -376,27 +399,22 @@ function getPreviousThursdayTimestamp() {
     return timestamp;
 }
 
-async function getMidnightJson() {
-    // if (roundTimeUp(date.toISOString().substr()) ==)
+async function getCurrentDaysJson() {
     const currentDate = getCurrentDateTimeUTC().split('T')[0];
-    const nextDate = getNextDateMidnightUTC().split('T')[0];
-    return await Promise.all([loadJSON(getDomainURL()+`/static/json/bulkmissions/${currentDate}.json`), loadJSON(getDomainURL()+`/static/json/bulkmissions/${nextDate}.json`)]);
-}
-async function getCurrentDaysJson(date) {
-    const currentDate = date.toISOString().slice(0, 10);
-    // const currentDate = getCurrentDateTimeUTC().split('T')[0];
     return await loadJSON(getDomainURL()+`/static/json/bulkmissions/${currentDate}.json`)
 }
 function getCurrentMissionData() {
     const datetime = roundTimeDown(getCurrentDateTimeUTC())
-    let data = currentDaysJson[datetime]
-    return data
+    return currentDaysJson[datetime]
 }
 function getUpcomingMissionData() {
     const datetime = roundTimeUp(getCurrentDateTimeUTC())
-    let data = currentDaysJson[datetime]
-    return data
+    return currentDaysJson[datetime]
 }
+function getNextUpcomingMissionData() {
+    const datetime = roundTimeUp(getCurrentDateTimeUTC())
+}
+
 async function getDeepDiveData() {
     let datetime = getPreviousThursdayTimestamp()
     datetime = replaceCharactersAtIndices(datetime, [[13, '-'], [16,'-']])
@@ -526,7 +544,7 @@ function resizeCanvas(div, canvas, x, y) {
     div.style.height = `${newHeight.toString()}px`;
 }
 
-async function renderBiomes_(dictionary) {
+function renderBiomes_(dictionary) {
     let renderedBiomes = {};
 
     for (var season in dictionary) {
@@ -558,9 +576,8 @@ async function renderBiomes_(dictionary) {
     return renderedBiomes;
 }
 
-async function renderBiomesFlat(dictionary) {
+function renderBiomesFlat(dictionary) {
     let renderedBiomes = {};
-
     var Biomes = dictionary['Biomes']
     renderedBiomes['Biomes'] = {}
     renderedBiomes['timestamp'] = dictionary['timestamp']
@@ -589,62 +606,116 @@ async function renderBiomesFlat(dictionary) {
         };
     return renderedBiomes;
 }
-async function renderBiomes(dictionary) {
+function renderBiomes(dictionary) {
     let bs;
     if (dictionary.hasOwnProperty('s0')) {
         bs = renderBiomes_(dictionary)
+        // console.log(bs['timestamp'])
+        return bs
     } else {
-        bs = renderBiomesFlat(dictionary)
+        bs =  renderBiomesFlat(dictionary)
+        // console.log(bs['timestamp'])
+        return bs
     }
-    console.log(bs[0]['timestamp'])
-    console.log(bs[1]['timestamp'])
+
 }
 
 function isMidnightUpcoming(date) {
     return roundTimeDown(date.toISOString()).slice(11, 19) == '23:30:00'
 }
 
-async function getBiomesMidnight(date) {
-    let upcomingMidnight = getNextDateMidnightUTC();
-    let nextDay = upcomingMidnight.split('T')[0];
+// async function getBiomesMidnight(date) {
+//     let upcomingMidnight = getNextDateMidnightUTC();
+//     let nextDay = upcomingMidnight.split('T')[0];
 
-    if (biomes) {
-        let currentBiomes = biomes[1];
-        currentDaysJson = await loadJSON(getDomainURL()+`/static/json/bulkmissions/${nextDay}.json`);
-        let upcomingBiomes = await renderBiomes(currentDaysJson[upcomingMidnight]);
-        return [currentBiomes, upcomingBiomes];
+//     if (biomes) {
+//         let currentBiomes = biomes[1];
+//         currentDaysJson = await loadJSON(getDomainURL()+`/static/json/bulkmissions/${nextDay}.json`);
+//         let upcomingBiomes = renderBiomes(currentDaysJson[upcomingMidnight]);
+//         return [currentBiomes, upcomingBiomes];
+//     } else {
+//         let results = await Promise.all([
+//             getCurrentDaysJson(),
+//             loadJSON(getDomainURL()+`/static/json/bulkmissions/${nextDay}.json`)
+//         ])
+//         let currentBiomes = renderBiomes(results[0][roundTimeDown(date.toISOString())]);
+//         currentDaysJson = results[1];
+//         let upcomingBiomes = renderBiomes(currentDaysJson[upcomingMidnight]);
+//         return [currentBiomes, upcomingBiomes];
+//     }   
+// }
+async function tempCacheUpcomingBiomes(isMidnightUpcoming_, date) {
+    let currentBiomes = biomes[1];
+    let upcomingBiomes;
+    if (isMidnightUpcoming_) {
+        let upcomingMidnight = getNextDateMidnightUTC();
+        let nextDay = upcomingMidnight.split('T')[0];
+        if (tempCurrentDaysJson) {
+            currentDaysJson = tempCurrentDaysJson;
+            tempCurrentDaysJson = undefined
+        } else {
+            currentDaysJson = await loadJSON(getDomainURL()+`/static/json/bulkmissions/${nextDay}.json`);
+        }
+        upcomingBiomes = renderBiomes(currentDaysJson[roundTimeUpNextUpcoming(date.toISOString())]);
+        tempBiomes = [currentBiomes, upcomingBiomes]
+        console.log(tempBiomes)
     } else {
-        let results = await Promise.all([
-            getCurrentDaysJson(date),
-            loadJSON(getDomainURL()+`/static/json/bulkmissions/${nextDay}.json`)
-        ])
-        let currentBiomes = await renderBiomes(results[0][roundTimeDown(date.toISOString())]);
-        currentDaysJson = results[1];
-        let upcomingBiomes = await renderBiomes(currentDaysJson[upcomingMidnight]);
-        return [currentBiomes, upcomingBiomes];
-    }   
+        if (roundTimeDown(date.toISOString()).split('T')[1] == '23:00:00Z') {
+            let upcomingMidnight = getNextDateMidnightUTC();
+            let nextDay = upcomingMidnight.split('T')[0];
+            tempCurrentDaysJson = await loadJSON(getDomainURL()+`/static/json/bulkmissions/${nextDay}.json`);
+            upcomingBiomes = renderBiomes(tempCurrentDaysJson[roundTimeUpNextUpcoming(date.toISOString())]);
+        } else {
+            upcomingBiomes = renderBiomes(currentDaysJson[roundTimeUpNextUpcoming(date.toISOString())]);
+        }
+        tempBiomes = [currentBiomes, upcomingBiomes]
+        console.log(tempBiomes)
+        // console.log(tempBiomes)
+    }
 }
 
-async function getBiomes() {
-    if (biomes) {
-        currentBiomes = biomes[1]
-        let dictionary_ = getUpcomingMissionData(currentDaysJson);
-        let upcomingBiomes = await renderBiomes(dictionary_);
-        return [currentBiomes, upcomingBiomes];
-    } else {
+function getBiomesOnInit() {
     let dictionary = getCurrentMissionData(currentDaysJson);
-    let currentBiomes = await renderBiomes(dictionary);
+    let currentBiomes = renderBiomes(dictionary);
     let dictionary_ = getUpcomingMissionData(currentDaysJson);
-    let upcomingBiomes = await renderBiomes(dictionary_);
+    let upcomingBiomes = renderBiomes(dictionary_);
     return [currentBiomes, upcomingBiomes];
+}
+
+async function getBiomesMidnightOnInit(date) {
+    let upcomingMidnight = getNextDateMidnightUTC();
+    let nextDay = upcomingMidnight.split('T')[0];
+    let results = await Promise.all([
+        getCurrentDaysJson(),
+        loadJSON(getDomainURL()+`/static/json/bulkmissions/${nextDay}.json`)
+    ]);
+    let currentBiomes = renderBiomes(results[0][roundTimeDown(date.toISOString())]);
+    currentDaysJson = results[1];
+    tempCurrentDaysJson = currentDaysJson;
+    let upcomingBiomes = renderBiomes(currentDaysJson[upcomingMidnight]);
+    return [currentBiomes, upcomingBiomes];
+}
+
+function getBiomes() {
+    let currentBiomes = tempBiomes[0];
+    let upcomingBiomes = tempBiomes[1];
+    return [currentBiomes, upcomingBiomes];
+}
+
+async function getBiomesMidnight() {
+    let currentBiomes = tempBiomes[0];
+    if (tempCurrentDaysJson) {
+        currentDaysJson = tempCurrentDaysJson;
     }
+    let upcomingBiomes = tempBiomes[1];
+    return [currentBiomes, upcomingBiomes];
 }
 
 function changeSeason(Biomes, season) {
     arrayBiomes(Biomes, season);
     if (document.getElementById('currentButton').textContent == 'Click here to see current missions') {
         document.getElementById('currentButton').click();
-    };
+    }
 }
 
 function toggleSeason4(Biomes, bool) {
@@ -657,16 +728,20 @@ function toggleSeason4(Biomes, bool) {
     }
 }
 
-async function refreshBiomes(date) {
-    if (isMidnightUpcoming(date)) {
-        biomes = await getBiomesMidnight(date);
+async function refreshBiomes(isMidnightUpcoming_) {
+    if (isMidnightUpcoming_) { // this could probably be consolidated into one block but im not going to fix what isnt broken for now
+        biomes = await getBiomesMidnight();
+        tempBiomes = undefined;
     } else {
-        biomes = await getBiomes(currentDaysJson);
+        biomes = getBiomes();
+        tempBiomes = undefined;
     }
     arrayBiomes(biomes, document.getElementById("season").value);
     if (document.getElementById('currentButton').textContent == 'Click here to see current missions') {
         document.getElementById('currentButton').click();
-    };
+    }
+    console.log(biomes[0]['timestamp'])
+    console.log(biomes[1]['timestamp'])
 }
 async function refreshDailyDeal() {
     dailyDeal = await getDailyDealData();
@@ -708,7 +783,7 @@ function arrayDailyDeal(dailyDeal) {
     dailyDealDiv.appendChild(dailyDealCanvas)
 }
 
-function arrayBiomes_(Biomes, season) {
+function arrayBiomes_(Biomes, season) { // deprecated, may need for debugging come season 5
     var currentBiomes = Biomes[0][season]['Biomes']
     var nextBiomes = Biomes[1][season]['Biomes']
     
@@ -751,7 +826,6 @@ function arrayBiomes_(Biomes, season) {
         };
     };
 }
-
 function findDuplicates(dictList, ignoreKeys) {
     const duplicates = [];
     for (let i = 0; i < dictList.length; i++) {
@@ -896,7 +970,7 @@ function arrayBiomes(Biomes, season) {
     equalizeGridItems()
 }
 
-function addShadowedTextToImage(canvas, texts, textColor, shadowColor, fontSize) {
+function addShadowedTextToImage(canvas, texts, fontSize) {
     function getTextMetrics(context, text, font) {
         context.font = font;
         return context.measureText(text);
@@ -949,21 +1023,25 @@ function addShadowedTextToImage(canvas, texts, textColor, shadowColor, fontSize)
 }
 
 function renderDeepDiveBiomeCodename(biome, codename) {
-    const img = biomesDDImages[biome];
+    const texts = ['CODENAME: ', codename];
+    const fontSize = 45;
     const canvas = document.createElement('canvas');
     canvas.classList.add('dd-biome')
-    canvas.width = img.width;
-    canvas.height = img.height;
     const ctx = canvas.getContext('2d');
-    ctx.drawImage(img, 0, 0);
-
-    const texts = ['CODENAME: ', codename];
-
-    const textColor = 'white';
-    const shadowColor = '#000000';
-    const fontSize = 45;
-    
-    addShadowedTextToImage(canvas, texts, textColor, shadowColor, fontSize);
+    for (let biomeName in biomesDD) {
+        if (biomeName == biome) {
+            const img = new Image()
+            img.src = biomesDD[biomeName]
+            img.onload = () => {
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0);
+                addShadowedTextToImage(canvas, texts, fontSize);
+            }
+            break
+        }
+    }
+    // const img = biomesDDImages[biome];
     return canvas;
 }
 
@@ -1135,7 +1213,6 @@ async function arrayDeepDives(deepDiveData) {
             deepDiveEliteDiv.appendChild(stageDiv);
         };
     } catch (error) {
-        console.log(error)
         // deepDiveData is undefined
     }
 }
@@ -1327,16 +1404,18 @@ async function initialize() {
     let biomes_;
     let ddData_;
     let dailyDeal_;
-    // waitRotation()
+    await waitRotation()
 
     let date = new Date();
     if (isMidnightUpcoming(date)) {
         let results = await Promise.all([
-            getBiomesMidnight(date),
+            getBiomesMidnightOnInit(date),
             getDeepDiveData(),
             getDailyDealData()
         ])
         biomes_ = results[0];
+        console.log(biomes_[0]['timestamp'])
+        console.log(biomes_[1]['timestamp'])
         ddData_ = results[1];
         dailyDeal_ = results[2]
         // for (let i = 0; i < results.length; i++) {
@@ -1350,15 +1429,16 @@ async function initialize() {
         //     }
         // }
     } else {
-        currentDaysJson = await getCurrentDaysJson(date);
+        currentDaysJson = await getCurrentDaysJson();
         let results = await Promise.all([
-            getBiomes(),
             getDeepDiveData(),
             getDailyDealData()
         ]);
-        biomes_ = results[0];
-        ddData_ = results[1];
-        dailyDeal_ = results[2]
+        biomes_ = getBiomesOnInit();
+        console.log(biomes_[0]['timestamp'])
+        console.log(biomes_[1]['timestamp'])
+        ddData_ = results[0];
+        dailyDeal_ = results[1]
         // for (let i = 0; i < results.length; i++) {
         //     let result = results[i]
         //     if (Array.isArray(result)) {
@@ -1401,8 +1481,8 @@ async function initialize() {
     <br>
     <div id="seasonSelect" class="seasonselect">
     <button id="seasonClick" class="seasonBox">Season 4 Toggle</button>
-    <input type="checkbox" id="season" class="seasonBox" value="s0">
-    <!-- <select id="season" name="season" class="seasonBox"></select> -->
+    <input type="checkbox" id="season" class="seasonBox" value="s0" disabled>
+    <!-- <select id="season" name="season" class="seasonBox" disabled></select> -->
     </div>
     </div>
     
@@ -1637,32 +1717,42 @@ async function initialize() {
     //     }
     // }
 
-    return [biomes_, dailyDeal_, ddData_, date]
+    return [biomes_, dailyDeal_, ddData_]
 }
 
+// document.addEventListener('upcomingBiomesCachingEvent', (event) => {
+//     let cache
+// })
+
+var tempBiomes;
+var tempCurrentDaysJson;
 var currentDaysJson;
-var currentDate;
 var biomes;
 var dailyDeal;
 var ddData;
 var initialized = false;
 document.addEventListener('DOMContentLoaded', async function() {
-    await Promise.all([preloadImagesAll(), preloadFonts()])
-    var imgs = await initialize();
-    biomes = imgs[0];
-    dailyDeal = imgs[1];
-    ddData = imgs[2];
-    currentDate = imgs[3]
+    try {
+        await preloadFonts()
+        await preloadImagesAll()
+        var imgs = await initialize();
+        biomes = imgs[0];
+        dailyDeal = imgs[1];
+        ddData = imgs[2];
 
-    var jqueryScript = document.createElement('script');
-    jqueryScript.src = "/static/jquery.min.js";
-    document.head.appendChild(jqueryScript);
-    jqueryScript.onload = function() {
-        var homepageScript = document.createElement('script');
-        homepageScript.src = "/static/homepage.js";
-        document.head.appendChild(homepageScript);
-        homepageScript.onload = function (){
-            onLoad();
+        var jqueryScript = document.createElement('script');
+        jqueryScript.src = "/static/jquery.min.js";
+        document.head.appendChild(jqueryScript);
+        jqueryScript.onload = function() {
+            var homepageScript = document.createElement('script');
+            homepageScript.src = "/static/homepage.js";
+            document.head.appendChild(homepageScript);
+            homepageScript.onload = function (){
+                onLoad(); // bottom of homepage.js
+            };
         };
-    };
+    } catch (error) {
+        alert(error);
+        location.reload();
+    }
 });

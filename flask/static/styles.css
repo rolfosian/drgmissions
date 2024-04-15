@@ -1,15 +1,3 @@
-@font-face {
-font-family: "BebasNeue";
-src: url("/static/BebasNeue-Regular.woff2");
-}
-@font-face {
-font-family: "HammerBro101MovieThin-Regular";
-src: url("/static/HammerBro101MovieThin-Regular.woff");
-}
-@font-face {
-font-family: "RiftSoft-Regular";
-src : url("/static/img/RiftSoft-Regular.woff2");
-}
 input[type="checkbox"] {
 transform: scale(1.5);
 }

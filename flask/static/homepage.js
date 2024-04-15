@@ -27,7 +27,7 @@ function deepDiveCountDown() {
     function updateCountdown() {
         let now;
         let remainingTime;
-        if (initialized && !ddData) {
+        if (!ddData) {
             remainingTime = 0;
             document.getElementById("ddcountdown").classList.add('glow-text');
         } else {
@@ -38,13 +38,9 @@ function deepDiveCountDown() {
         if (remainingTime <= 0) {
             clearInterval(countdownTimer);
             document.getElementById("ddcountdown").innerHTML = "0D 00:00:00";
-            if (initialized) {
-                refreshDeepDives().then(() => {
-                    startCountdown(30000);
-                });
-            } else {
-                startCountdown(1000);
-            }
+            refreshDeepDives().then(() => {
+                startCountdown(30000);
+            });
         } else {(0)
             let days = Math.floor(remainingTime / (1000 * 60 * 60 * 24));
             let hours = Math.floor((remainingTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -68,6 +64,7 @@ function topMissionsCountdown() {
     let countdownElement = document.getElementById('countdown');
     let countdownTimer;
     let targetTime = new Date();
+    let cacheActive = false;
     
     function startCountdown() {
         targetTime.setSeconds(0);
@@ -81,23 +78,30 @@ function topMissionsCountdown() {
         countdownTimer = setInterval(updateCountdown, 1000);
     }
     function updateCountdown() {
-        let remainingTime = Math.floor(((targetTime - new Date() + 2) / 1000));
+        let date_ = new Date()
+        let remainingTime = Math.floor(((targetTime - date_ + 2) / 1000));
+        let isMidnightUpcoming_ = isMidnightUpcoming(date_)
+        
+        if (remainingTime < 3 && !cacheActive) {
+            tempCacheUpcomingBiomes(isMidnightUpcoming_, date_).then(() => {
+                cacheActive = true
+            });
+        }
         if (remainingTime < 0) {
             clearInterval(countdownTimer);
-            if (initialized) {
-                let loading = document.querySelector('p.loading')
-                loading.style.display = 'inline-block';
-                $(".biome-container").each(function() {
-                    $(this).css("opacity", "0");
-                    });
-                refreshBiomes(targetTime).then(startCountdown);
+            let loading = document.querySelector('p.loading')
+            loading.style.display = 'inline-block';
+            $(".biome-container").each(function() {
+                $(this).css("opacity", "0");
+                });
+            refreshBiomes().then(() => {
+                cacheActive = false
+                startCountdown();
                 $(".biome-container").each(function() {
                     $(this).css("opacity", "1");
                     });
                 loading.style.display = 'none';
-            } else {
-                startCountdown();
-            };
+            });
         } else if (remainingTime >= 0) {
             let minutes = Math.floor(remainingTime / 60);
             let seconds = remainingTime % 60;
@@ -122,11 +126,7 @@ function topDailyDealCountdown() {
         let remainingTime = targetTime.getTime() - now;
         if (remainingTime <= 0) {
             clearInterval(countdownTimer);
-            if (initialized) {
-                refreshDailyDeal().then(startCountdown);
-            } else {
-                startCountdown();
-            }
+            refreshDailyDeal().then(startCountdown);
         } else {
             let hours = Math.floor((remainingTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
             let minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
@@ -242,12 +242,12 @@ function onLoad() {
     arrayBiomes(biomes, 's0');
     arrayDailyDeal(dailyDeal);
     arrayDeepDives(ddData);
-    initialized = true
 
     document.querySelector('p.loading').style.display = 'none';
     document.getElementById("current").classList.toggle("collapsed");
     toggleCollapse();
     document.getElementById("upcoming").style.visibility = 'visible';
+    initialized = true
 
     topDailyDealCountdown()
     topMissionsCountdown()
@@ -260,8 +260,11 @@ function onLoad() {
 
     document.getElementById('buttonsbutton').setAttribute('onclick', 'toggleButtons()');
     
-    // document.getElementById('season').setAttribute('onchange', 'changeSeason(biomes, this.value)');
-    document.getElementById('season').setAttribute('onchange', "toggleSeason4(biomes, this.checked)");
+    let season = document.getElementById('season');
+    // season.setAttribute('onchange', 'changeSeason(biomes, this.value)');
+    // season.disabled = false;
+    season.setAttribute('onchange', "toggleSeason4(biomes, this.checked)");
+    season.disabled = false;
     document.getElementById('seasonClick').setAttribute('onclick', "document.getElementById('season').click()");
     document.getElementById('currentButton').setAttribute('onclick', 'toggleCollapse()');
     document.getElementById('backgroundButton').setAttribute('onclick', 'toggleBackground()');

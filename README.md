@@ -1,7 +1,7 @@
 ## **Deep Rock Galactic lua scripts for use with [RE-UE4SS lua API](https://github.com/UE4SS-RE/RE-UE4SS/) to fetch current mission and deep dive data for flask**
 
 - To run DRG headless, use command line arg `-nullrhi` when running the game.
-- Tested working with a Windows 10 virtual machine using `-nullrhi` (Requires OpenGL for the UE4SS hook).
+- Tested working with a Windows 10 virtual machine using `-nullrhi` (Requires OpenGL or dx11 for the UE4SS hook).
 - Make sure to [skip intro videos](https://www.pcgamingwiki.com/wiki/Deep_Rock_Galactic#Skip_intro_videos) and also use `-nosplash` command line arg if desired.
 - Be sure to disable Steam cloud save synchronization.
 - Unzip UE4SS into Deep Rock Galactic\FSD\Binaries\Win64 - this is also the CWD of the scripts run by the UE4SS hook.

@@ -1113,46 +1113,62 @@ def rotate_DDs(DDs):
 #         split_json(num_days)
 #         index_event.set()
 
-def group_json_by_days(DRG):
-    timestamps_dt = [datetime.fromisoformat(ts[:-1]) for ts in DRG.keys()]
-    
-    grouped_by_days = {}
-    for timestamp in timestamps_dt:
-        date = timestamp.date().strftime('%Y-%m-%d')
-        if date not in grouped_by_days:
-            grouped_by_days[date] = {}
-        timestamp = timestamp.strftime("%Y-%m-%dT%H:%M:%SZ")
-        grouped_by_days[date][timestamp] = DRG[timestamp]
-        
-    return grouped_by_days
+def split_daily_deals_json():
+    with open('drgdailydeals.json', 'r') as f:
+        AllTheDeals = json.load(f)
 
-def extract_days_from_json(data, num_days):
-    timestamps = {datetime.strptime(key, '%Y-%m-%d'): value for key, value in data.items()}
-    sorted_timestamps = sorted(timestamps.items())
+    shutil.rmtree('./static/json/dailydeals')
+    os.mkdir('./static/json/dailydeals')
 
-    start_date = sorted_timestamps[0][0]
-    end_date = sorted_timestamps[-1][0]
-    
-    complete_dates = [start_date + timedelta(days=i) for i in range((end_date - start_date).days + 1)]
-    complete_data = {date.strftime('%Y-%m-%d'): timestamps.get(date, 0) for date in complete_dates}
-    
-    current_datetime = datetime.utcnow()
-    days_from_now = current_datetime + timedelta(days=num_days)
-    relevant_days = {key: value for key, value in complete_data.items() if current_datetime <= datetime.strptime(key, '%Y-%m-%d') < days_from_now}
-    
-    return relevant_days
+    for timestamp, deal in AllTheDeals.items():
+        fname = timestamp.replace(':', '-')
+        with open(f'./static/json/dailydeals/{fname}.json', 'w') as f:
+            json.dump(deal, f)
+
 
 def rotate_jsons_days(DRG, num_days):
+    def extract_days_from_json(data, num_days):
+        timestamps = {datetime.strptime(key, '%Y-%m-%d'): value for key, value in data.items()}
+        sorted_timestamps = sorted(timestamps.items())
+        
+        start_date = sorted_timestamps[0][0]
+        end_date = sorted_timestamps[-1][0]
+        
+        
+        complete_dates = [start_date + timedelta(days=i) for i in range((end_date - start_date).days + 1)]
+        complete_data = {date.strftime('%Y-%m-%d'): timestamps.get(date, 0) for date in complete_dates}
+        
+        current_datetime = datetime.utcnow()
+        days_from_now = current_datetime + timedelta(days=num_days)
+        relevant_days = {key: value for key, value in complete_data.items() if current_datetime <= datetime.strptime(key, '%Y-%m-%d') < days_from_now}
+        current_datetime = datetime.utcnow().strftime('%Y-%m-%d')
+        relevant_days[current_datetime] = data[current_datetime]
+        
+        return relevant_days
+    def group_json_by_days(DRG):
+        timestamps_dt = [datetime.fromisoformat(ts[:-1]) for ts in DRG.keys()]
+        
+        grouped_by_days = {}
+        for timestamp in timestamps_dt:
+            date = timestamp.date().strftime('%Y-%m-%d')
+            if date not in grouped_by_days:
+                grouped_by_days[date] = {}
+            timestamp = timestamp.strftime("%Y-%m-%dT%H:%M:%SZ")
+            grouped_by_days[date][timestamp] = DRG[timestamp]
+            
+        return grouped_by_days
+    
     completed = []
     days = group_json_by_days(DRG)
     days = extract_days_from_json(DRG, num_days)
-    if os.path.isdir('./static/json/bulkmissions'):
-        shutil.rmtree('./static/json/bulkmissions')
-    os.mkdir('./static/json/bulkmissions')
+    
+    dirpath = './static/json/bulkmissions'
+    if os.path.isdir(dirpath):
+        shutil.rmtree(dirpath)
+    os.mkdir(dirpath)
+    
     for day, timestamp in days.items():
-        path = f'./static/json/bulkmissions/{day}.json'
-        completed.append(path)
-        with open(path, 'w') as f:
+        with open(f'{dirpath}/{day}.json') as f:
             json.dump(timestamp, f)
             
     while True:

@@ -6,7 +6,7 @@ from hashlib import md5
 from time import sleep
 
 
-
+#UNGROUPED BY DAY
 def split_json(num_days, bs):
     def extract_days_from_json(data, num_days):
         timestamps = {datetime.fromisoformat(key.replace('Z', '')): value for key, value in data.items()}
@@ -180,21 +180,19 @@ def extract_days_from_json(data, num_days):
     
     return relevant_days
 
-# with open('drgdailydeals.json', 'r') as f:
-#     DRG = json.load(f)
+def split_daily_deals_json():
+    with open('drgdailydeals.json', 'r') as f:
+        AllTheDeals = json.load(f)
+    
+    dirpath = './static/json/dailydeals'
+    if os.path.isdir(dirpath):
+        shutil.rmtree(dirpath)
+    os.mkdir(dirpath)
 
-# shutil.rmtree('./static/json/dailydeals')
-# os.mkdir('./static/json/dailydeals')
-
-# for timestamp, deal in DRG.items():
-#     fname = timestamp.replace(':', '-')
-#     with open(f'./static/json/dailydeals/{fname}.json', 'w') as f:
-#         json.dump(deal, f)
-        
-# today = datetime.today()
-# today_midnight = today.replace(hour=0, minute=0, second=0, microsecond=0)
-# iso_timestamp = today_midnight.isoformat().replace(':', '-')+'Z'
-# print(iso_timestamp)
+    for timestamp, deal in AllTheDeals.items():
+        fname = timestamp.replace(':', '-')
+        with open(f'./static/json/dailydeals/{fname}.json', 'w') as f:
+            json.dump(deal, f)
 
 with open('drgmissionsgod.json', 'r') as f:
     DRG = flatten_seasons(json.load(f))
@@ -207,30 +205,7 @@ os.mkdir('./static/json/bulkmissions')
 for day, timestamp in days.items():
     path = f'./static/json/bulkmissions/{day}.json'
     with open(path, 'w') as f:
-        json.dump(timestamp, f)
-
-def rotate_jsons_days(DRG, num_days):
-    days = group_json_by_days(DRG)
-    days = extract_days_from_json(DRG, num_days)
-    if os.path.isdir('./static/json/bulkmissions'):
-        shutil.rmtree('./static/json/bulkmissions')
-    os.mkdir('./static/json/bulkmissions')
-    for day, timestamp in days.items():
-        with open(f'./static/json/bulkmissions/{day}.json') as f:
-            json.dump(timestamp, f)
-            
-    while True:
-        sleep(num_days*86400-3600)
-        days = group_json_by_days(DRG)
-        days = extract_days_from_json(days, num_days)
-        if os.path.isdir('./static/json/bulkmissions'):
-            shutil.rmtree('./static/json/bulkmissions')
-        os.mkdir('./static/json/bulkmissions')
-        for day, timestamp in days.items():
-            with open(f'./static/json/bulkmissions/{day}.json') as f:
-                json.dump(timestamp, f)
-        
-    
+        json.dump(timestamp, f) 
 
 # flat_or_not = input('Flat or not: ')
 # if flat_or_not.lower() == 'flat':
