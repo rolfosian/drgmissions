@@ -90,7 +90,7 @@ ddsthread = threading.Thread(target=rotate_DDs, args=(DDs,))
 index_event = threading.Event()
 #index_Queue = queue.Queue()
 index_Queue = []
-index_thread = threading.Thread(target=rotate_index, args=(DRG, rendering_events, tstamp, next_tstamp, index_event, index_Queue))
+index_thread = threading.Thread(target=rotate_index, args=(rendering_events, tstamp, next_tstamp, index_event, index_Queue))
 
 #Obsolete but kept the index event and rotation stuff just cause im not going to fix what isnt broken and i cant be bothered rewriting more stuff
 #Listener that clears the rendering event 1.5 seconds before the 30 minute mission rollover interval so the homepage won't load for clients until the rotators are done rendering the mission icons
@@ -129,9 +129,13 @@ app = Flask(__name__, static_folder='./static')
 #Homepage
 @app.route('/')
 def home():
-    index_event.wait()
+    # index_event.wait()
     # return send_file(BytesIO(index_Queue[0]['index']), mimetype='text/html', etag=index_Queue[0]['etag'])
     return send_file('./static/index.html')
+
+@app.route('/test')
+def test():
+    return '<!doctype html><html><head><script src="/static/test.js"></script></head></html>'
 
 #Sends current mission icons, arg format f"?img={Biome.replace(' ', '-')}{mission['CodeName'].replace(' ', '-')}{mission['season']}" - see rotate_biomes_FLAT in drgmissionslib.py
 @app.route('/png')

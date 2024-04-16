@@ -8,7 +8,7 @@ $('img').on('load', function() {
 scrollToTop();
 });
 
-function deepDiveCountDown() {
+async function deepDiveCountDown() {
     let targetDay = 4;
     let targetHour = 11;
     let targetTime = new Date();
@@ -60,12 +60,61 @@ function deepDiveCountDown() {
     startCountdown(1000);
 }
 
+// async function topMissionsCountdown() {
+//     let countdownElement = document.getElementById('countdown');
+//     let countdownTimer;
+//     let targetTime = new Date();
+//     let cacheActive = false;
+    
+//     function startCountdown() {
+//         targetTime.setSeconds(0);
+//         targetTime.setMilliseconds(0);
+//         if (targetTime.getMinutes() < 30) {
+//             targetTime.setMinutes(30);
+//         } else {
+//             targetTime.setMinutes(0);
+//             targetTime.setHours(targetTime.getHours() + 1);
+//         }
+//         countdownTimer = setInterval(updateCountdown, 1000);
+//     }
+//     function updateCountdown() {
+//         let date_ = new Date()
+//         let remainingTime = Math.floor(((targetTime - date_ + 2) / 1000));
+//         let isMidnightUpcoming_ = isMidnightUpcoming(date_)
+//         if (remainingTime < 3 && !cacheActive) {
+//             tempCacheUpcomingBiomes(isMidnightUpcoming_, date_).then(() => {
+//                 cacheActive = true
+//             });
+//         }
+//         if (remainingTime < 0) {
+//             clearInterval(countdownTimer);
+//             let loading = document.querySelector('p.loading')
+//             loading.style.display = 'inline-block';
+//             $(".biome-container").each(function() {
+//                 $(this).css("opacity", "0");
+//                 });
+//             refreshBiomes(isMidnightUpcoming_).then(() => {
+//                 cacheActive = false
+//                 startCountdown();
+//                 $(".biome-container").each(function() {
+//                     $(this).css("opacity", "1");
+//                     });
+//                 loading.style.display = 'none';
+//             });
+//         } else if (remainingTime >= 0) {
+//             let minutes = Math.floor(remainingTime / 60);
+//             let seconds = remainingTime % 60;
+//             let countdownString = `${minutes.toString().padStart(2, '0')} : ${seconds.toString().padStart(2, '0')}`;
+//             countdownElement.textContent = countdownString;
+//         }
+//     }
+//     startCountdown();
+// };
 function topMissionsCountdown() {
     let countdownElement = document.getElementById('countdown');
     let countdownTimer;
     let targetTime = new Date();
-    let cacheActive = false;
-    
+
     function startCountdown() {
         targetTime.setSeconds(0);
         targetTime.setMilliseconds(0);
@@ -77,31 +126,23 @@ function topMissionsCountdown() {
         }
         countdownTimer = setInterval(updateCountdown, 1000);
     }
+
     function updateCountdown() {
-        let date_ = new Date()
+        let date_ = new Date();
         let remainingTime = Math.floor(((targetTime - date_ + 2) / 1000));
-        let isMidnightUpcoming_ = isMidnightUpcoming(date_)
-        
+        let isMidnightUpcoming_ = isMidnightUpcoming(date_);
+
         if (remainingTime < 3 && !cacheActive) {
-            tempCacheUpcomingBiomes(isMidnightUpcoming_, date_).then(() => {
-                cacheActive = true
-            });
+            let upcomingBiomeCacheEvent = new Event('upcomingBiomeCache');
+            upcomingBiomeCacheEvent.isMidnightUpcoming = isMidnightUpcoming_;
+            upcomingBiomeCacheEvent.date = date_;
+            document.dispatchEvent(upcomingBiomeCacheEvent);
         }
         if (remainingTime < 0) {
             clearInterval(countdownTimer);
-            let loading = document.querySelector('p.loading')
-            loading.style.display = 'inline-block';
-            $(".biome-container").each(function() {
-                $(this).css("opacity", "0");
-                });
-            refreshBiomes().then(() => {
-                cacheActive = false
-                startCountdown();
-                $(".biome-container").each(function() {
-                    $(this).css("opacity", "1");
-                    });
-                loading.style.display = 'none';
-            });
+            let refreshBiomesEvent = new Event('refreshBiomes');
+            refreshBiomesEvent.isMidnightUpcoming = isMidnightUpcoming_;
+            document.dispatchEvent(refreshBiomesEvent);
         } else if (remainingTime >= 0) {
             let minutes = Math.floor(remainingTime / 60);
             let seconds = remainingTime % 60;
@@ -109,8 +150,28 @@ function topMissionsCountdown() {
             countdownElement.textContent = countdownString;
         }
     }
+
+    document.addEventListener('upcomingBiomeCache', async function(event) {
+        cacheActive = true;
+        tempCacheUpcomingBiomes(event.isMidnightUpcoming, event.date)
+    });
+    
+    document.addEventListener('refreshBiomes', async function(event) {
+        startCountdown();
+
+        while (!tempBiomes) {
+            await sleep(1);
+        }
+        cacheActive = false;
+        let isMidnightUpcoming_ = event.isMidnightUpcoming;
+        refreshBiomes(isMidnightUpcoming_);
+        // refreshBiomes(isMidnightUpcoming_).then(() => {
+        //     startCountdown()
+        // });
+    });
+
     startCountdown();
-};
+}
 function topDailyDealCountdown() {
     let targetHour = 0;
     let targetTime = new Date();
@@ -249,6 +310,7 @@ function onLoad() {
     document.getElementById("upcoming").style.visibility = 'visible';
     initialized = true
 
+
     topDailyDealCountdown()
     topMissionsCountdown()
     deepDiveCountDown()
@@ -268,5 +330,5 @@ function onLoad() {
     document.getElementById('seasonClick').setAttribute('onclick', "document.getElementById('season').click()");
     document.getElementById('currentButton').setAttribute('onclick', 'toggleCollapse()');
     document.getElementById('backgroundButton').setAttribute('onclick', 'toggleBackground()');
-    document.getElementById('loading').textContent = 'An error occured, please refresh the page.'
+    // document.getElementById('loading').textContent = 'An error occured, please refresh the page.'
 };

@@ -80,11 +80,11 @@ var warnings = {
 var warningsImages = {};
 
 var secondaryObjsDD = {
-    "Repair Minimules": "./static/img/Icon_Salvage_Mules_Objective_DDsecondaryobj.png",
-    "Eliminate Dreadnought": "./static/img/Kill_Dreadnought_Objective_icon_DDsecondaryobj.png",
-    "Mine Morkite": "./static/img/Morkite_icon_DDsecondaryobj.png",
-    "Get Alien Eggs": "./static/img/Alien_egg_icon_DDsecondaryobj.png",
-    "Black Box": "./static/img/Blackbox_icon_DDsecondaryobj.png"
+    "Repair Minimules": "/static/img/Icon_Salvage_Mules_Objective_DDsecondaryobj.png",
+    "Eliminate Dreadnought": "/static/img/Kill_Dreadnought_Objective_icon_DDsecondaryobj.png",
+    "Mine Morkite": "/static/img/Morkite_icon_DDsecondaryobj.png",
+    "Get Alien Eggs": "/static/img/Alien_egg_icon_DDsecondaryobj.png",
+    "Black Box": "/static/img/Blackbox_icon_DDsecondaryobj.png"
 };
 var secondaryObjsDDImages = {};
 
@@ -257,56 +257,105 @@ function getCurrentDateTimeUTC() {
     return formattedUTCDateTime;
 }
 
+// function roundTimeUpNextUpcoming(datetimeString) {
+//     var datetimeMinutes = parseInt(datetimeString.slice(14, 16));
+//     var datetime_unix = getCurrentDateTimeUTC_UNIX();
+//     var nextHour = datetime_unix - (datetime_unix % 3600) + 3600;
+
+//     var nextHourDate = new Date(nextHour * 1000);
+    
+//     var newYear = nextHourDate.getUTCFullYear();
+//     var newMonth = ('0' + (nextHourDate.getUTCMonth() + 1)).slice(-2);
+//     var newDay = ('0' + nextHourDate.getUTCDate()).slice(-2);
+//     var newHour = ('0' + nextHourDate.getUTCHours()).slice(-2);
+//     var newMinutes = ':00:00Z'
+
+//     if (datetimeMinutes >= 30) {
+//         newMinutes = ':30:00Z'
+//     }
+
+//     var newDatetime = newYear + '-' + 
+//                       newMonth + '-' + 
+//                       newDay + 'T' +
+//                       newHour + newMinutes;
+
+//     return newDatetime;
+// }
+
+function incrementTime(direction, datetimeString, numberOfIncrements = 1) {
+    if (direction === 'up') {
+        for (let i = 0; i < numberOfIncrements; i++) {
+            datetimeString = roundTimeUp(datetimeString);
+        }
+        return datetimeString;
+    } else if (direction === 'down') {
+        for (let i = 0; i < numberOfIncrements; i++) {
+            datetimeString = roundTimeDown(datetimeString);
+        }
+        return datetimeString;
+    } else {
+        throw new Error('Invalid direction. Please use "up" or "down".');
+    }
+}
+
+function roundTimeUpNextUpcoming(datetimestring) {
+    return roundTimeUp(roundTimeUp(datetimestring));
+}
+
+// function roundTimeUp(datetimeString) {
+//     var datetimeMinutes = parseInt(datetimeString.slice(14, 16));
+//     if (datetimeMinutes >= 30) {
+//         var datetime_unix = getCurrentDateTimeUTC_UNIX();
+//         var nextHour = datetime_unix - (datetime_unix % 3600) + 3600;
+    
+//         var nextHourDate = new Date(nextHour * 1000);
+        
+//         var newYear = nextHourDate.getUTCFullYear();
+//         var newMonth = ('0' + (nextHourDate.getUTCMonth() + 1)).slice(-2);
+//         var newDay = ('0' + nextHourDate.getUTCDate()).slice(-2);
+//         var newHour = ('0' + nextHourDate.getUTCHours()).slice(-2);
+    
+//         var newDatetime = newYear + '-' + 
+//                           newMonth + '-' + 
+//                           newDay + 'T' +
+//                           newHour + ':00:00Z';
+//     } else {
+//         var newDatetime = datetimeString.slice(0, 14) + '30:00Z';
+//     }
+//     return newDatetime;
+// }
+
+function roundTimeUp(datetimeString) {
+    const currentTime = new Date(datetimeString);
+    const currentTimeMinutes = currentTime.getUTCMinutes();
+
+    let lastMark = new Date(currentTime);
+    let nextMark = new Date(currentTime);
+    let secondsSinceLastMark, secondsToNextMark;
+
+    if (currentTimeMinutes >= 30) {
+        lastMark.setUTCMinutes(30);
+        nextMark.setUTCMinutes(0);
+        nextMark.setUTCHours(nextMark.getUTCHours() + 1);
+    } else {
+        lastMark.setUTCMinutes(0);
+        nextMark.setUTCMinutes(30);
+    }
+
+    secondsSinceLastMark = (currentTime - lastMark) / 1000;
+    secondsToNextMark = (nextMark - currentTime) / 1000;
+
+    const roundedTime = new Date(currentTime.getTime() + secondsToNextMark * 1000);
+    roundedTime.setSeconds(0);
+    roundedTime.setMilliseconds(0);
+    const roundedTimeStr = roundedTime.toISOString().slice(0,19)+'Z';
+    return roundedTimeStr;
+}
+
 function getCurrentDateTimeUTC_UNIX() {
     return Math.floor(new Date(getCurrentDateTimeUTC()).getTime() / 1000);
 }
 
-function roundTimeUpNextUpcoming(datetimeString) {
-    var datetimeMinutes = parseInt(datetimeString.slice(14, 16));
-    var datetime_unix = getCurrentDateTimeUTC_UNIX();
-    var nextHour = datetime_unix - (datetime_unix % 3600) + 3600;
-
-    var nextHourDate = new Date(nextHour * 1000);
-    
-    var newYear = nextHourDate.getUTCFullYear();
-    var newMonth = ('0' + (nextHourDate.getUTCMonth() + 1)).slice(-2);
-    var newDay = ('0' + nextHourDate.getUTCDate()).slice(-2);
-    var newHour = ('0' + nextHourDate.getUTCHours()).slice(-2);
-    var newMinutes = ':00:00Z'
-
-    if (datetimeMinutes >= 30) {
-        newMinutes = ':30:00Z'
-    }
-
-    var newDatetime = newYear + '-' + 
-                      newMonth + '-' + 
-                      newDay + 'T' +
-                      newHour + newMinutes;
-
-    return newDatetime;
-}
-function roundTimeUp(datetimeString) {
-    var datetimeMinutes = parseInt(datetimeString.slice(14, 16));
-    if (datetimeMinutes >= 30) {
-        var datetime_unix = getCurrentDateTimeUTC_UNIX();
-        var nextHour = datetime_unix - (datetime_unix % 3600) + 3600;
-    
-        var nextHourDate = new Date(nextHour * 1000);
-        
-        var newYear = nextHourDate.getUTCFullYear();
-        var newMonth = ('0' + (nextHourDate.getUTCMonth() + 1)).slice(-2);
-        var newDay = ('0' + nextHourDate.getUTCDate()).slice(-2);
-        var newHour = ('0' + nextHourDate.getUTCHours()).slice(-2);
-    
-        var newDatetime = newYear + '-' + 
-                          newMonth + '-' + 
-                          newDay + 'T' +
-                          newHour + ':00:00Z';
-    } else {
-        var newDatetime = datetimeString.slice(0, 14) + '30:00Z';
-    }
-    return newDatetime;
-}
 function roundTimeDown(datetimeString) {
     var datetimeMinutes = parseInt(datetimeString.slice(14, 16));
     if (datetimeMinutes >= 30) {
@@ -575,7 +624,6 @@ function renderBiomes_(dictionary) {
 
     return renderedBiomes;
 }
-
 function renderBiomesFlat(dictionary) {
     let renderedBiomes = {};
     var Biomes = dictionary['Biomes']
@@ -588,11 +636,24 @@ function renderBiomesFlat(dictionary) {
 
         for (let i = 0; i < biomeMissions.length; i++) {
             let mission = biomeMissions[i];
-            let mission1 = {};
+            let mission1 = {}
+
+            if (mission.hasOwnProperty('season_modified')) {
+                mission1['season_modified'] = {}
+                for (let season in mission['season_modified']) {
+                    let modifiedMission = mission['season_modified'][season];
+                    mission1['season_modified'][season] = {};
+                    mission1['season_modified'][season]['CodeName'] = modifiedMission['CodeName'];
+                    mission1['season_modified'][season]['id'] = modifiedMission['id'];
+                    mission1['season_modified'][season]['season'] = modifiedMission['season'];
+                    let mission_icon_canvas_div = renderMission(modifiedMission);
+                    mission1['season_modified'][season]['rendered_mission'] = mission_icon_canvas_div;
+                }
+            }
 
             mission1['CodeName'] = mission['CodeName'];
             mission1['id'] = mission['id'];
-            mission1['season'] = mission['season']
+            mission1['season'] = mission['season'];
             // mission_icon_canvas_div.name = biome+mission1['CodeName']+mission1['season']
 
             let mission_icon_canvas_div = renderMission(mission);
@@ -601,9 +662,8 @@ function renderBiomesFlat(dictionary) {
             // biome1[mission_icon_canvas_div.name] = mission1
             biome1.push(mission1);
         }
-
         renderedBiomes['Biomes'][biome] = biome1;
-        };
+    };
     return renderedBiomes;
 }
 function renderBiomes(dictionary) {
@@ -617,7 +677,6 @@ function renderBiomes(dictionary) {
         // console.log(bs['timestamp'])
         return bs
     }
-
 }
 
 function isMidnightUpcoming(date) {
@@ -825,112 +884,21 @@ function arrayBiomes_(Biomes, season) { // deprecated, may need for debugging co
             };
         };
     };
-}
-function findDuplicates(dictList, ignoreKeys) {
-    const duplicates = [];
-    for (let i = 0; i < dictList.length; i++) {
-        const dict1 = dictList[i];
-        for (let j = i + 1; j < dictList.length; j++) {
-            const dict2 = dictList[j];
-            let isEqual = true;
-            for (const key in dict1) {
-                if (!ignoreKeys.includes(key)) {
-                    if (dict1[key] !== dict2[key]) {
-                        isEqual = false;
-                        break;
-                    }
-                }
-            }
-            if (isEqual) {
-                duplicates.push([dict1, dict2]);
-            }
-        }
-    }
-    if (duplicates.length === 0) {
-        return false;
-    }
-    return duplicates;
-}
-function processDuplicates(duplicates, season, biomeDiv, biomeMissions) {
-    let skip = [];
-    let seen = [];
-    let biomeMissionsOriginal = [...biomeMissions];
-
-    for (let i = 0; i < duplicates.length; i++) {
-        let len = duplicates[i].length
-        try {
-            for (let j = 0; j < len; j++) {
-                let mission = duplicates[i][j]
-                if (mission['season'] != season) {
-                    skip.push(`${mission['id']}${mission['season']}`)
-                }
-            }
-        } catch {
-        }
-    }
-    
-    for (let i = 0; i < biomeMissions.length; i++) {
-        let mission = biomeMissions[i];
-
-        if (inList(skip, `${mission['id']}${mission['season']}`)) {
-            seen.push(mission['CodeName'])
-            continue;
-        }
-
-        if (season == 's0' && mission['season'] != 's0') {
-            continue
-        }
-        
-        if (season != 's0') {
-            seen.forEach((codename, index) => {
-                try {
-                    if (codename == biomeMissions[i-1]['CodeName']) {
-                        biomeMissions[i] = biomeMissions[i-1]
-                        biomeMissions[i-1] = mission
-                    } else if (codename == biomeMissions[i+1]['CodeName']) {
-                        biomeMissions[i] = biomeMissions[i+1]
-                        biomeMissions[i+1] = mission
-                    }
-                } catch {
-                }
-            });
-        }
-
-        biomeDiv.appendChild(mission['rendered_mission']);
-    };
-    biomeMissions = biomeMissionsOriginal; 
-}
-function processSeasonBiome(duplicates, season, biomeDiv, biomeMissions) {
-    if (duplicates) {
-        processDuplicates(duplicates, season, biomeDiv, biomeMissions);
-    } else {
-        for (let i = 0; i < biomeMissions.length; i++) {
-            let mission = biomeMissions[i];
-            if (season == 's0') {
-                if (mission['season'] != 's0') {
-                    continue
-                }
-            }
-            biomeDiv.appendChild(mission['rendered_mission']);
-        }
-    }
+    equalizeGridItems()
 }
 
-function arrayBiomes(Biomes, season) { // dev
+function arrayBiomes(Biomes, season) { // may need for debugging
     if (Biomes[0].hasOwnProperty('s0')) {
         arrayBiomes_(Biomes, season)
-        equalizeGridItems()
     } else {
         arrayBiomesFlat(Biomes, season)
-        equalizeGridItems()
     }
 }
-
-function arrayBiomes(Biomes, season) {
+function arrayBiomesFlat(Biomes, season) {
     let currentBiomes = Biomes[0]['Biomes']
     let nextBiomes = Biomes[1]['Biomes']
     let biomeMissions;
-    let duplicates;
+    let isS0 = season === 's0'
     
     let biomes_ = ['Crystalline Caverns', 'Glacial Strata', 'Radioactive Exclusion Zone', 'Fungus Bogs', 'Dense Biozone', 'Salt Pits', 'Sandblasted Corridors', 'Magma Core', 'Azure Weald', 'Hollow Bough'];
     for (let i_ = 0; i_ < biomes_.length; i_++) {
@@ -952,8 +920,16 @@ function arrayBiomes(Biomes, season) {
             biomeDiv.appendChild(spanElement)
         } else {
             biomeMissions = currentBiomes[biome];
-            duplicates = findDuplicates(biomeMissions, ignoreKeys=['id', 'season', 'rendered_mission'])
-            processSeasonBiome(duplicates, season, biomeDiv, biomeMissions)
+            for (let i = 0; i < biomeMissions.length; i++) {
+                let mission = biomeMissions[i];
+                if (isS0 && mission['season'] != season) {
+                    continue
+                }
+                if (mission.hasOwnProperty('season_modified') && !isS0) {
+                    mission = mission['season_modified'][season]
+                }
+                biomeDiv.appendChild(mission['rendered_mission']);
+            }
         }
 
         if (!(biome in nextBiomes)) {
@@ -963,9 +939,17 @@ function arrayBiomes(Biomes, season) {
             nextBiomeDiv.appendChild(spanElement)
         } else {
             biomeMissions = nextBiomes[biome];
-            duplicates = findDuplicates(biomeMissions, ignoreKeys=['id', 'season', 'rendered_mission'])
-            processSeasonBiome(duplicates, season, nextBiomeDiv, biomeMissions)
-        };
+            for (let i = 0; i < biomeMissions.length; i++) {
+                let mission = biomeMissions[i];
+                if (isS0 && mission['season'] != season) {
+                    continue
+                }
+                if (mission.hasOwnProperty('season_modified') && !isS0) {
+                    mission = mission['season_modified'][season]
+                }
+                nextBiomeDiv.appendChild(mission['rendered_mission']);
+            }
+        }
     };
     equalizeGridItems()
 }
@@ -1414,6 +1398,7 @@ async function initialize() {
             getDailyDealData()
         ])
         biomes_ = results[0];
+        console.log(biomes_)
         console.log(biomes_[0]['timestamp'])
         console.log(biomes_[1]['timestamp'])
         ddData_ = results[1];
@@ -1435,6 +1420,7 @@ async function initialize() {
             getDailyDealData()
         ]);
         biomes_ = getBiomesOnInit();
+        console.log(biomes_)
         console.log(biomes_[0]['timestamp'])
         console.log(biomes_[1]['timestamp'])
         ddData_ = results[0];
@@ -1731,8 +1717,9 @@ var biomes;
 var dailyDeal;
 var ddData;
 var initialized = false;
+var cacheActive = false;
 document.addEventListener('DOMContentLoaded', async function() {
-    try {
+    // try {
         await preloadFonts()
         await preloadImagesAll()
         var imgs = await initialize();
@@ -1751,8 +1738,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                 onLoad(); // bottom of homepage.js
             };
         };
-    } catch (error) {
-        alert(error);
-        location.reload();
-    }
+    // } catch (error) {
+    //     alert(error);
+    //     location.reload();
+    // }
 });
