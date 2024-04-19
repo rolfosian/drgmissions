@@ -295,7 +295,7 @@ async function preloadImagesAll() {
 }
 
 var fontNamesAndUrls = {
-    'HammerBro101MovieBold-Regular' : '/static/img/HammerBro101MovieBold-Regular.ttf',
+    'CarbonBold-W00-Regular' : '/static/img/CarbonBold-W00-Regular.ttf',
     'Bungee-Regular' : '/static/img/Bungee-Regular.ttf',
     'RiftSoft-Regular' : '/static/img/RiftSoft-Regular.ttf',
     'BebasNeue' : '/static/img/BebasNeue-Regular.woff2'
@@ -409,7 +409,7 @@ function renderMission(m_d, six) {
         ctx.drawImage(resource, 44, 205, resource.width * scaleFactor, resource.height * scaleFactor);
 
         const text = getText(m_d['PrimaryObjective'], m_d['Complexity'], m_d['Length']);
-        drawText(text, 'HammerBro101MovieBold-Regular', '35',  m_d['PrimaryObjective']);
+        drawText(text, 'CarbonBold-W00-Regular', '35',  m_d['PrimaryObjective']);
     }
 
     function getText(primaryObj, complexity, length) {
@@ -524,7 +524,7 @@ function renderDeepDiveStage(m_d, stageCount) {
         ctx.drawImage(resource, 44, 205, resource.width * scaleFactor, resource.height * scaleFactor);
 
         const text = getText(m_d['PrimaryObjective'], m_d['Complexity'], m_d['Length']);
-        drawText(text, 'HammerBro101MovieBold-Regular', '35',  m_d['PrimaryObjective']);
+        drawText(text, 'CarbonBold-W00-Regular', '35',  m_d['PrimaryObjective']);
     }
 
     function getText(primaryObj, complexity, length) {
@@ -623,7 +623,7 @@ function renderDailyDeal(dealDict) {
 
     var text = "TODAY'S OFFER:";
     var fillStyle = 'black';
-    drawText(text, 200, 30, 'black', 45, 'HammerBro101MovieBold-Regular');
+    drawText(text, 200, 30, 'black', 45, 'CarbonBold-W00-Regular');
     drawText(resource, 200, 75, 'black', 60, 'Bungee-Regular')
 
     var resourceImg = dailyDealResourcesImages[resource];

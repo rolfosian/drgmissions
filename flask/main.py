@@ -3,12 +3,13 @@ from drgmissionslib import (
     render_xp_calc_index, 
     order_dictionary_by_date,
     rotate_biomes_FLAT,
+    # rotate_biomes, obsolete, may need for debugging later
     rotate_dailydeal,
     rotate_DDs,
     rotate_index,
     rotate_timestamps,
     rotate_timestamp_from_dict,
-    # rotate_split_jsons,
+    # rotate_split_jsons, i dont trust this yet
     wait_rotation,
     flatten_seasons,
     class_xp_levels,
@@ -18,8 +19,12 @@ import json
 from flask import Flask, request, send_file, jsonify
 import threading
 from io import BytesIO
+from os import getcwd
+from shutil import copy as shutilcopy
 # import queue
+cwd = getcwd()
 
+# obsolete, may need for debugging later
 # def create_mission_icons_rotators(DRG, tstamp, next_tstamp):
 #     # seasons = ['s0', 's1','s2', 's3','s4', 's5']
 #     seasons = ['s0', 's4']
@@ -116,6 +121,8 @@ def start_threads():
     index_thread.start()
     
 #def join_threads():
+    # for thread in biome_rotator_threads:
+    #     thread.join()
     #tstampthread.join()
     #biomesthread.join()
     #ddsthread.join()
@@ -132,10 +139,6 @@ def home():
     # index_event.wait()
     # return send_file(BytesIO(index_Queue[0]['index']), mimetype='text/html', etag=index_Queue[0]['etag'])
     return send_file('./static/index.html')
-
-@app.route('/test')
-def test():
-    return '<!doctype html><html><head><script src="/static/test.js"></script></head></html>'
 
 #Sends current mission icons, arg format f"?img={Biome.replace(' ', '-')}{mission['CodeName'].replace(' ', '-')}{mission['season']}" - see rotate_biomes_FLAT in drgmissionslib.py
 @app.route('/png')
@@ -257,16 +260,20 @@ def upload():
         file_ = request.files['file']
         filename = file_.filename
         if filename.endswith('.json') or filename.endswith('.py'):
-            file_.save(f'./{filename}')
-            file_.save(f'./static/json/{filename}')
+            file_.save(f'{cwd}/{filename}')
+            shutilcopy(f'{cwd}/{filename}', f'{cwd}/static/json/{filename}')
         elif filename.endswith('icon.png'):
-            file_.save(f'./static/img/{filename}')
+            file_.save(f'{cwd}{filename}')
         else:
-            file_.save(f'./static/{filename}')
+            file_.save(f'{cwd}/{filename}')
         response_data = {'message': 'Success'}
         return jsonify(response_data)
-    except Exception:
+    except:
         return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
+
+@app.route('/test')
+def test():
+    return '<!doctype html><html><head><script src="/static/test.js"></script></head><body bgcolor="#202020"><select id="season" name="season" class="seasonBox"></select></div></body></html>'
 
 if __name__ == '__main__':
     start_threads()

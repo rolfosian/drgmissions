@@ -189,7 +189,7 @@ left: 50%;
 color: white;
 font-size: 65px;
 transform: translate(-50%, -50%);
-font-family: "BebasNeue", sans-serif;
+font-family: "CarbonBold-W00-Regular";
 }
 span#ddcountdown {
 margin-bottom: 0;
@@ -198,7 +198,7 @@ align-items: center;
 color: white;
 font-size: 72px;
 justify-content: center;
-font-family: "BebasNeue", sans-serif;
+font-family: "CarbonBold-W00-Regular";
 }
 #countdowncontainer {
 position: fixed;
@@ -207,6 +207,9 @@ left: 50%;
 transform: translateX(-50%);
 justify-content: center;
 z-index: 9998;
+}
+#buttonDiv {
+    display: none;
 }
 #slideButton {
 position: relative;
@@ -263,7 +266,7 @@ font-family: "BebasNeue", sans-serif;
 display: none;
 text-align: center;
 color: white;
-font-size: 35px;
+font-size: 30px;
 font-family: "BebasNeue", sans-serif;
 }
 #dailydealhead {

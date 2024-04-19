@@ -7,7 +7,6 @@ import requests
 import winreg
 import json
 import re
-from hashlib import md5
 
 #Validation
 #-----------------------
@@ -182,78 +181,6 @@ def round_time_down(datetime_string):
         new_datetime = datetime_string[:14] + '00:00Z'
     return new_datetime
 
-def flatten_seasons(DRG):
-    combined_biomes = {}
-    missions_count = 0
-    missions_per_season = {}
-    for season in list(DRG.items())[1][1].keys():
-        missions_per_season[season] = 0
-        
-    for timestamp, seasons_dict in DRG.items():
-        combined_biomes[timestamp] = {}
-        combined_biomes[timestamp]['timestamp'] = timestamp
-        combined_biomes[timestamp]['Biomes'] = {biome : [] for biome in seasons_dict['s0']['Biomes'].keys()}
-        combined_missions = []
-        for season, season_dict  in seasons_dict.items():
-            for biome, missions in season_dict['Biomes'].items():
-                
-                for mission in missions:
-                    id = mission['id']
-                    del mission['id']
-                    md5_ = md5(json.dumps(mission).encode()).hexdigest()
-                    mission['id'] = id
-                    mission['season'] = season
-                    
-                    combined_missions.append((timestamp, season, biome, mission, md5_))
-                    missions_count += 1
-                    missions_per_season[season] += 1
-                        
-        combined_biomes[timestamp]['Biomes'][biome] = sorted(combined_missions, key=lambda x: x[1])
-
-    # amount_of_timestamps = len(list(DRG.keys()))
-    
-    # print(missions_per_season['s0'])
-    # missions_per_timestamp = missions_per_season['s0'] / amount_of_timestamps
-    # print(missions_per_timestamp)
-    
-    # print(missions_per_season['s4'])
-    # missions_per_timestamp = missions_per_season['s4'] / amount_of_timestamps
-    # print(missions_per_timestamp)
-    
-    # print(missions_count)
-    missions_count = 0
-
-    god = {}
-    for timestamp, biomes in combined_biomes.items():
-        god[timestamp] = {}
-        god[timestamp]['Biomes'] = {}
-        god[timestamp]['timestamp'] = timestamp
-        md5s = []
-        
-        for biome, missions in biomes['Biomes'].items():
-            god[timestamp]['Biomes'][biome] = []
-            
-            for timestamp_, season, biome, mission, mission_md5 in missions:
-                if season == 's0':
-                    md5s.append(timestamp+mission_md5)
-                    god[timestamp_]['Biomes'][biome].append(mission)
-                    missions_count += 1
-                elif timestamp+mission_md5 in md5s:
-                    continue
-                else:
-                    god[timestamp_]['Biomes'][biome].append(mission)
-                    missions_count += 1
-    # print(missions_count)
-
-    # missions_per_timestamp = missions_count / amount_of_timestamps
-    # print(missions_per_timestamp)
-    
-    # for b, ms in bs.items():
-    #     print(b)
-    #     for m in ms:
-    #         print(json.dumps(m, indent=4))
-
-    return god
 #------------------------------------------------------------------------------------------------------
 
 def upload_file(url, file_path, bearer_token):

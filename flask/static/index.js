@@ -10,6 +10,7 @@ var primaryObjs = {
     'Industrial Sabotage': '/static/img/Sabotage_icon.png'
 };
 var primaryObjsImages = {};
+primaryObjsImages.name = 'primaryObjsImages'
 
 var primaryObjResources = {
     'hexagon' : '/static/img/hexagon.png',
@@ -23,6 +24,7 @@ var primaryObjResources = {
     'Industrial Sabotage': '/static/img/Icon_Facility_DataRack.png'
 };
 var primaryObjResourcesImages = {};
+primaryObjResourcesImages.name = 'primaryObjResourcesImages'
 
 var secondaryObjs = {
     'ApocaBlooms': '/static/img/Apoca_bloom_icon.png',
@@ -35,6 +37,7 @@ var secondaryObjs = {
     'Hollomite': '/static/img/Hollomite_icon.png'
 };
 var secondaryObjsImages = {};
+secondaryObjsImages.name = 'secondaryObjsImages'
 
 var complexities = {
     '1': '/static/img/Icons_complexity_1.png',
@@ -42,6 +45,7 @@ var complexities = {
     '3': '/static/img/Icons_complexity_3.png'
 };
 var complexitiesImages = {};
+complexitiesImages.name = 'complexitiesImages'
 
 var lengths = {
     '1': '/static/img/Icons_length_1.png',
@@ -49,6 +53,7 @@ var lengths = {
     '3': '/static/img/Icons_length_3.png'
 };
 var lengthsImages = {};
+lengthsImages.name = 'lengthsImages'
 
 var mutators = {
     'Critical Weakness': '/static/img/Mutator_critical_weakness_icon.png',
@@ -61,6 +66,7 @@ var mutators = {
     'Volatile Guts': '/static/img/Mutator_volatile_guts_icon.png'
 };
 var mutatorsImages = {};
+mutatorsImages.name = 'mutatorsImages'
 
 var warnings = {
     'Cave Leech Cluster': '/static/img/Warning_cave_leech_cluster_icon.png',
@@ -78,6 +84,7 @@ var warnings = {
     'Rival Presence': '/static/img/Warning_rival_presence_icon.png'
 };
 var warningsImages = {};
+warningsImages.name = 'warningsImages'
 
 var secondaryObjsDD = {
     "Repair Minimules": "/static/img/Icon_Salvage_Mules_Objective_DDsecondaryobj.png",
@@ -87,6 +94,7 @@ var secondaryObjsDD = {
     "Black Box": "/static/img/Blackbox_icon_DDsecondaryobj.png"
 };
 var secondaryObjsDDImages = {};
+secondaryObjsDDImages.name = 'secondaryObjsDDImages'
 
 var biomesDD = {
     'Crystalline Caverns': '/static/img/DeepDive_MissionBar_CrystalCaves.png',
@@ -101,6 +109,7 @@ var biomesDD = {
     'Hollow Bough': '/static/img/DeepDive_MissionBar_HollowBough.png'
 };
 var biomesDDImages = {};
+biomesDDImages.name = 'biomesDDImages'
 
 var dailyDealResources = {
     'Bismor': '/static/img/Bismor_icon.png',
@@ -113,29 +122,147 @@ var dailyDealResources = {
     'Bubble': '/static/img/Icon_TradeTerminal_SaleBubble.png'
 };
 var dailyDealResourcesImages = {};
+dailyDealResourcesImages.name = 'dailyDealResourcesImages'
 
 var fontNamesAndUrls = {
-    'HammerBro101MovieBold-Regular' : '/static/img/HammerBro101MovieBold-Regular.ttf',
-    'HammerBro101MovieThin-Regular' : '/static/HammerBro101MovieThin-Regular.woff',
-    'Bungee-Regular' : '/static/img/Bungee-Regular.ttf',
-    'RiftSoft-Regular' : '/static/img/RiftSoft-Regular.ttf',
-    'BebasNeue' : '/static/img/BebasNeue-Regular.woff2'
+    'HammerBro101MovieThin-Regular' : ['woff', '/static/HammerBro101MovieThin-Regular.woff'],
+    'CarbonBold-W00-Regular' : ['truetype', '/static/img/CarbonBold-W00-Regular.ttf'],
+    'Bungee-Regular' : ['truetype', '/static/img/Bungee-Regular.ttf'],
+    'RiftSoft-Regular' : ['truetype', '/static/img/RiftSoft-Regular.ttf'],
+    'BebasNeue' : ['woff2', '/static/img/BebasNeue-Regular.woff2']
 };
+
+var base64LocalStoragesImg = {};
+var base64LocalStoragesFonts = {};
+
+function arrayBufferToBase64( buffer ) {
+    var binary = '';
+    var bytes = new Uint8Array( buffer );
+    var len = bytes.byteLength;
+    for (var i = 0; i < len; i++) {
+        binary += String.fromCharCode( bytes[ i ] );
+    }
+    return window.btoa( binary );
+}
+function base64ToArrayBuffer(base64_string) {
+    return Uint8Array.from(atob(base64_string), c => c.charCodeAt(0)).buffer;
+}
+async function fetchBinaryData(key, url) {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    const arrayBuffer = await blob.arrayBuffer();
+    return [key, arrayBuffer];
+   }
 
 async function preloadImages(imageObj, imageCache) {
     let promises = [];
+    base64LocalStoragesImg[imageCache.name] = {}
+
     for (let key in imageObj) {
-        let img = new Image();
-        img.src = imageObj[key];
-        let promise = new Promise((resolve, reject) => {
-            img.onload = () => resolve();
-            img.onerror = () => reject();
-        });
-        promises.push(promise);
-        imageCache[key] = img;
+        let promisedBinary = fetchBinaryData(key, imageObj[key])
+        promises.push(promisedBinary);
     }
-    await Promise.all(promises);
+    let promisedBinaries = await Promise.all(promises);
+
+    for (let i = 0; i < promisedBinaries.length; i++) {
+        let promisedBinary = promisedBinaries[i];
+        key = promisedBinary[0]
+        let base64Data = arrayBufferToBase64(promisedBinary[1]);
+        base64LocalStoragesImg[imageCache.name][key] = base64Data;
+        let img = new Image()
+        img.src = "data:image/png;base64," + base64Data
+        img.onload = async () => {
+            imageCache[key] = img
+        }
+        await img.onload()
+    }
 }
+async function loadImgsFromLocalStorageObj(imageObj, imageCache) {
+    for (let key in imageObj) {
+        let base64Data =  localStorages['img'][imageCache.name][key]
+        let img = new Image()
+        img.src = "data:image/png;base64," + base64Data;
+        img.onload = async () => {
+            imageCache[key] = img
+        }
+        await img.onload()
+    }
+}
+
+async function loadImgsFromLocalStorageAll() {
+    await Promise.all([
+        loadImgsFromLocalStorageObj(primaryObjs, primaryObjsImages),
+        loadImgsFromLocalStorageObj(primaryObjResources, primaryObjResourcesImages),
+        loadImgsFromLocalStorageObj(secondaryObjs, secondaryObjsImages),
+        loadImgsFromLocalStorageObj(complexities, complexitiesImages),
+        loadImgsFromLocalStorageObj(lengths, lengthsImages),
+        loadImgsFromLocalStorageObj(mutators, mutatorsImages),
+        loadImgsFromLocalStorageObj(warnings, warningsImages),
+        loadImgsFromLocalStorageObj(secondaryObjsDD, secondaryObjsDDImages),
+        // loadImgsFromLocalStorageObj(biomesDD, biomesDDImages),
+        loadImgsFromLocalStorageObj(dailyDealResources, dailyDealResourcesImages)
+    ]);
+}
+
+async function preloadFonts(){
+    let promises = [];
+    let types = {};
+    let fontsBinaries;
+
+    for (let fontName in fontNamesAndUrls) {
+        let fontUrl = fontNamesAndUrls[fontName];
+        console.log(fontUrl[1])
+        let promisedBinary = fetchBinaryData(fontName, fontUrl[1]);
+        types[fontName] = fontUrl[0];
+        promises.push(promisedBinary);
+    }
+    fontsBinaries = await Promise.all(promises);
+    for (let i = 0; i < fontsBinaries.length; i++) {
+        let fontNameAndBinaryData = fontsBinaries[i];
+        let fontName = fontNameAndBinaryData[0];
+        let fontBinaryData = fontNameAndBinaryData[1];
+        let type = types[fontName]
+
+        base64Data = arrayBufferToBase64(fontBinaryData);
+        base64LocalStoragesFonts[fontName] = [type, base64Data];
+        let fontFace = new FontFace(fontName, `url(data:font/${type};base64,${base64Data})`);
+        await fontFace.load();
+        document.fonts.add(fontFace);
+    }
+    localStorage.setItem('fonts', JSON.stringify(base64LocalStoragesFonts));
+    base64LocalStoragesFonts = undefined;
+}
+
+async function loadFontsFromLocalStorageObj() {
+    let fonts;
+    for (let key in localStorages['fonts']) {
+        let base64Data = localStorages['fonts'][key][1]
+        let type = localStorages['fonts'][key][0]
+        let font = new FontFace(key, `url(data:font/${type};base64,${base64Data})`);
+        await font.load();
+        document.fonts.add(font);
+    }
+}
+
+// async function preloadImages(imageObj, imageCache) {
+//     let promises = [];
+//     for (let key in imageObj) {
+//         let img = new Image();
+//         img.src = imageObj[key];
+//         let promise = new Promise((resolve, reject) => {
+//             img.onload = () => resolve();
+//             img.onerror = () => reject();
+//         });
+//         promises.push(promise);
+//         imageCache[key] = img;
+//     }
+//     await Promise.all(promises);
+//      }
+
+
+
+//     // imageCache = undefined;
+// }
 async function preloadImagesAll() {
     await Promise.all([
         preloadImages(primaryObjs, primaryObjsImages),
@@ -149,23 +276,25 @@ async function preloadImagesAll() {
         // preloadImages(biomesDD, biomesDDImages),
         preloadImages(dailyDealResources, dailyDealResourcesImages)
     ]);
+    localStorage.setItem('img', JSON.stringify(base64LocalStoragesImg))
+    base64LocalStoragesImg = undefined;
 }
 
-async function preloadFonts(){
-    let promises = [];
-    let fonts = [];
-    for (let fontName in fontNamesAndUrls) {
-        let fontUrl = fontNamesAndUrls[fontName];
-        let font = new FontFace(fontName, `url(${fontUrl})`);
-        let promise = font.load();
-        promises.push(promise);
-        fonts.push(font);
-    }
-    await Promise.all(promises);
-    for (let i = 0; i < fonts.length; i++) {
-        document.fonts.add(fonts[i]);
-    }
-}
+// async function preloadFonts(){
+//     let promises = [];
+//     let fonts = [];
+//     for (let fontName in fontNamesAndUrls) {
+//         let fontUrl = fontNamesAndUrls[fontName];
+//         let font = new FontFace(fontName, `url(${fontUrl})`);
+//         let promise = font.load();
+//         promises.push(promise);
+//         fonts.push(font);
+//     }
+//     await Promise.all(promises);
+//     for (let i = 0; i < fonts.length; i++) {
+//         document.fonts.add(fonts[i]);
+//     }
+// }
 
 async function preloadAll() {
     try {
@@ -214,17 +343,37 @@ function getCurrentDateMidnightUTC() {
     return formattedUTCDateTime;
 }
 
-function getNextDateMidnightUTC() {
-    let now = new Date();
-    let sysYear = now.getFullYear()
-    let sysMonth = now.getMonth()
-    let sysDate = now.getDate()
-    let nows = new Date(Date.UTC(sysYear, sysMonth,  sysDate, 0, 0, 0, 0))
-    nows.setUTCDate(nows.getUTCDate()+1);
+// function getNextDateMidnightUTC() {
+//     let now = new Date();
+//     let sysYear = now.getFullYear()
+//     let sysMonth = now.getMonth()
+//     let sysDate = now.getDate()
+//     let nows = new Date(Date.UTC(sysYear, sysMonth,  sysDate, 0, 0, 0, 0))
+//     nows.setUTCDate(nows.getUTCDate()+1);
 
-    let utcYear = nows.getUTCFullYear();
-    let utcMonth = ('0' + (nows.getUTCMonth() + 1)).slice(-2);
-    let utcDay = ('0' + nows.getUTCDate()).slice(-2);
+//     let utcYear = nows.getUTCFullYear();
+//     let utcMonth = ('0' + (nows.getUTCMonth() + 1)).slice(-2);
+//     let utcDay = ('0' + nows.getUTCDate()).slice(-2);
+//     let utcHours = '00';
+//     let utcMinutes = '00';
+//     let utcSeconds = '00';
+
+//     var formattedUTCDateTime = utcYear + '-' +
+//         utcMonth + '-' +
+//         utcDay + 'T' +
+//         utcHours + ':' +
+//         utcMinutes + ':' +
+//         utcSeconds + 'Z';
+//     return formattedUTCDateTime;
+// }
+
+function getNextDateMidnightUTC(date) {
+    let now = new Date(date)
+    now.setUTCDate(now.getUTCDate()+1);
+
+    let utcYear = now.getUTCFullYear();
+    let utcMonth = ('0' + (now.getUTCMonth() + 1)).slice(-2);
+    let utcDay = ('0' + now.getUTCDate()).slice(-2);
     let utcHours = '00';
     let utcMinutes = '00';
     let utcSeconds = '00';
@@ -257,31 +406,6 @@ function getCurrentDateTimeUTC() {
     return formattedUTCDateTime;
 }
 
-// function roundTimeUpNextUpcoming(datetimeString) {
-//     var datetimeMinutes = parseInt(datetimeString.slice(14, 16));
-//     var datetime_unix = getCurrentDateTimeUTC_UNIX();
-//     var nextHour = datetime_unix - (datetime_unix % 3600) + 3600;
-
-//     var nextHourDate = new Date(nextHour * 1000);
-    
-//     var newYear = nextHourDate.getUTCFullYear();
-//     var newMonth = ('0' + (nextHourDate.getUTCMonth() + 1)).slice(-2);
-//     var newDay = ('0' + nextHourDate.getUTCDate()).slice(-2);
-//     var newHour = ('0' + nextHourDate.getUTCHours()).slice(-2);
-//     var newMinutes = ':00:00Z'
-
-//     if (datetimeMinutes >= 30) {
-//         newMinutes = ':30:00Z'
-//     }
-
-//     var newDatetime = newYear + '-' + 
-//                       newMonth + '-' + 
-//                       newDay + 'T' +
-//                       newHour + newMinutes;
-
-//     return newDatetime;
-// }
-
 function incrementTime(direction, datetimeString, numberOfIncrements = 1) {
     if (direction === 'up') {
         for (let i = 0; i < numberOfIncrements; i++) {
@@ -301,29 +425,6 @@ function incrementTime(direction, datetimeString, numberOfIncrements = 1) {
 function roundTimeUpNextUpcoming(datetimestring) {
     return roundTimeUp(roundTimeUp(datetimestring));
 }
-
-// function roundTimeUp(datetimeString) {
-//     var datetimeMinutes = parseInt(datetimeString.slice(14, 16));
-//     if (datetimeMinutes >= 30) {
-//         var datetime_unix = getCurrentDateTimeUTC_UNIX();
-//         var nextHour = datetime_unix - (datetime_unix % 3600) + 3600;
-    
-//         var nextHourDate = new Date(nextHour * 1000);
-        
-//         var newYear = nextHourDate.getUTCFullYear();
-//         var newMonth = ('0' + (nextHourDate.getUTCMonth() + 1)).slice(-2);
-//         var newDay = ('0' + nextHourDate.getUTCDate()).slice(-2);
-//         var newHour = ('0' + nextHourDate.getUTCHours()).slice(-2);
-    
-//         var newDatetime = newYear + '-' + 
-//                           newMonth + '-' + 
-//                           newDay + 'T' +
-//                           newHour + ':00:00Z';
-//     } else {
-//         var newDatetime = datetimeString.slice(0, 14) + '30:00Z';
-//     }
-//     return newDatetime;
-// }
 
 function roundTimeUp(datetimeString) {
     const currentTime = new Date(datetimeString);
@@ -382,7 +483,7 @@ function getTomorrowDate(date) {
 
 async function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
-  }
+}
 async function waitRotation() {
     while (true) {
         const targetMinutes59 = [29, 59];
@@ -448,20 +549,13 @@ function getPreviousThursdayTimestamp() {
     return timestamp;
 }
 
-async function getCurrentDaysJson() {
-    const currentDate = getCurrentDateTimeUTC().split('T')[0];
-    return await loadJSON(getDomainURL()+`/static/json/bulkmissions/${currentDate}.json`)
-}
 function getCurrentMissionData() {
     const datetime = roundTimeDown(getCurrentDateTimeUTC())
-    return currentDaysJson[datetime]
+    return localStorages['currentDaysJson'][1][datetime]
 }
 function getUpcomingMissionData() {
     const datetime = roundTimeUp(getCurrentDateTimeUTC())
-    return currentDaysJson[datetime]
-}
-function getNextUpcomingMissionData() {
-    const datetime = roundTimeUp(getCurrentDateTimeUTC())
+    return localStorages['currentDaysJson'][1][datetime]
 }
 
 async function getDeepDiveData() {
@@ -558,7 +652,7 @@ function renderMission(m_d) {
         ctx.drawImage(resource, 44, 205, resource.width * scaleFactor, resource.height * scaleFactor);
 
         const text = getText(m_d['PrimaryObjective'], m_d['Complexity'], m_d['Length']);
-        drawText(text, 'HammerBro101MovieBold-Regular', '35',  m_d['PrimaryObjective']);
+        drawText(text, 'CarbonBold-W00-Regular', '35',  m_d['PrimaryObjective']);
     }
 
     function getText(primaryObj, complexity, length) {
@@ -654,12 +748,10 @@ function renderBiomesFlat(dictionary) {
             mission1['CodeName'] = mission['CodeName'];
             mission1['id'] = mission['id'];
             mission1['season'] = mission['season'];
-            // mission_icon_canvas_div.name = biome+mission1['CodeName']+mission1['season']
 
             let mission_icon_canvas_div = renderMission(mission);
             mission1['rendered_mission'] = mission_icon_canvas_div;
 
-            // biome1[mission_icon_canvas_div.name] = mission1
             biome1.push(mission1);
         }
         renderedBiomes['Biomes'][biome] = biome1;
@@ -683,75 +775,54 @@ function isMidnightUpcoming(date) {
     return roundTimeDown(date.toISOString()).slice(11, 19) == '23:30:00'
 }
 
-// async function getBiomesMidnight(date) {
-//     let upcomingMidnight = getNextDateMidnightUTC();
-//     let nextDay = upcomingMidnight.split('T')[0];
-
-//     if (biomes) {
-//         let currentBiomes = biomes[1];
-//         currentDaysJson = await loadJSON(getDomainURL()+`/static/json/bulkmissions/${nextDay}.json`);
-//         let upcomingBiomes = renderBiomes(currentDaysJson[upcomingMidnight]);
-//         return [currentBiomes, upcomingBiomes];
-//     } else {
-//         let results = await Promise.all([
-//             getCurrentDaysJson(),
-//             loadJSON(getDomainURL()+`/static/json/bulkmissions/${nextDay}.json`)
-//         ])
-//         let currentBiomes = renderBiomes(results[0][roundTimeDown(date.toISOString())]);
-//         currentDaysJson = results[1];
-//         let upcomingBiomes = renderBiomes(currentDaysJson[upcomingMidnight]);
-//         return [currentBiomes, upcomingBiomes];
-//     }   
-// }
 async function tempCacheUpcomingBiomes(isMidnightUpcoming_, date) {
     let currentBiomes = biomes[1];
     let upcomingBiomes;
-    if (isMidnightUpcoming_) {
-        let upcomingMidnight = getNextDateMidnightUTC();
-        let nextDay = upcomingMidnight.split('T')[0];
-        if (tempCurrentDaysJson) {
-            currentDaysJson = tempCurrentDaysJson;
-            tempCurrentDaysJson = undefined
-        } else {
-            currentDaysJson = await loadJSON(getDomainURL()+`/static/json/bulkmissions/${nextDay}.json`);
-        }
-        upcomingBiomes = renderBiomes(currentDaysJson[roundTimeUpNextUpcoming(date.toISOString())]);
-        tempBiomes = [currentBiomes, upcomingBiomes]
-        console.log(tempBiomes)
-    } else {
-        if (roundTimeDown(date.toISOString()).split('T')[1] == '23:00:00Z') {
-            let upcomingMidnight = getNextDateMidnightUTC();
-            let nextDay = upcomingMidnight.split('T')[0];
+    
+    switch (true) {
+        case (isMidnightUpcoming_):
+            if (tempCurrentDaysJson) {
+                let nextDay = getNextDateMidnightUTC(date).split('T')[0];
+                setStorages('currentDaysJson', [nextDay, tempCurrentDaysJson]);
+                tempCurrentDaysJson = undefined;
+    
+            } else {
+                await getCurrentDaysJson(date, true);
+            }
+    
+            upcomingBiomes = renderBiomes(localStorages['currentDaysJson'][1][roundTimeUpNextUpcoming(date.toISOString())]);
+            break
+
+        case (roundTimeDown(date.toISOString()).slice(11, 19) == '23:00:00'):
+            let nextDay = getNextDateMidnightUTC(date).split('T')[0];
             tempCurrentDaysJson = await loadJSON(getDomainURL()+`/static/json/bulkmissions/${nextDay}.json`);
             upcomingBiomes = renderBiomes(tempCurrentDaysJson[roundTimeUpNextUpcoming(date.toISOString())]);
-        } else {
-            upcomingBiomes = renderBiomes(currentDaysJson[roundTimeUpNextUpcoming(date.toISOString())]);
-        }
-        tempBiomes = [currentBiomes, upcomingBiomes]
-        console.log(tempBiomes)
-        // console.log(tempBiomes)
+            break
+
+        default:
+            upcomingBiomes = renderBiomes(localStorages['currentDaysJson'][1][roundTimeUpNextUpcoming(date.toISOString())]);
+            break
     }
+
+    tempBiomes = [currentBiomes, upcomingBiomes]
+    console.log('------')
+    console.log(tempBiomes)
+    console.log(date.toISOString())
 }
 
 function getBiomesOnInit() {
-    let dictionary = getCurrentMissionData(currentDaysJson);
+    let dictionary = getCurrentMissionData(localStorages['currentDaysJson'][1]);
     let currentBiomes = renderBiomes(dictionary);
-    let dictionary_ = getUpcomingMissionData(currentDaysJson);
+    let dictionary_ = getUpcomingMissionData(localStorages['currentDaysJson'][1]);
     let upcomingBiomes = renderBiomes(dictionary_);
     return [currentBiomes, upcomingBiomes];
 }
 
 async function getBiomesMidnightOnInit(date) {
-    let upcomingMidnight = getNextDateMidnightUTC();
-    let nextDay = upcomingMidnight.split('T')[0];
-    let results = await Promise.all([
-        getCurrentDaysJson(),
-        loadJSON(getDomainURL()+`/static/json/bulkmissions/${nextDay}.json`)
-    ]);
-    let currentBiomes = renderBiomes(results[0][roundTimeDown(date.toISOString())]);
-    currentDaysJson = results[1];
-    tempCurrentDaysJson = currentDaysJson;
-    let upcomingBiomes = renderBiomes(currentDaysJson[upcomingMidnight]);
+    let upcomingMidnight = getNextDateMidnightUTC(date);
+    let results = await getCurrentDaysJson(date, true);
+    let currentBiomes = renderBiomes(results[0][roundTimeDown(date.toISOString().slice(0, 19)+'Z')]);    
+    let upcomingBiomes = renderBiomes(localStorages['currentDaysJson'][1][upcomingMidnight]);
     return [currentBiomes, upcomingBiomes];
 }
 
@@ -764,7 +835,8 @@ function getBiomes() {
 async function getBiomesMidnight() {
     let currentBiomes = tempBiomes[0];
     if (tempCurrentDaysJson) {
-        currentDaysJson = tempCurrentDaysJson;
+        setStorages('currentDaysJson', tempCurrentDaysJson);
+        tempCurrentDaysJson = undefined
     }
     let upcomingBiomes = tempBiomes[1];
     return [currentBiomes, upcomingBiomes];
@@ -775,30 +847,36 @@ function changeSeason(Biomes, season) {
     if (document.getElementById('currentButton').textContent == 'Click here to see current missions') {
         document.getElementById('currentButton').click();
     }
+
+    setStorages('seasonSelected', season)
 }
 
 function toggleSeason4(Biomes, bool) {
-    if (bool) {
-        document.getElementById("season").value = 's4'
-        arrayBiomes(Biomes, 's4');
-    } else {
-        document.getElementById("season").value = 's0'
-        arrayBiomes(Biomes, 's0');
+    switch (bool) {
+        case (true):
+            document.getElementById("season").value = 's4'
+            arrayBiomes(Biomes, 's4');
+            setStorages('seasonSelected', 's4')
+            break
+        case (false):
+            document.getElementById("season").value = 's0'
+            arrayBiomes(Biomes, 's0');
+            setStorages('seasonSelected', 's0')
+            break
     }
 }
 
 async function refreshBiomes(isMidnightUpcoming_) {
     if (isMidnightUpcoming_) { // this could probably be consolidated into one block but im not going to fix what isnt broken for now
         biomes = await getBiomesMidnight();
-        tempBiomes = undefined;
     } else {
         biomes = getBiomes();
-        tempBiomes = undefined;
     }
     arrayBiomes(biomes, document.getElementById("season").value);
     if (document.getElementById('currentButton').textContent == 'Click here to see current missions') {
         document.getElementById('currentButton').click();
     }
+    tempBiomes = undefined;
     console.log(biomes[0]['timestamp'])
     console.log(biomes[1]['timestamp'])
 }
@@ -1025,7 +1103,6 @@ function renderDeepDiveBiomeCodename(biome, codename) {
             break
         }
     }
-    // const img = biomesDDImages[biome];
     return canvas;
 }
 
@@ -1110,7 +1187,7 @@ function renderDeepDiveStage(m_d, stageCount) {
         ctx.drawImage(resource, 44, 205, resource.width * scaleFactor, resource.height * scaleFactor);
 
         const text = getText(m_d['PrimaryObjective'], m_d['Complexity'], m_d['Length']);
-        drawText(text, 'HammerBro101MovieBold-Regular', '35',  m_d['PrimaryObjective']);
+        drawText(text, 'CarbonBold-W00-Regular', '35',  m_d['PrimaryObjective']);
     }
 
     function getText(primaryObj, complexity, length) {
@@ -1259,7 +1336,7 @@ function renderDailyDeal(dealDict) {
 
     var text = "TODAY'S OFFER:";
     var fillStyle = 'black';
-    drawText(text, 200, 30, 'black', 45, 'HammerBro101MovieBold-Regular');
+    drawText(text, 200, 30, 'black', 45, 'CarbonBold-W00-Regular');
     drawText(resource, 200, 75, 'black', 60, 'Bungee-Regular')
 
     var resourceImg = dailyDealResourcesImages[resource];
@@ -1324,6 +1401,56 @@ function renderDailyDeal(dealDict) {
     div.appendChild(canvas)
     return div
 }
+function isElementVisible(el) {
+    return (el.offsetParent !== null);
+}
+function setupIdleVideoPause(videoElementId, idleTimeThreshold) {
+    let idleTimer;
+    let isPausedByIdle = false;
+    let isPausedByBlur = false;
+    const videoElement = document.getElementById(videoElementId);
+
+    function resetIdleTimer() {
+        clearTimeout(idleTimer);
+        idleTimer = setTimeout(function() {
+            if (!isPausedByBlur) {
+                videoElement.pause();
+                isPausedByIdle = true;
+            }
+        }, idleTimeThreshold);
+    }
+
+    function handleUserActivity() {
+        resetIdleTimer();
+        if (!isPausedByBlur && isPausedByIdle && videoElement.style.display != 'none') {
+            videoElement.play();
+            isPausedByIdle = false;
+        }
+
+    }
+
+    document.addEventListener("mousemove", handleUserActivity);
+    document.addEventListener("keypress", handleUserActivity);
+    document.addEventListener("click", handleUserActivity);
+
+    window.addEventListener('blur', function() {
+        if (!isPausedByIdle) {
+            videoElement.pause();
+            isPausedByBlur = true;
+        }
+
+
+    });
+    window.addEventListener('focus', function() {
+        if (isPausedByBlur && videoElement.style.display != 'none') {
+            videoElement.play();
+            isPausedByBlur = false;
+        }
+    });
+
+    resetIdleTimer();
+}
+
 function mostCommonNumber(arr) {
     const filteredArr = arr.filter(num => num !== 0);
     const countMap = filteredArr.reduce((map, num) => (map.set(num, (map.get(num) || 0) + 1), map), new Map());
@@ -1335,32 +1462,28 @@ function checkOverflowAndFixScanners(containers) {
     let heights = [];
 
     containers.forEach(container => {
-        let children_ = container.children;
-        for (var i = 0; i < children_.length; i++) {
-            if (children_[i].tagName.toLowerCase() === 'div') {
-                if (children_[i].children.length == 1) {
-                    scanners.push(container);
-                }
-            }
+        if (Array.from(container.children).some(child => 
+            child.tagName.toLowerCase() === 'div' && child.children.length === 1)) {
+            scanners.push(container);
         }
     });
     containers.forEach(container => {
-        container.style.height = "auto"
-        let height = container.offsetHeight
+        container.style.height = "auto";
+        let height = container.offsetHeight;
         if (height != 0) {
-            container.style.height = `${height-10}px`
+            container.style.height = `${height-10}px`;
             if (!(inList(scanners, container))) {
-                heights.push(height)
+                heights.push(height);
             }
         }
     });
     if (window.matchMedia("(min-width: 1440px)").matches) {
         scanners.forEach(container => {
-            container.style.height = `${mostCommonNumber(heights)-10}px`
+            container.style.height = `${mostCommonNumber(heights)-10}px`;
         })
     } else {
         scanners.forEach(container => {
-            container.style.height = `auto`
+            container.style.height = `auto`;
         })
     }
 
@@ -1377,8 +1500,105 @@ function checkOverflowAndFixScanners(containers) {
 }
 function equalizeGridItems() {
     const gridItems = document.querySelectorAll('.biome-container');
-    checkOverflowAndFixScanners(gridItems)
+    checkOverflowAndFixScanners(gridItems);
 }
+
+function toggleBackground() {
+    var video = document.getElementById("background-video");
+    var backgroundbutton = document.getElementById('backgroundButton');
+    var overlay = document.querySelector(".overlay");
+    if (video.style.display === "none" && overlay.style.display === "none") {
+        video.style.display = "block";
+        overlay.style.display = "block";
+        backgroundbutton.textContent = "Hide background";
+        video.play();
+        setStorages('isBackgroundHidden', false);
+    } else {
+        video.style.display = "none";
+        overlay.style.display = "none";
+        backgroundbutton.textContent = "Show background";
+        video.pause();
+        setStorages('isBackgroundHidden', true);
+    }
+};
+
+function handleStorageChange(event) {
+    function handleCase(key) {
+        localStorages[key] = JSON.parse(event.newValue);
+        dispatchConfigEvent(key, localStorages[key]);
+    }
+
+    for (const key in localStorages) {
+        if (key === event.key) {
+            handleCase(key);
+            break;
+        }
+    }
+}
+function dispatchConfigEvent(key, value) {
+    const configEvent = new Event('configEvent');
+    configEvent.key = key;
+    configEvent.newValue = {};
+    configEvent.newValue[key] = value;
+    window.dispatchEvent(configEvent);
+}
+window.addEventListener('storage', handleStorageChange);
+window.addEventListener('configEvent', (event) => {
+    switch (event.key) {
+        case 'isBackgroundHidden':
+            if (event.newValue[event.key] !== localStorages['isBackgroundHidden']) {
+                localStorages['isBackgroundHidden'] = event.newValue[event.key];
+            }
+            break;
+        case 'areButtonsHidden':
+            if (event.newValue[event.key] !== localStorages['areButtonsHidden']) {
+                localStorages['areButtonsHidden'] = event.newValue[event.key];
+            }
+            break;
+        default:
+            break;
+    }
+});
+function toggleButtons() {
+    let buttonDiv = document.getElementById('buttonDiv');
+    let buttonsbutton = document.getElementById('buttonsbutton');
+    let backgroundbutton = document.getElementById('backgroundButton');
+    let slideButton = document.getElementById('slideButton');
+    let currentButton = document.getElementById('currentButton');
+    let missionscountdown = document.getElementById('missionscountdown');
+    let DAILYDEAL = document.getElementById('DAILYDEAL');
+    let dailydealbutton = document.getElementById('dailydealbutton');
+    let seasonBox = document.getElementById('seasonSelect')
+
+    if (buttonDiv.style.display === "none") {
+        buttonDiv.style.display = 'block';
+        backgroundbutton.style.display = "inline-block";
+        slideButton.style.display = "inline-block";
+        currentButton.style.display = "inline-block";
+        dailydealbutton.style.display = "inline-block";
+        dailydealbutton.textContent = "Click here to see Daily Deal";
+        DAILYDEAL.style.display = "none";
+        seasonBox.style.display = "inline-block";
+        missionscountdown.style.display = "none";
+        buttonsbutton.textContent = " x ";
+        $("#missionscountdown").slideToggle();
+        $("#slideButton").text("Hide countdown");
+        setStorages('areButtonsHidden', false)
+    } else {
+        buttonDiv.style.display = "none"
+        missionscountdown.style.display = "none";
+        backgroundbutton.style.display = "none";
+        DAILYDEAL.style.display = "none";
+        dailydealbutton.style.display = "none";
+        slideButton.style.display = "none";
+        currentButton.style.display = "none";
+        seasonBox.style.display = "none";
+        buttonsbutton.textContent = "+";
+        setStorages('areButtonsHidden', true)
+    }
+};
+
+
 window.addEventListener('resize', function(event) {
     if (initialized) {
         equalizeGridItems()
@@ -1398,6 +1618,7 @@ async function initialize() {
             getDailyDealData()
         ])
         biomes_ = results[0];
+        console.log('------')
         console.log(biomes_)
         console.log(biomes_[0]['timestamp'])
         console.log(biomes_[1]['timestamp'])
@@ -1414,12 +1635,13 @@ async function initialize() {
         //     }
         // }
     } else {
-        currentDaysJson = await getCurrentDaysJson();
+        await getCurrentDaysJson(date);
         let results = await Promise.all([
             getDeepDiveData(),
             getDailyDealData()
         ]);
         biomes_ = getBiomesOnInit();
+        console.log('------')
         console.log(biomes_)
         console.log(biomes_[0]['timestamp'])
         console.log(biomes_[1]['timestamp'])
@@ -1443,7 +1665,7 @@ async function initialize() {
     // currentDatetime = replaceCharactersAtIndices(currentDatetime, [[13, '-'], [16,'-']]);
     let currentDateTimeHREF = getDomainURL()+'/static/json/bulkmissions/'+currentDatetime+'.json';
 
-    let nextDatetime = getNextDateMidnightUTC().split('T')[0];
+    let nextDatetime = getNextDateMidnightUTC(date).split('T')[0];
     // nextDatetime = replaceCharactersAtIndices(nextDatetime, [[13, '-'], [16,'-']]);
     let nextDateTimeHREF = getDomainURL()+'/static/json/bulkmissions/'+nextDatetime+'.json';
 
@@ -1457,22 +1679,6 @@ async function initialize() {
 
 
     let html = `
-    <div id="countdowncontainer">
-    <button id="backgroundButton">Hide background</button><button id="buttonsbutton">x</button><br>
-    <div id=DAILYDEAL><div id="dailydealhead">NEW DAILY DEAL IN<br><span id="DailyDealcountdown"></span></div><div id="DailyDeal" class="daily_deal_container"></div></div>
-    <button id="dailydealbutton">Click here to see Daily Deal</button><br>
-    <div id="missionscountdown">NEW MISSIONS IN<br>
-    <span id="countdown"></span></div><button id="slideButton">Hide countdown</button><br>
-    <button id="currentButton">Click here to see upcoming missions</button>
-    <br>
-    <div id="seasonSelect" class="seasonselect">
-    <button id="seasonClick" class="seasonBox">Season 4 Toggle</button>
-    <input type="checkbox" id="season" class="seasonBox" value="s0" disabled>
-    <!-- <select id="season" name="season" class="seasonBox" disabled></select> -->
-    </div>
-    </div>
-    
-    
     <div id="current">
     <div class="grid-container">
     
@@ -1680,66 +1886,195 @@ async function initialize() {
     <span class="credits">Send credits (eth): 0xb9c8591A80A3158f7cFFf96EC3c7eA9adB7818E7</span>
     </div>
     <p class='gsgdisclaimer'><i>This website is a third-party platform and is not affiliated, endorsed, or sponsored by Ghost Ship Games. The use of Deep Rock Galactic's in-game assets on this website is solely for illustrative purposes and does not imply any ownership or association with the game or its developers. All copyrights and trademarks belong to their respective owners. For official information about Deep Rock Galactic, please visit the official Ghost Ship Games website.</i></p></div>
-    `
+    `;
 
-    let mainContent = document.getElementById('mainContent')
-    mainContent.innerHTML = html
-
-    // let seasonBoxValues = {
-    //     's0' : 'No Season',
-    //     's1': 'Season 1',
-    //     's2': 'Season 2', 
-    //     's3': 'Season 3', 
-    //     's4': 'Season 4', 
-    //     's5': 'Season 5'
-    // }
-    // let seasonBox = document.getElementById('season')
-    // for (let season in seasonBoxValues) {
-    //     if (season in biomes_[0]) {
-    //         let option = document.createElement('option');
-    //         option.value = season;
-    //         option.textContent = seasonBoxValues[season];
-    //         seasonBox.appendChild(option);
-    //     }
-    // }
+    let mainContent = document.getElementById('mainContent');
+    mainContent.innerHTML = html;
 
     return [biomes_, dailyDeal_, ddData_]
 }
 
-// document.addEventListener('upcomingBiomesCachingEvent', (event) => {
-//     let cache
-// })
+async function getCurrentDaysJson(date, isMidnightUpcoming_=false) {
+    let cdj;
+    const todaysDate = date.toISOString().slice(0, 10)
+
+    if (localStorages['currentDaysJson']) {
+        cdj = localStorages['currentDaysJson'];
+        if (isMidnightUpcoming_) {
+            const tomorrowsDate = getNextDateMidnightUTC(date).slice(0, 10);
+
+            if (cdj[0] == todaysDate) {
+                let cdjMidnight = [tomorrowsDate, await loadJSON(getDomainURL()+`/static/json/bulkmissions/${tomorrowsDate}.json`)];
+                setStorages('currentDaysJson', cdjMidnight);
+                return [cdj[1], cdjMidnight[1]];
+            } else {
+                let cdjs = await Promise.all([
+                    loadJSON(getDomainURL()+`/static/json/bulkmissions/${todaysDate}.json`),
+                    loadJSON(getDomainURL()+`/static/json/bulkmissions/${tomorrowsDate}.json`)
+                ]);
+                setStorages('currentDaysJson', [tomorrowsDate, cdjs[1]]);
+                return [cdjs[0], cdjs[1]]
+            }
+
+        } else if (cdj[0] === todaysDate) {
+            return cdj[1]
+        }
+
+    } else if (isMidnightUpcoming_ && !localStorages['currentDaysJson']) {
+        const tomorrowsDate = getNextDateMidnightUTC(date).slice(0, 10);
+        let cdjs = await Promise.all([
+            loadJSON(getDomainURL()+`/static/json/bulkmissions/${todaysDate}.json`),
+            loadJSON(getDomainURL()+`/static/json/bulkmissions/${tomorrowsDate}.json`)
+        ]);
+        let cdjMidnight = [tomorrowsDate, cdjs[1]];
+        setStorages('currentDaysJson', cdjMidnight);
+        return [cdjs[0], cdjs[1]]
+        
+    } else {
+        cdj = [todaysDate, await loadJSON(getDomainURL()+`/static/json/bulkmissions/${todaysDate}.json`)];
+        setStorages('currentDaysJson', cdj);
+        return cdj[1]
+    }
+}
+
+function verifyStorages() {
+    function simpleHash(input) {
+        let hash = 0;
+        for (let i = 0; i < input.length; i++) {
+            const charCode = input.charCodeAt(i);
+            hash = (hash << 5) - hash + charCode;
+            hash |= 0;
+        }
+        return hash;
+    }
+
+    for (let key in localStorages) {
+        // try {
+            // if (key == 'img') {
+            //     localStorages[key] = undefined
+            //     continue
+            // }
+    
+            // if (key == 'fonts') {
+            //     localStorages[key] = undefined
+            //     continue
+            // }
+    
+            // if (key == 'currentDaysJson') {
+            //     localStorages[key] = undefined
+            //     continue
+            // }
+
+            
+            let v = localStorage.getItem(key);
+            if (v) {
+                switch (key) {
+                    case 'fonts':
+                        fontsVerified = simpleHash(v) === localStoragesHashes[key];
+                        break;
+                    case 'img':
+                        imgsVerified = simpleHash(v) === localStoragesHashes[key];
+                        break;
+                    default:
+                        break;
+                }
+
+                localStorages[key] = JSON.parse(v);
+            } else if (localStorages[key]) {
+                setStorages(key, localStorages[key]);
+            }
+        // } catch (error) {
+        //     console.log(key, error)
+        // }
+    
+        console.log(key, localStorages[key]);
+    }
+}
+function shouldNotLoadFromLocalStorage(storageType, verificationStatus) {
+    return !localStorages[storageType] || !verificationStatus;
+}
+function setStorages(key, value, storages=localStorages) {
+    storages[key] = value;
+    localStorage.setItem(key, JSON.stringify(value));
+}
+var localStorages = {
+    'isBackgroundHidden' : false,
+    'areButtonsHidden' : false,
+    'seasonSelected' : 's0',
+    'currentDaysJson' : undefined,
+    'img' : undefined,
+    'fonts' : undefined
+};
+var localStoragesHashes = {
+    'img' : 1541292500,
+    'fonts' : 637194767
+};
 
 var tempBiomes;
 var tempCurrentDaysJson;
-var currentDaysJson;
+// var currentDaysJson;
 var biomes;
 var dailyDeal;
 var ddData;
 var initialized = false;
 var cacheActive = false;
+var fontsVerified = false;
+var imgsVerified = false;
+verifyStorages();
 document.addEventListener('DOMContentLoaded', async function() {
     // try {
-        await preloadFonts()
-        await preloadImagesAll()
+        if (localStorages['isBackgroundHidden']) {
+            toggleBackground();
+        }
+        if (localStorages['areButtonsHidden']) {
+            toggleButtons();
+        }
+        if (localStorages['seasonSelected'] === 's4') {
+            document.getElementById('season').checked = true;
+        }
+        // let seasonBoxValues = {
+        //     's0' : 'No Season',
+        //     's1': 'Season 1',
+        //     's2': 'Season 2', 
+        //     's3': 'Season 3', 
+        //     's4': 'Season 4', 
+        //     's5': 'Season 5'
+        // };
+        // let seasonBox = document.getElementById('season')
+        // for (let season in seasonBoxValues) {
+        //     let option = document.createElement('option');
+        //     option.value = season;
+        //     option.textContent = seasonBoxValues[season];
+        //     seasonBox.appendChild(option);
+        //     if (season === localStorages['seasonSelected']) {
+        //         seasonBox.value = seasonBoxValues[season]
+        //     }
+        // }
+
+        if (shouldNotLoadFromLocalStorage('img', imgsVerified)) {
+            await preloadImagesAll();
+        } else {
+            await loadImgsFromLocalStorageAll()
+        }
+        if (shouldNotLoadFromLocalStorage('fonts', fontsVerified)) {
+            await preloadFonts();
+        } else {
+            await loadFontsFromLocalStorageObj()
+        }
+
         var imgs = await initialize();
         biomes = imgs[0];
         dailyDeal = imgs[1];
         ddData = imgs[2];
 
-        var jqueryScript = document.createElement('script');
-        jqueryScript.src = "/static/jquery.min.js";
-        document.head.appendChild(jqueryScript);
-        jqueryScript.onload = function() {
-            var homepageScript = document.createElement('script');
-            homepageScript.src = "/static/homepage.js";
-            document.head.appendChild(homepageScript);
-            homepageScript.onload = function (){
-                onLoad(); // bottom of homepage.js
-            };
+        var homepageScript = document.createElement('script');
+        homepageScript.src = "/static/homepage.js";
+        document.head.appendChild(homepageScript);
+        homepageScript.onload = function (){
+            onLoad(); // bottom of homepage.js
         };
     // } catch (error) {
-    //     alert(error);
-    //     location.reload();
+        // alert(error);
+        // location.reload();
     // }
 });
