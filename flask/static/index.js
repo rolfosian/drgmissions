@@ -1,131 +1,173 @@
-//img caching parameters
+// caching parameters
+var biomeBanners = {
+    'Crystalline Caverns': '/static/DeepDive_MissionBar_CrystalCaves.webp',
+    'Glacial Strata' : '/static/DeepDive_MissionBar_GlacialStrata.webp',
+    'Radioactive Exclusion Zone': '/static/DeepDive_MissionBar_Radioactive.webp',
+    'Fungus Bogs': '/static/DeepDive_MissionBar_FungusBogs.webp',
+    'Dense Biozone': '/static/DeepDive_MissionBar_LushDownpour.webp',
+    'Salt Pits': '/static/DeepDive_MissionBar_SaltPits.webp',
+    'Sandblasted Corridors': '/static/DeepDive_MissionBar_Sandblasted.webp',
+    'Magma Core': '/static/DeepDive_MissionBar_MagmaCore.webp',
+    'Azure Weald': '/static/DeepDive_MissionBar_AzureWeald.webp',
+    'Hollow Bough': '/static/DeepDive_MissionBar_HollowBough.webp'
+}
+var biomeBannersImages = {};
+biomeBannersImages.name = 'biomeBannersImages'
+
+function setBiomeBanners() {
+    let minerals = {
+        'Crystalline Caverns': 'Abundant: Jadiz; Scarce: Bismor',
+        'Glacial Strata' : "Abundant: Magnite; Scarce: Umanite",
+        'Radioactive Exclusion Zone': 'Abundant: Umanite; Scarce: Enor Pearl',
+        'Fungus Bogs': 'Abundant: Croppa; Scarce: Jadiz',
+        'Dense Biozone': 'Abundant: Bismor; Scarce: Umanite',
+        'Salt Pits': 'Abundant: Enor Pearl; Scarce: Bismor',
+        'Sandblasted Corridors': 'Abundant: Enor Pearl; Scarce: Bismor',
+        'Magma Core': 'Abundant: Magnite; Scarce: Croppa',
+        'Azure Weald': 'Abundant: Croppa; Scarce: Umanite',
+        'Hollow Bough': 'Abundant: Jadiz; Scarce: Bismor'
+    }
+    for (let biome in minerals) {
+        biomeBannersImages[biome].title = minerals[biome];
+        biomeBannersImages[biome].classList.add("image-container");
+        let imgCopy = new Image();
+        imgCopy.src = biomeBannersImages[biome].src
+        imgCopy.classList.add("image-container");
+        imgCopy.title = minerals[biome];
+
+        let divs = document.querySelectorAll(`div[biome="${biome}"]`);
+        divs[0].prepend(biomeBannersImages[biome]);
+        divs[1].prepend(imgCopy)
+    }
+}
+
 var primaryObjs = {
-    'Mining Expedition': '/static/img/Mining_expedition_icon.png',
-    'Egg Hunt': '/static/img/Egg_collection_icon.png',
-    'On-Site Refining': '/static/img/Refining_icon.png',
-    'Salvage Operation': '/static/img/Salvage_icon.png',
-    'Escort Duty': '/static/img/Escort_icon.png',
-    'Point Extraction': '/static/img/Point_extraction_icon.png',
-    'Elimination': '/static/img/Elimination_icon.png',
-    'Industrial Sabotage': '/static/img/Sabotage_icon.png'
+    'Mining Expedition': '/static/img/Mining_expedition_icon.webp',
+    'Egg Hunt': '/static/img/Egg_collection_icon.webp',
+    'On-Site Refining': '/static/img/Refining_icon.webp',
+    'Salvage Operation': '/static/img/Salvage_icon.webp',
+    'Escort Duty': '/static/img/Escort_icon.webp',
+    'Point Extraction': '/static/img/Point_extraction_icon.webp',
+    'Elimination': '/static/img/Elimination_icon.webp',
+    'Industrial Sabotage': '/static/img/Sabotage_icon.webp'
 };
 var primaryObjsImages = {};
 primaryObjsImages.name = 'primaryObjsImages'
 
 var primaryObjResources = {
-    'hexagon' : '/static/img/hexagon.png',
-    'Mining Expedition': '/static/img/Morkite_icon.png',
-    'Egg Hunt': '/static/img/Alien_egg_icon.png',
-    'On-Site Refining': '/static/img/Icon_PumpingJack_Core_Simplified_Workfile.png',
-    'Salvage Operation': '/static/img/Icon_Salvage_Mules_Objective.png',
-    'Escort Duty': '/static/img/Icon_FuelCannister_Simplified.png',
-    'Point Extraction': '/static/img/Icons_Resources_Outline_Aquarq.png',
-    'Elimination': '/static/img/Kill_Dreadnought_Objective_icon.png',
-    'Industrial Sabotage': '/static/img/Icon_Facility_DataRack.png'
+    'hexagon' : '/static/img/hexagon.webp',
+    'Mining Expedition': '/static/img/Morkite_icon.webp',
+    'Egg Hunt': '/static/img/Alien_egg_icon.webp',
+    'On-Site Refining': '/static/img/Icon_PumpingJack_Core_Simplified_Workfile.webp',
+    'Salvage Operation': '/static/img/Icon_Salvage_Mules_Objective.webp',
+    'Escort Duty': '/static/img/Icon_FuelCannister_Simplified.webp',
+    'Point Extraction': '/static/img/Icons_Resources_Outline_Aquarq.webp',
+    'Elimination': '/static/img/Kill_Dreadnought_Objective_icon.webp',
+    'Industrial Sabotage': '/static/img/Icon_Facility_DataRack.webp'
 };
 var primaryObjResourcesImages = {};
 primaryObjResourcesImages.name = 'primaryObjResourcesImages'
 
 var secondaryObjs = {
-    'ApocaBlooms': '/static/img/Apoca_bloom_icon.png',
-    'Fossils': '/static/img/Fossil_icon.png',
-    'Boolo Caps': '/static/img/Boolo_cap_icon.png',
-    'Dystrum': '/static/img/Dystrum_icon.png',
-    'Ebonuts': '/static/img/Ebonut_icon.png',
-    'Fester Fleas': '/static/img/Fleas_icon.png',
-    'Gunk Seeds': '/static/img/Gunk_seed_icon.png',
-    'Hollomite': '/static/img/Hollomite_icon.png'
+    'ApocaBlooms': '/static/img/Apoca_bloom_icon.webp',
+    'Fossils': '/static/img/Fossil_icon.webp',
+    'Boolo Caps': '/static/img/Boolo_cap_icon.webp',
+    'Dystrum': '/static/img/Dystrum_icon.webp',
+    'Ebonuts': '/static/img/Ebonut_icon.webp',
+    'Fester Fleas': '/static/img/Fleas_icon.webp',
+    'Gunk Seeds': '/static/img/Gunk_seed_icon.webp',
+    'Hollomite': '/static/img/Hollomite_icon.webp'
 };
 var secondaryObjsImages = {};
 secondaryObjsImages.name = 'secondaryObjsImages'
 
 var complexities = {
-    '1': '/static/img/Icons_complexity_1.png',
-    '2': '/static/img/Icons_complexity_2.png',
-    '3': '/static/img/Icons_complexity_3.png'
+    '1': '/static/img/Icons_complexity_1.webp',
+    '2': '/static/img/Icons_complexity_2.webp',
+    '3': '/static/img/Icons_complexity_3.webp'
 };
 var complexitiesImages = {};
 complexitiesImages.name = 'complexitiesImages'
 
 var lengths = {
-    '1': '/static/img/Icons_length_1.png',
-    '2': '/static/img/Icons_length_2.png',
-    '3': '/static/img/Icons_length_3.png'
+    '1': '/static/img/Icons_length_1.webp',
+    '2': '/static/img/Icons_length_2.webp',
+    '3': '/static/img/Icons_length_3.webp'
 };
 var lengthsImages = {};
 lengthsImages.name = 'lengthsImages'
 
 var mutators = {
-    'Critical Weakness': '/static/img/Mutator_critical_weakness_icon.png',
-    'Gold Rush': '/static/img/Mutator_gold_rush_icon.png',
-    'Double XP': '/static/img/Mutator_triple_xp_icon.png',
-    'Golden Bugs': '/static/img/Mutator_golden_bugs_icon.png',
-    'Low Gravity': '/static/img/Mutator_no_fall_damage_icon.png',
-    'Mineral Mania': '/static/img/Mutator_mineral_mania_icon.png',
-    'Rich Atmosphere': '/static/img/Mutator_rich_atmosphere_icon.png',
-    'Volatile Guts': '/static/img/Mutator_volatile_guts_icon.png'
+    'Critical Weakness': '/static/img/Mutator_critical_weakness_icon.webp',
+    'Gold Rush': '/static/img/Mutator_gold_rush_icon.webp',
+    'Double XP': '/static/img/Mutator_triple_xp_icon.webp',
+    'Golden Bugs': '/static/img/Mutator_golden_bugs_icon.webp',
+    'Low Gravity': '/static/img/Mutator_no_fall_damage_icon.webp',
+    'Mineral Mania': '/static/img/Mutator_mineral_mania_icon.webp',
+    'Rich Atmosphere': '/static/img/Mutator_rich_atmosphere_icon.webp',
+    'Volatile Guts': '/static/img/Mutator_volatile_guts_icon.webp'
 };
 var mutatorsImages = {};
 mutatorsImages.name = 'mutatorsImages'
 
 var warnings = {
-    'Cave Leech Cluster': '/static/img/Warning_cave_leech_cluster_icon.png',
-    'Exploder Infestation': '/static/img/Warning_exploder_infestation_icon.png',
-    'Haunted Cave': '/static/img/Warning_haunted_cave_icon.png',
-    'Lethal Enemies': '/static/img/Warning_lethal_enemies_icon.png',
-    'Low Oxygen': '/static/img/Warning_low_oxygen_icon.png',
-    'Mactera Plague': '/static/img/Warning_mactera_plague_icon.png',
-    'Parasites': '/static/img/Warning_parasites_icon.png',
-    'Regenerative Bugs': '/static/img/Warning_regenerative_bugs_icon.png',
-    'Shield Disruption': '/static/img/Warning_shield_disruption_icon.png',
-    'Elite Threat': '/static/img/Warning_elite_threat_icon.png',
-    'Swarmageddon': '/static/img/Warning_swarmageddon_icon.png',
-    'Lithophage Outbreak': '/static/img/Warning_lithophage_outbreak_icon.png',
-    'Rival Presence': '/static/img/Warning_rival_presence_icon.png'
+    'Cave Leech Cluster': '/static/img/Warning_cave_leech_cluster_icon.webp',
+    'Exploder Infestation': '/static/img/Warning_exploder_infestation_icon.webp',
+    'Haunted Cave': '/static/img/Warning_haunted_cave_icon.webp',
+    'Lethal Enemies': '/static/img/Warning_lethal_enemies_icon.webp',
+    'Low Oxygen': '/static/img/Warning_low_oxygen_icon.webp',
+    'Mactera Plague': '/static/img/Warning_mactera_plague_icon.webp',
+    'Parasites': '/static/img/Warning_parasites_icon.webp',
+    'Regenerative Bugs': '/static/img/Warning_regenerative_bugs_icon.webp',
+    'Shield Disruption': '/static/img/Warning_shield_disruption_icon.webp',
+    'Elite Threat': '/static/img/Warning_elite_threat_icon.webp',
+    'Swarmageddon': '/static/img/Warning_swarmageddon_icon.webp',
+    'Lithophage Outbreak': '/static/img/Warning_lithophage_outbreak_icon.webp',
+    'Rival Presence': '/static/img/Warning_rival_presence_icon.webp'
 };
 var warningsImages = {};
 warningsImages.name = 'warningsImages'
 
 var secondaryObjsDD = {
-    "Repair Minimules": "/static/img/Icon_Salvage_Mules_Objective_DDsecondaryobj.png",
-    "Eliminate Dreadnought": "/static/img/Kill_Dreadnought_Objective_icon_DDsecondaryobj.png",
-    "Mine Morkite": "/static/img/Morkite_icon_DDsecondaryobj.png",
-    "Get Alien Eggs": "/static/img/Alien_egg_icon_DDsecondaryobj.png",
-    "Black Box": "/static/img/Blackbox_icon_DDsecondaryobj.png"
+    "Repair Minimules": "/static/img/Icon_Salvage_Mules_Objective_DDsecondaryobj.webp",
+    "Eliminate Dreadnought": "/static/img/Kill_Dreadnought_Objective_icon_DDsecondaryobj.webp",
+    "Mine Morkite": "/static/img/Morkite_icon_DDsecondaryobj.webp",
+    "Get Alien Eggs": "/static/img/Alien_egg_icon_DDsecondaryobj.webp",
+    "Black Box": "/static/img/Blackbox_icon_DDsecondaryobj.webp"
 };
 var secondaryObjsDDImages = {};
 secondaryObjsDDImages.name = 'secondaryObjsDDImages'
 
 var biomesDD = {
-    'Crystalline Caverns': '/static/img/DeepDive_MissionBar_CrystalCaves.png',
-    'Glacial Strata': '/static/img/DeepDive_MissionBar_GlacialStrata.png',
-    'Radioactive Exclusion Zone': '/static/img/DeepDive_MissionBar_Radioactive.png',
-    'Fungus Bogs': '/static/img/DeepDive_MissionBar_FungusBogs.png',
-    'Dense Biozone': '/static/img/DeepDive_MissionBar_LushDownpour.png',
-    'Salt Pits': '/static/img/DeepDive_MissionBar_SaltPits.png',
-    'Sandblasted Corridors': '/static/img/DeepDive_MissionBar_Sandblasted.png',
-    'Magma Core': '/static/img/DeepDive_MissionBar_MagmaCore.png',
-    'Azure Weald': '/static/img/DeepDive_MissionBar_AzureWeald.png',
-    'Hollow Bough': '/static/img/DeepDive_MissionBar_HollowBough.png'
+    'Crystalline Caverns': '/static/img/DeepDive_MissionBar_CrystalCaves.webp',
+    'Glacial Strata': '/static/img/DeepDive_MissionBar_GlacialStrata.webp',
+    'Radioactive Exclusion Zone': '/static/img/DeepDive_MissionBar_Radioactive.webp',
+    'Fungus Bogs': '/static/img/DeepDive_MissionBar_FungusBogs.webp',
+    'Dense Biozone': '/static/img/DeepDive_MissionBar_LushDownpour.webp',
+    'Salt Pits': '/static/img/DeepDive_MissionBar_SaltPits.webp',
+    'Sandblasted Corridors': '/static/img/DeepDive_MissionBar_Sandblasted.webp',
+    'Magma Core': '/static/img/DeepDive_MissionBar_MagmaCore.webp',
+    'Azure Weald': '/static/img/DeepDive_MissionBar_AzureWeald.webp',
+    'Hollow Bough': '/static/img/DeepDive_MissionBar_HollowBough.webp'
 };
 var biomesDDImages = {};
 biomesDDImages.name = 'biomesDDImages'
 
 var dailyDealResources = {
-    'Bismor': '/static/img/Bismor_icon.png',
-    'Croppa': '/static/img/Croppa_icon.png',
-    'Enor Pearl': '/static/img/Enor_pearl_icon.png',
-    'Jadiz': '/static/img/Jadiz_icon.png',
-    'Magnite': '/static/img/Magnite_icon.png',
-    'Umanite': '/static/img/Umanite_icon.png',
-    'Credits': '/static/img/Credit.png',
-    'Bubble': '/static/img/Icon_TradeTerminal_SaleBubble.png'
+    'Bismor': '/static/img/Bismor_icon.webp',
+    'Croppa': '/static/img/Croppa_icon.webp',
+    'Enor Pearl': '/static/img/Enor_pearl_icon.webp',
+    'Jadiz': '/static/img/Jadiz_icon.webp',
+    'Magnite': '/static/img/Magnite_icon.webp',
+    'Umanite': '/static/img/Umanite_icon.webp',
+    'Credits': '/static/img/Credit.webp',
+    'Bubble': '/static/img/Icon_TradeTerminal_SaleBubble.webp'
 };
 var dailyDealResourcesImages = {};
 dailyDealResourcesImages.name = 'dailyDealResourcesImages'
 
 var fontNamesAndUrls = {
-    'HammerBro101MovieThin-Regular' : ['woff', '/static/HammerBro101MovieThin-Regular.woff'],
+    'CarbonThin-W00-Regular' : ['truetype', '/static/img/CarbonThin-W00-Regular.ttf'],
     'CarbonBold-W00-Regular' : ['truetype', '/static/img/CarbonBold-W00-Regular.ttf'],
     'Bungee-Regular' : ['truetype', '/static/img/Bungee-Regular.ttf'],
     'RiftSoft-Regular' : ['truetype', '/static/img/RiftSoft-Regular.ttf'],
@@ -170,7 +212,7 @@ async function preloadImages(imageObj, imageCache) {
         let base64Data = arrayBufferToBase64(promisedBinary[1]);
         base64LocalStoragesImg[imageCache.name][key] = base64Data;
         let img = new Image()
-        img.src = "data:image/png;base64," + base64Data
+        img.src = "data:image/webp;base64," + base64Data
         img.onload = async () => {
             imageCache[key] = img
         }
@@ -181,7 +223,7 @@ async function loadImgsFromLocalStorageObj(imageObj, imageCache) {
     for (let key in imageObj) {
         let base64Data =  localStorages['img'][imageCache.name][key]
         let img = new Image()
-        img.src = "data:image/png;base64," + base64Data;
+        img.src = "data:image/webp;base64," + base64Data;
         img.onload = async () => {
             imageCache[key] = img
         }
@@ -199,9 +241,30 @@ async function loadImgsFromLocalStorageAll() {
         loadImgsFromLocalStorageObj(mutators, mutatorsImages),
         loadImgsFromLocalStorageObj(warnings, warningsImages),
         loadImgsFromLocalStorageObj(secondaryObjsDD, secondaryObjsDDImages),
-        // loadImgsFromLocalStorageObj(biomesDD, biomesDDImages),
+        loadImgsFromLocalStorageObj(biomesDD, biomesDDImages),
+        loadImgsFromLocalStorageObj(biomeBanners, biomeBannersImages),
         loadImgsFromLocalStorageObj(dailyDealResources, dailyDealResourcesImages)
     ]);
+    delete primaryObjs;
+    delete primaryObjResources;
+    delete secondaryObjs;
+    delete complexities;
+    delete lengths;
+    delete mutators;
+    delete warnings;
+    delete secondaryObjsDD;
+    delete biomeBanners;
+    delete dailyDealResources;
+    delete primaryObjsImages.name;
+    delete primaryObjResourcesImages.name;
+    delete secondaryObjsImages.name;
+    delete complexitiesImages.name;
+    delete lengthsImages.name;
+    delete mutatorsImages.name;
+    delete warningsImages.name;
+    delete secondaryObjsDDImages.name;
+    delete biomeBannersImages.name;
+    delete dailyDealResourcesImages.name;
 }
 
 async function preloadFonts(){
@@ -211,12 +274,13 @@ async function preloadFonts(){
 
     for (let fontName in fontNamesAndUrls) {
         let fontUrl = fontNamesAndUrls[fontName];
-        console.log(fontUrl[1])
         let promisedBinary = fetchBinaryData(fontName, fontUrl[1]);
         types[fontName] = fontUrl[0];
         promises.push(promisedBinary);
     }
+
     fontsBinaries = await Promise.all(promises);
+
     for (let i = 0; i < fontsBinaries.length; i++) {
         let fontNameAndBinaryData = fontsBinaries[i];
         let fontName = fontNameAndBinaryData[0];
@@ -229,12 +293,14 @@ async function preloadFonts(){
         await fontFace.load();
         document.fonts.add(fontFace);
     }
+
     localStorage.setItem('fonts', JSON.stringify(base64LocalStoragesFonts));
+
     base64LocalStoragesFonts = undefined;
+    delete fontNamesAndUrls;
 }
 
 async function loadFontsFromLocalStorageObj() {
-    let fonts;
     for (let key in localStorages['fonts']) {
         let base64Data = localStorages['fonts'][key][1]
         let type = localStorages['fonts'][key][0]
@@ -244,6 +310,10 @@ async function loadFontsFromLocalStorageObj() {
     }
 }
 
+async function preloadHomepageScript() {
+    let response = await fetch('/static/homepage.js');
+    return response.text();
+}
 // async function preloadImages(imageObj, imageCache) {
 //     let promises = [];
 //     for (let key in imageObj) {
@@ -273,11 +343,33 @@ async function preloadImagesAll() {
         preloadImages(mutators, mutatorsImages),
         preloadImages(warnings, warningsImages),
         preloadImages(secondaryObjsDD, secondaryObjsDDImages),
-        // preloadImages(biomesDD, biomesDDImages),
+        preloadImages(biomeBanners, biomeBannersImages),
+        preloadImages(biomesDD, biomesDDImages),
         preloadImages(dailyDealResources, dailyDealResourcesImages)
     ]);
     localStorage.setItem('img', JSON.stringify(base64LocalStoragesImg))
+
     base64LocalStoragesImg = undefined;
+    delete primaryObjs;
+    delete primaryObjResources;
+    delete secondaryObjs;
+    delete complexities;
+    delete lengths;
+    delete mutators;
+    delete warnings;
+    delete secondaryObjsDD;
+    delete biomeBanners;
+    delete dailyDealResources;
+    delete primaryObjsImages.name;
+    delete primaryObjResourcesImages.name;
+    delete secondaryObjsImages.name;
+    delete complexitiesImages.name;
+    delete lengthsImages.name;
+    delete mutatorsImages.name;
+    delete warningsImages.name;
+    delete secondaryObjsDDImages.name;
+    delete biomeBannersImages.name;
+    delete dailyDealResourcesImages.name;
 }
 
 // async function preloadFonts(){
@@ -508,7 +600,7 @@ async function waitRotation() {
 //     }
 // }
 
-async function loadJSON(filePath, maxRetries = 3, retryDelay = 2000) {
+async function loadJSON(filePath, maxRetries = 3, retryDelay = 5000 ) {
     let retries = 0;
     while (retries < maxRetries) {
         try {
@@ -782,8 +874,7 @@ async function tempCacheUpcomingBiomes(isMidnightUpcoming_, date) {
     switch (true) {
         case (isMidnightUpcoming_):
             if (tempCurrentDaysJson) {
-                let nextDay = getNextDateMidnightUTC(date).split('T')[0];
-                setStorages('currentDaysJson', [nextDay, tempCurrentDaysJson]);
+                setStorages('currentDaysJson', tempCurrentDaysJson);
                 tempCurrentDaysJson = undefined;
     
             } else {
@@ -795,8 +886,8 @@ async function tempCacheUpcomingBiomes(isMidnightUpcoming_, date) {
 
         case (roundTimeDown(date.toISOString()).slice(11, 19) == '23:00:00'):
             let nextDay = getNextDateMidnightUTC(date).split('T')[0];
-            tempCurrentDaysJson = await loadJSON(getDomainURL()+`/static/json/bulkmissions/${nextDay}.json`);
-            upcomingBiomes = renderBiomes(tempCurrentDaysJson[roundTimeUpNextUpcoming(date.toISOString())]);
+            tempCurrentDaysJson = [nextDay, await loadJSON(getDomainURL()+`/static/json/bulkmissions/${nextDay}.json`)];
+            upcomingBiomes = renderBiomes(tempCurrentDaysJson[1][roundTimeUpNextUpcoming(date.toISOString())]);
             break
 
         default:
@@ -812,6 +903,7 @@ async function tempCacheUpcomingBiomes(isMidnightUpcoming_, date) {
 
 function getBiomesOnInit() {
     let dictionary = getCurrentMissionData(localStorages['currentDaysJson'][1]);
+    // console.log(localStorages['currentDaysJson'][1])
     let currentBiomes = renderBiomes(dictionary);
     let dictionary_ = getUpcomingMissionData(localStorages['currentDaysJson'][1]);
     let upcomingBiomes = renderBiomes(dictionary_);
@@ -821,6 +913,7 @@ function getBiomesOnInit() {
 async function getBiomesMidnightOnInit(date) {
     let upcomingMidnight = getNextDateMidnightUTC(date);
     let results = await getCurrentDaysJson(date, true);
+    // console.log(results)
     let currentBiomes = renderBiomes(results[0][roundTimeDown(date.toISOString().slice(0, 19)+'Z')]);    
     let upcomingBiomes = renderBiomes(localStorages['currentDaysJson'][1][upcomingMidnight]);
     return [currentBiomes, upcomingBiomes];
@@ -835,6 +928,7 @@ function getBiomes() {
 async function getBiomesMidnight() {
     let currentBiomes = tempBiomes[0];
     if (tempCurrentDaysJson) {
+        console.log(tempCurrentDaysJson)
         setStorages('currentDaysJson', tempCurrentDaysJson);
         tempCurrentDaysJson = undefined
     }
@@ -885,38 +979,47 @@ async function refreshDailyDeal() {
     arrayDailyDeal(dailyDeal)
 }
 async function refreshDeepDives() {
-    ddData = await getDeepDiveData();
-    if (ddData) {
-        arrayDeepDives(ddData)
-    } else {
-        let deepDiveNormalDiv = document.getElementById('Deep Dive Normal');
-        while(deepDiveNormalDiv.hasChildNodes()) {
-            deepDiveNormalDiv.removeChild(deepDiveNormalDiv.lastChild);
-        };
-        deepDiveNormalDiv.appendChild(document.createElement("br"));
-        let spanElement = document.createElement("span");
-        spanElement.className = "scanners";
-        spanElement.textContent = "// AWAITING UP TO DATE DATA \\\\";
-        deepDiveNormalDiv.appendChild(spanElement)
+    deepDiveData = await getDeepDiveData();
+    if (deepDiveData) {
+        arrayDeepDives(deepDiveData)
 
-        var deepDiveEliteDiv = document.getElementById('Deep Dive Elite');
-        while(deepDiveEliteDiv.hasChildNodes()) {
-            deepDiveEliteDiv.removeChild(deepDiveEliteDiv.lastChild);
-        };
-        deepDiveEliteDiv.appendChild(document.createElement("br"));
-        spanElement = document.createElement("span");
-        spanElement.className = "scanners";
-        spanElement.textContent = "// AWAITING UP TO DATE DATA \\\\";
-        deepDiveEliteDiv.appendChild(spanElement)
+    } else {
+        handleUnavailableDeepDiveData()
     } 
+}
+
+function handleUnavailableDeepDiveData() {
+    let deepDiveNormalDiv = document.getElementById('Deep Dive Normal');
+    while(deepDiveNormalDiv.hasChildNodes()) {
+        deepDiveNormalDiv.removeChild(deepDiveNormalDiv.lastChild);
+    };
+
+    deepDiveNormalDiv.appendChild(document.createElement("br"));
+    let spanElement = document.createElement("span");
+    spanElement.className = "scanners";
+    spanElement.textContent = "// AWAITING UP TO DATE DATA \\\\";
+    deepDiveNormalDiv.appendChild(spanElement)
+
+    var deepDiveEliteDiv = document.getElementById('Deep Dive Elite');
+    while(deepDiveEliteDiv.hasChildNodes()) {
+        deepDiveEliteDiv.removeChild(deepDiveEliteDiv.lastChild);
+    };
+
+    deepDiveEliteDiv.appendChild(document.createElement("br"));
+    spanElement = document.createElement("span");
+    spanElement.className = "scanners";
+    spanElement.textContent = "// AWAITING UP TO DATE DATA \\\\";
+    deepDiveEliteDiv.appendChild(spanElement)
 }
 
 function arrayDailyDeal(dailyDeal) {
     let dailyDealCanvas = renderDailyDeal(dailyDeal)
     let dailyDealDiv = document.getElementById('DailyDeal')
+
     while(dailyDealDiv.hasChildNodes()) {
         dailyDealDiv.removeChild(dailyDealDiv.lastChild);
     };
+
     dailyDealDiv.appendChild(dailyDealCanvas)
 }
 
@@ -1092,14 +1195,11 @@ function renderDeepDiveBiomeCodename(biome, codename) {
     const ctx = canvas.getContext('2d');
     for (let biomeName in biomesDD) {
         if (biomeName == biome) {
-            const img = new Image()
-            img.src = biomesDD[biomeName]
-            img.onload = () => {
-                canvas.width = img.width;
-                canvas.height = img.height;
-                ctx.drawImage(img, 0, 0);
-                addShadowedTextToImage(canvas, texts, fontSize);
-            }
+            const img = biomesDDImages[biomeName]
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+            addShadowedTextToImage(canvas, texts, fontSize);
             break
         }
     }
@@ -1238,8 +1338,8 @@ async function arrayDeepDives(deepDiveData) {
     try {
         var deepDiveNormal = deepDiveData["Deep Dives"]["Deep Dive Normal"];
         var deepDiveElite = deepDiveData["Deep Dives"]["Deep Dive Elite"];
-        var deepDiveNormalDiv = document.getElementById('Deep Dive Normal');
-        var deepDiveEliteDiv = document.getElementById('Deep Dive Elite');
+        var deepDiveNormalDiv = document.getElementById('Deep-Dive-Normal');
+        var deepDiveEliteDiv = document.getElementById('Deep-Dive-Elite');
     
         var deepDiveNormalBiome = renderDeepDiveBiomeCodename(deepDiveNormal['Biome'], deepDiveNormal['CodeName']);
         while(deepDiveNormalDiv.hasChildNodes()) {
@@ -1273,16 +1373,23 @@ async function arrayDeepDives(deepDiveData) {
             stageDiv = renderDeepDiveStage(stage, stageCount);
             deepDiveEliteDiv.appendChild(stageDiv);
         };
-    } catch (error) {
+    } catch {
         // deepDiveData is undefined
     }
 }
 
-async function getDailyDealData() {
-    var datetime = getCurrentDateMidnightUTC()
-    datetime = replaceCharactersAtIndices(datetime, [[13, '-'], [16,'-']])
-    var data = await loadJSON(getDomainURL()+`/static/json/dailydeals/${datetime}.json`)
-    return data
+// async function getDailyDealData() {
+//     var datetime = getCurrentDateMidnightUTC()
+//     datetime = replaceCharactersAtIndices(datetime, [[13, '-'], [16,'-']])
+//     var data = await loadJSON(getDomainURL()+`/static/json/dailydeals/${datetime}.json`)
+//     return data
+// }
+
+function getDailyDealData(isMidnightUpcoming=false) {
+    if (isMidnightUpcoming) {
+        return tempDailyDeal
+    }
+    return localStorages['currentDaysJson'][1]['dailyDeal']
 }
 
 function scaleImage(ctx, image, scale) {
@@ -1434,7 +1541,7 @@ function setupIdleVideoPause(videoElementId, idleTimeThreshold) {
     document.addEventListener("click", handleUserActivity);
 
     window.addEventListener('blur', function() {
-        if (!isPausedByIdle) {
+        if (!isPausedByIdle && videoElement.style.display != 'none') {
             videoElement.pause();
             isPausedByBlur = true;
         }
@@ -1606,60 +1713,26 @@ window.addEventListener('resize', function(event) {
 });
 async function initialize() {
     let biomes_;
-    let ddData_;
     let dailyDeal_;
-    await waitRotation()
 
     let date = new Date();
     if (isMidnightUpcoming(date)) {
-        let results = await Promise.all([
-            getBiomesMidnightOnInit(date),
-            getDeepDiveData(),
-            getDailyDealData()
-        ])
-        biomes_ = results[0];
-        console.log('------')
-        console.log(biomes_)
-        console.log(biomes_[0]['timestamp'])
-        console.log(biomes_[1]['timestamp'])
-        ddData_ = results[1];
-        dailyDeal_ = results[2]
-        // for (let i = 0; i < results.length; i++) {
-        //     let result = results[i]
-        //     if (Array.isArray(result)) {
-        //         biomes_ = result[0];
-        //     } else if ('Deep Dives' in result) {
-        //         ddData_ = result;
-        //     } else {
-        //         dailyDeal_ = result;
-        //     }
-        // }
+        biomes_ = await getBiomesMidnightOnInit(date);
+        dailyDeal_ = getDailyDealData(true);
+        console.log('------');
+        console.log(biomes_);
+        console.log(biomes_[0]['timestamp']);
+        console.log(biomes_[1]['timestamp']);
+
     } else {
         await getCurrentDaysJson(date);
-        let results = await Promise.all([
-            getDeepDiveData(),
-            getDailyDealData()
-        ]);
         biomes_ = getBiomesOnInit();
-        console.log('------')
-        console.log(biomes_)
-        console.log(biomes_[0]['timestamp'])
-        console.log(biomes_[1]['timestamp'])
-        ddData_ = results[0];
-        dailyDeal_ = results[1]
-        // for (let i = 0; i < results.length; i++) {
-        //     let result = results[i]
-        //     if (Array.isArray(result)) {
-        //         biomes_ = result;
-        //     } else if ('Deep Dives' in result) {
-        //         ddData_ = result;
-        //     } else {
-        //         dailyDeal_ = result;
-        //     }
-        // }
+        console.log('------');
+        console.log(biomes_);
+        console.log(biomes_[0]['timestamp']);
+        console.log(biomes_[1]['timestamp']);
+        dailyDeal_ = getDailyDealData();
     }
-    
-
 
     let currentDatetime = date.toISOString().slice(0, 10);
     // currentDatetime = replaceCharactersAtIndices(currentDatetime, [[13, '-'], [16,'-']]);
@@ -1683,80 +1756,70 @@ async function initialize() {
     <div class="grid-container">
     
     <h2>
-    <div class="biome-container">
-    <img title="Abundant: Magnite; Scarce: Umanite" class="image-container" src="/static/DeepDive_MissionBar_GlacialStrata.png">
+    <div class="biome-container" biome="Glacial Strata">
     <br><div id="Glacial Strata" class="missions">
     </div>
     </div>
     </h2>
     
     <h2>
-    <div class="biome-container">
-    <img title="Abundant: Jadiz; Scarce: Bismor" class="image-container" src="/static/DeepDive_MissionBar_CrystalCaves.png">
+    <div class="biome-container" biome="Crystalline Caverns">
     <br><div id="Crystalline Caverns" class="missions">
     </div>
     </div>
     </h2>
     
     <h2>
-    <div class="biome-container">
-    <img title="Abundant: Enor Pearl; Scarce: Bismor" class="image-container" src="/static/DeepDive_MissionBar_SaltPits.png">
+    <div class="biome-container" biome="Salt Pits">
     <br><div id="Salt Pits">
     </div>
     </div>
     </h2>
     
     <h2>
-    <div class="biome-container">
-    <img title="Abundant: Magnite; Scarce: Croppa" class="image-container" src="/static/DeepDive_MissionBar_MagmaCore.png">
+    <div class="biome-container" biome="Magma Core">
     <br><div id="Magma Core" class="missions">
     </div>
     </div>
     </h2>
     
     <h2>
-    <div class ="biome-container">
-    <img title="Abundant: Croppa; Scarce: Umanite" class="image-container" src="/static/DeepDive_MissionBar_AzureWeald.png">
+    <div class ="biome-container" biome="Azure Weald">
     <br><div id="Azure Weald" class="missions">
     </div>
     </div>
     </h2>
     
     <h2>
-    <div class="biome-container">
-    <img title="Abundant: Enor Pearl; Scarce: Bismor" class="image-container" src="/static/DeepDive_MissionBar_Sandblasted.png">
+    <div class="biome-container" biome="Sandblasted Corridors">
     <br><div id="Sandblasted Corridors" class="missions">
     </div>
     </div>
     </h2>
     
     <h2>
-    <div class="biome-container">
-    <img title="Abundant: Croppa; Scarce: Jadiz" class="image-container" src="/static/DeepDive_MissionBar_FungusBogs.png">
+    <div class="biome-container" biome="Fungus Bogs">
     <br><div id="Fungus Bogs" class="missions">
     </div>
     </div>
     </h2>
     
     <h2>
-    <div class="biome-container">
-    <img title="Abundant: Umanite; Scarce: Enor Pearl" class="image-container" src="/static/DeepDive_MissionBar_Radioactive.png">
+    <div class="biome-container" biome="Radioactive Exclusion Zone">
     <br><div id="Radioactive Exclusion Zone" class="missions">
     </div>
     </div>
     </h2>
     
     <h2>
-    <div class="biome-container">
-    <img title="Abundant: Bismor; Scarce: Umanite" class="image-container" src="/static/DeepDive_MissionBar_LushDownpour.png">
+    <div class="biome-container" biome="Dense Biozone">
     <br><div id="Dense Biozone" class="missions">
     </div>
     </div>
     </h2>
     
     <h2>
-    <div class="biome-container">
-    <img title="Abundant: Jadiz; Scarce: Bismor" class="image-container" src="/static/DeepDive_MissionBar_HollowBough.png">
+    <div class="biome-container" biome="Hollow Bough">
     <br><div id="Hollow Bough" class="missions">
     </div>
     </div>
@@ -1770,8 +1833,7 @@ async function initialize() {
     <div class="grid-container">
     
     <h2>
-    <div class="biome-container">
-    <img title="Abundant: Magnite; Scarce: Umanite" class="image-container" src="/static/DeepDive_MissionBar_GlacialStrata.png">
+    <div class="biome-container" biome="Glacial Strata">
     <br><div id="nextGlacial Strata" class="missions">
     </div>
     
@@ -1779,32 +1841,28 @@ async function initialize() {
     </h2>
     
     <h2>
-    <div class="biome-container">
-    <img title="Abundant: Jadiz; Scarce: Bismor" class="image-container" src="/static/DeepDive_MissionBar_CrystalCaves.png">
+    <div class="biome-container" biome="Crystalline Caverns">
     <br><div id="nextCrystalline Caverns" class="missions">
     </div>
     </div>
     </h2>
     
     <h2>
-    <div class="biome-container">
-    <img title="Abundant: Enor Pearl; Scarce: Bismor" class="image-container" src="/static/DeepDive_MissionBar_SaltPits.png">
+    <div class="biome-container" biome="Salt Pits">
     <br><div id="nextSalt Pits" class="missions">
     </div>
     </div>
     </h2>
     
     <h2>
-    <div class="biome-container">
-    <img title="Abundant: Magnite; Scarce: Croppa" class="image-container" src="/static/DeepDive_MissionBar_MagmaCore.png">
+    <div class="biome-container" biome="Magma Core">
     <br><div id="nextMagma Core" class="missions">
     </div>
     </div>
     </h2>
     
     <h2>
-    <div class ="biome-container">
-    <img title="Abundant: Croppa; Scarce: Umanite" class="image-container" src="/static/DeepDive_MissionBar_AzureWeald.png">
+    <div class ="biome-container" biome="Azure Weald">
     <br><div id="nextAzure Weald" class="missions">
     </div>
     
@@ -1812,39 +1870,34 @@ async function initialize() {
     </h2>
     
     <h2>
-    <div class="biome-container">
-    <img title="Abundant: Enor Pearl; Scarce: Bismor" class="image-container" src="/static/DeepDive_MissionBar_Sandblasted.png">
+    <div class="biome-container" biome="Sandblasted Corridors">
     <br><div id="nextSandblasted Corridors">
     </div>
     </h2>
     
     <h2>
-    <div class="biome-container">
-    <img title="Abundant: Croppa; Scarce: Jadiz" class="image-container" src="/static/DeepDive_MissionBar_FungusBogs.png">
+    <div class="biome-container" biome="Fungus Bogs">
     <br><div id="nextFungus Bogs" class="missions">
     </div>
     </div>
     </h2>
     
     <h2>
-    <div class="biome-container">
-    <img title="Abundant: Umanite; Scarce: Enor Pearl" class="image-container" src="/static/DeepDive_MissionBar_Radioactive.png">
+    <div class="biome-container" biome="Radioactive Exclusion Zone">
     <br><div id="nextRadioactive Exclusion Zone" class="missions">
     </div>
     </div>
     </h2>
     
     <h2>
-    <div class="biome-container">
-    <img title="Abundant: Bismor; Scarce: Umanite" class="image-container" src="/static/DeepDive_MissionBar_LushDownpour.png">
+    <div class="biome-container" biome="Dense Biozone">
     <br><div id="nextDense Biozone" class="missions">
     </div>
     </div>
     </h2>
     
     <h2>
-    <div class="biome-container">
-    <img title="Abundant: Jadiz; Scarce: Bismor" class="image-container" src="/static/DeepDive_MissionBar_HollowBough.png">
+    <div class="biome-container" biome="Hollow Bough">
     <br><div id="nextHollow Bough" class="missions">
     </div>
     </div>
@@ -1859,7 +1912,7 @@ async function initialize() {
     <div class="dd-container">
     <h2>
     <img class="image-container" src="/static/dd.png">
-    <div id="Deep Dive Normal" class="dd-missions">
+    <div id="Deep-Dive-Normal" class="dd-missions">
     </div>
     </h2>
     </div>
@@ -1867,7 +1920,7 @@ async function initialize() {
     <div class="dd-container">
     <h2>
     <img class="image-container" src="/static/edd.png">
-    <div id="Deep Dive Elite" class="dd-missions">
+    <div id="Deep-Dive-Elite" class="dd-missions">
     </div>
     </h2>
     </div>
@@ -1890,8 +1943,9 @@ async function initialize() {
 
     let mainContent = document.getElementById('mainContent');
     mainContent.innerHTML = html;
+    setBiomeBanners()
 
-    return [biomes_, dailyDeal_, ddData_]
+    return [biomes_, dailyDeal_]
 }
 
 async function getCurrentDaysJson(date, isMidnightUpcoming_=false) {
@@ -1905,6 +1959,7 @@ async function getCurrentDaysJson(date, isMidnightUpcoming_=false) {
 
             if (cdj[0] == todaysDate) {
                 let cdjMidnight = [tomorrowsDate, await loadJSON(getDomainURL()+`/static/json/bulkmissions/${tomorrowsDate}.json`)];
+                tempDailyDeal = cdj[1]['dailyDeal'];
                 setStorages('currentDaysJson', cdjMidnight);
                 return [cdj[1], cdjMidnight[1]];
             } else {
@@ -1912,6 +1967,7 @@ async function getCurrentDaysJson(date, isMidnightUpcoming_=false) {
                     loadJSON(getDomainURL()+`/static/json/bulkmissions/${todaysDate}.json`),
                     loadJSON(getDomainURL()+`/static/json/bulkmissions/${tomorrowsDate}.json`)
                 ]);
+                tempDailyDeal = cdjs[0]['dailyDeal'];
                 setStorages('currentDaysJson', [tomorrowsDate, cdjs[1]]);
                 return [cdjs[0], cdjs[1]]
             }
@@ -1926,6 +1982,7 @@ async function getCurrentDaysJson(date, isMidnightUpcoming_=false) {
             loadJSON(getDomainURL()+`/static/json/bulkmissions/${todaysDate}.json`),
             loadJSON(getDomainURL()+`/static/json/bulkmissions/${tomorrowsDate}.json`)
         ]);
+        tempDailyDeal = cdjs[0]['dailyDeal'];
         let cdjMidnight = [tomorrowsDate, cdjs[1]];
         setStorages('currentDaysJson', cdjMidnight);
         return [cdjs[0], cdjs[1]]
@@ -1937,50 +1994,60 @@ async function getCurrentDaysJson(date, isMidnightUpcoming_=false) {
     }
 }
 
-function verifyStorages() {
-    function simpleHash(input) {
-        let hash = 0;
-        for (let i = 0; i < input.length; i++) {
-            const charCode = input.charCodeAt(i);
-            hash = (hash << 5) - hash + charCode;
-            hash |= 0;
-        }
-        return hash;
+function simpleHash(input) {
+    let hash = 0;
+    for (let i = 0; i < input.length; i++) {
+        const charCode = input.charCodeAt(i);
+        hash = (hash << 5) - hash + charCode;
+        hash |= 0;
     }
+    return hash;
+}
 
+async function verifyStorages() {
     for (let key in localStorages) {
         // try {
             // if (key == 'img') {
-            //     localStorages[key] = undefined
+            //     setStorages(key, null)
             //     continue
             // }
     
             // if (key == 'fonts') {
-            //     localStorages[key] = undefined
+            //     setStorages(key, null)
             //     continue
             // }
     
             // if (key == 'currentDaysJson') {
-            //     localStorages[key] = undefined
+            //     setStorages(key, null)
             //     continue
             // }
 
-            
+            if (key == 'homepageScript') {
+                setStorages(key, null)
+                continue
+            }
             let v = localStorage.getItem(key);
             if (v) {
-                switch (key) {
-                    case 'fonts':
-                        fontsVerified = simpleHash(v) === localStoragesHashes[key];
-                        break;
-                    case 'img':
-                        imgsVerified = simpleHash(v) === localStoragesHashes[key];
-                        break;
-                    default:
-                        break;
+                if (localStoragesHashes.hasOwnProperty(key)) {
+                    if (simpleHash(v) === localStoragesHashes[key]) {
+                        localStorages[key] = JSON.parse(v);
+                    } else {
+                        console.log(key, simpleHash(v))
+                        localStorages[key] = null;
+                    }
+ 
+                } else if (key === 'currentDaysJson') {
+                    let data = JSON.parse(v);
+                    if (data[0] != new Date().toISOString().slice(0, 10)) {
+                        setStorages(key, null);
+                    } else {
+                        localStorages[key] = data;
+                    }
+                } else {
+                    localStorages[key] = JSON.parse(v);
                 }
 
-                localStorages[key] = JSON.parse(v);
-            } else if (localStorages[key]) {
+            } else {
                 setStorages(key, localStorages[key]);
             }
         // } catch (error) {
@@ -1988,6 +2055,10 @@ function verifyStorages() {
         // }
     
         console.log(key, localStorages[key]);
+        }
+
+    if (!localStorages['homepageScript']) {
+       setStorages('homepageScript', await preloadHomepageScript());
     }
 }
 function shouldNotLoadFromLocalStorage(storageType, verificationStatus) {
@@ -1997,41 +2068,48 @@ function setStorages(key, value, storages=localStorages) {
     storages[key] = value;
     localStorage.setItem(key, JSON.stringify(value));
 }
-var localStorages = {
+var localStorages = { 
     'isBackgroundHidden' : false,
     'areButtonsHidden' : false,
     'seasonSelected' : 's0',
-    'currentDaysJson' : undefined,
-    'img' : undefined,
-    'fonts' : undefined
+    'currentDaysJson' : null,
+    'img' : null,
+    'fonts' : null,
+    'homepageScript' : null,
 };
 var localStoragesHashes = {
-    'img' : 1541292500,
-    'fonts' : 637194767
+    'img' : 118045380,
+    'fonts' : -1224859869,
+    'homepageScript' : 1570522210,
 };
 
+var cacheActive = false;
+var isRefreshing = false;
 var tempBiomes;
 var tempCurrentDaysJson;
-// var currentDaysJson;
+
 var biomes;
 var dailyDeal;
-var ddData;
+var tempDailyDeal;
+
+var deepDiveData;
+
 var initialized = false;
-var cacheActive = false;
-var fontsVerified = false;
-var imgsVerified = false;
-verifyStorages();
+
 document.addEventListener('DOMContentLoaded', async function() {
     // try {
+        await waitRotation();
+        await verifyStorages();
+        
         if (localStorages['isBackgroundHidden']) {
             toggleBackground();
         }
         if (localStorages['areButtonsHidden']) {
             toggleButtons();
         }
-        if (localStorages['seasonSelected'] === 's4') {
-            document.getElementById('season').checked = true;
-        }
+        // if (localStorages['seasonSelected'] === 's4') {
+        //     document.getElementById('season').checked = true;
+        // }
         // let seasonBoxValues = {
         //     's0' : 'No Season',
         //     's1': 'Season 1',
@@ -2050,31 +2128,35 @@ document.addEventListener('DOMContentLoaded', async function() {
         //         seasonBox.value = seasonBoxValues[season]
         //     }
         // }
-
-        if (shouldNotLoadFromLocalStorage('img', imgsVerified)) {
-            await preloadImagesAll();
-        } else {
-            await loadImgsFromLocalStorageAll()
-        }
-        if (shouldNotLoadFromLocalStorage('fonts', fontsVerified)) {
+        if (!localStorages['fonts']) {
             await preloadFonts();
         } else {
             await loadFontsFromLocalStorageObj()
         }
+        if (!localStorages['img']) {
+            await preloadImagesAll();
+        } else {
+            await loadImgsFromLocalStorageAll()
+        }
 
-        var imgs = await initialize();
-        biomes = imgs[0];
-        dailyDeal = imgs[1];
-        ddData = imgs[2];
+        var breakfast = await initialize();
+        biomes = breakfast[0];
+        dailyDeal = breakfast[1];
+        breakfast = undefined;
 
         var homepageScript = document.createElement('script');
-        homepageScript.src = "/static/homepage.js";
+        // homepageScript.textContent = localStorages['homepageScript']
         document.head.appendChild(homepageScript);
-        homepageScript.onload = function (){
-            onLoad(); // bottom of homepage.js
+        // await onLoad(); // bottom of homepage.js, access via console.log(localStorages['homepageScript] or /static/homepage.js)
+
+        homepageScript.src = "/static/homepage.js"
+        homepageScript.onload = async function () {
+           await onLoad(); // bottom of homepage.js
         };
+
     // } catch (error) {
         // alert(error);
         // location.reload();
     // }
+
 });

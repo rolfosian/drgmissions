@@ -187,22 +187,49 @@ def split_daily_deals_json():
         with open(f'./static/json/dailydeals/{fname}.json', 'w') as f:
             json.dump(deal, f)
 
-# with open('drgmissionsgod.json', 'r') as f:
-#     DRG = json.load(f)
+def add_daily_deals_to_grouped_json(DRG):
+    with open('drgdailydeals.json', 'r') as f:
+        AllTheDeals = json.load(f)
     
-# days = group_json_by_days(DRG)
-# days = extract_days_from_json(days, 2)
-# if os.path.isdir('./static/json/bulkmissions'):
-#     shutil.rmtree('./static/json/bulkmissions')
-# os.mkdir('./static/json/bulkmissions')
-# for day, timestamp in days.items():
-#     path = f'./static/json/bulkmissions/{day}.json'
-#     with open(path, 'w') as f:
-#         json.dump(timestamp, f) 
+        for timestamp, deal in AllTheDeals.items():
+            deal[timestamp] = timestamp
+            try:
+                DRG[timestamp.split('T')[0]]['dailyDeal'] = deal
+            except:
+                continue
+    return DRG
+
+# def simpleHash(input):
+#     hash = 0
+#     for char in input:
+#         charCode = ord(char)
+#         hash = ((hash << 5) - hash) + charCode
+#         hash &= 0xffffffff 
+#     return hash if hash < 0x80000000 else hash - 0x100000000
+
+# # hashes must be written before they are assigned to DRG dict
+# def write_string_hashes(DRG):
+#     hashes_dict = {}
+#     for day, dictionary in DRG.items():
+#         hash_ = simpleHash(json.dumps(dictionary))             
+#         hashes_dict[day] = hash_
+    
+#     with open('drgmissionsdailyhashes.json', 'w') as f:
+#         json.dump(hashes_dict, f)
+
+# def add_string_hashes(DRG):
+#     hashes_dict = {}
+#     for day, dictionary in DRG.items():
+#         hash_ = simpleHash(json.dumps(dictionary))             
+#         DRG[day]['stringHash'] =  hash_
+#         hashes_dict[day] = hash_
+        
+#     return DRG
 
 def main():
     with open('drgmissionsgod.json', 'r') as f:
         DRG = json.load(f)
+        
     flat_or_not = input('Flat or not: ')
     if flat_or_not.lower() == 'flat'  or flat_or_not.lower() == 'yes' or flat_or_not.lower() == 'y':
         DRG = flatten_seasons_new(DRG)
@@ -210,8 +237,14 @@ def main():
     days_or_not = input('Group by days or not: ')
     if days_or_not.lower() == 'days' or days_or_not.lower() == 'yes' or days_or_not.lower() == 'y':
         DRG = group_json_by_days(DRG)
+        
+        daily_deals_or_not = input('Daily deals or not: ')
+        if daily_deals_or_not.lower() == 'yes' or daily_deals_or_not.lower() == 'y':
+            DRG = add_daily_deals_to_grouped_json(DRG)
+        
         num_days = int(input('Number of days: '))
         DRG = extract_days_from_json(DRG, num_days)
+
     else:
         days_or_not_ungrouped = input('Split by days (Ungrouped)?')
         if days_or_not_ungrouped.lower() == 'yes' or days_or_not_ungrouped.lower() == 'y':
@@ -221,14 +254,13 @@ def main():
 
     split_json_raw(DRG)
 
-main()
+# main()
 
 # with open('drgmissionsgod.json', 'r') as f:
 #     DRG = json.load(f)
-    
+
 # DRG = flatten_seasons_new(DRG)
-
-# bs = DRG['2024-04-16T04:00:00Z']
-
-# for bs_, d in bs.items():
-#     print(json.dumps(d, indent=4))
+# DRG = group_json_by_days(DRG)
+# DRG = add_daily_deals_to_grouped_json(DRG)
+# DRG = extract_days_from_json(DRG, 300)
+# print(len(list(DRG.keys())))

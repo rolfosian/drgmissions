@@ -28,7 +28,7 @@ async function deepDiveCountDown() {
     function updateCountdown() {
         let now;
         let remainingTime;
-        if (!ddData) {
+        if (!deepDiveData) {
             remainingTime = 0;
             document.getElementById("ddcountdown").classList.add('glow-text');
         } else {
@@ -65,7 +65,6 @@ function topMissionsCountdown() {
     let countdownElement = document.getElementById('countdown');
     let countdownTimer;
     let targetTime = new Date();
-    let isRefreshing = false;
     let isMidnightUpcoming_;
 
     function startCountdown() {
@@ -82,8 +81,9 @@ function topMissionsCountdown() {
 
     function dispatchCacheEvent(isMidnightUpcoming_, date_) {
         let upcomingBiomeCacheEvent = new Event('upcomingBiomeCache');
+        let date__ = new Date(date_)
         upcomingBiomeCacheEvent.isMidnightUpcoming = isMidnightUpcoming_;
-        upcomingBiomeCacheEvent.date = date_;
+        upcomingBiomeCacheEvent.date = date__;
         document.dispatchEvent(upcomingBiomeCacheEvent);
     }
 
@@ -143,22 +143,35 @@ function topDailyDealCountdown() {
         countdownTimer = setInterval(updateCountdown, 1000)
     }
     function updateCountdown() {
-        let now = Date.now();
+        let date = new Date()
+        let now = date.getTime();
         let remainingTime = targetTime.getTime() - now;
         if (remainingTime <= 0) {
             clearInterval(countdownTimer);
-            refreshDailyDeal().then(startCountdown);
-        } else {
+            let event = new Event('refreshDailyDeal')
+            event.dateString = date.toISOString().slice(0, 10)
+            document.dispatchEvent(event)
+        }
             let hours = Math.floor((remainingTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
             let minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
             let seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
             let formattedTime = padZero(hours) + ":" + padZero(minutes) + ":" + padZero(seconds);
             document.getElementById("DailyDealcountdown").innerHTML = formattedTime;
         }
-    }
+    
     function padZero(number) {
         return number.toString().padStart(2, "0");
     }
+
+    document.addEventListener('refreshDailyDeal', async function(event) {
+        while (localStorages['currentDaysJson'][0] != event.dateString) {
+            await sleep(1);
+        }
+        await refreshDailyDeal();
+        startCountdown();
+    });
+
+
     startCountdown();
 };
 
@@ -201,10 +214,14 @@ function toggleCollapse() {
     equalizeGridItems()
 };
 
-function onLoad() {
+async function onLoad() {
     arrayBiomes(biomes, localStorages['seasonSelected']);
-    arrayDailyDeal(dailyDeal);
-    arrayDeepDives(ddData);
+    if (tempDailyDeal) {
+        arrayDailyDeal(tempDailyDeal);
+        tempDailyDeal = undefined;
+    } else {
+        arrayDailyDeal(dailyDeal);
+    }
 
     document.querySelector('p.loading').style.display = 'none';
     document.getElementById("current").classList.toggle("collapsed");
@@ -232,7 +249,7 @@ function onLoad() {
     if (!localStorages['areButtonsHidden']) {
         $("#missionscountdown").slideToggle();
     }
-    
+
     let buttonsButton = document.getElementById('buttonsbutton');
     buttonsButton.setAttribute('onclick', 'toggleButtons()');
     buttonsButton.disabled = false;
@@ -245,4 +262,14 @@ function onLoad() {
     backgroundButton.setAttribute('onclick', 'toggleBackground()');
     backgroundButton.disabled = false;
     // document.getElementById('loading').textContent = 'An error occured, please refresh the page.'
+
+    try {
+        deepDiveData = await getDeepDiveData()
+        arrayDeepDives(deepDiveData);
+    } catch {
+        handleUnavailableDeepDiveData()
+    }
+    $(".dd-missions").each(function() {
+        $(this).css("opacity", "1");
+        });
 };
