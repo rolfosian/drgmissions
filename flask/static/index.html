@@ -10,11 +10,34 @@
 <meta property="og:description" content="Deep Rock Galactic Mission Tracker">
 <link rel ="icon" href="/static/favicon.ico" type="image/x-icon">
 <link rel ="stylesheet" href="/static/styles.css" type="text/css">
+<script src="/static/jquery.min.js"></script>
 <script src="/static/index.js"></script>
 </head>
 <body bgcolor="#303030">
-<video id="background-video" autoplay muted loop><source src="/static/space_rig.webm" type="video/webm"></video>
+<video id="background-video" muted loop><source src="/static/space_rig.webm" type="video/webm"></video>
 <div class="overlay"></div>
+
 <p id="loading" class="loading">Loading</p>
+
+<div id="countdowncontainer">
+<button id="backgroundButton" disabled>Hide background</button>
+<button id="buttonsbutton" disabled>x</button><br>
+<div id="buttonDiv"></div>
+<div id=DAILYDEAL><div id="dailydealhead">NEW DAILY DEAL IN<br><span id="DailyDealcountdown"></span></div>
+<div id="DailyDeal" class="daily_deal_container"></div></div>
+<button id="dailydealbutton">Click here to see Daily Deal</button><br>
+<div id="missionscountdown">NEW MISSIONS IN<br>
+<span id="countdown"></span></div><button id="slideButton">Hide countdown</button><br>
+<button id="currentButton" disabled>Click here to see upcoming missions</button>
+<br>
+<div id="seasonSelect" class="seasonselect">
+<button id="seasonClick" class="seasonBox" disabled>Season 4 Toggle</button>
+<input type="checkbox" id="season" class="seasonBox" value="s0" disabled>
+</div>
+<!-- <select id="season" name="season" class="seasonBox" disabled></select> -->
+</div>
+</div>
+
 <div id="mainContent"></div>
+
 </body></html>

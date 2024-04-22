@@ -8,7 +8,7 @@ $('img').on('load', function() {
 scrollToTop();
 });
 
-function deepDiveCountDown() {
+async function deepDiveCountDown() {
     let targetDay = 4;
     let targetHour = 11;
     let targetTime = new Date();
@@ -24,10 +24,11 @@ function deepDiveCountDown() {
         }
         countdownTimer = setInterval(updateCountdown, interval)
     }
+
     function updateCountdown() {
         let now;
         let remainingTime;
-        if (initialized && !ddData) {
+        if (!deepDiveData) {
             remainingTime = 0;
             document.getElementById("ddcountdown").classList.add('glow-text');
         } else {
@@ -38,13 +39,9 @@ function deepDiveCountDown() {
         if (remainingTime <= 0) {
             clearInterval(countdownTimer);
             document.getElementById("ddcountdown").innerHTML = "0D 00:00:00";
-            if (initialized) {
-                refreshDeepDives().then(() => {
-                    startCountdown(30000);
-                });
-            } else {
-                startCountdown(1000);
-            }
+            refreshDeepDives().then(() => {
+                startCountdown(30000);
+            });
         } else {(0)
             let days = Math.floor(remainingTime / (1000 * 60 * 60 * 24));
             let hours = Math.floor((remainingTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -68,7 +65,8 @@ function topMissionsCountdown() {
     let countdownElement = document.getElementById('countdown');
     let countdownTimer;
     let targetTime = new Date();
-    
+    let isMidnightUpcoming_;
+
     function startCountdown() {
         targetTime.setSeconds(0);
         targetTime.setMilliseconds(0);
@@ -80,37 +78,64 @@ function topMissionsCountdown() {
         }
         countdownTimer = setInterval(updateCountdown, 1000);
     }
+
+    function dispatchCacheEvent(isMidnightUpcoming_, date_) {
+        let upcomingBiomeCacheEvent = new Event('upcomingBiomeCache');
+        upcomingBiomeCacheEvent.isMidnightUpcoming = isMidnightUpcoming_;
+        upcomingBiomeCacheEvent.date = date_;
+        document.dispatchEvent(upcomingBiomeCacheEvent);
+    }
+
     function updateCountdown() {
-        let remainingTime = Math.floor(((targetTime - new Date() + 2) / 1000));
-        if (remainingTime < 0) {
+        let date_ = new Date();
+        let remainingTime = Math.floor(((targetTime - date_ + 2) / 1000));
+        if (remainingTime >= 0){
+            isMidnightUpcoming_ = isMidnightUpcoming(date_);
+        }
+        if (remainingTime < 102 && !cacheActive && remainingTime > 0) {
+            cacheActive = true;
+            dispatchCacheEvent(isMidnightUpcoming_, date_)
+        }
+        if (remainingTime < 0 && !isRefreshing) {
+            isRefreshing = true
+            if (!cacheActive) {
+                cacheActive = true;
+                dispatchCacheEvent(isMidnightUpcoming_, date_)
+            }
             clearInterval(countdownTimer);
-            if (initialized) {
-                let loading = document.querySelector('p.loading')
-                loading.style.display = 'inline-block';
-                $(".biome-container").each(function() {
-                    $(this).css("opacity", "0");
-                    });
-                refreshBiomes().then(startCountdown);
-                $(".biome-container").each(function() {
-                    $(this).css("opacity", "1");
-                    });
-                loading.style.display = 'none';
-            } else {
-                startCountdown();
-            };
+            let refreshBiomesEvent = new Event('refreshBiomes');
+            refreshBiomesEvent.isMidnightUpcoming = isMidnightUpcoming_;
+            document.dispatchEvent(refreshBiomesEvent);
         } else if (remainingTime >= 0) {
             let minutes = Math.floor(remainingTime / 60);
             let seconds = remainingTime % 60;
-            let countdownString = `${minutes.toString().padStart(2, '0')} : ${seconds.toString().padStart(2, '0')}`;
+            let countdownString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
             countdownElement.textContent = countdownString;
         }
     }
+
+    document.addEventListener('upcomingBiomeCache', async function(event) {
+        tempCacheUpcomingBiomes(event.isMidnightUpcoming, event.date)
+    });
+    
+    document.addEventListener('refreshBiomes', async function(event) {
+        while (!tempBiomes) {
+            await sleep(1);
+        }
+        startCountdown();
+        await refreshBiomes(event.isMidnightUpcoming)
+        cacheActive = false;
+        isRefreshing = false;
+    });
+
     startCountdown();
-};
+}
+
 function topDailyDealCountdown() {
     let targetHour = 0;
     let targetTime = new Date();
     let countdownTimer;
+    let isDailyDealRefreshing;
 
     function startCountdown() {
         targetTime.setUTCHours(targetHour, 0, 0, 0);
@@ -118,35 +143,38 @@ function topDailyDealCountdown() {
         countdownTimer = setInterval(updateCountdown, 1000)
     }
     function updateCountdown() {
-        let now = Date.now();
+        let date = new Date()
+        let now = date.getTime();
         let remainingTime = targetTime.getTime() - now;
-        if (remainingTime <= 0) {
+        if (remainingTime < 0 && !isDailyDealRefreshing) {
+            isDailyDealRefreshing = true;
             clearInterval(countdownTimer);
-            if (initialized) {
-                refreshDailyDeal().then(startCountdown);
-            } else {
-                startCountdown();
-            }
-        } else {
+            let event = new Event('refreshDailyDeal')
+            event.dateString = date.toISOString().slice(0, 10)
+            document.dispatchEvent(event)
+        }
             let hours = Math.floor((remainingTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
             let minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
             let seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
             let formattedTime = padZero(hours) + ":" + padZero(minutes) + ":" + padZero(seconds);
             document.getElementById("DailyDealcountdown").innerHTML = formattedTime;
         }
-    }
+    
     function padZero(number) {
         return number.toString().padStart(2, "0");
     }
+
+    document.addEventListener('refreshDailyDeal', async function(event) {
+        while (localStorages['currentDaysJson'][0] != event.dateString) {
+            await sleep(1);
+        }
+        await refreshDailyDeal();
+        startCountdown();
+        isDailyDealRefreshing = false;
+    });
+
     startCountdown();
 };
-window.addEventListener('blur', function() {
-    document.querySelector('#background-video').pause();
-    ;
-    });
-window.addEventListener('focus', function() {
-document.querySelector('#background-video').play();
-});
 
 $(document).ready(function() {
 $("#slideButton").click(function() {
@@ -187,83 +215,62 @@ function toggleCollapse() {
     equalizeGridItems()
 };
 
-function toggleBackground() {
-    var video = document.getElementById("background-video");
-    var backgroundbutton = document.getElementById('backgroundButton');
-    var overlay = document.querySelector(".overlay");
-    if (video.style.display === "none" && overlay.style.display === "none") {
-        video.style.display = "block";
-        overlay.style.display = "block";
-        backgroundbutton.textContent = "Hide background";
-        video.play();
+async function onLoad() {
+    arrayBiomes(biomes, localStorages['seasonSelected']);
+    if (tempDailyDeal) {
+        arrayDailyDeal(tempDailyDeal);
+        tempDailyDeal = undefined;
     } else {
-        video.style.display = "none";
-        overlay.style.display = "none";
-        backgroundbutton.textContent = "Show background";
-        video.pause();
+        arrayDailyDeal(dailyDeal);
     }
-};
-
-function toggleButtons() {
-    let buttonsbutton = document.getElementById('buttonsbutton');
-    let backgroundbutton = document.getElementById('backgroundButton');
-    let slideButton = document.getElementById('slideButton');
-    let currentButton = document.getElementById('currentButton');
-    let missionscountdown = document.getElementById('missionscountdown');
-    let DAILYDEAL = document.getElementById('DAILYDEAL');
-    let dailydealbutton = document.getElementById('dailydealbutton');
-    let seasonBox = document.getElementById('seasonSelect')
-
-    if (slideButton.style.display === "none") {
-        backgroundbutton.style.display = "inline-block";
-        slideButton.style.display = "inline-block";
-        currentButton.style.display = "inline-block";
-        dailydealbutton.style.display = "inline-block";
-        dailydealbutton.textContent = "Click here to see Daily Deal";
-        DAILYDEAL.style.display = "none";
-        seasonBox.style.display = "inline-block";
-        missionscountdown.style.display = "none";
-        buttonsbutton.textContent = " x ";
-        $("#missionscountdown").slideToggle();
-        $("#slideButton").text("Hide countdown");
-    } else {
-        missionscountdown.style.display = "none";
-        backgroundbutton.style.display = "none";
-        DAILYDEAL.style.display = "none";
-        dailydealbutton.style.display = "none";
-        slideButton.style.display = "none";
-        currentButton.style.display = "none";
-        seasonBox.style.display = "none";
-        buttonsbutton.textContent = "+";
-    }
-};
-
-function onLoad() {
-    arrayBiomes(biomes, 's0');
-    arrayDailyDeal(dailyDeal);
-    arrayDeepDives(ddData);
-    initialized = true
 
     document.querySelector('p.loading').style.display = 'none';
     document.getElementById("current").classList.toggle("collapsed");
     toggleCollapse();
     document.getElementById("upcoming").style.visibility = 'visible';
+    initialized = true
 
+    setupIdleVideoPause('background-video', 10000)
     topDailyDealCountdown()
     topMissionsCountdown()
     deepDiveCountDown()
 
+    // let season = document.getElementById('season');
+    // season.setAttribute('onchange', 'changeSeason(biomes, this.value)');
+    // season.disabled = false;
+    season.setAttribute('onchange', "toggleSeason4(biomes, this.checked)");
+    season.disabled = false;
+    seasonClick = document.getElementById('seasonClick')
+    seasonClick.setAttribute('onclick', "document.getElementById('season').click()");
+    seasonClick.disabled = false;
+
     $(".biome-container").each(function() {
     $(this).css("opacity", "1");
     });
-    $("#missionscountdown").slideToggle();
+    if (!localStorages['areButtonsHidden']) {
+        $("#missionscountdown").slideToggle();
+    }
 
-    document.getElementById('buttonsbutton').setAttribute('onclick', 'toggleButtons()');
+    let buttonsButton = document.getElementById('buttonsbutton');
+    buttonsButton.setAttribute('onclick', 'toggleButtons()');
+    buttonsButton.disabled = false;
     
-    // document.getElementById('season').setAttribute('onchange', 'changeSeason(biomes, this.value)');
-    document.getElementById('season').setAttribute('onchange', "toggleSeason4(biomes, this.checked)");
-    document.getElementById('seasonClick').setAttribute('onclick', "document.getElementById('season').click()");
-    document.getElementById('currentButton').setAttribute('onclick', 'toggleCollapse()');
-    document.getElementById('backgroundButton').setAttribute('onclick', 'toggleBackground()');
-    document.getElementById('loading').textContent = 'An error occured, please refresh the page.'
+    currentButton = document.getElementById('currentButton');
+    currentButton.setAttribute('onclick', 'toggleCollapse()');
+    currentButton.disabled = false;
+
+    backgroundButton = document.getElementById('backgroundButton');
+    backgroundButton.setAttribute('onclick', 'toggleBackground()');
+    backgroundButton.disabled = false;
+    // document.getElementById('loading').textContent = 'An error occured, please refresh the page.'
+
+    try {
+        deepDiveData = await getDeepDiveData()
+        arrayDeepDives(deepDiveData);
+    } catch {
+        handleUnavailableDeepDiveData()
+    }
+    $(".dd-missions").each(function() {
+        $(this).css("opacity", "1");
+        });
 };

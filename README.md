@@ -1,7 +1,7 @@
 ## **Deep Rock Galactic lua scripts for use with [RE-UE4SS lua API](https://github.com/UE4SS-RE/RE-UE4SS/) to fetch current mission and deep dive data for flask**
 
 - To run DRG headless, use command line arg `-nullrhi` when running the game.
-- Tested working with a Windows 10 virtual machine using `-nullrhi` (Requires OpenGL for the UE4SS hook).
+- Tested working with a Windows 10 virtual machine using `-nullrhi` (Requires OpenGL or dx11 for the UE4SS hook).
 - Make sure to [skip intro videos](https://www.pcgamingwiki.com/wiki/Deep_Rock_Galactic#Skip_intro_videos) and also use `-nosplash` command line arg if desired.
 - Be sure to disable Steam cloud save synchronization.
 - Unzip UE4SS into Deep Rock Galactic\FSD\Binaries\Win64 - this is also the CWD of the scripts run by the UE4SS hook.
@@ -20,19 +20,14 @@
 
 - ~~Consider using [SteamCMD](https://developer.valvesoftware.com/wiki/SteamCMD) for even less overhead and easier automation for updates etc~~ - Doesn't work, the game just says it can't find the Steam service and won't load the start menu.
 
-- Run `split_timestamps_to_individual_json.py` to accomodate json for new static website
-
-
+- Run `split_timestamps.py` (in the flask folder, make sure to select flat when prompted unless debugging) to accomodate json for new static website
 
 ## **TODO**
 - **Public Enemy Number One**: Check and Update Deep Dive scraper weekly to accomodate currently unknown configurations, **contingencies for if Steam misbehaves on wake**
+- Fix canvas mission icon jaggies
 - Figure out a solution to reduce required delay between iterations for accurate data to be collected by the 30 minute incrementer
 - Figure out how to manipulate wine(?) system clock with hook on linux
-- Clean up and convert Complexity/Length finalization to table lookup
-- ~~New flask endpoints, modified index HTML, UE4SS scripts, and multiple virtual machines startup scripts to scrape multiple different sets of mission data concurrently to accomodate different season content toggles~~
-- ~~Contingencies for if the game doesn't terminate gracefully on 'organic' exit~~ Refer to kill process function in [this script](https://github.com/rolfosian/drgmissions/blob/main/DDs_Run.py)
-- ~~Contingencies for if the game crashes~~ Refer to timeout logic in `.*_Run.py` scripts.
-- ~~Scripts to actually launch the game and upload DD data to flask host weekly~~
+- Clean up and convert Complexity/Length finalization to table lookup seriously look at it its so disgusting DO SOMETHING
 - ~~Parallelize png rendering and arraying functions and change png route args to codenames instead of indexing once possible~~ Moved png rendering and arraying to thread pools, but the gains are miniscule because of thread management overhead, the GIL and I/O bound image rendering. It also requires a hard restart of the interpreter so `gunicorn --reload` isn't feasible. Needs processing pools to see gains that are bigger than fractions of a millisecond, but the vps is only 1 vcore so I'm not going to bother debugging the circular multiprocessing import at this stage.
 
 -------------------------------------------------------------------------------------------

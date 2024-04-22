@@ -1,142 +1,344 @@
-//img caching parameters
+// caching parameters
+var biomeBanners = {
+    'Crystalline Caverns': '/static/DeepDive_MissionBar_CrystalCaves.webp',
+    'Glacial Strata' : '/static/DeepDive_MissionBar_GlacialStrata.webp',
+    'Radioactive Exclusion Zone': '/static/DeepDive_MissionBar_Radioactive.webp',
+    'Fungus Bogs': '/static/DeepDive_MissionBar_FungusBogs.webp',
+    'Dense Biozone': '/static/DeepDive_MissionBar_LushDownpour.webp',
+    'Salt Pits': '/static/DeepDive_MissionBar_SaltPits.webp',
+    'Sandblasted Corridors': '/static/DeepDive_MissionBar_Sandblasted.webp',
+    'Magma Core': '/static/DeepDive_MissionBar_MagmaCore.webp',
+    'Azure Weald': '/static/DeepDive_MissionBar_AzureWeald.webp',
+    'Hollow Bough': '/static/DeepDive_MissionBar_HollowBough.webp'
+}
+var biomeBannersImages = {};
+biomeBannersImages.name = 'biomeBanners'
+
+var deepDivesBanners = {
+    'dd' : '/static/dd.webp',
+    'edd' : '/static/edd.webp'
+};
+deepDivesBannersImages = {};
+deepDivesBannersImages.name = 'deepDivesBanners'
+
+function setBiomeAndDeepDivesBanners() {
+    let minerals = {
+        'Crystalline Caverns': 'Abundant: Jadiz; Scarce: Bismor',
+        'Glacial Strata' : "Abundant: Magnite; Scarce: Umanite",
+        'Radioactive Exclusion Zone': 'Abundant: Umanite; Scarce: Enor Pearl',
+        'Fungus Bogs': 'Abundant: Croppa; Scarce: Jadiz',
+        'Dense Biozone': 'Abundant: Bismor; Scarce: Umanite',
+        'Salt Pits': 'Abundant: Enor Pearl; Scarce: Bismor',
+        'Sandblasted Corridors': 'Abundant: Enor Pearl; Scarce: Bismor',
+        'Magma Core': 'Abundant: Magnite; Scarce: Croppa',
+        'Azure Weald': 'Abundant: Croppa; Scarce: Umanite',
+        'Hollow Bough': 'Abundant: Jadiz; Scarce: Bismor'
+    }
+    for (let biome in minerals) {
+        biomeBannersImages[biome].title = minerals[biome];
+        biomeBannersImages[biome].classList.add("banner");
+        let imgCopy = new Image();
+        imgCopy.src = biomeBannersImages[biome].src
+        imgCopy.classList.add("banner");
+        imgCopy.title = minerals[biome];
+
+        let divs = document.querySelectorAll(`div[biome="${biome}"]`);
+        divs[0].prepend(biomeBannersImages[biome]);
+        divs[1].prepend(imgCopy)
+    }
+
+    for (let deepDive in deepDivesBannersImages) {
+        let div = document.querySelector(`div[dd="${deepDive}"]`);
+        deepDivesBannersImages[deepDive].classList.add('banner')
+        div.prepend(deepDivesBannersImages[deepDive])
+    }
+}
+
 var primaryObjs = {
-    'Mining Expedition': '/static/img/Mining_expedition_icon.png',
-    'Egg Hunt': '/static/img/Egg_collection_icon.png',
-    'On-Site Refining': '/static/img/Refining_icon.png',
-    'Salvage Operation': '/static/img/Salvage_icon.png',
-    'Escort Duty': '/static/img/Escort_icon.png',
-    'Point Extraction': '/static/img/Point_extraction_icon.png',
-    'Elimination': '/static/img/Elimination_icon.png',
-    'Industrial Sabotage': '/static/img/Sabotage_icon.png'
+    'Mining Expedition': '/static/img/Mining_expedition_icon.webp',
+    'Egg Hunt': '/static/img/Egg_collection_icon.webp',
+    'On-Site Refining': '/static/img/Refining_icon.webp',
+    'Salvage Operation': '/static/img/Salvage_icon.webp',
+    'Escort Duty': '/static/img/Escort_icon.webp',
+    'Point Extraction': '/static/img/Point_extraction_icon.webp',
+    'Elimination': '/static/img/Elimination_icon.webp',
+    'Industrial Sabotage': '/static/img/Sabotage_icon.webp'
 };
 var primaryObjsImages = {};
+primaryObjsImages.name = 'primaryObjsImages'
 
 var primaryObjResources = {
-    'hexagon' : '/static/img/hexagon.png',
-    'Mining Expedition': '/static/img/Morkite_icon.png',
-    'Egg Hunt': '/static/img/Alien_egg_icon.png',
-    'On-Site Refining': '/static/img/Icon_PumpingJack_Core_Simplified_Workfile.png',
-    'Salvage Operation': '/static/img/Icon_Salvage_Mules_Objective.png',
-    'Escort Duty': '/static/img/Icon_FuelCannister_Simplified.png',
-    'Point Extraction': '/static/img/Icons_Resources_Outline_Aquarq.png',
-    'Elimination': '/static/img/Kill_Dreadnought_Objective_icon.png',
-    'Industrial Sabotage': '/static/img/Icon_Facility_DataRack.png'
+    'hexagon' : '/static/img/hexagon.webp',
+    'Mining Expedition': '/static/img/Morkite_icon.webp',
+    'Egg Hunt': '/static/img/Alien_egg_icon.webp',
+    'On-Site Refining': '/static/img/Icon_PumpingJack_Core_Simplified_Workfile.webp',
+    'Salvage Operation': '/static/img/Icon_Salvage_Mules_Objective.webp',
+    'Escort Duty': '/static/img/Icon_FuelCannister_Simplified.webp',
+    'Point Extraction': '/static/img/Icons_Resources_Outline_Aquarq.webp',
+    'Elimination': '/static/img/Kill_Dreadnought_Objective_icon.webp',
+    'Industrial Sabotage': '/static/img/Icon_Facility_DataRack.webp'
 };
 var primaryObjResourcesImages = {};
+primaryObjResourcesImages.name = 'primaryObjResourcesImages'
 
 var secondaryObjs = {
-    'ApocaBlooms': '/static/img/Apoca_bloom_icon.png',
-    'Fossils': '/static/img/Fossil_icon.png',
-    'Boolo Caps': '/static/img/Boolo_cap_icon.png',
-    'Dystrum': '/static/img/Dystrum_icon.png',
-    'Ebonuts': '/static/img/Ebonut_icon.png',
-    'Fester Fleas': '/static/img/Fleas_icon.png',
-    'Gunk Seeds': '/static/img/Gunk_seed_icon.png',
-    'Hollomite': '/static/img/Hollomite_icon.png'
+    'ApocaBlooms': '/static/img/Apoca_bloom_icon.webp',
+    'Fossils': '/static/img/Fossil_icon.webp',
+    'Boolo Caps': '/static/img/Boolo_cap_icon.webp',
+    'Dystrum': '/static/img/Dystrum_icon.webp',
+    'Ebonuts': '/static/img/Ebonut_icon.webp',
+    'Fester Fleas': '/static/img/Fleas_icon.webp',
+    'Gunk Seeds': '/static/img/Gunk_seed_icon.webp',
+    'Hollomite': '/static/img/Hollomite_icon.webp'
 };
 var secondaryObjsImages = {};
+secondaryObjsImages.name = 'secondaryObjsImages'
 
 var complexities = {
-    '1': '/static/img/Icons_complexity_1.png',
-    '2': '/static/img/Icons_complexity_2.png',
-    '3': '/static/img/Icons_complexity_3.png'
+    '1': '/static/img/Icons_complexity_1.webp',
+    '2': '/static/img/Icons_complexity_2.webp',
+    '3': '/static/img/Icons_complexity_3.webp'
 };
 var complexitiesImages = {};
+complexitiesImages.name = 'complexitiesImages'
 
 var lengths = {
-    '1': '/static/img/Icons_length_1.png',
-    '2': '/static/img/Icons_length_2.png',
-    '3': '/static/img/Icons_length_3.png'
+    '1': '/static/img/Icons_length_1.webp',
+    '2': '/static/img/Icons_length_2.webp',
+    '3': '/static/img/Icons_length_3.webp'
 };
 var lengthsImages = {};
+lengthsImages.name = 'lengthsImages'
 
 var mutators = {
-    'Critical Weakness': '/static/img/Mutator_critical_weakness_icon.png',
-    'Gold Rush': '/static/img/Mutator_gold_rush_icon.png',
-    'Double XP': '/static/img/Mutator_triple_xp_icon.png',
-    'Golden Bugs': '/static/img/Mutator_golden_bugs_icon.png',
-    'Low Gravity': '/static/img/Mutator_no_fall_damage_icon.png',
-    'Mineral Mania': '/static/img/Mutator_mineral_mania_icon.png',
-    'Rich Atmosphere': '/static/img/Mutator_rich_atmosphere_icon.png',
-    'Volatile Guts': '/static/img/Mutator_volatile_guts_icon.png'
+    'Critical Weakness': '/static/img/Mutator_critical_weakness_icon.webp',
+    'Gold Rush': '/static/img/Mutator_gold_rush_icon.webp',
+    'Double XP': '/static/img/Mutator_triple_xp_icon.webp',
+    'Golden Bugs': '/static/img/Mutator_golden_bugs_icon.webp',
+    'Low Gravity': '/static/img/Mutator_no_fall_damage_icon.webp',
+    'Mineral Mania': '/static/img/Mutator_mineral_mania_icon.webp',
+    'Rich Atmosphere': '/static/img/Mutator_rich_atmosphere_icon.webp',
+    'Volatile Guts': '/static/img/Mutator_volatile_guts_icon.webp'
 };
 var mutatorsImages = {};
+mutatorsImages.name = 'mutatorsImages'
 
 var warnings = {
-    'Cave Leech Cluster': '/static/img/Warning_cave_leech_cluster_icon.png',
-    'Exploder Infestation': '/static/img/Warning_exploder_infestation_icon.png',
-    'Haunted Cave': '/static/img/Warning_haunted_cave_icon.png',
-    'Lethal Enemies': '/static/img/Warning_lethal_enemies_icon.png',
-    'Low Oxygen': '/static/img/Warning_low_oxygen_icon.png',
-    'Mactera Plague': '/static/img/Warning_mactera_plague_icon.png',
-    'Parasites': '/static/img/Warning_parasites_icon.png',
-    'Regenerative Bugs': '/static/img/Warning_regenerative_bugs_icon.png',
-    'Shield Disruption': '/static/img/Warning_shield_disruption_icon.png',
-    'Elite Threat': '/static/img/Warning_elite_threat_icon.png',
-    'Swarmageddon': '/static/img/Warning_swarmageddon_icon.png',
-    'Lithophage Outbreak': '/static/img/Warning_lithophage_outbreak_icon.png',
-    'Rival Presence': '/static/img/Warning_rival_presence_icon.png'
+    'Cave Leech Cluster': '/static/img/Warning_cave_leech_cluster_icon.webp',
+    'Exploder Infestation': '/static/img/Warning_exploder_infestation_icon.webp',
+    'Haunted Cave': '/static/img/Warning_haunted_cave_icon.webp',
+    'Lethal Enemies': '/static/img/Warning_lethal_enemies_icon.webp',
+    'Low Oxygen': '/static/img/Warning_low_oxygen_icon.webp',
+    'Mactera Plague': '/static/img/Warning_mactera_plague_icon.webp',
+    'Parasites': '/static/img/Warning_parasites_icon.webp',
+    'Regenerative Bugs': '/static/img/Warning_regenerative_bugs_icon.webp',
+    'Shield Disruption': '/static/img/Warning_shield_disruption_icon.webp',
+    'Elite Threat': '/static/img/Warning_elite_threat_icon.webp',
+    'Swarmageddon': '/static/img/Warning_swarmageddon_icon.webp',
+    'Lithophage Outbreak': '/static/img/Warning_lithophage_outbreak_icon.webp',
+    'Rival Presence': '/static/img/Warning_rival_presence_icon.webp'
 };
 var warningsImages = {};
+warningsImages.name = 'warningsImages'
 
 var secondaryObjsDD = {
-    "Repair Minimules": "./static/img/Icon_Salvage_Mules_Objective_DDsecondaryobj.png",
-    "Eliminate Dreadnought": "./static/img/Kill_Dreadnought_Objective_icon_DDsecondaryobj.png",
-    "Mine Morkite": "./static/img/Morkite_icon_DDsecondaryobj.png",
-    "Get Alien Eggs": "./static/img/Alien_egg_icon_DDsecondaryobj.png",
-    "Black Box": "./static/img/Blackbox_icon_DDsecondaryobj.png"
+    "Repair Minimules": "/static/img/Icon_Salvage_Mules_Objective_DDsecondaryobj.webp",
+    "Eliminate Dreadnought": "/static/img/Kill_Dreadnought_Objective_icon_DDsecondaryobj.webp",
+    "Mine Morkite": "/static/img/Morkite_icon_DDsecondaryobj.webp",
+    "Get Alien Eggs": "/static/img/Alien_egg_icon_DDsecondaryobj.webp",
+    "Black Box": "/static/img/Blackbox_icon_DDsecondaryobj.webp"
 };
 var secondaryObjsDDImages = {};
+secondaryObjsDDImages.name = 'secondaryObjsDDImages'
 
 var biomesDD = {
-    'Crystalline Caverns': '/static/img/DeepDive_MissionBar_CrystalCaves.png',
-    'Glacial Strata': '/static/img/DeepDive_MissionBar_GlacialStrata.png',
-    'Radioactive Exclusion Zone': '/static/img/DeepDive_MissionBar_Radioactive.png',
-    'Fungus Bogs': '/static/img/DeepDive_MissionBar_FungusBogs.png',
-    'Dense Biozone': '/static/img/DeepDive_MissionBar_LushDownpour.png',
-    'Salt Pits': '/static/img/DeepDive_MissionBar_SaltPits.png',
-    'Sandblasted Corridors': '/static/img/DeepDive_MissionBar_Sandblasted.png',
-    'Magma Core': '/static/img/DeepDive_MissionBar_MagmaCore.png',
-    'Azure Weald': '/static/img/DeepDive_MissionBar_AzureWeald.png',
-    'Hollow Bough': '/static/img/DeepDive_MissionBar_HollowBough.png'
+    'Crystalline Caverns': '/static/img/DeepDive_MissionBar_CrystalCaves.webp',
+    'Glacial Strata': '/static/img/DeepDive_MissionBar_GlacialStrata.webp',
+    'Radioactive Exclusion Zone': '/static/img/DeepDive_MissionBar_Radioactive.webp',
+    'Fungus Bogs': '/static/img/DeepDive_MissionBar_FungusBogs.webp',
+    'Dense Biozone': '/static/img/DeepDive_MissionBar_LushDownpour.webp',
+    'Salt Pits': '/static/img/DeepDive_MissionBar_SaltPits.webp',
+    'Sandblasted Corridors': '/static/img/DeepDive_MissionBar_Sandblasted.webp',
+    'Magma Core': '/static/img/DeepDive_MissionBar_MagmaCore.webp',
+    'Azure Weald': '/static/img/DeepDive_MissionBar_AzureWeald.webp',
+    'Hollow Bough': '/static/img/DeepDive_MissionBar_HollowBough.webp'
 };
 var biomesDDImages = {};
+biomesDDImages.name = 'biomesDDImages'
 
 var dailyDealResources = {
-    'Bismor': '/static/img/Bismor_icon.png',
-    'Croppa': '/static/img/Croppa_icon.png',
-    'Enor Pearl': '/static/img/Enor_pearl_icon.png',
-    'Jadiz': '/static/img/Jadiz_icon.png',
-    'Magnite': '/static/img/Magnite_icon.png',
-    'Umanite': '/static/img/Umanite_icon.png',
-    'Credits': '/static/img/Credit.png',
-    'Bubble': '/static/img/Icon_TradeTerminal_SaleBubble.png'
+    'Bismor': '/static/img/Bismor_icon.webp',
+    'Croppa': '/static/img/Croppa_icon.webp',
+    'Enor Pearl': '/static/img/Enor_pearl_icon.webp',
+    'Jadiz': '/static/img/Jadiz_icon.webp',
+    'Magnite': '/static/img/Magnite_icon.webp',
+    'Umanite': '/static/img/Umanite_icon.webp',
+    'Credits': '/static/img/Credit.webp',
+    'Bubble': '/static/img/Icon_TradeTerminal_SaleBubble.webp'
 };
 var dailyDealResourcesImages = {};
+dailyDealResourcesImages.name = 'dailyDealResourcesImages'
 
 var fontNamesAndUrls = {
-    'HammerBro101MovieBold-Regular' : '/static/img/HammerBro101MovieBold-Regular.ttf',
-    'Bungee-Regular' : '/static/img/Bungee-Regular.ttf',
-    'RiftSoft-Regular' : '/static/img/RiftSoft-Regular.ttf',
+    'CarbonThin-W00-Regular' : '/static/img/CarbonThin-W00-Regular.woff2',
+    'CarbonBold-W00-Regular' : '/static/img/CarbonBold-W00-Regular.woff2',
+    'Bungee-Regular' : '/static/img/Bungee-Regular.woff2',
+    'RiftSoft-Regular' : '/static/img/RiftSoft-Regular.woff2',
     'BebasNeue' : '/static/img/BebasNeue-Regular.woff2'
 };
 
+var base64LocalStoragesImg = {};
+var base64LocalStoragesFonts = {};
 
+function arrayBufferToBase64( buffer ) {
+    var binary = '';
+    var bytes = new Uint8Array( buffer );
+    var len = bytes.byteLength;
+    for (var i = 0; i < len; i++) {
+        binary += String.fromCharCode( bytes[ i ] );
+    }
+    return window.btoa( binary );
+}
+function base64ToArrayBuffer(base64_string) {
+    return Uint8Array.from(atob(base64_string), c => c.charCodeAt(0)).buffer;
+}
+async function fetchBinaryData(key, url) {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    const arrayBuffer = await blob.arrayBuffer();
+    return [key, arrayBuffer];
+   }
 
 async function preloadImages(imageObj, imageCache) {
     let promises = [];
+    base64LocalStoragesImg[imageCache.name] = {}
+
     for (let key in imageObj) {
-        let img = new Image();
-        img.src = imageObj[key];
-        let promise = new Promise((resolve, reject) => {
-            img.onload = () => resolve();
-            img.onerror = () => reject();
-        });
-        promises.push(promise);
-        imageCache[key] = img;
+        let promisedBinary = fetchBinaryData(key, imageObj[key])
+        promises.push(promisedBinary);
     }
-    await Promise.all(promises);
+    let promisedBinaries = await Promise.all(promises);
+
+    promises = [];
+    for (let i = 0; i < promisedBinaries.length; i++) {
+        let promisedBinary = promisedBinaries[i];
+        key = promisedBinary[0]
+        let base64Data = arrayBufferToBase64(promisedBinary[1]);
+        base64LocalStoragesImg[imageCache.name][key] = base64Data;
+        let img = new Image()
+        img.src = "data:image/webp;base64," + base64Data
+        img.onload = async () => {
+            imageCache[key] = img
+        }
+        promises.push(img.onload())
+    }
+    await Promise.all([promises])
+
+    // alternative to above loop but i dont think the overhead on this is worth it, idk if its worth even promising that one either
+    // promises = promisedBinaries.map(async promisedBinary => {
+    //     const key = promisedBinary[0];
+    //     const base64Data = arrayBufferToBase64(promisedBinary[1]);
+    //     base64LocalStoragesImg[imageCache.name][key] = base64Data;
+    
+    //     return new Promise((resolve, reject) => {
+    //         const img = new Image();
+    //         img.src = "data:image/webp;base64," + base64Data;
+    //         img.onload = () => {
+    //             imageCache[key] = img;
+    //             resolve();
+    //         };
+    //         img.onerror = (error) => {
+    //              throw new Error(error);
+    //         }
+    //     });
+    // });
+    // await Promise.all(promises)
 }
+async function loadImgsFromLocalStorageObj(imageObj, imageCache) {
+    let promises = [];
+    for (let key in imageObj) {
+        let base64Data =  localStorages['img'][imageCache.name][key]
+        let img = new Image()
+        img.src = "data:image/webp;base64," + base64Data;
+        img.onload = async () => {
+            imageCache[key] = img
+        }
+        promises.push(img.onload())
+    }
+    await Promise.all([promises])
+}
+
+async function loadImgsFromLocalStorageAll() {
+    await Promise.all([
+        loadImgsFromLocalStorageObj(primaryObjs, primaryObjsImages),
+        loadImgsFromLocalStorageObj(primaryObjResources, primaryObjResourcesImages),
+        loadImgsFromLocalStorageObj(secondaryObjs, secondaryObjsImages),
+        loadImgsFromLocalStorageObj(complexities, complexitiesImages),
+        loadImgsFromLocalStorageObj(lengths, lengthsImages),
+        loadImgsFromLocalStorageObj(mutators, mutatorsImages),
+        loadImgsFromLocalStorageObj(warnings, warningsImages),
+        loadImgsFromLocalStorageObj(secondaryObjsDD, secondaryObjsDDImages),
+        loadImgsFromLocalStorageObj(biomesDD, biomesDDImages),
+        loadImgsFromLocalStorageObj(biomeBanners, biomeBannersImages),
+        loadImgsFromLocalStorageObj(deepDivesBanners, deepDivesBannersImages),
+        loadImgsFromLocalStorageObj(dailyDealResources, dailyDealResourcesImages)
+    ]);
+    base64LocalStoragesImg = undefined;
+    primaryObjs = undefined;
+    primaryObjResources = undefined;
+    secondaryObjs = undefined;
+    complexities = undefined;
+    lengths = undefined;
+    mutators = undefined;
+    warnings = undefined;
+    secondaryObjsDD = undefined;
+    biomeBanners = undefined;
+    dailyDealResources = undefined;
+    deepDivesBanners = undefined;
+
+    delete primaryObjsImages.name;
+    delete primaryObjResourcesImages.name;
+    delete secondaryObjsImages.name;
+    delete complexitiesImages.name;
+    delete lengthsImages.name;
+    delete mutatorsImages.name;
+    delete warningsImages.name;
+    delete secondaryObjsDDImages.name;
+    delete biomeBannersImages.name;
+    delete dailyDealResourcesImages.name;
+    delete deepDivesBannersImages.name;
+}
+
+async function preloadFonts(){
+    let promises = [];
+    let fontsBinaries;
+
+    for (let fontName in fontNamesAndUrls) {
+        let fontUrl = fontNamesAndUrls[fontName];
+        let promisedBinary = fetchBinaryData(fontName, fontUrl);
+        promises.push(promisedBinary);
+    }
+
+    fontsBinaries = await Promise.all(promises);
+
+    for (let i = 0; i < fontsBinaries.length; i++) {
+        let fontName = fontsBinaries[i][0];
+        let fontBinaryData = fontsBinaries[i][1];
+
+        base64Data = arrayBufferToBase64(fontBinaryData);
+        base64LocalStoragesFonts[fontName] = base64Data;
+
+        let fontFace = new FontFace(fontName, `url(data:font/woff2;base64,${base64Data})`);
+        await fontFace.load();
+        document.fonts.add(fontFace);
+    }
+
+    localStorage.setItem('fonts', JSON.stringify(base64LocalStoragesFonts));
+
+    base64LocalStoragesFonts = undefined;
+    fontNamesAndUrls = undefined;
+}
+
 async function preloadImagesAll() {
     await Promise.all([
         preloadImages(primaryObjs, primaryObjsImages),
@@ -148,23 +350,49 @@ async function preloadImagesAll() {
         preloadImages(warnings, warningsImages),
         preloadImages(secondaryObjsDD, secondaryObjsDDImages),
         preloadImages(biomesDD, biomesDDImages),
-        preloadImages(dailyDealResources, dailyDealResourcesImages)
+        preloadImages(dailyDealResources, dailyDealResourcesImages),
+        preloadImages(biomeBanners, biomeBannersImages),
+        preloadImages(deepDivesBanners, deepDivesBannersImages)
     ]);
+    localStorage.setItem('img', JSON.stringify(base64LocalStoragesImg))
+
+    base64LocalStoragesImg = undefined;
+    primaryObjs = undefined;
+    primaryObjResources = undefined;
+    secondaryObjs = undefined;
+    complexities = undefined;
+    lengths = undefined;
+    mutators = undefined;
+    warnings = undefined;
+    secondaryObjsDD = undefined;
+    biomeBanners = undefined;
+    dailyDealResources = undefined;
+    deepDivesBanners = undefined;
+
+    delete primaryObjsImages.name;
+    delete primaryObjResourcesImages.name;
+    delete secondaryObjsImages.name;
+    delete complexitiesImages.name;
+    delete lengthsImages.name;
+    delete mutatorsImages.name;
+    delete warningsImages.name;
+    delete secondaryObjsDDImages.name;
+    delete biomeBannersImages.name;
+    delete dailyDealResourcesImages.name;
+    delete deepDivesBannersImages.name;
 }
 
-async function preloadFonts(){
-    let promises = [];
-    let fonts = [];
-    for (let fontName in fontNamesAndUrls) {
-        let fontUrl = fontNamesAndUrls[fontName];
-        let font = new FontFace(fontName, `url(${fontUrl})`);
-        let promise = font.load();
-        promises.push(promise);
-        fonts.push(font);
-    }
-    await Promise.all(promises);
-    for (let i = 0; i < fonts.length; i++) {
-        document.fonts.add(fonts[i]);
+async function preloadHomepageScript() {
+    let response = await fetch('/static/homepage.js');
+    return response.text();
+}
+
+async function loadFontsFromLocalStorageObj() {
+    for (let key in localStorages['fonts']) {
+        let base64Data = localStorages['fonts'][key]
+        let font = new FontFace(key, `url(data:font/woff2;base64,${base64Data})`);
+        await font.load();
+        document.fonts.add(font);
     }
 }
 
@@ -196,25 +424,6 @@ function replaceCharactersAtIndices(inputString, replacements) {
     return result;
 }
 
-function getCurrentDateTimeUTC() {
-    var now = new Date();
-
-    var utcYear = now.getUTCFullYear();
-    var utcMonth = ('0' + (now.getUTCMonth() + 1)).slice(-2);
-    var utcDay = ('0' + now.getUTCDate()).slice(-2);
-    var utcHours = ('0' + now.getUTCHours()).slice(-2);
-    var utcMinutes = ('0' + now.getUTCMinutes()).slice(-2);
-    var utcSeconds = ('0' + now.getUTCSeconds()).slice(-2);
-
-    var formattedUTCDateTime = utcYear + '-' + 
-                               utcMonth + '-' + 
-                               utcDay + 'T' +
-                               utcHours + ':' +
-                               utcMinutes + ':' +
-                               utcSeconds + 'Z';
-    return formattedUTCDateTime;
-}
-
 function getCurrentDateMidnightUTC() {
     var now = new Date();
 
@@ -234,32 +443,96 @@ function getCurrentDateMidnightUTC() {
     return formattedUTCDateTime;
 }
 
+function getNextDateMidnightUTC(date) {
+    let now = new Date(date)
+    now.setUTCDate(now.getUTCDate()+1);
+
+    let utcYear = now.getUTCFullYear();
+    let utcMonth = ('0' + (now.getUTCMonth() + 1)).slice(-2);
+    let utcDay = ('0' + now.getUTCDate()).slice(-2);
+    let utcHours = '00';
+    let utcMinutes = '00';
+    let utcSeconds = '00';
+
+    var formattedUTCDateTime = utcYear + '-' +
+        utcMonth + '-' +
+        utcDay + 'T' +
+        utcHours + ':' +
+        utcMinutes + ':' +
+        utcSeconds + 'Z';
+    return formattedUTCDateTime;
+}
+
+function getCurrentDateTimeUTC() {
+    var now = new Date();
+
+    var utcYear = now.getUTCFullYear();
+    var utcMonth = ('0' + (now.getUTCMonth() + 1)).slice(-2);
+    var utcDay = ('0' + now.getUTCDate()).slice(-2);
+    var utcHours = ('0' + now.getUTCHours()).slice(-2);
+    var utcMinutes = ('0' + now.getUTCMinutes()).slice(-2);
+    var utcSeconds = ('0' + now.getUTCSeconds()).slice(-2);
+
+    var formattedUTCDateTime = utcYear + '-' + 
+                               utcMonth + '-' + 
+                               utcDay + 'T' +
+                               utcHours + ':' +
+                               utcMinutes + ':' +
+                               utcSeconds + 'Z';
+    return formattedUTCDateTime;
+}
+
+function incrementTime(direction, datetimeString, numberOfIncrements = 1) {
+    if (direction === 'up') {
+        for (let i = 0; i < numberOfIncrements; i++) {
+            datetimeString = roundTimeUp(datetimeString);
+        }
+        return datetimeString;
+    } else if (direction === 'down') {
+        for (let i = 0; i < numberOfIncrements; i++) {
+            datetimeString = roundTimeDown(datetimeString);
+        }
+        return datetimeString;
+    } else {
+        throw new Error('Invalid direction. Please use "up" or "down".');
+    }
+}
+
+function roundTimeUpNextUpcoming(datetimestring) {
+    return roundTimeUp(roundTimeUp(datetimestring));
+}
+
+function roundTimeUp(datetimeString) {
+    const currentTime = new Date(datetimeString);
+    const currentTimeMinutes = currentTime.getUTCMinutes();
+
+    let lastMark = new Date(currentTime);
+    let nextMark = new Date(currentTime);
+    let secondsSinceLastMark, secondsToNextMark;
+
+    if (currentTimeMinutes >= 30) {
+        lastMark.setUTCMinutes(30);
+        nextMark.setUTCMinutes(0);
+        nextMark.setUTCHours(nextMark.getUTCHours() + 1);
+    } else {
+        lastMark.setUTCMinutes(0);
+        nextMark.setUTCMinutes(30);
+    }
+
+    secondsSinceLastMark = (currentTime - lastMark) / 1000;
+    secondsToNextMark = (nextMark - currentTime) / 1000;
+
+    const roundedTime = new Date(currentTime.getTime() + secondsToNextMark * 1000);
+    roundedTime.setSeconds(0);
+    roundedTime.setMilliseconds(0);
+    const roundedTimeStr = roundedTime.toISOString().slice(0,19)+'Z';
+    return roundedTimeStr;
+}
+
 function getCurrentDateTimeUTC_UNIX() {
     return Math.floor(new Date(getCurrentDateTimeUTC()).getTime() / 1000);
 }
 
-function roundTimeUp(datetimeString) {
-    var datetimeMinutes = parseInt(datetimeString.slice(14, 16));
-    if (datetimeMinutes >= 30) {
-        var datetime_unix = getCurrentDateTimeUTC_UNIX();
-        var nextHour = datetime_unix - (datetime_unix % 3600) + 3600;
-    
-        var nextHourDate = new Date(nextHour * 1000);
-        
-        var newYear = nextHourDate.getUTCFullYear();
-        var newMonth = ('0' + (nextHourDate.getUTCMonth() + 1)).slice(-2);
-        var newDay = ('0' + nextHourDate.getUTCDate()).slice(-2);
-        var newHour = ('0' + nextHourDate.getUTCHours()).slice(-2);
-    
-        var newDatetime = newYear + '-' + 
-                          newMonth + '-' + 
-                          newDay + 'T' +
-                          newHour + ':00:00Z';
-    } else {
-        var newDatetime = datetimeString.slice(0, 14) + '30:00Z';
-    }
-    return newDatetime;
-}
 function roundTimeDown(datetimeString) {
     var datetimeMinutes = parseInt(datetimeString.slice(14, 16));
     if (datetimeMinutes >= 30) {
@@ -270,17 +543,38 @@ function roundTimeDown(datetimeString) {
     return newDatetime;
 }
 
-// async function loadJSON(filePath) {
-//     try {
-//       const response = await fetch(filePath);
-//       const data = await response.json();
-//       return data;
-//     } catch (error) {
-//       throw error;
-//     }
-// }
+function getTomorrowDate(date) {
 
-async function loadJSON(filePath, maxRetries = 3, retryDelay = 2000) {
+    var tomorrow = new Date(date);
+    tomorrow.setDate(date.getDate() + 1);
+
+    var year = tomorrow.getFullYear();
+    var month = tomorrow.getMonth() + 1;
+    var day = tomorrow.getDate();
+
+    var formattedTomorrow = year + '-' + (month < 10 ? '0' : '') + month + '-' + (day < 10 ? '0' : '') + day;
+
+    return formattedTomorrow;
+}
+
+async function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+async function waitRotation() {
+    while (true) {
+        const targetMinutes59 = [29, 59];
+        const currentDate = new Date();
+        const currentMinute = currentDate.getMinutes();
+        const currentSecond = currentDate.getSeconds() + currentDate.getMilliseconds() / 1000;
+        if (currentSecond > 58.50 && inList(targetMinutes59, currentMinute)) {
+            await sleep(1500)
+            continue
+        }
+        break
+    }
+}
+
+async function loadJSON(filePath, maxRetries = 3, retryDelay = 5000 ) {
     let retries = 0;
     while (retries < maxRetries) {
         try {
@@ -321,22 +615,19 @@ function getPreviousThursdayTimestamp() {
     return timestamp;
 }
 
-async function getCurrentMissionData() {
-    var datetime = roundTimeDown(getCurrentDateTimeUTC())
-    datetime = replaceCharactersAtIndices(datetime, [[13, '-'], [16,'-']])
-    var data = await loadJSON(getDomainURL()+`/static/json/bulkmissions/${datetime}.json`)
-    return data
+function getCurrentMissionData() {
+    const datetime = roundTimeDown(getCurrentDateTimeUTC())
+    return localStorages['currentDaysJson'][1][datetime]
 }
-async function getUpcomingMissionData() {
-    var datetime = roundTimeUp(getCurrentDateTimeUTC())
-    datetime = replaceCharactersAtIndices(datetime, [[13, '-'], [16,'-']])
-    var data = await loadJSON(getDomainURL()+`/static/json/bulkmissions/${datetime}.json`)
-    return data
+function getUpcomingMissionData() {
+    const datetime = roundTimeUp(getCurrentDateTimeUTC())
+    return localStorages['currentDaysJson'][1][datetime]
 }
+
 async function getDeepDiveData() {
-    var datetime = getPreviousThursdayTimestamp()
+    let datetime = getPreviousThursdayTimestamp()
     datetime = replaceCharactersAtIndices(datetime, [[13, '-'], [16,'-']])
-    var data;
+    let data;
     try {
         data = await loadJSON(getDomainURL()+`/static/json/DD_${datetime}.json`)
     } catch {
@@ -427,7 +718,7 @@ function renderMission(m_d) {
         ctx.drawImage(resource, 44, 205, resource.width * scaleFactor, resource.height * scaleFactor);
 
         const text = getText(m_d['PrimaryObjective'], m_d['Complexity'], m_d['Length']);
-        drawText(text, 'HammerBro101MovieBold-Regular', '35',  m_d['PrimaryObjective']);
+        drawText(text, 'CarbonBold-W00-Regular', '35',  m_d['PrimaryObjective']);
     }
 
     function getText(primaryObj, complexity, length) {
@@ -462,7 +753,7 @@ function resizeCanvas(div, canvas, x, y) {
     div.style.height = `${newHeight.toString()}px`;
 }
 
-async function renderBiomes_(dictionary) {
+function renderBiomes_(dictionary) {
     let renderedBiomes = {};
 
     for (var season in dictionary) {
@@ -493,12 +784,11 @@ async function renderBiomes_(dictionary) {
 
     return renderedBiomes;
 }
-
-async function renderBiomesFlat(dictionary) {
+function renderBiomesFlat(dictionary) {
     let renderedBiomes = {};
-
     var Biomes = dictionary['Biomes']
     renderedBiomes['Biomes'] = {}
+    renderedBiomes['timestamp'] = dictionary['timestamp']
 
     for (let biome in Biomes) {
         let biomeMissions = Biomes[biome];
@@ -506,114 +796,256 @@ async function renderBiomesFlat(dictionary) {
 
         for (let i = 0; i < biomeMissions.length; i++) {
             let mission = biomeMissions[i];
-            let mission1 = {};
+            let mission1 = {}
+
+            if (mission.hasOwnProperty('season_modified')) {
+                mission1['season_modified'] = {}
+                for (let season in mission['season_modified']) {
+                    let modifiedMission = mission['season_modified'][season];
+                    mission1['season_modified'][season] = {};
+                    mission1['season_modified'][season]['CodeName'] = modifiedMission['CodeName'];
+                    mission1['season_modified'][season]['id'] = modifiedMission['id'];
+                    mission1['season_modified'][season]['season'] = modifiedMission['season'];
+                    let mission_icon_canvas_div = renderMission(modifiedMission);
+                    mission1['season_modified'][season]['rendered_mission'] = mission_icon_canvas_div;
+                }
+            }
 
             mission1['CodeName'] = mission['CodeName'];
             mission1['id'] = mission['id'];
-            mission1['season'] = mission['season']
-            // mission_icon_canvas_div.name = biome+mission1['CodeName']+mission1['season']
+            mission1['season'] = mission['season'];
 
             let mission_icon_canvas_div = renderMission(mission);
             mission1['rendered_mission'] = mission_icon_canvas_div;
 
-            // biome1[mission_icon_canvas_div.name] = mission1
             biome1.push(mission1);
         }
-
         renderedBiomes['Biomes'][biome] = biome1;
-        };
+    };
     return renderedBiomes;
 }
-async function renderBiomes(dictionary) {
+function renderBiomes(dictionary) {
+    let bs;
     if (dictionary.hasOwnProperty('s0')) {
-        return await renderBiomes_(dictionary)
+        bs = renderBiomes_(dictionary)
+        // console.log(bs['timestamp'])
+        return bs
     } else {
-        return await renderBiomesFlat(dictionary)
+        bs =  renderBiomesFlat(dictionary)
+        // console.log(bs['timestamp'])
+        return bs
     }
 }
 
-async function getBiomes() {
-    if (biomes) {
-        currentBiomes = biomes[1]
-        var dictionary_ = await getUpcomingMissionData();
-        var upcomingBiomes = await renderBiomes(dictionary_);
-        return [currentBiomes, upcomingBiomes];
-    } else {
-    var dictionary = await getCurrentMissionData();
-    var currentBiomes = await renderBiomes(dictionary);
-    var dictionary_ = await getUpcomingMissionData();
-    var upcomingBiomes = await renderBiomes(dictionary_);
-    return [currentBiomes, upcomingBiomes];
+function isMidnightUpcoming(date) {
+    return roundTimeDown(date.toISOString()).slice(11, 19) == '23:30:00'
+}
+
+async function tempCacheUpcomingBiomes(isMidnightUpcoming_, date) {
+    let currentBiomes = biomes[1];
+    let upcomingBiomes;
+    
+    switch (true) {
+        case (isMidnightUpcoming_):
+            if (tempCurrentDaysJson) {
+                setStorages('currentDaysJson', tempCurrentDaysJson);
+                tempCurrentDaysJson = undefined;
+    
+            } else {
+                await getCurrentDaysJson(date, true);
+            }
+    
+            upcomingBiomes = renderBiomes(localStorages['currentDaysJson'][1][roundTimeUpNextUpcoming(date.toISOString())]);
+            break
+
+        case (roundTimeDown(date.toISOString()).slice(11, 19) == '23:00:00'):
+            let nextDay = getNextDateMidnightUTC(date).split('T')[0];
+            tempCurrentDaysJson = [nextDay, await loadJSON(getDomainURL()+`/static/json/bulkmissions/${nextDay}.json`)];
+            upcomingBiomes = renderBiomes(tempCurrentDaysJson[1][roundTimeUpNextUpcoming(date.toISOString())]);
+            break
+
+        default:
+            upcomingBiomes = renderBiomes(localStorages['currentDaysJson'][1][roundTimeUpNextUpcoming(date.toISOString())]);
+            break
     }
 
-    
+    tempBiomes = [currentBiomes, upcomingBiomes]
+    // console.log('------')
+    // console.log(tempBiomes)
+    // console.log(date.toISOString())
+}
+
+function getBiomesOnInit() {
+    let dictionary = getCurrentMissionData(localStorages['currentDaysJson'][1]);
+    // console.log(localStorages['currentDaysJson'][1])
+    let currentBiomes = renderBiomes(dictionary);
+    let dictionary_ = getUpcomingMissionData(localStorages['currentDaysJson'][1]);
+    let upcomingBiomes = renderBiomes(dictionary_);
+    return [currentBiomes, upcomingBiomes];
+}
+
+async function getBiomesMidnightOnInit(date) {
+    if (tempBiomes) {
+        tempBiomes = undefined;
+        tempCurrentDaysJson = undefined;
+    }
+    let upcomingMidnight = getNextDateMidnightUTC(date);
+    let results = await getCurrentDaysJson(date, true);
+    // console.log(results)
+    let currentBiomes = renderBiomes(results[0][roundTimeDown(date.toISOString().slice(0, 19)+'Z')]);    
+    let upcomingBiomes = renderBiomes(localStorages['currentDaysJson'][1][upcomingMidnight]);
+    return [currentBiomes, upcomingBiomes];
+}
+
+function getBiomes() {
+    let currentBiomes = tempBiomes[0];
+    let upcomingBiomes = tempBiomes[1];
+    return [currentBiomes, upcomingBiomes];
+}
+
+async function getBiomesMidnight() {
+    let currentBiomes = tempBiomes[0];
+    if (tempCurrentDaysJson) {
+        // console.log(tempCurrentDaysJson)
+        setStorages('currentDaysJson', tempCurrentDaysJson);
+        tempCurrentDaysJson = undefined
+    }
+    let upcomingBiomes = tempBiomes[1];
+    return [currentBiomes, upcomingBiomes];
 }
 
 function changeSeason(Biomes, season) {
     arrayBiomes(Biomes, season);
     if (document.getElementById('currentButton').textContent == 'Click here to see current missions') {
         document.getElementById('currentButton').click();
-    };
+    }
+
+    setStorages('seasonSelected', season)
 }
 
 function toggleSeason4(Biomes, bool) {
-    if (bool) {
-        document.getElementById("season").value = 's4'
-        arrayBiomes(Biomes, 's4');
-    } else {
-        document.getElementById("season").value = 's0'
-        arrayBiomes(Biomes, 's0');
+    switch (bool) {
+        case (true):
+            document.getElementById("season").value = 's4'
+            arrayBiomes(Biomes, 's4');
+            setStorages('seasonSelected', 's4')
+            break
+        case (false):
+            document.getElementById("season").value = 's0'
+            arrayBiomes(Biomes, 's0');
+            setStorages('seasonSelected', 's0')
+            break
     }
 }
 
-async function refreshBiomes() {
-    biomes = await getBiomes();
+function hasMidnightJustBeen(datestring) {
+    return datestring.slice(11, 19) === '00:00:00'
+}
+function rolloverCurrentDaysJsonLink (currentDaysTimestamp) {
+    let currentDaysJsonLink = document.getElementById('currentDaysJsonLink'); 
+    currentDaysJsonLink.href = getDomainURL()+'/static/json/bulkmissions/'+currentDaysTimestamp.slice(0, 10)+'.json'
+
+    let tomorrowDaysJsonLink = document.getElementById('tomorrowDaysJsonLink');
+    tomorrowDaysJsonLink.href = getDomainURL()+'/static/json/bulkmissions/'+getNextDateMidnightUTC(currentDaysTimestamp).slice(0, 10)+'.json'
+}
+async function refreshBiomes(isMidnightUpcoming_, retry=false) {
+    let refreshDate = new Date();
+    let refreshDateISOString = refreshDate.toISOString().slice(0, 19)+'Z'
+    let expectedCurrentTimestamp = roundTimeDown(refreshDateISOString);
+    let expectedUpcomingTimestamp = roundTimeUp(refreshDate)
+
+    if (tempBiomes[0]['timestamp'] != expectedCurrentTimestamp || tempBiomes[1]['timestamp'] != expectedUpcomingTimestamp) {
+        // console.log('BROWSER TAB INACTIVITY????????????????????????????????')
+
+        isMidnightUpcoming_ = isMidnightUpcoming(refreshDateISOString)
+        if (isMidnightUpcoming_) {
+            tempBiomes = await getBiomesMidnightOnInit();
+            return await refreshBiomes(isMidnightUpcoming_, true);
+
+        } else if (localStorages['currentDaysJson'][0] != refreshDateISOString.slice(0, 10)) {
+            await getCurrentDaysJson(refreshDate);
+            tempBiomes = getBiomesOnInit();
+            return await refreshBiomes(isMidnightUpcoming_, true)
+
+        } else {
+            tempBiomes = getBiomesOnInit();
+            return await refreshBiomes(isMidnightUpcoming_, true)
+        }   
+    }
+
+    switch (true) {
+        case retry:
+            break
+        case (isMidnightUpcoming_):
+            biomes = await getBiomesMidnight();
+            break
+        default:
+            biomes = getBiomes();
+            break
+    }
+
+    if (hasMidnightJustBeen(expectedCurrentTimestamp)) {
+        rolloverCurrentDaysJsonLink(expectedCurrentTimestamp)
+    }
     arrayBiomes(biomes, document.getElementById("season").value);
     if (document.getElementById('currentButton').textContent == 'Click here to see current missions') {
         document.getElementById('currentButton').click();
-    };
+    }
+
+    tempBiomes = undefined;
+    // console.log(biomes[0]['timestamp'])
+    // console.log(biomes[1]['timestamp'])
 }
 async function refreshDailyDeal() {
     dailyDeal = await getDailyDealData();
     arrayDailyDeal(dailyDeal)
 }
 async function refreshDeepDives() {
-    ddData = await getDeepDiveData();
-    if (ddData) {
-        arrayDeepDives(ddData)
-    } else {
-        let deepDiveNormalDiv = document.getElementById('Deep Dive Normal');
-        while(deepDiveNormalDiv.hasChildNodes()) {
-            deepDiveNormalDiv.removeChild(deepDiveNormalDiv.lastChild);
-        };
-        deepDiveNormalDiv.appendChild(document.createElement("br"));
-        let spanElement = document.createElement("span");
-        spanElement.className = "scanners";
-        spanElement.textContent = "// AWAITING UP TO DATE DATA \\\\";
-        deepDiveNormalDiv.appendChild(spanElement)
+    deepDiveData = await getDeepDiveData();
+    if (deepDiveData) {
+        arrayDeepDives(deepDiveData)
 
-        var deepDiveEliteDiv = document.getElementById('Deep Dive Elite');
-        while(deepDiveEliteDiv.hasChildNodes()) {
-            deepDiveEliteDiv.removeChild(deepDiveEliteDiv.lastChild);
-        };
-        deepDiveEliteDiv.appendChild(document.createElement("br"));
-        spanElement = document.createElement("span");
-        spanElement.className = "scanners";
-        spanElement.textContent = "// AWAITING UP TO DATE DATA \\\\";
-        deepDiveEliteDiv.appendChild(spanElement)
+    } else {
+        handleUnavailableDeepDiveData()
     } 
+}
+
+function handleUnavailableDeepDiveData() {
+    let deepDiveNormalDiv = document.getElementById('Deep Dive Normal');
+    while(deepDiveNormalDiv.hasChildNodes()) {
+        deepDiveNormalDiv.removeChild(deepDiveNormalDiv.lastChild);
+    };
+
+    deepDiveNormalDiv.appendChild(document.createElement("br"));
+    let spanElement = document.createElement("span");
+    spanElement.className = "scanners";
+    spanElement.textContent = "// AWAITING UP TO DATE DATA \\\\";
+    deepDiveNormalDiv.appendChild(spanElement)
+
+    var deepDiveEliteDiv = document.getElementById('Deep Dive Elite');
+    while(deepDiveEliteDiv.hasChildNodes()) {
+        deepDiveEliteDiv.removeChild(deepDiveEliteDiv.lastChild);
+    };
+
+    deepDiveEliteDiv.appendChild(document.createElement("br"));
+    spanElement = document.createElement("span");
+    spanElement.className = "scanners";
+    spanElement.textContent = "// AWAITING UP TO DATE DATA \\\\";
+    deepDiveEliteDiv.appendChild(spanElement)
 }
 
 function arrayDailyDeal(dailyDeal) {
     let dailyDealCanvas = renderDailyDeal(dailyDeal)
     let dailyDealDiv = document.getElementById('DailyDeal')
+
     while(dailyDealDiv.hasChildNodes()) {
         dailyDealDiv.removeChild(dailyDealDiv.lastChild);
     };
+
     dailyDealDiv.appendChild(dailyDealCanvas)
 }
 
-function arrayBiomes_(Biomes, season) {
+function arrayBiomes_(Biomes, season) { // deprecated, may need for debugging come season 5
     var currentBiomes = Biomes[0][season]['Biomes']
     var nextBiomes = Biomes[1][season]['Biomes']
     
@@ -655,113 +1087,22 @@ function arrayBiomes_(Biomes, season) {
             };
         };
     };
+    equalizeGridItems()
 }
 
-function findDuplicates(dictList, ignoreKeys) {
-    const duplicates = [];
-    for (let i = 0; i < dictList.length; i++) {
-        const dict1 = dictList[i];
-        for (let j = i + 1; j < dictList.length; j++) {
-            const dict2 = dictList[j];
-            let isEqual = true;
-            for (const key in dict1) {
-                if (!ignoreKeys.includes(key)) {
-                    if (dict1[key] !== dict2[key]) {
-                        isEqual = false;
-                        break;
-                    }
-                }
-            }
-            if (isEqual) {
-                duplicates.push([dict1, dict2]);
-            }
-        }
-    }
-    if (duplicates.length === 0) {
-        return false;
-    }
-    return duplicates;
-}
-function processDuplicates(duplicates, season, biomeDiv, biomeMissions) {
-    let skip = [];
-    let seen = [];
-    let biomeMissionsOriginal = [...biomeMissions];
-
-    for (let i = 0; i < duplicates.length; i++) {
-        let len = duplicates[i].length
-        try {
-            for (let j = 0; j < len; j++) {
-                let mission = duplicates[i][j]
-                if (mission['season'] != season) {
-                    skip.push(`${mission['id']}${mission['season']}`)
-                }
-            }
-        } catch {
-        }
-    }
-    
-    for (let i = 0; i < biomeMissions.length; i++) {
-        let mission = biomeMissions[i];
-
-        if (inList(skip, `${mission['id']}${mission['season']}`)) {
-            seen.push(mission['CodeName'])
-            continue;
-        }
-
-        if (season == 's0' && mission['season'] != 's0') {
-            continue
-        }
-        
-        if (season != 's0') {
-            seen.forEach((codename, index) => {
-                try {
-                    if (codename == biomeMissions[i-1]['CodeName']) {
-                        biomeMissions[i] = biomeMissions[i-1]
-                        biomeMissions[i-1] = mission
-                    } else if (codename == biomeMissions[i+1]['CodeName']) {
-                        biomeMissions[i] = biomeMissions[i+1]
-                        biomeMissions[i+1] = mission
-                    }
-                } catch {
-                }
-            });
-        }
-
-        biomeDiv.appendChild(mission['rendered_mission']);
-    };
-    biomeMissions = biomeMissionsOriginal; 
-}
-function processSeasonBiome(duplicates, season, biomeDiv, biomeMissions) {
-    if (duplicates) {
-        processDuplicates(duplicates, season, biomeDiv, biomeMissions);
-    } else {
-        for (let i = 0; i < biomeMissions.length; i++) {
-            let mission = biomeMissions[i];
-            if (season == 's0') {
-                if (mission['season'] != 's0') {
-                    continue
-                }
-            }
-            biomeDiv.appendChild(mission['rendered_mission']);
-        }
-    }
-}
-
-function arrayBiomes(Biomes, season) { // dev
-    if (Biomes[0].hasOwnProperty('s0')) {
-        arrayBiomes_(Biomes, season)
-        equalizeGridItems()
-    } else {
+// array as a verb
+function arrayBiomes(Biomes, season) { // may need for debugging
+    // if (Biomes[0].hasOwnProperty('s0')) {
+    //     arrayBiomes_(Biomes, season)
+    // } else {
         arrayBiomesFlat(Biomes, season)
-        equalizeGridItems()
-    }
+    // }
 }
-
-function arrayBiomes(Biomes, season) {
+function arrayBiomesFlat(Biomes, season) {
     let currentBiomes = Biomes[0]['Biomes']
     let nextBiomes = Biomes[1]['Biomes']
     let biomeMissions;
-    let duplicates;
+    let isS0 = season === 's0'
     
     let biomes_ = ['Crystalline Caverns', 'Glacial Strata', 'Radioactive Exclusion Zone', 'Fungus Bogs', 'Dense Biozone', 'Salt Pits', 'Sandblasted Corridors', 'Magma Core', 'Azure Weald', 'Hollow Bough'];
     for (let i_ = 0; i_ < biomes_.length; i_++) {
@@ -783,8 +1124,16 @@ function arrayBiomes(Biomes, season) {
             biomeDiv.appendChild(spanElement)
         } else {
             biomeMissions = currentBiomes[biome];
-            duplicates = findDuplicates(biomeMissions, ignoreKeys=['id', 'season', 'rendered_mission'])
-            processSeasonBiome(duplicates, season, biomeDiv, biomeMissions)
+            for (let i = 0; i < biomeMissions.length; i++) {
+                let mission = biomeMissions[i];
+                if (isS0 && mission['season'] != season) {
+                    continue
+                }
+                if (mission.hasOwnProperty('season_modified') && !isS0) {
+                    mission = mission['season_modified'][season]
+                }
+                biomeDiv.appendChild(mission['rendered_mission']);
+            }
         }
 
         if (!(biome in nextBiomes)) {
@@ -794,14 +1143,22 @@ function arrayBiomes(Biomes, season) {
             nextBiomeDiv.appendChild(spanElement)
         } else {
             biomeMissions = nextBiomes[biome];
-            duplicates = findDuplicates(biomeMissions, ignoreKeys=['id', 'season', 'rendered_mission'])
-            processSeasonBiome(duplicates, season, nextBiomeDiv, biomeMissions)
-        };
+            for (let i = 0; i < biomeMissions.length; i++) {
+                let mission = biomeMissions[i];
+                if (isS0 && mission['season'] != season) {
+                    continue
+                }
+                if (mission.hasOwnProperty('season_modified') && !isS0) {
+                    mission = mission['season_modified'][season]
+                }
+                nextBiomeDiv.appendChild(mission['rendered_mission']);
+            }
+        }
     };
     equalizeGridItems()
 }
 
-function addShadowedTextToImage(canvas, texts, textColor, shadowColor, fontSize) {
+function addShadowedTextToImage(canvas, texts, fontSize) {
     function getTextMetrics(context, text, font) {
         context.font = font;
         return context.measureText(text);
@@ -854,21 +1211,21 @@ function addShadowedTextToImage(canvas, texts, textColor, shadowColor, fontSize)
 }
 
 function renderDeepDiveBiomeCodename(biome, codename) {
-    const img = biomesDDImages[biome];
+    const texts = ['CODENAME: ', codename];
+    const fontSize = 45;
     const canvas = document.createElement('canvas');
     canvas.classList.add('dd-biome')
-    canvas.width = img.width;
-    canvas.height = img.height;
     const ctx = canvas.getContext('2d');
-    ctx.drawImage(img, 0, 0);
-
-    const texts = ['CODENAME: ', codename];
-
-    const textColor = 'white';
-    const shadowColor = '#000000';
-    const fontSize = 45;
-    
-    addShadowedTextToImage(canvas, texts, textColor, shadowColor, fontSize);
+    for (let biomeName in biomesDD) {
+        if (biomeName == biome) {
+            const img = biomesDDImages[biomeName]
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+            addShadowedTextToImage(canvas, texts, fontSize);
+            break
+        }
+    }
     return canvas;
 }
 
@@ -953,7 +1310,7 @@ function renderDeepDiveStage(m_d, stageCount) {
         ctx.drawImage(resource, 44, 205, resource.width * scaleFactor, resource.height * scaleFactor);
 
         const text = getText(m_d['PrimaryObjective'], m_d['Complexity'], m_d['Length']);
-        drawText(text, 'HammerBro101MovieBold-Regular', '35',  m_d['PrimaryObjective']);
+        drawText(text, 'CarbonBold-W00-Regular', '35',  m_d['PrimaryObjective']);
     }
 
     function getText(primaryObj, complexity, length) {
@@ -1004,8 +1361,8 @@ async function arrayDeepDives(deepDiveData) {
     try {
         var deepDiveNormal = deepDiveData["Deep Dives"]["Deep Dive Normal"];
         var deepDiveElite = deepDiveData["Deep Dives"]["Deep Dive Elite"];
-        var deepDiveNormalDiv = document.getElementById('Deep Dive Normal');
-        var deepDiveEliteDiv = document.getElementById('Deep Dive Elite');
+        var deepDiveNormalDiv = document.getElementById('Deep-Dive-Normal');
+        var deepDiveEliteDiv = document.getElementById('Deep-Dive-Elite');
     
         var deepDiveNormalBiome = renderDeepDiveBiomeCodename(deepDiveNormal['Biome'], deepDiveNormal['CodeName']);
         while(deepDiveNormalDiv.hasChildNodes()) {
@@ -1039,17 +1396,16 @@ async function arrayDeepDives(deepDiveData) {
             stageDiv = renderDeepDiveStage(stage, stageCount);
             deepDiveEliteDiv.appendChild(stageDiv);
         };
-    } catch (error) {
-        console.log(error)
+    } catch {
         // deepDiveData is undefined
     }
 }
 
-async function getDailyDealData() {
-    var datetime = getCurrentDateMidnightUTC()
-    datetime = replaceCharactersAtIndices(datetime, [[13, '-'], [16,'-']])
-    var data = await loadJSON(getDomainURL()+`/static/json/dailydeals/${datetime}.json`)
-    return data
+function getDailyDealData(isMidnightUpcoming=false) {
+    if (isMidnightUpcoming) {
+        return tempDailyDeal
+    }
+    return localStorages['currentDaysJson'][1]['dailyDeal']
 }
 
 function scaleImage(ctx, image, scale) {
@@ -1103,7 +1459,7 @@ function renderDailyDeal(dealDict) {
 
     var text = "TODAY'S OFFER:";
     var fillStyle = 'black';
-    drawText(text, 200, 30, 'black', 45, 'HammerBro101MovieBold-Regular');
+    drawText(text, 200, 30, 'black', 45, 'CarbonBold-W00-Regular');
     drawText(resource, 200, 75, 'black', 60, 'Bungee-Regular')
 
     var resourceImg = dailyDealResourcesImages[resource];
@@ -1168,6 +1524,56 @@ function renderDailyDeal(dealDict) {
     div.appendChild(canvas)
     return div
 }
+function isElementVisible(el) {
+    return (el.offsetParent !== null);
+}
+function setupIdleVideoPause(videoElementId, idleTimeThreshold) {
+    let idleTimer;
+    let isPausedByIdle = false;
+    let isPausedByBlur = false;
+    const videoElement = document.getElementById(videoElementId);
+
+    function resetIdleTimer() {
+        clearTimeout(idleTimer);
+        idleTimer = setTimeout(function() {
+            if (!isPausedByBlur) {
+                videoElement.pause();
+                isPausedByIdle = true;
+            }
+        }, idleTimeThreshold);
+    }
+
+    function handleUserActivity() {
+        resetIdleTimer();
+        if (!isPausedByBlur && isPausedByIdle && videoElement.style.display != 'none') {
+            videoElement.play();
+            isPausedByIdle = false;
+        }
+
+    }
+
+    document.addEventListener("mousemove", handleUserActivity);
+    document.addEventListener("keypress", handleUserActivity);
+    document.addEventListener("click", handleUserActivity);
+
+    window.addEventListener('blur', function() {
+        if (!isPausedByIdle && videoElement.style.display != 'none') {
+            videoElement.pause();
+            isPausedByBlur = true;
+        }
+
+
+    });
+    window.addEventListener('focus', function() {
+        if (isPausedByBlur && videoElement.style.display != 'none') {
+            videoElement.play();
+            isPausedByBlur = false;
+        }
+    });
+
+    resetIdleTimer();
+}
+
 function mostCommonNumber(arr) {
     const filteredArr = arr.filter(num => num !== 0);
     const countMap = filteredArr.reduce((map, num) => (map.set(num, (map.get(num) || 0) + 1), map), new Map());
@@ -1179,32 +1585,28 @@ function checkOverflowAndFixScanners(containers) {
     let heights = [];
 
     containers.forEach(container => {
-        let children_ = container.children;
-        for (var i = 0; i < children_.length; i++) {
-            if (children_[i].tagName.toLowerCase() === 'div') {
-                if (children_[i].children.length == 1) {
-                    scanners.push(container);
-                }
-            }
+        if (Array.from(container.children).some(child => 
+            child.tagName.toLowerCase() === 'div' && child.children.length === 1)) {
+            scanners.push(container);
         }
     });
     containers.forEach(container => {
-        container.style.height = "auto"
-        let height = container.offsetHeight
+        container.style.height = "auto";
+        let height = container.offsetHeight;
         if (height != 0) {
-            container.style.height = `${height-10}px`
+            container.style.height = `${height-10}px`;
             if (!(inList(scanners, container))) {
-                heights.push(height)
+                heights.push(height);
             }
         }
     });
     if (window.matchMedia("(min-width: 1440px)").matches) {
         scanners.forEach(container => {
-            container.style.height = `${mostCommonNumber(heights)-10}px`
+            container.style.height = `${mostCommonNumber(heights)-10}px`;
         })
     } else {
         scanners.forEach(container => {
-            container.style.height = `auto`
+            container.style.height = `auto`;
         })
     }
 
@@ -1221,147 +1623,211 @@ function checkOverflowAndFixScanners(containers) {
 }
 function equalizeGridItems() {
     const gridItems = document.querySelectorAll('.biome-container');
-    checkOverflowAndFixScanners(gridItems)
+    checkOverflowAndFixScanners(gridItems);
 }
+
+function toggleBackground() {
+    var video = document.getElementById("background-video");
+    var backgroundbutton = document.getElementById('backgroundButton');
+    var overlay = document.querySelector(".overlay");
+    if (video.style.display === "none" && overlay.style.display === "none") {
+        video.style.display = "block";
+        overlay.style.display = "block";
+        backgroundbutton.textContent = "Hide background";
+        if (initialized) {
+            video.play();
+        }
+        setStorages('isBackgroundHidden', false);
+    } else {
+        video.style.display = "none";
+        overlay.style.display = "none";
+        backgroundbutton.textContent = "Show background";
+        video.pause();
+        setStorages('isBackgroundHidden', true);
+    }
+};
+
+function handleStorageChange(event) {
+    function handleCase(key) {
+        localStorages[key] = JSON.parse(event.newValue);
+        dispatchConfigEvent(key, localStorages[key]);
+    }
+
+    for (const key in localStorages) {
+        if (key === event.key) {
+            handleCase(key);
+            break;
+        }
+    }
+}
+function dispatchConfigEvent(key, value) {
+    const configEvent = new Event('configEvent');
+    configEvent.key = key;
+    configEvent.newValue = {};
+    configEvent.newValue[key] = value;
+    window.dispatchEvent(configEvent);
+}
+window.addEventListener('storage', handleStorageChange);
+window.addEventListener('configEvent', (event) => {
+    switch (event.key) {
+        case 'isBackgroundHidden':
+            if (event.newValue[event.key] !== localStorages['isBackgroundHidden']) {
+                localStorages['isBackgroundHidden'] = event.newValue[event.key];
+            }
+            break;
+        case 'areButtonsHidden':
+            if (event.newValue[event.key] !== localStorages['areButtonsHidden']) {
+                localStorages['areButtonsHidden'] = event.newValue[event.key];
+            }
+            break;
+        default:
+            break;
+    }
+});
+function toggleButtons() {
+    let buttonDiv = document.getElementById('buttonDiv');
+    let buttonsbutton = document.getElementById('buttonsbutton');
+    let backgroundbutton = document.getElementById('backgroundButton');
+    let slideButton = document.getElementById('slideButton');
+    let currentButton = document.getElementById('currentButton');
+    let missionscountdown = document.getElementById('missionscountdown');
+    let DAILYDEAL = document.getElementById('DAILYDEAL');
+    let dailydealbutton = document.getElementById('dailydealbutton');
+    let seasonBox = document.getElementById('seasonSelect')
+
+    if (buttonDiv.style.display === "none") {
+        buttonDiv.style.display = 'block';
+        backgroundbutton.style.display = "inline-block";
+        slideButton.style.display = "inline-block";
+        currentButton.style.display = "inline-block";
+        dailydealbutton.style.display = "inline-block";
+        dailydealbutton.textContent = "Click here to see Daily Deal";
+        DAILYDEAL.style.display = "none";
+        seasonBox.style.display = "inline-block";
+        missionscountdown.style.display = "none";
+        buttonsbutton.textContent = " x ";
+        $("#missionscountdown").slideToggle();
+        $("#slideButton").text("Hide countdown");
+        setStorages('areButtonsHidden', false)
+    } else {
+        buttonDiv.style.display = "none"
+        missionscountdown.style.display = "none";
+        backgroundbutton.style.display = "none";
+        DAILYDEAL.style.display = "none";
+        dailydealbutton.style.display = "none";
+        slideButton.style.display = "none";
+        currentButton.style.display = "none";
+        seasonBox.style.display = "none";
+        buttonsbutton.textContent = "+";
+        setStorages('areButtonsHidden', true)
+    }
+};
 window.addEventListener('resize', function(event) {
     if (initialized) {
         equalizeGridItems()
     }
 });
-async function initialize() {
+async function initialize(date) {
     let biomes_;
-    let ddData_;
     let dailyDeal_;
 
-    let results = await Promise.all([
-        getBiomes(),
-        getDeepDiveData(),
-        getDailyDealData()
-    ]);
+    if (isMidnightUpcoming(date)) {
+        biomes_ = await getBiomesMidnightOnInit(date);
+        dailyDeal_ = getDailyDealData(true);
+        // console.log('------');
+        // console.log(biomes_);
+        // console.log(biomes_[0]['timestamp']);
+        // console.log(biomes_[1]['timestamp']);
 
-    for (let i = 0; i < results.length; i++) {
-        let result = results[i]
-        if (Array.isArray(result)) {
-            biomes_ = result;
-        } else if ('Deep Dives' in result) {
-            ddData_ = result;
-        } else {
-            dailyDeal_ = result;
-        }
+    } else {
+        await getCurrentDaysJson(date);
+        biomes_ = getBiomesOnInit();
+        dailyDeal_ = getDailyDealData();
+        // console.log('------');
+        // console.log(biomes_);
+        // console.log(biomes_[0]['timestamp']);
+        // console.log(biomes_[1]['timestamp']);
     }
 
-    let currentDatetime = roundTimeDown(getCurrentDateTimeUTC());
-    currentDatetime = replaceCharactersAtIndices(currentDatetime, [[13, '-'], [16,'-']]);
+    let currentDatetime = date.toISOString().slice(0, 10);
     let currentDateTimeHREF = getDomainURL()+'/static/json/bulkmissions/'+currentDatetime+'.json';
 
-    let nextDatetime = roundTimeUp(getCurrentDateTimeUTC());
-    nextDatetime = replaceCharactersAtIndices(nextDatetime, [[13, '-'], [16,'-']]);
+    let nextDatetime = getNextDateMidnightUTC(date).split('T')[0];
     let nextDateTimeHREF = getDomainURL()+'/static/json/bulkmissions/'+nextDatetime+'.json';
 
     let ddDatetime = getPreviousThursdayTimestamp();
     ddDatetime = replaceCharactersAtIndices(ddDatetime, [[13, '-'], [16,'-']]);
     let ddDatetimeHREF = getDomainURL()+'/static/json/DD_'+ddDatetime+'.json';
 
-    let dailyDealDatetime = getCurrentDateMidnightUTC();
-    dailyDealDatetime = replaceCharactersAtIndices(dailyDealDatetime, [[13, '-'], [16,'-']]);
-    let dailyDealHREF = getDomainURL()+`/static/json/dailydeals/${dailyDealDatetime}.json`;
-
-
     let html = `
-    <div id="countdowncontainer">
-    <button id="backgroundButton">Hide background</button><button id="buttonsbutton">x</button><br>
-    <div id=DAILYDEAL><div id="dailydealhead">NEW DAILY DEAL IN<br><span id="DailyDealcountdown"></span></div><div id="DailyDeal" class="daily_deal_container"></div></div>
-    <button id="dailydealbutton">Click here to see Daily Deal</button><br>
-    <div id="missionscountdown">NEW MISSIONS IN<br>
-    <span id="countdown"></span></div><button id="slideButton">Hide countdown</button><br>
-    <button id="currentButton">Click here to see upcoming missions</button>
-    <br>
-    <div id="seasonSelect" class="seasonselect">
-    <button id="seasonClick" class="seasonBox">Season 4 Toggle</button>
-    <input type="checkbox" id="season" class="seasonBox" value="s0">
-    <!-- <select id="season" name="season" class="seasonBox"></select> -->
-    </div>
-    </div>
-    
-    
     <div id="current">
     <div class="grid-container">
     
     <h2>
-    <div class="biome-container">
-    <img title="Abundant: Magnite; Scarce: Umanite" class="image-container" src="/static/DeepDive_MissionBar_GlacialStrata.png">
+    <div class="biome-container" biome="Glacial Strata">
     <br><div id="Glacial Strata" class="missions">
     </div>
     </div>
     </h2>
     
     <h2>
-    <div class="biome-container">
-    <img title="Abundant: Jadiz; Scarce: Bismor" class="image-container" src="/static/DeepDive_MissionBar_CrystalCaves.png">
+    <div class="biome-container" biome="Crystalline Caverns">
     <br><div id="Crystalline Caverns" class="missions">
     </div>
     </div>
     </h2>
     
     <h2>
-    <div class="biome-container">
-    <img title="Abundant: Enor Pearl; Scarce: Bismor" class="image-container" src="/static/DeepDive_MissionBar_SaltPits.png">
+    <div class="biome-container" biome="Salt Pits">
     <br><div id="Salt Pits">
     </div>
     </div>
     </h2>
     
     <h2>
-    <div class="biome-container">
-    <img title="Abundant: Magnite; Scarce: Croppa" class="image-container" src="/static/DeepDive_MissionBar_MagmaCore.png">
+    <div class="biome-container" biome="Magma Core">
     <br><div id="Magma Core" class="missions">
     </div>
     </div>
     </h2>
     
     <h2>
-    <div class ="biome-container">
-    <img title="Abundant: Croppa; Scarce: Umanite" class="image-container" src="/static/DeepDive_MissionBar_AzureWeald.png">
+    <div class ="biome-container" biome="Azure Weald">
     <br><div id="Azure Weald" class="missions">
     </div>
     </div>
     </h2>
     
     <h2>
-    <div class="biome-container">
-    <img title="Abundant: Enor Pearl; Scarce: Bismor" class="image-container" src="/static/DeepDive_MissionBar_Sandblasted.png">
+    <div class="biome-container" biome="Sandblasted Corridors">
     <br><div id="Sandblasted Corridors" class="missions">
     </div>
     </div>
     </h2>
     
     <h2>
-    <div class="biome-container">
-    <img title="Abundant: Croppa; Scarce: Jadiz" class="image-container" src="/static/DeepDive_MissionBar_FungusBogs.png">
+    <div class="biome-container" biome="Fungus Bogs">
     <br><div id="Fungus Bogs" class="missions">
     </div>
     </div>
     </h2>
     
     <h2>
-    <div class="biome-container">
-    <img title="Abundant: Umanite; Scarce: Enor Pearl" class="image-container" src="/static/DeepDive_MissionBar_Radioactive.png">
+    <div class="biome-container" biome="Radioactive Exclusion Zone">
     <br><div id="Radioactive Exclusion Zone" class="missions">
     </div>
     </div>
     </h2>
     
     <h2>
-    <div class="biome-container">
-    <img title="Abundant: Bismor; Scarce: Umanite" class="image-container" src="/static/DeepDive_MissionBar_LushDownpour.png">
+    <div class="biome-container" biome="Dense Biozone">
     <br><div id="Dense Biozone" class="missions">
     </div>
     </div>
     </h2>
     
     <h2>
-    <div class="biome-container">
-    <img title="Abundant: Jadiz; Scarce: Bismor" class="image-container" src="/static/DeepDive_MissionBar_HollowBough.png">
+    <div class="biome-container" biome="Hollow Bough">
     <br><div id="Hollow Bough" class="missions">
     </div>
     </div>
@@ -1375,8 +1841,7 @@ async function initialize() {
     <div class="grid-container">
     
     <h2>
-    <div class="biome-container">
-    <img title="Abundant: Magnite; Scarce: Umanite" class="image-container" src="/static/DeepDive_MissionBar_GlacialStrata.png">
+    <div class="biome-container" biome="Glacial Strata">
     <br><div id="nextGlacial Strata" class="missions">
     </div>
     
@@ -1384,32 +1849,28 @@ async function initialize() {
     </h2>
     
     <h2>
-    <div class="biome-container">
-    <img title="Abundant: Jadiz; Scarce: Bismor" class="image-container" src="/static/DeepDive_MissionBar_CrystalCaves.png">
+    <div class="biome-container" biome="Crystalline Caverns">
     <br><div id="nextCrystalline Caverns" class="missions">
     </div>
     </div>
     </h2>
     
     <h2>
-    <div class="biome-container">
-    <img title="Abundant: Enor Pearl; Scarce: Bismor" class="image-container" src="/static/DeepDive_MissionBar_SaltPits.png">
+    <div class="biome-container" biome="Salt Pits">
     <br><div id="nextSalt Pits" class="missions">
     </div>
     </div>
     </h2>
     
     <h2>
-    <div class="biome-container">
-    <img title="Abundant: Magnite; Scarce: Croppa" class="image-container" src="/static/DeepDive_MissionBar_MagmaCore.png">
+    <div class="biome-container" biome="Magma Core">
     <br><div id="nextMagma Core" class="missions">
     </div>
     </div>
     </h2>
     
     <h2>
-    <div class ="biome-container">
-    <img title="Abundant: Croppa; Scarce: Umanite" class="image-container" src="/static/DeepDive_MissionBar_AzureWeald.png">
+    <div class ="biome-container" biome="Azure Weald">
     <br><div id="nextAzure Weald" class="missions">
     </div>
     
@@ -1417,39 +1878,34 @@ async function initialize() {
     </h2>
     
     <h2>
-    <div class="biome-container">
-    <img title="Abundant: Enor Pearl; Scarce: Bismor" class="image-container" src="/static/DeepDive_MissionBar_Sandblasted.png">
+    <div class="biome-container" biome="Sandblasted Corridors">
     <br><div id="nextSandblasted Corridors">
     </div>
     </h2>
     
     <h2>
-    <div class="biome-container">
-    <img title="Abundant: Croppa; Scarce: Jadiz" class="image-container" src="/static/DeepDive_MissionBar_FungusBogs.png">
+    <div class="biome-container" biome="Fungus Bogs">
     <br><div id="nextFungus Bogs" class="missions">
     </div>
     </div>
     </h2>
     
     <h2>
-    <div class="biome-container">
-    <img title="Abundant: Umanite; Scarce: Enor Pearl" class="image-container" src="/static/DeepDive_MissionBar_Radioactive.png">
+    <div class="biome-container" biome="Radioactive Exclusion Zone">
     <br><div id="nextRadioactive Exclusion Zone" class="missions">
     </div>
     </div>
     </h2>
     
     <h2>
-    <div class="biome-container">
-    <img title="Abundant: Bismor; Scarce: Umanite" class="image-container" src="/static/DeepDive_MissionBar_LushDownpour.png">
+    <div class="biome-container" biome="Dense Biozone">
     <br><div id="nextDense Biozone" class="missions">
     </div>
     </div>
     </h2>
     
     <h2>
-    <div class="biome-container">
-    <img title="Abundant: Jadiz; Scarce: Bismor" class="image-container" src="/static/DeepDive_MissionBar_HollowBough.png">
+    <div class="biome-container" biome="Hollow Bough">
     <br><div id="nextHollow Bough" class="missions">
     </div>
     </div>
@@ -1461,21 +1917,19 @@ async function initialize() {
     
     <div class="grid-container">
 
-    <div class="dd-container">
     <h2>
-    <img class="image-container" src="/static/dd.png">
-    <div id="Deep Dive Normal" class="dd-missions">
+    <div class="dd-container" dd="dd">
+    <div id="Deep-Dive-Normal" class="dd-missions">
+    </div>
     </div>
     </h2>
-    </div>
 
-    <div class="dd-container">
     <h2>
-    <img class="image-container" src="/static/edd.png">
-    <div id="Deep Dive Elite" class="dd-missions">
+    <div class="dd-container" dd="edd">
+    <div id="Deep-Dive-Elite" class="dd-missions">
+    </div>
     </div>
     </h2>
-    </div>
 
     </div>
     
@@ -1487,57 +1941,237 @@ async function initialize() {
     </div>
 
     <div class="jsonc">
-    <div class="jsonlinks"><span style="color: white;font-size: 30px;font-family: BebasNeue, sans-serif;"> <a class="jsonlink" href="${currentDateTimeHREF}">CURRENT MISSION DATA</a> | <a class="jsonlink" href="${nextDateTimeHREF}">UPCOMING MISSION DATA</a> | <a class="jsonlink" href="${ddDatetimeHREF}">CURRENT DEEP DIVE DATA</a> | <a class="jsonlink" href="${dailyDealHREF}">CURRENT DAILY DEAL DATA</a> | <a class="jsonlink" href="/static/xp_calculator.html">CLASS XP CALCULATOR</a> | <a class="jsonlink" href="https://github.com/rolfosian/drgmissions/">GITHUB</a></span> </div>
+    <div class="jsonlinks"><span style="color: white;font-size: 30px;font-family: BebasNeue, sans-serif;"> <a id="currentDaysJsonLink" class="jsonlink" href="${currentDateTimeHREF}">TODAY'S DATA</a> | <a id="tomorrowDaysJsonLink" class="jsonlink" href="${nextDateTimeHREF}">TOMORROW'S DATA</a> | <a class="jsonlink" href="${ddDatetimeHREF}">CURRENT DEEP DIVE DATA</a> | <a class="jsonlink" href="/static/xp_calculator.html">CLASS XP CALCULATOR</a> | <a class="jsonlink" href="https://github.com/rolfosian/drgmissions/">GITHUB</a></span> </div>
     <span class="credits">Send credits (eth): 0xb9c8591A80A3158f7cFFf96EC3c7eA9adB7818E7</span>
     </div>
     <p class='gsgdisclaimer'><i>This website is a third-party platform and is not affiliated, endorsed, or sponsored by Ghost Ship Games. The use of Deep Rock Galactic's in-game assets on this website is solely for illustrative purposes and does not imply any ownership or association with the game or its developers. All copyrights and trademarks belong to their respective owners. For official information about Deep Rock Galactic, please visit the official Ghost Ship Games website.</i></p></div>
-    `
+    `;
 
-    let mainContent = document.getElementById('mainContent')
-    mainContent.innerHTML = html
+    let mainContent = document.getElementById('mainContent');
+    mainContent.innerHTML = html;
+    setBiomeAndDeepDivesBanners()
 
-    // let seasonBoxValues = {
-    //     's0' : 'No Season',
-    //     's1': 'Season 1',
-    //     's2': 'Season 2', 
-    //     's3': 'Season 3', 
-    //     's4': 'Season 4', 
-    //     's5': 'Season 5'
-    // }
-    // let seasonBox = document.getElementById('season')
-    // for (let season in seasonBoxValues) {
-    //     if (season in biomes_[0]) {
-    //         let option = document.createElement('option');
-    //         option.value = season;
-    //         option.textContent = seasonBoxValues[season];
-    //         seasonBox.appendChild(option);
-    //     }
-    // }
-
-    return [biomes_, dailyDeal_, ddData_]
+    return [biomes_, dailyDeal_]
 }
 
+async function getCurrentDaysJson(date, isMidnightUpcoming_=false) {
+    let cdj;
+    const todaysDate = date.toISOString().slice(0, 10)
+
+    if (localStorages['currentDaysJson']) {
+        cdj = localStorages['currentDaysJson'];
+        if (isMidnightUpcoming_) {
+            const tomorrowsDate = getNextDateMidnightUTC(date).slice(0, 10);
+
+            if (cdj[0] == todaysDate) {
+                let cdjMidnight = [tomorrowsDate, await loadJSON(getDomainURL()+`/static/json/bulkmissions/${tomorrowsDate}.json`)];
+                tempDailyDeal = cdj[1]['dailyDeal'];
+                setStorages('currentDaysJson', cdjMidnight);
+                return [cdj[1], cdjMidnight[1]];
+            } else {
+                let cdjs = await Promise.all([
+                    loadJSON(getDomainURL()+`/static/json/bulkmissions/${todaysDate}.json`),
+                    loadJSON(getDomainURL()+`/static/json/bulkmissions/${tomorrowsDate}.json`)
+                ]);
+                tempDailyDeal = cdjs[0]['dailyDeal'];
+                setStorages('currentDaysJson', [tomorrowsDate, cdjs[1]]);
+                return [cdjs[0], cdjs[1]]
+            }
+
+        } else if (cdj[0] === todaysDate) {
+            return cdj[1]
+        }
+
+    } else if (isMidnightUpcoming_ && !localStorages['currentDaysJson']) {
+        const tomorrowsDate = getNextDateMidnightUTC(date).slice(0, 10);
+        let cdjs = await Promise.all([
+            loadJSON(getDomainURL()+`/static/json/bulkmissions/${todaysDate}.json`),
+            loadJSON(getDomainURL()+`/static/json/bulkmissions/${tomorrowsDate}.json`)
+        ]);
+        tempDailyDeal = cdjs[0]['dailyDeal'];
+        let cdjMidnight = [tomorrowsDate, cdjs[1]];
+        setStorages('currentDaysJson', cdjMidnight);
+        return [cdjs[0], cdjs[1]]
+        
+    } else {
+        cdj = [todaysDate, await loadJSON(getDomainURL()+`/static/json/bulkmissions/${todaysDate}.json`)];
+        setStorages('currentDaysJson', cdj);
+        return cdj[1]
+    }
+}
+
+function simpleHash(input) {
+    let hash = 0;
+    for (let i = 0; i < input.length; i++) {
+        const charCode = input.charCodeAt(i);
+        hash = (hash << 5) - hash + charCode;
+        hash |= 0;
+    }
+    return hash;
+}
+
+async function verifyStorages(date) {
+    for (let key in localStorages) {
+        // try {
+            // if (key == 'img') {
+            //     setStorages(key, null)
+            //     continue
+            // }
+    
+            // if (key == 'fonts') {
+            //     setStorages(key, null)
+            //     continue
+            // }
+    
+            // if (key == 'currentDaysJson') {
+            //     setStorages(key, null)
+            //     continue
+            // }
+
+            // if (key == 'homepageScript') {
+            //     setStorages(key, null)
+            //     continue
+            // }
+
+            let v = localStorage.getItem(key);
+            if (v) {
+                if (localStoragesHashes.hasOwnProperty(key)) {
+                    if (simpleHash(v) === localStoragesHashes[key]) {
+                        localStorages[key] = JSON.parse(v);
+                    } else {
+                        console.log(key, simpleHash(v))
+                        setStorages(key, null);
+                    }
+ 
+                } else if (key === 'currentDaysJson') {
+                    let data = JSON.parse(v);
+                    if (data[0] != date.toISOString().slice(0, 10)) {
+                        setStorages(key, null);
+                    } else {
+                        localStorages[key] = data;
+                    }
+                } else {
+                    localStorages[key] = JSON.parse(v);
+                }
+
+            } else {
+                setStorages(key, localStorages[key]);
+            }
+        // } catch (error) {
+        //     console.log(key, error)
+        // }
+    
+        // console.log(key, localStorages[key]);
+        }
+
+    if (!localStorages['homepageScript']) {
+       setStorages('homepageScript', await preloadHomepageScript());
+    }
+    // console.log(localStorages['homepageScript'])
+}
+function shouldNotLoadFromLocalStorage(storageType, verificationStatus) {
+    return !localStorages[storageType] || !verificationStatus;
+}
+function setStorages(key, value, storages=localStorages) {
+    storages[key] = value;
+    localStorage.setItem(key, JSON.stringify(value));
+}
+var localStorages = { 
+    'isBackgroundHidden' : false,
+    'areButtonsHidden' : false,
+    'seasonSelected' : 's0',
+    'currentDaysJson' : null,
+    'img' : null,
+    'fonts' : null,
+    'homepageScript' : null,
+};
+var localStoragesHashes = {
+    'img' : 530276585,
+    'fonts' : 906557479,
+    'homepageScript' : 717494654,
+};
+
+var cacheActive = false;
+var isRefreshing = false;
+var tempBiomes;
+var tempCurrentDaysJson;
 
 var biomes;
 var dailyDeal;
-var ddData;
-var initialized = false;
-document.addEventListener('DOMContentLoaded', async function() {
-    await Promise.all([preloadImagesAll(), preloadFonts()])
-    var imgs = await initialize();
-    biomes = imgs[0];
-    dailyDeal = imgs[1];
-    ddData = imgs[2];
+var tempDailyDeal;
 
-    var jqueryScript = document.createElement('script');
-    jqueryScript.src = "/static/jquery.min.js";
-    document.head.appendChild(jqueryScript);
-    jqueryScript.onload = function() {
+var deepDiveData;
+
+var initialized = false;
+
+document.addEventListener('DOMContentLoaded', async function() {
+    // try {
+        await waitRotation();
+
+        let date = new Date()
+        await verifyStorages(date);
+        
+        if (localStorages['isBackgroundHidden']) {
+            toggleBackground();
+        }
+        if (localStorages['areButtonsHidden']) {
+            toggleButtons();
+        }
+        if (localStorages['seasonSelected'] === 's4') {
+            document.getElementById('season').checked = true;
+        }
+
+
+        // let seasonBoxValues = {
+        //     's0' : 'No Season',
+        //     's1': 'Season 1',
+        //     's2': 'Season 2', 
+        //     's3': 'Season 3', 
+        //     's4': 'Season 4', 
+        //     's5': 'Season 5'
+        // };
+        // let seasonBox = document.getElementById('season')
+        // for (let season in seasonBoxValues) {
+        //     let option = document.createElement('option');
+        //     option.value = season;
+        //     option.textContent = seasonBoxValues[season];
+        //     seasonBox.appendChild(option);
+        // }
+        // seasonBox.value = seasonBoxValues[localStorages['seasonSelected']]
+
+        if (!localStorages['fonts']) {
+            await preloadFonts();
+        } else {
+            await loadFontsFromLocalStorageObj()
+        }
+        if (!localStorages['img']) {
+            await preloadImagesAll();
+        } else {
+            await loadImgsFromLocalStorageAll()
+        }
+
+        var breakfast = await initialize(date);
+        biomes = breakfast[0];
+        dailyDeal = breakfast[1];
+        breakfast = undefined;
+
         var homepageScript = document.createElement('script');
-        homepageScript.src = "/static/homepage.js";
+        homepageScript.textContent = localStorages['homepageScript']
         document.head.appendChild(homepageScript);
-        homepageScript.onload = function (){
-            onLoad();
-        };
-    };
+        homepageScript.onload = async () => {
+            await onLoad(); // bottom of homepage.js
+        }
+        await homepageScript.onload()
+        
+
+        // homepageScript.src = "/static/homepage.js"
+        // homepageScript.onload = async function () {
+        //    await onLoad(); // bottom of homepage.js
+        // };
+
+    // } catch (error) {
+        // alert(error);
+        // location.reload();
+    // }
+
 });

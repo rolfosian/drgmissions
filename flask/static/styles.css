@@ -1,15 +1,3 @@
-@font-face {
-font-family: "BebasNeue";
-src: url("/static/BebasNeue-Regular.woff2");
-}
-@font-face {
-font-family: "HammerBro101MovieThin-Regular";
-src: url("/static/HammerBro101MovieThin-Regular.woff");
-}
-@font-face {
-font-family: "RiftSoft-Regular";
-src : url("/static/img/RiftSoft-Regular.woff2");
-}
 input[type="checkbox"] {
 transform: scale(1.5);
 }
@@ -26,7 +14,7 @@ top: 40%;
 left: 50%;
 transform: translate(-50%, -50%);
 color: red;
-font-family: "HammerBro101MovieThin-Regular", sans-serif;
+font-family: "CarbonThin-W00-Regular";
 font-size: 60px;
 display: inline-block;
 width: 10ch;
@@ -97,7 +85,7 @@ text-align: center;
 opacity: 0;
 transition: opacity 0.5s ease-in-out;
 }
-.image-container {
+.banner {
 width: 80%;
 height: auto;
 }
@@ -119,8 +107,7 @@ width: 70%;
 z-index: 9999;
 }
 .missions {
-    display:inline-block;
-    /* font-size: 0; */
+display:inline-block;
 }
 .fade-in {
 opacity: 1;
@@ -134,7 +121,9 @@ width: 60%;
 height: auto;
 }
 .dd-missions{
-    display: inline-block;
+display: inline-block;
+opacity: 0;
+transition: opacity 0.5s ease-in-out;
 }
 a:link:hover {
     color: #5AC8FF;
@@ -149,7 +138,7 @@ margin-bottom: 0;
 text-align: right;
 font-size: 10px;
 color: white;
-font-family: "BebasNeue", sans-serif;
+font-family: "BebasNeue";
 }
 .jsonlinks {
 display: flex;
@@ -157,29 +146,29 @@ display: flex;
 .jsonlink {
 color: #1E90FF;
 font-size: 30px;
-font-family: "BebasNeue", sans-serif;
+font-family: "BebasNeue";
 }
 .nextlink {
 color: #1E90FF;
 font-size: 40px;
-font-family: "BebasNeue", sans-serif;
+font-family: "BebasNeue";
 }
 .scanners {
 color: red;
-font-family: "HammerBro101MovieThin-Regular", sans-serif;
+font-family: "CarbonThin-W00-Regular";
 font-size: 20px;
 }
 .gsgdisclaimer {
 margin-bottom: 0;
 font-size: 20px;
 color: white;
-font-family: "BebasNeue", sans-serif;
+font-family: "BebasNeue";
 }
 .ddscountdown {
 text-align: center;
 color: white;
 font-size: 35px;
-font-family: "BebasNeue", sans-serif;
+font-family: "BebasNeue";
 }
 @keyframes glowing {
 0% {
@@ -201,7 +190,7 @@ left: 50%;
 color: white;
 font-size: 65px;
 transform: translate(-50%, -50%);
-font-family: "BebasNeue", sans-serif;
+font-family: "CarbonBold-W00-Regular";
 }
 span#ddcountdown {
 margin-bottom: 0;
@@ -210,7 +199,7 @@ align-items: center;
 color: white;
 font-size: 72px;
 justify-content: center;
-font-family: "BebasNeue", sans-serif;
+font-family: "CarbonBold-W00-Regular";
 }
 #countdowncontainer {
 position: fixed;
@@ -219,6 +208,9 @@ left: 50%;
 transform: translateX(-50%);
 justify-content: center;
 z-index: 9998;
+}
+#buttonDiv {
+    display: none;
 }
 #slideButton {
 position: relative;
@@ -231,7 +223,7 @@ width: auto;
 height: auto;
 color: white;
 font-size: 15px;
-font-family: "BebasNeue", sans-serif;
+font-family: "BebasNeue";
 }
 #currentButton {
 position: relative;
@@ -241,7 +233,7 @@ transform: translateX(-50%);
 background-color: #303030;
 color: white;
 font-size: 15px;
-font-family: "BebasNeue", sans-serif;
+font-family: "BebasNeue";
 width: 194px;
 }
 #DAILYDEAL{
@@ -255,7 +247,7 @@ transform: translateX(-50%);
 background-color: #303030;
 color: white;
 font-size: 15px;
-font-family: "BebasNeue", sans-serif;
+font-family: "BebasNeue";
 }
 span#DailyDealcountdown {
 white-space: nowrap;
@@ -263,26 +255,26 @@ left: 50%;
 color: white;
 font-size: 45px;
 transform: translate(-50%, -50%);
-font-family: "BebasNeue", sans-serif;
+font-family: "CarbonBold-W00-Regular";
 }
 #dailydealcountdown {
 text-align: center;
 color: white;
 font-size: 15px;
-font-family: "BebasNeue", sans-serif;
+font-family: "BebasNeue";
 }
 #missionscountdown {
 display: none;
 text-align: center;
 color: white;
-font-size: 35px;
-font-family: "BebasNeue", sans-serif;
+font-size: 30px;
+font-family: "BebasNeue";
 }
 #dailydealhead {
 text-align: center;
 color: white;
 font-size: 35px;
-font-family: "BebasNeue", sans-serif;
+font-family: "BebasNeue";
 }
 #backgroundButton {
 position: relative;
@@ -294,7 +286,7 @@ transform: translateX(-50%);
 background-color: #303030;
 color: white;
 font-size: 15px;
-font-family: "BebasNeue", sans-serif;
+font-family: "BebasNeue";
 }
 #buttonsbutton {
 position: relative;
@@ -307,12 +299,10 @@ font-family: sans-serif;
 }
 .seasonBox {
 position: relative;
-/* left: 50%; */
-/* transform: translateX(-50%); */
 background-color: #303030;
 color: white;
 font-size: 15px;
-font-family: "BebasNeue", sans-serif;
+font-family: "BebasNeue";
 }
 .daily_trade {
 border-bottom-left-radius: 3%;
@@ -324,11 +314,10 @@ text-align: center;
 }
 .DD-codename-text {
 position: absolute;
-/* justify-content: center; */
 width: 100%;
 height: 100%;
 color: white;
-font-family: "BebasNeue", sans-serif;
+font-family: "BebasNeue";
 font-size: 30px;
 }
 
@@ -356,36 +345,36 @@ gap: 50px;
 top: 0%;
 text-align: top;
 color: white;
-font-family: "HammerBro101MovieThin-Regular", sans-serif;
+font-family: "CarbonThin-W00-Regular";
 font-size: 20px;
 }
 @media screen and (max-width: 1440px) {
 .calctitle {
 display: none;
 color: white;
-font-family: "HammerBro101MovieThin-Regular", sans-serif;
+font-family: "CarbonThin-W00-Regular";
 font-size: 10px;
 }
 }
 .calcbox {
 color : auto;
-font-family: "HammerBro101MovieThin-Regular", sans-serif;
+font-family: "CarbonThin-W00-Regular";
 font-size: 30px;
 width: 150px;
 }    
 .calcoutput {
 color: white;
-font-family: "HammerBro101MovieThin-Regular", sans-serif;
+font-family: "CarbonThin-W00-Regular";
 font-size: 50px;
 min-height: 1010px;
 }
 .classcalc {
 color: white;
 font-size: 35px;
-font-family: "BebasNeue", sans-serif;
+font-family: "BebasNeue";
 }
 .classcalcsub {
 color: white;
 font-size: 30px;
-font-family: "BebasNeue", sans-serif;
+font-family: "BebasNeue";
 }

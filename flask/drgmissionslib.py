@@ -774,12 +774,24 @@ def render_biomes_FLAT(Biomes):
     rendered_biomes = {}
     for biome, missions in Biomes.items():
         biome1 = []
-        if len(missions) > 5:
-            six = True
-        else:
-            six = False
+        # if len(missions) > 5:
+        #     six = True
+        # else:
+        #     six = False
+        six = False
         for mission in missions:
             mission1 = {}
+            if 'season_modified' in mission:
+                mission1['season_modified'] = {}
+                
+                for season in mission['season_modified']:
+                    modified_mission = mission['season_modified'][season]
+                    mission1['season_modified'][season] = {}
+                    mission1['season_modified'][season]['CodeName'] = modified_mission['CodeName']
+                    mission1['season_modified'][season]['id'] = modified_mission['id']
+                    mission1['season_modified'][season]['season'] = modified_mission['season']
+                    mission1['season_modified'][season]['rendered_mission'] = render_mission(modified_mission, six)
+                    
             mission1['CodeName'] = mission['CodeName']
             mission1['season'] = mission['season']
             mission1['id'] = mission['id']
@@ -937,60 +949,50 @@ def rotate_biomes(DRG, season, tstamp_Queue, next_tstamp_Queue, biomes_lists, re
             del NextBiomes
         sleep(0.25)
 
-def find_duplicates_in_string_list(string_list):
-    for i, str1 in enumerate(string_list):
-        for str2 in string_list[i+1:]:
-            if str1[:-2] == str2[:-2]:
-                return True
-    return False
 def rotate_biomes_FLAT(DRG, tstamp_Queue, next_tstamp_Queue, nextbiomes_Queue, biomes_Queue, rendering_events):
-    #order = ['Glacial Strata', 'Crystalline Caverns', 'Salt Pits', 'Magma Core', 'Azure Weald', 'Sandblasted Corridors', 'Fungus Bogs', 'Radioactive Exclusion Zone', 'Dense Biozone', 'Hollow Bough']
-    #thread pools for saving and hashing PIL objects - microscopic gains. #TODO multiprocessing pools
-    #def process_mission(mission):
-        #mission0 = {}
-        #mission0['CodeName'] = mission['CodeName']
-        #mission_icon = BytesIO()
-        #mission['rendered_mission'].save(mission_icon, format='PNG')
-        #mission_icon.seek(0)
-        #etag = hashlib.md5(mission_icon.getvalue()).hexdigest()
-        #mission0['etag'] = etag
-        #mission0['rendered_mission'] = mission_icon
-        #return mission0
-    #def wrap_missions_executor(missions):
-        #mission_futures = []
-        #with ThreadPoolExecutor() as executor:
-            #for mission in missions:
-                #future = executor.submit(process_mission, mission)
-                #mission_futures.append(future)
-            #results = [future.result() for future in mission_futures]
-            #return results
-    #def wrap_biomes_executor(Biomes):
-        #with ThreadPoolExecutor() as executor:
-            #biome_futures = {}
-            #for biome, missions in Biomes.items():
-                #future = executor.submit(wrap_missions_executor, missions)
-                #biome_futures[biome] = future
-            #results = {biome: future.result() for biome, future in biome_futures.items()}
-            #return results
-    #def array_biomes(Biomes, timestamp):
-        #Biomes1 = wrap_biomes_executor(Biomes)
-        #return timestamp, Biomes1
     def array_biomes(Biomes, timestamp):
         Biomes1 = {}
         for biome in Biomes.keys():
             biome1 = biome.replace(' ', '-')
             Biomes1[biome1] = {}
             for mission in Biomes[biome]:
-                mission0 = {}
-                mission0['CodeName'] = mission['CodeName']
-                mission_icon = BytesIO()
-                mission['rendered_mission'].save(mission_icon, format='PNG')
-                mission['rendered_mission'].close()
-                mission_icon.seek(0)
-                etag = md5(mission_icon.getvalue()).hexdigest()
-                mission0['etag'] = etag
-                mission0['rendered_mission'] = mission_icon
-                Biomes1[biome1+mission['CodeName'].replace(' ', '-')+mission['season']] = mission0
+                if 'season_modified' in mission:
+                    for season in mission['season_modified']:
+                        modified_mission = mission['season_modified'][season]
+                        mission1 = {}
+                        mission1['CodeName'] = mission['CodeName']
+                        modified_mission_icon = BytesIO()
+                        modified_mission['rendered_mission'].save(modified_mission_icon, format='PNG')
+                        modified_mission['rendered_mission'].close()
+                        mission_icon.seek(0)
+                        etag = md5(modified_mission_icon.getvalue()).hexdigest()
+                        mission1['etag'] = etag
+                        mission1['rendered_mission'] = modified_mission_icon
+                        Biomes1[modified_mission['CodeName'].replace(' ', '-')+season] = mission1
+                    
+                    mission0 = {}
+                    mission0['CodeName'] = mission['CodeName']
+                    mission_icon = BytesIO()
+                    mission['rendered_mission'].save(mission_icon, format='PNG')
+                    mission['rendered_mission'].close()
+                    mission_icon.seek(0)
+                    etag = md5(mission_icon.getvalue()).hexdigest()
+                    mission0['etag'] = etag
+                    mission0['rendered_mission'] = mission_icon
+                    Biomes1[mission['CodeName'].replace(' ', '-')+mission['season']] = mission0
+                
+                else:
+                    mission0 = {}
+                    mission0['CodeName'] = mission['CodeName']
+                    mission_icon = BytesIO()
+                    mission['rendered_mission'].save(mission_icon, format='PNG')
+                    mission['rendered_mission'].close()
+                    mission_icon.seek(0)
+                    etag = md5(mission_icon.getvalue()).hexdigest()
+                    mission0['etag'] = etag
+                    mission0['rendered_mission'] = mission_icon
+                    Biomes1[mission['CodeName'].replace(' ', '-')+mission['season']] = mission0
+                    
         return timestamp, Biomes1
     
     while len(tstamp_Queue) == 0 and len(next_tstamp_Queue) == 0:
@@ -1080,38 +1082,149 @@ def rotate_DDs(DDs):
 #----------------------------------------------------------------
 #UTILS
 
-def extract_days_from_json(data, num_days):
-    timestamps = {datetime.fromisoformat(key.replace('Z', '')): value for key, value in data.items()}
-    current_datetime = datetime.utcnow()
+# def extract_days_from_json(data, num_days):
+#     timestamps = {datetime.fromisoformat(key.replace('Z', '')): value for key, value in data.items()}
+#     current_datetime = datetime.utcnow()
 
-    days_from_now = current_datetime + timedelta(days=num_days)
-    relevant_days = {f"{str(key).replace(' ', 'T')}Z": value for key, value in timestamps.items() if current_datetime <= key < days_from_now}
-    return relevant_days
+#     days_from_now = current_datetime + timedelta(days=num_days)
+#     relevant_days = {f"{str(key).replace(' ', 'T')}Z": value for key, value in timestamps.items() if current_datetime <= key < days_from_now}
+#     return relevant_days
 
-def split_json(num_days, DRG):
-    shutil.rmtree('./static/json/bulkmissions')
-    os.mkdir('./static/json/bulkmissions')
+# def split_json(num_days, DRG):
+#     shutil.rmtree('./static/json/bulkmissions')
+#     os.mkdir('./static/json/bulkmissions')
     
-    bs = DRG[round_time_down(datetime.utcnow().isoformat())]
-    DRG = extract_days_from_json(DRG, num_days)
+#     bs = DRG[round_time_down(datetime.utcnow().isoformat())]
+#     DRG = extract_days_from_json(DRG, num_days)
     
-    for timestamp, dictionary in (DRG.items()):
-        fname = timestamp.replace(':','-')
-        with open(f'./static/json/bulkmissions/{fname}.json', 'w') as f:
-            json.dump(dictionary, f)
+#     for timestamp, dictionary in (DRG.items()):
+#         fname = timestamp.replace(':','-')
+#         with open(f'./static/json/bulkmissions/{fname}.json', 'w') as f:
+#             json.dump(dictionary, f)
 
-    fname = round_time_down(datetime.utcnow().isoformat()).replace(':', '-')
-    with open (f'./static/json/bulkmissions/{fname}.json', 'w') as f:
-        json.dump(bs, f)
+#     fname = round_time_down(datetime.utcnow().isoformat()).replace(':', '-')
+#     with open (f'./static/json/bulkmissions/{fname}.json', 'w') as f:
+#         json.dump(bs, f)
 
-def rotate_split_jsons(num_days, DRG, index_event):
-    split_json(num_days, DRG)
-    index_event.set()
+# def rotate_split_jsons(num_days, DRG, index_event):
+#     split_json(num_days, DRG)
+#     index_event.set()
+#     while True:
+#         sleep(num_days*86400-3600)
+#         index_event.clear()
+#         split_json(num_days)
+#         index_event.set()
+
+def split_daily_deals_json():
+    with open('drgdailydeals.json', 'r') as f:
+        AllTheDeals = json.load(f)
+
+    shutil.rmtree('./static/json/dailydeals')
+    os.mkdir('./static/json/dailydeals')
+
+    for timestamp, deal in AllTheDeals.items():
+        fname = timestamp.replace(':', '-')
+        with open(f'./static/json/dailydeals/{fname}.json', 'w') as f:
+            json.dump(deal, f)
+
+def group_by_day_and_split_all(DRG):
+    def group_json_by_days(DRG):
+        timestamps_dt = [datetime.fromisoformat(ts[:-1]) for ts in DRG.keys()]
+        
+        grouped_by_days = {}
+        for timestamp in timestamps_dt:
+            date = timestamp.date().strftime('%Y-%m-%d')
+            if date not in grouped_by_days:
+                grouped_by_days[date] = {}
+            timestamp = timestamp.strftime("%Y-%m-%dT%H:%M:%SZ")
+            grouped_by_days[date][timestamp] = DRG[timestamp]
+            
+        return grouped_by_days
+    def add_daily_deals_to_grouped_json(DRG):
+        with open('drgdailydeals.json', 'r') as f:
+            AllTheDeals = json.load(f)
+        
+            for timestamp, deal in AllTheDeals.items():
+                deal[timestamp] = timestamp
+                try:
+                    DRG[timestamp.split('T')[0]]['dailyDeal'] = deal
+                except:
+                    continue
+        return DRG
+    def split_json_bulkmissions_raw(DRG):
+        if os.path.isdir('./static/json/bulkmissions'):
+            shutil.rmtree('./static/json/bulkmissions')
+        os.mkdir('./static/json/bulkmissions')
+        
+        for timestamp, dictionary in DRG.items():
+            fname = timestamp.replace(':','-')
+            with open(f'./static/json/bulkmissions/{fname}.json', 'w') as f:
+                json.dump(dictionary, f)
+
+    to_split = group_json_by_days(DRG)
+    to_split = add_daily_deals_to_grouped_json(to_split)
+    split_json_bulkmissions_raw(to_split)
+
+
+def rotate_jsons_days(DRG, num_days):
+    def extract_days_from_json(data, num_days):
+        timestamps = {datetime.strptime(key, '%Y-%m-%d'): value for key, value in data.items()}
+        sorted_timestamps = sorted(timestamps.items())
+        
+        start_date = sorted_timestamps[0][0]
+        end_date = sorted_timestamps[-1][0]
+        
+        
+        complete_dates = [start_date + timedelta(days=i) for i in range((end_date - start_date).days + 1)]
+        complete_data = {date.strftime('%Y-%m-%d'): timestamps.get(date, 0) for date in complete_dates}
+        
+        current_datetime = datetime.utcnow()
+        days_from_now = current_datetime + timedelta(days=num_days)
+        relevant_days = {key: value for key, value in complete_data.items() if current_datetime <= datetime.strptime(key, '%Y-%m-%d') < days_from_now}
+        current_datetime = datetime.utcnow().strftime('%Y-%m-%d')
+        relevant_days[current_datetime] = data[current_datetime]
+        
+        return relevant_days
+    def group_json_by_days(DRG):
+        timestamps_dt = [datetime.fromisoformat(ts[:-1]) for ts in DRG.keys()]
+        
+        grouped_by_days = {}
+        for timestamp in timestamps_dt:
+            date = timestamp.date().strftime('%Y-%m-%d')
+            if date not in grouped_by_days:
+                grouped_by_days[date] = {}
+            timestamp = timestamp.strftime("%Y-%m-%dT%H:%M:%SZ")
+            grouped_by_days[date][timestamp] = DRG[timestamp]
+            
+        return grouped_by_days
+    
+    completed = []
+    days = group_json_by_days(DRG)
+    days = extract_days_from_json(DRG, num_days)
+    
+    dirpath = './static/json/bulkmissions'
+    if os.path.isdir(dirpath):
+        shutil.rmtree(dirpath)
+    os.mkdir(dirpath)
+    
+    for day, timestamp in days.items():
+        with open(f'{dirpath}/{day}.json') as f:
+            json.dump(timestamp, f)
+            
     while True:
         sleep(num_days*86400-3600)
-        index_event.clear()
-        split_json(num_days)
-        index_event.set()
+        days = group_json_by_days(DRG)
+        days = extract_days_from_json(days, num_days)
+        
+        for path in completed:
+            os.remove(path)
+            completed.remove(path)
+            
+        for day, timestamp in days.items():
+            path = f'./static/json/bulkmissions/{day}.json'
+            completed.append(path)
+            with open(path, 'w') as f:
+                json.dump(timestamp, f)
 
 def sort_dictionary(dictionary, custom_order):
     sorted_dict = {}
@@ -1249,78 +1362,64 @@ def round_time_down(datetime_string):
     else:
         new_datetime = datetime_string[:14] + '00:00Z'
     return new_datetime
+
 def flatten_seasons(DRG):
-    combined_biomes = {}
-    missions_count = 0
-    missions_per_season = {}
-    for season in list(DRG.items())[1][1].keys():
-        missions_per_season[season] = 0
+    def compare_dicts(dict1, dict2, ignore_keys):
+        dict1_filtered = {k: v for k, v in dict1.items() if k not in ignore_keys}
+        dict2_filtered = {k: v for k, v in dict2.items() if k not in ignore_keys}
+
+        return dict1_filtered == dict2_filtered
+    combined = {}
+    seasons = list(list(DRG.items())[1][1].keys())
+    timestamps = list(DRG.keys())
+    
+    for timestamp in timestamps:
+        combined[timestamp] = {}
+        combined[timestamp]['timestamp'] = timestamp
+        combined[timestamp]['Biomes'] = {}
+        for biome in DRG[timestamp]['s0']['Biomes'].keys():
+            combined[timestamp]['Biomes'][biome+'codenames'] = []
         
-    for timestamp, seasons_dict in DRG.items():
-        combined_biomes[timestamp] = {}
-        combined_biomes[timestamp]['timestamp'] = timestamp
-        combined_biomes[timestamp]['Biomes'] = {biome : [] for biome in seasons_dict['s0']['Biomes'].keys()}
-        combined_missions = []
-        for season, season_dict  in seasons_dict.items():
-            for biome, missions in season_dict['Biomes'].items():
+        for biome, missions in DRG[timestamp]['s0']['Biomes'].items():
+            for mission in missions:
+                mission['season'] = 's0'
+                combined[timestamp]['Biomes'][biome+'codenames'].append(mission['CodeName'])
                 
-                for mission in missions:
-                    id = mission['id']
-                    del mission['id']
-                    md5_ = md5(json.dumps(mission).encode()).hexdigest()
-                    mission['id'] = id
+            combined[timestamp]['Biomes'][biome] = [mission for mission in missions]
+        del DRG[timestamp]['s0']
+    seasons.remove('s0')
+    
+    duplicates = []
+    for timestamp in timestamps:
+        for season in seasons:
+            for biome, missions in DRG[timestamp][season]['Biomes'].items():
+                for index, mission in enumerate(missions):
                     mission['season'] = season
-                    
-                    combined_missions.append((timestamp, season, biome, mission, md5_))
-                    missions_count += 1
-                    missions_per_season[season] += 1
-                        
-        combined_biomes[timestamp]['Biomes'][biome] = sorted(combined_missions, key=lambda x: x[1])
-
-    # amount_of_timestamps = len(list(DRG.keys()))
+                    if mission['CodeName'] in combined[timestamp]['Biomes'][biome+'codenames']:
+                        duplicates.append([timestamp, biome, mission])
+                    else:
+                        try:
+                            combined[timestamp]['Biomes'][biome].insert(index, mission)
+                        except:
+                            combined[timestamp]['Biomes'][biome].append(mission)
     
-    # print(missions_per_season['s0'])
-    # missions_per_timestamp = missions_per_season['s0'] / amount_of_timestamps
-    # print(missions_per_timestamp)
-    
-    # print(missions_per_season['s4'])
-    # missions_per_timestamp = missions_per_season['s4'] / amount_of_timestamps
-    # print(missions_per_timestamp)
-    
-    # print(missions_count)
-    missions_count = 0
-
-    god = {}
-    for timestamp, biomes in combined_biomes.items():
-        god[timestamp] = {}
-        god[timestamp]['Biomes'] = {}
-        god[timestamp]['timestamp'] = timestamp
-        md5s = []
-        
-        for biome, missions in biomes['Biomes'].items():
-            god[timestamp]['Biomes'][biome] = []
-            
-            for timestamp_, season, biome, mission, mission_md5 in missions:
-                if season == 's0':
-                    md5s.append(timestamp+mission_md5)
-                    god[timestamp_]['Biomes'][biome].append(mission)
-                    missions_count += 1
-                elif timestamp+mission_md5 in md5s:
+    for timestamp, biome, dup_mission in duplicates:
+        for season in seasons:
+            for mission in combined[timestamp]['Biomes'][biome]:
+                if dup_mission['CodeName'] != mission['CodeName']:
                     continue
-                else:
-                    god[timestamp_]['Biomes'][biome].append(mission)
-                    missions_count += 1
-    # print(missions_count)
+                if compare_dicts(mission, dup_mission, ['season', 'id', 'season_modified']):
+                    continue
+                if 'season_modified' not in mission:
+                    mission['season_modified'] = {}
+                mission['season_modified'][season] = dup_mission
 
-    # missions_per_timestamp = missions_count / amount_of_timestamps
-    # print(missions_per_timestamp)
-    
-    # for b, ms in bs.items():
-    #     print(b)
-    #     for m in ms:
-    #         print(json.dumps(m, indent=4))
+    for timestamp in timestamps:
+        for k in list(combined[timestamp]['Biomes'].keys()):
+            if k.endswith('codenames'):
+                del combined[timestamp]['Biomes'][k]
 
-    return god
+    return combined
 
 def wait_rotation(rendering_events, index_event):
     target_minutes_59 = [29, 59]
@@ -1351,8 +1450,9 @@ def SERVER_READY(index_event):
 #HTML STRING RENDERERS
 
 #HOMEPAGE
-def rotate_index(DRG, rendering_events, current_timestamp_Queue, next_timestamp_Queue, index_event, index_Queue):
-    for s in rendering_events.keys():
+def rotate_index(rendering_events, current_timestamp_Queue, next_timestamp_Queue, index_event, index_Queue):
+    seasons = rendering_events.keys()
+    for s in seasons:
         rendering_events[s].wait()
     current_timestamp = current_timestamp_Queue[0]
     # index = {}
@@ -1365,7 +1465,7 @@ def rotate_index(DRG, rendering_events, current_timestamp_Queue, next_timestamp_
     while True:
         applicable_timestamp = current_timestamp_Queue[0]
         if applicable_timestamp != current_timestamp:
-            for s in rendering_events.keys():
+            for s in seasons:
                 rendering_events[s].wait()
                 
             # index = {}
