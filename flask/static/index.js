@@ -232,7 +232,7 @@ async function preloadImages(imageObj, imageCache) {
         }
         promises.push(img.onload())
     }
-    await Promise.all([promises])
+    await Promise.all(promises)
 
     // alternative to above loop but i dont think the overhead on this is worth it, idk if its worth even promising that one either
     // promises = promisedBinaries.map(async promisedBinary => {
@@ -265,7 +265,7 @@ async function loadImgsFromLocalStorageObj(imageObj, imageCache) {
         }
         promises.push(img.onload())
     }
-    await Promise.all([promises])
+    await Promise.all(promises)
 }
 
 async function loadImgsFromLocalStorageAll() {
@@ -974,8 +974,6 @@ async function refreshBiomes(isMidnightUpcoming_, retry=false) {
     }
 
     switch (true) {
-        case retry:
-            break
         case (isMidnightUpcoming_):
             biomes = await getBiomesMidnight();
             break

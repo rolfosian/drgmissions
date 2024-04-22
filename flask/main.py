@@ -146,7 +146,7 @@ app = Flask(__name__, static_folder='./static')
 def home():
     # index_event.wait()
     # return send_file(BytesIO(index_Queue[0]['index']), mimetype='text/html', etag=index_Queue[0]['etag'])
-    return send_file('./static/index.html')
+    return send_file(f'{cwd}/static/index.html')
 
 #Sends current mission icons, arg format f"?img={Biome.replace(' ', '-')}{mission['CodeName'].replace(' ', '-')}{mission['season']}" - see rotate_biomes_FLAT in drgmissionslib.py
 #eg http://127.0.0.1:5000/png?img=Glacial-StrataSpiked-Shelters0 (mission['CodeName'] is 'Spiked Shelter' and the season is s0)
