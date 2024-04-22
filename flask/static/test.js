@@ -100,27 +100,43 @@ function main (){
 
 // compareFuncs(funcsAndParams, 500)
 
-// localStorages = {
-//     'seasonSelected' : 's5'
-// }
+localStorages = {
+    'seasonSelected' : 's5'
+}
 
-// document.addEventListener('DOMContentLoaded', () => {
-//     let seasonBoxValues = {
-//         's0' : 'No Season',
-//         's1': 'Season 1',
-//         's2': 'Season 2', 
-//         's3': 'Season 3', 
-//         's4': 'Season 4', 
-//         's5': 'Season 5'
-//     };
-//     let seasonBox = document.getElementById('season')
-//     for (let season in seasonBoxValues) {
-//         let option = document.createElement('option');
-//         option.value = season;
-//         option.textContent = seasonBoxValues[season];
-//         seasonBox.appendChild(option);
-//         if (season === localStorages['seasonSelected']) {
-//             seasonBox.value = season
-//         }
-//     }
-// })
+document.addEventListener('DOMContentLoaded', () => {
+    let seasonBoxValues = {
+        's0' : 'No Season',
+        's1': 'Season 1',
+        's2': 'Season 2', 
+        's3': 'Season 3', 
+        's4': 'Season 4', 
+        's5': 'Season 5'
+    };
+    let seasonBox = document.getElementById('season')
+    for (let season in seasonBoxValues) {
+        let option = document.createElement('option');
+        option.value = season;
+        option.textContent = seasonBoxValues[season];
+        seasonBox.appendChild(option);
+        if (season === localStorages['seasonSelected']) {
+            seasonBox.value = season
+        }
+    }
+})
+
+
+addEventListener('DOMContentLoaded', async () => {
+    function simpleHash(input) {
+        let hash = 0;
+        for (let i = 0; i < input.length; i++) {
+            const charCode = input.charCodeAt(i);
+            hash = (hash << 5) - hash + charCode;
+            hash |= 0;
+        }
+        return hash;
+    }
+    let response = await fetch('/static/homepage.js');
+    let text = await response.text()
+    console.log('homepageScript', simpleHash(JSON.stringify(text)))
+});

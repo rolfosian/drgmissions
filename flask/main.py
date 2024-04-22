@@ -9,7 +9,8 @@ from drgmissionslib import (
     rotate_index,
     rotate_timestamps,
     rotate_timestamp_from_dict,
-    # rotate_split_jsons, i dont trust this yet
+    # rotate_split_jsons, i dont trust this yet, its not needed when keys are grouped by day now anyway
+    group_by_day_and_split_all,
     wait_rotation,
     flatten_seasons,
     class_xp_levels,
@@ -20,7 +21,7 @@ from flask import Flask, request, send_file, jsonify
 import threading
 from io import BytesIO
 from os import getcwd
-from shutil import copy as shutilcopy
+from shutil import copy as shutil_copy
 # import queue
 cwd = getcwd()
 
@@ -43,10 +44,15 @@ cwd = getcwd()
 with open('drgmissionsgod.json', 'r') as f:
     DRG = json.load(f)
     f.close()
+    #merge season branches to one
+    DRG = flatten_seasons(DRG)
+    
+    #split into individual json files for static site
+    group_by_day_and_split_all(DRG)
+    
     #Remove past timestamps from memory
     select_timestamp_from_dict(DRG, False)
-    
-    DRG = flatten_seasons(DRG)
+
 
 with open('drgdailydeals.json', 'r') as f:
     AllTheDeals = f.read()
@@ -92,6 +98,7 @@ ddsthread = threading.Thread(target=rotate_DDs, args=(DDs,))
 #Homepage HTML rotator, md5 hashes once to enable 304 on every 30 minute rollover and the home route doesn't need to render it again for every request and can just send copies
 #Clears index event and waits for rendering_event to be set before proceeding and then sets index event to enable homepage requests once more
 
+#old index is obsolete but i keep the rotator running witb bare event logic just in case
 index_event = threading.Event()
 #index_Queue = queue.Queue()
 index_Queue = []
@@ -102,6 +109,7 @@ index_thread = threading.Thread(target=rotate_index, args=(rendering_events, tst
 wait_rotationthread = threading.Thread(target=wait_rotation, args=(rendering_events, index_event))
 
 #json splitting mechanism for static site, set to update the ./static/json/bulkmissions folder every 4 days just so i dont have to look at a directory with 5000 files in it
+# i dont trust this yet, its not needed when keys are grouped by day now anyway
 # json_thread = threading.Thread(target=rotate_split_jsons, args=(4, DRG, index_event))
 
 def start_threads():
@@ -141,6 +149,7 @@ def home():
     return send_file('./static/index.html')
 
 #Sends current mission icons, arg format f"?img={Biome.replace(' ', '-')}{mission['CodeName'].replace(' ', '-')}{mission['season']}" - see rotate_biomes_FLAT in drgmissionslib.py
+#eg http://127.0.0.1:5000/png?img=Glacial-StrataSpiked-Shelters0 (mission['CodeName'] is 'Spiked Shelter' and the season is s0)
 @app.route('/png')
 def serve_img():
     try:
@@ -152,6 +161,7 @@ def serve_img():
         return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
 
 #Sends upcoming mission icons, arg format f"?img={Biome.replace(' ', '-')}{mission['CodeName'].replace(' ', '-')}{mission['season']}" - see rotate_biomes_FLAT in drgmissionslib.py
+#eg http://127.0.0.1:5000/upcoming_png?img=Glacial-StrataSpiked-Shelters0 (mission['CodeName'] is 'Spiked Shelter' and the season is s0)
 @app.route('/upcoming_png')
 def serve_next_img():
     try:
@@ -261,7 +271,7 @@ def upload():
         filename = file_.filename
         if filename.endswith('.json') or filename.endswith('.py'):
             file_.save(f'{cwd}/{filename}')
-            shutilcopy(f'{cwd}/{filename}', f'{cwd}/static/json/{filename}')
+            shutil_copy(f'{cwd}/{filename}', f'{cwd}/static/json/{filename}')
         elif filename.endswith('icon.png'):
             file_.save(f'{cwd}{filename}')
         else:

@@ -85,7 +85,7 @@ text-align: center;
 opacity: 0;
 transition: opacity 0.5s ease-in-out;
 }
-.image-container {
+.banner {
 width: 80%;
 height: auto;
 }
@@ -299,8 +299,6 @@ font-family: sans-serif;
 }
 .seasonBox {
 position: relative;
-/* left: 50%; */
-/* transform: translateX(-50%); */
 background-color: #303030;
 color: white;
 font-size: 15px;

@@ -12,9 +12,16 @@ var biomeBanners = {
     'Hollow Bough': '/static/DeepDive_MissionBar_HollowBough.webp'
 }
 var biomeBannersImages = {};
-biomeBannersImages.name = 'biomeBannersImages'
+biomeBannersImages.name = 'biomeBanners'
 
-function setBiomeBanners() {
+var deepDivesBanners = {
+    'dd' : '/static/dd.webp',
+    'edd' : '/static/edd.webp'
+};
+deepDivesBannersImages = {};
+deepDivesBannersImages.name = 'deepDivesBanners'
+
+function setBiomeAndDeepDivesBanners() {
     let minerals = {
         'Crystalline Caverns': 'Abundant: Jadiz; Scarce: Bismor',
         'Glacial Strata' : "Abundant: Magnite; Scarce: Umanite",
@@ -29,15 +36,21 @@ function setBiomeBanners() {
     }
     for (let biome in minerals) {
         biomeBannersImages[biome].title = minerals[biome];
-        biomeBannersImages[biome].classList.add("image-container");
+        biomeBannersImages[biome].classList.add("banner");
         let imgCopy = new Image();
         imgCopy.src = biomeBannersImages[biome].src
-        imgCopy.classList.add("image-container");
+        imgCopy.classList.add("banner");
         imgCopy.title = minerals[biome];
 
         let divs = document.querySelectorAll(`div[biome="${biome}"]`);
         divs[0].prepend(biomeBannersImages[biome]);
         divs[1].prepend(imgCopy)
+    }
+
+    for (let deepDive in deepDivesBannersImages) {
+        let div = document.querySelector(`div[dd="${deepDive}"]`);
+        deepDivesBannersImages[deepDive].classList.add('banner')
+        div.prepend(deepDivesBannersImages[deepDive])
     }
 }
 
@@ -167,11 +180,11 @@ var dailyDealResourcesImages = {};
 dailyDealResourcesImages.name = 'dailyDealResourcesImages'
 
 var fontNamesAndUrls = {
-    'CarbonThin-W00-Regular' : ['truetype', '/static/img/CarbonThin-W00-Regular.ttf'],
-    'CarbonBold-W00-Regular' : ['truetype', '/static/img/CarbonBold-W00-Regular.ttf'],
-    'Bungee-Regular' : ['truetype', '/static/img/Bungee-Regular.ttf'],
-    'RiftSoft-Regular' : ['truetype', '/static/img/RiftSoft-Regular.ttf'],
-    'BebasNeue' : ['woff2', '/static/img/BebasNeue-Regular.woff2']
+    'CarbonThin-W00-Regular' : '/static/img/CarbonThin-W00-Regular.woff2',
+    'CarbonBold-W00-Regular' : '/static/img/CarbonBold-W00-Regular.woff2',
+    'Bungee-Regular' : '/static/img/Bungee-Regular.woff2',
+    'RiftSoft-Regular' : '/static/img/RiftSoft-Regular.woff2',
+    'BebasNeue' : '/static/img/BebasNeue-Regular.woff2'
 };
 
 var base64LocalStoragesImg = {};
@@ -206,6 +219,7 @@ async function preloadImages(imageObj, imageCache) {
     }
     let promisedBinaries = await Promise.all(promises);
 
+    promises = [];
     for (let i = 0; i < promisedBinaries.length; i++) {
         let promisedBinary = promisedBinaries[i];
         key = promisedBinary[0]
@@ -216,10 +230,32 @@ async function preloadImages(imageObj, imageCache) {
         img.onload = async () => {
             imageCache[key] = img
         }
-        await img.onload()
+        promises.push(img.onload())
     }
+    await Promise.all([promises])
+
+    // alternative to above loop but i dont think the overhead on this is worth it, idk if its worth even promising that one either
+    // promises = promisedBinaries.map(async promisedBinary => {
+    //     const key = promisedBinary[0];
+    //     const base64Data = arrayBufferToBase64(promisedBinary[1]);
+    //     base64LocalStoragesImg[imageCache.name][key] = base64Data;
+    
+    //     return new Promise((resolve, reject) => {
+    //         const img = new Image();
+    //         img.src = "data:image/webp;base64," + base64Data;
+    //         img.onload = () => {
+    //             imageCache[key] = img;
+    //             resolve();
+    //         };
+    //         img.onerror = (error) => {
+    //              throw new Error(error);
+    //         }
+    //     });
+    // });
+    // await Promise.all(promises)
 }
 async function loadImgsFromLocalStorageObj(imageObj, imageCache) {
+    let promises = [];
     for (let key in imageObj) {
         let base64Data =  localStorages['img'][imageCache.name][key]
         let img = new Image()
@@ -227,8 +263,9 @@ async function loadImgsFromLocalStorageObj(imageObj, imageCache) {
         img.onload = async () => {
             imageCache[key] = img
         }
-        await img.onload()
+        promises.push(img.onload())
     }
+    await Promise.all([promises])
 }
 
 async function loadImgsFromLocalStorageAll() {
@@ -243,18 +280,22 @@ async function loadImgsFromLocalStorageAll() {
         loadImgsFromLocalStorageObj(secondaryObjsDD, secondaryObjsDDImages),
         loadImgsFromLocalStorageObj(biomesDD, biomesDDImages),
         loadImgsFromLocalStorageObj(biomeBanners, biomeBannersImages),
+        loadImgsFromLocalStorageObj(deepDivesBanners, deepDivesBannersImages),
         loadImgsFromLocalStorageObj(dailyDealResources, dailyDealResourcesImages)
     ]);
-    delete primaryObjs;
-    delete primaryObjResources;
-    delete secondaryObjs;
-    delete complexities;
-    delete lengths;
-    delete mutators;
-    delete warnings;
-    delete secondaryObjsDD;
-    delete biomeBanners;
-    delete dailyDealResources;
+    base64LocalStoragesImg = undefined;
+    primaryObjs = undefined;
+    primaryObjResources = undefined;
+    secondaryObjs = undefined;
+    complexities = undefined;
+    lengths = undefined;
+    mutators = undefined;
+    warnings = undefined;
+    secondaryObjsDD = undefined;
+    biomeBanners = undefined;
+    dailyDealResources = undefined;
+    deepDivesBanners = undefined;
+
     delete primaryObjsImages.name;
     delete primaryObjResourcesImages.name;
     delete secondaryObjsImages.name;
@@ -265,31 +306,29 @@ async function loadImgsFromLocalStorageAll() {
     delete secondaryObjsDDImages.name;
     delete biomeBannersImages.name;
     delete dailyDealResourcesImages.name;
+    delete deepDivesBannersImages.name;
 }
 
 async function preloadFonts(){
     let promises = [];
-    let types = {};
     let fontsBinaries;
 
     for (let fontName in fontNamesAndUrls) {
         let fontUrl = fontNamesAndUrls[fontName];
-        let promisedBinary = fetchBinaryData(fontName, fontUrl[1]);
-        types[fontName] = fontUrl[0];
+        let promisedBinary = fetchBinaryData(fontName, fontUrl);
         promises.push(promisedBinary);
     }
 
     fontsBinaries = await Promise.all(promises);
 
     for (let i = 0; i < fontsBinaries.length; i++) {
-        let fontNameAndBinaryData = fontsBinaries[i];
-        let fontName = fontNameAndBinaryData[0];
-        let fontBinaryData = fontNameAndBinaryData[1];
-        let type = types[fontName]
+        let fontName = fontsBinaries[i][0];
+        let fontBinaryData = fontsBinaries[i][1];
 
         base64Data = arrayBufferToBase64(fontBinaryData);
-        base64LocalStoragesFonts[fontName] = [type, base64Data];
-        let fontFace = new FontFace(fontName, `url(data:font/${type};base64,${base64Data})`);
+        base64LocalStoragesFonts[fontName] = base64Data;
+
+        let fontFace = new FontFace(fontName, `url(data:font/woff2;base64,${base64Data})`);
         await fontFace.load();
         document.fonts.add(fontFace);
     }
@@ -297,42 +336,9 @@ async function preloadFonts(){
     localStorage.setItem('fonts', JSON.stringify(base64LocalStoragesFonts));
 
     base64LocalStoragesFonts = undefined;
-    delete fontNamesAndUrls;
+    fontNamesAndUrls = undefined;
 }
 
-async function loadFontsFromLocalStorageObj() {
-    for (let key in localStorages['fonts']) {
-        let base64Data = localStorages['fonts'][key][1]
-        let type = localStorages['fonts'][key][0]
-        let font = new FontFace(key, `url(data:font/${type};base64,${base64Data})`);
-        await font.load();
-        document.fonts.add(font);
-    }
-}
-
-async function preloadHomepageScript() {
-    let response = await fetch('/static/homepage.js');
-    return response.text();
-}
-// async function preloadImages(imageObj, imageCache) {
-//     let promises = [];
-//     for (let key in imageObj) {
-//         let img = new Image();
-//         img.src = imageObj[key];
-//         let promise = new Promise((resolve, reject) => {
-//             img.onload = () => resolve();
-//             img.onerror = () => reject();
-//         });
-//         promises.push(promise);
-//         imageCache[key] = img;
-//     }
-//     await Promise.all(promises);
-//      }
-
-
-
-//     // imageCache = undefined;
-// }
 async function preloadImagesAll() {
     await Promise.all([
         preloadImages(primaryObjs, primaryObjsImages),
@@ -343,23 +349,26 @@ async function preloadImagesAll() {
         preloadImages(mutators, mutatorsImages),
         preloadImages(warnings, warningsImages),
         preloadImages(secondaryObjsDD, secondaryObjsDDImages),
-        preloadImages(biomeBanners, biomeBannersImages),
         preloadImages(biomesDD, biomesDDImages),
-        preloadImages(dailyDealResources, dailyDealResourcesImages)
+        preloadImages(dailyDealResources, dailyDealResourcesImages),
+        preloadImages(biomeBanners, biomeBannersImages),
+        preloadImages(deepDivesBanners, deepDivesBannersImages)
     ]);
     localStorage.setItem('img', JSON.stringify(base64LocalStoragesImg))
 
     base64LocalStoragesImg = undefined;
-    delete primaryObjs;
-    delete primaryObjResources;
-    delete secondaryObjs;
-    delete complexities;
-    delete lengths;
-    delete mutators;
-    delete warnings;
-    delete secondaryObjsDD;
-    delete biomeBanners;
-    delete dailyDealResources;
+    primaryObjs = undefined;
+    primaryObjResources = undefined;
+    secondaryObjs = undefined;
+    complexities = undefined;
+    lengths = undefined;
+    mutators = undefined;
+    warnings = undefined;
+    secondaryObjsDD = undefined;
+    biomeBanners = undefined;
+    dailyDealResources = undefined;
+    deepDivesBanners = undefined;
+
     delete primaryObjsImages.name;
     delete primaryObjResourcesImages.name;
     delete secondaryObjsImages.name;
@@ -370,23 +379,22 @@ async function preloadImagesAll() {
     delete secondaryObjsDDImages.name;
     delete biomeBannersImages.name;
     delete dailyDealResourcesImages.name;
+    delete deepDivesBannersImages.name;
 }
 
-// async function preloadFonts(){
-//     let promises = [];
-//     let fonts = [];
-//     for (let fontName in fontNamesAndUrls) {
-//         let fontUrl = fontNamesAndUrls[fontName];
-//         let font = new FontFace(fontName, `url(${fontUrl})`);
-//         let promise = font.load();
-//         promises.push(promise);
-//         fonts.push(font);
-//     }
-//     await Promise.all(promises);
-//     for (let i = 0; i < fonts.length; i++) {
-//         document.fonts.add(fonts[i]);
-//     }
-// }
+async function preloadHomepageScript() {
+    let response = await fetch('/static/homepage.js');
+    return response.text();
+}
+
+async function loadFontsFromLocalStorageObj() {
+    for (let key in localStorages['fonts']) {
+        let base64Data = localStorages['fonts'][key]
+        let font = new FontFace(key, `url(data:font/woff2;base64,${base64Data})`);
+        await font.load();
+        document.fonts.add(font);
+    }
+}
 
 async function preloadAll() {
     try {
@@ -434,30 +442,6 @@ function getCurrentDateMidnightUTC() {
                                utcSeconds + 'Z';
     return formattedUTCDateTime;
 }
-
-// function getNextDateMidnightUTC() {
-//     let now = new Date();
-//     let sysYear = now.getFullYear()
-//     let sysMonth = now.getMonth()
-//     let sysDate = now.getDate()
-//     let nows = new Date(Date.UTC(sysYear, sysMonth,  sysDate, 0, 0, 0, 0))
-//     nows.setUTCDate(nows.getUTCDate()+1);
-
-//     let utcYear = nows.getUTCFullYear();
-//     let utcMonth = ('0' + (nows.getUTCMonth() + 1)).slice(-2);
-//     let utcDay = ('0' + nows.getUTCDate()).slice(-2);
-//     let utcHours = '00';
-//     let utcMinutes = '00';
-//     let utcSeconds = '00';
-
-//     var formattedUTCDateTime = utcYear + '-' +
-//         utcMonth + '-' +
-//         utcDay + 'T' +
-//         utcHours + ':' +
-//         utcMinutes + ':' +
-//         utcSeconds + 'Z';
-//     return formattedUTCDateTime;
-// }
 
 function getNextDateMidnightUTC(date) {
     let now = new Date(date)
@@ -589,16 +573,6 @@ async function waitRotation() {
         break
     }
 }
-
-// async function loadJSON(filePath) {
-//     try {
-//       const response = await fetch(filePath);
-//       const data = await response.json();
-//       return data;
-//     } catch (error) {
-//       throw error;
-//     }
-// }
 
 async function loadJSON(filePath, maxRetries = 3, retryDelay = 5000 ) {
     let retries = 0;
@@ -896,9 +870,9 @@ async function tempCacheUpcomingBiomes(isMidnightUpcoming_, date) {
     }
 
     tempBiomes = [currentBiomes, upcomingBiomes]
-    console.log('------')
-    console.log(tempBiomes)
-    console.log(date.toISOString())
+    // console.log('------')
+    // console.log(tempBiomes)
+    // console.log(date.toISOString())
 }
 
 function getBiomesOnInit() {
@@ -911,6 +885,10 @@ function getBiomesOnInit() {
 }
 
 async function getBiomesMidnightOnInit(date) {
+    if (tempBiomes) {
+        tempBiomes = undefined;
+        tempCurrentDaysJson = undefined;
+    }
     let upcomingMidnight = getNextDateMidnightUTC(date);
     let results = await getCurrentDaysJson(date, true);
     // console.log(results)
@@ -928,7 +906,7 @@ function getBiomes() {
 async function getBiomesMidnight() {
     let currentBiomes = tempBiomes[0];
     if (tempCurrentDaysJson) {
-        console.log(tempCurrentDaysJson)
+        // console.log(tempCurrentDaysJson)
         setStorages('currentDaysJson', tempCurrentDaysJson);
         tempCurrentDaysJson = undefined
     }
@@ -960,19 +938,63 @@ function toggleSeason4(Biomes, bool) {
     }
 }
 
-async function refreshBiomes(isMidnightUpcoming_) {
-    if (isMidnightUpcoming_) { // this could probably be consolidated into one block but im not going to fix what isnt broken for now
-        biomes = await getBiomesMidnight();
-    } else {
-        biomes = getBiomes();
+function hasMidnightJustBeen(datestring) {
+    return datestring.slice(11, 19) === '00:00:00'
+}
+function rolloverCurrentDaysJsonLink (currentDaysTimestamp) {
+    let currentDaysJsonLink = document.getElementById('currentDaysJsonLink'); 
+    currentDaysJsonLink.href = getDomainURL()+'/static/json/bulkmissions/'+currentDaysTimestamp.slice(0, 10)+'.json'
+
+    let tomorrowDaysJsonLink = document.getElementById('tomorrowDaysJsonLink');
+    tomorrowDaysJsonLink.href = getDomainURL()+'/static/json/bulkmissions/'+getNextDateMidnightUTC(currentDaysTimestamp).slice(0, 10)+'.json'
+}
+async function refreshBiomes(isMidnightUpcoming_, retry=false) {
+    let refreshDate = new Date();
+    let refreshDateISOString = refreshDate.toISOString().slice(0, 19)+'Z'
+    let expectedCurrentTimestamp = roundTimeDown(refreshDateISOString);
+    let expectedUpcomingTimestamp = roundTimeUp(refreshDate)
+
+    if (tempBiomes[0]['timestamp'] != expectedCurrentTimestamp || tempBiomes[1]['timestamp'] != expectedUpcomingTimestamp) {
+        // console.log('BROWSER TAB INACTIVITY????????????????????????????????')
+
+        isMidnightUpcoming_ = isMidnightUpcoming(refreshDateISOString)
+        if (isMidnightUpcoming_) {
+            tempBiomes = await getBiomesMidnightOnInit();
+            return await refreshBiomes(isMidnightUpcoming_, true);
+
+        } else if (localStorages['currentDaysJson'][0] != refreshDateISOString.slice(0, 10)) {
+            await getCurrentDaysJson(refreshDate);
+            tempBiomes = getBiomesOnInit();
+            return await refreshBiomes(isMidnightUpcoming_, true)
+
+        } else {
+            tempBiomes = getBiomesOnInit();
+            return await refreshBiomes(isMidnightUpcoming_, true)
+        }   
+    }
+
+    switch (true) {
+        case retry:
+            break
+        case (isMidnightUpcoming_):
+            biomes = await getBiomesMidnight();
+            break
+        default:
+            biomes = getBiomes();
+            break
+    }
+
+    if (hasMidnightJustBeen(expectedCurrentTimestamp)) {
+        rolloverCurrentDaysJsonLink(expectedCurrentTimestamp)
     }
     arrayBiomes(biomes, document.getElementById("season").value);
     if (document.getElementById('currentButton').textContent == 'Click here to see current missions') {
         document.getElementById('currentButton').click();
     }
+
     tempBiomes = undefined;
-    console.log(biomes[0]['timestamp'])
-    console.log(biomes[1]['timestamp'])
+    // console.log(biomes[0]['timestamp'])
+    // console.log(biomes[1]['timestamp'])
 }
 async function refreshDailyDeal() {
     dailyDeal = await getDailyDealData();
@@ -1068,12 +1090,13 @@ function arrayBiomes_(Biomes, season) { // deprecated, may need for debugging co
     equalizeGridItems()
 }
 
+// array as a verb
 function arrayBiomes(Biomes, season) { // may need for debugging
-    if (Biomes[0].hasOwnProperty('s0')) {
-        arrayBiomes_(Biomes, season)
-    } else {
+    // if (Biomes[0].hasOwnProperty('s0')) {
+    //     arrayBiomes_(Biomes, season)
+    // } else {
         arrayBiomesFlat(Biomes, season)
-    }
+    // }
 }
 function arrayBiomesFlat(Biomes, season) {
     let currentBiomes = Biomes[0]['Biomes']
@@ -1378,13 +1401,6 @@ async function arrayDeepDives(deepDiveData) {
     }
 }
 
-// async function getDailyDealData() {
-//     var datetime = getCurrentDateMidnightUTC()
-//     datetime = replaceCharactersAtIndices(datetime, [[13, '-'], [16,'-']])
-//     var data = await loadJSON(getDomainURL()+`/static/json/dailydeals/${datetime}.json`)
-//     return data
-// }
-
 function getDailyDealData(isMidnightUpcoming=false) {
     if (isMidnightUpcoming) {
         return tempDailyDeal
@@ -1618,7 +1634,9 @@ function toggleBackground() {
         video.style.display = "block";
         overlay.style.display = "block";
         backgroundbutton.textContent = "Hide background";
-        video.play();
+        if (initialized) {
+            video.play();
+        }
         setStorages('isBackgroundHidden', false);
     } else {
         video.style.display = "none";
@@ -1704,52 +1722,42 @@ function toggleButtons() {
         setStorages('areButtonsHidden', true)
     }
 };
-
-
 window.addEventListener('resize', function(event) {
     if (initialized) {
         equalizeGridItems()
     }
 });
-async function initialize() {
+async function initialize(date) {
     let biomes_;
     let dailyDeal_;
 
-    let date = new Date();
     if (isMidnightUpcoming(date)) {
         biomes_ = await getBiomesMidnightOnInit(date);
         dailyDeal_ = getDailyDealData(true);
-        console.log('------');
-        console.log(biomes_);
-        console.log(biomes_[0]['timestamp']);
-        console.log(biomes_[1]['timestamp']);
+        // console.log('------');
+        // console.log(biomes_);
+        // console.log(biomes_[0]['timestamp']);
+        // console.log(biomes_[1]['timestamp']);
 
     } else {
         await getCurrentDaysJson(date);
         biomes_ = getBiomesOnInit();
-        console.log('------');
-        console.log(biomes_);
-        console.log(biomes_[0]['timestamp']);
-        console.log(biomes_[1]['timestamp']);
         dailyDeal_ = getDailyDealData();
+        // console.log('------');
+        // console.log(biomes_);
+        // console.log(biomes_[0]['timestamp']);
+        // console.log(biomes_[1]['timestamp']);
     }
 
     let currentDatetime = date.toISOString().slice(0, 10);
-    // currentDatetime = replaceCharactersAtIndices(currentDatetime, [[13, '-'], [16,'-']]);
     let currentDateTimeHREF = getDomainURL()+'/static/json/bulkmissions/'+currentDatetime+'.json';
 
     let nextDatetime = getNextDateMidnightUTC(date).split('T')[0];
-    // nextDatetime = replaceCharactersAtIndices(nextDatetime, [[13, '-'], [16,'-']]);
     let nextDateTimeHREF = getDomainURL()+'/static/json/bulkmissions/'+nextDatetime+'.json';
 
     let ddDatetime = getPreviousThursdayTimestamp();
     ddDatetime = replaceCharactersAtIndices(ddDatetime, [[13, '-'], [16,'-']]);
     let ddDatetimeHREF = getDomainURL()+'/static/json/DD_'+ddDatetime+'.json';
-
-    let dailyDealDatetime = getCurrentDateMidnightUTC();
-    dailyDealDatetime = replaceCharactersAtIndices(dailyDealDatetime, [[13, '-'], [16,'-']]);
-    let dailyDealHREF = getDomainURL()+`/static/json/dailydeals/${dailyDealDatetime}.json`;
-
 
     let html = `
     <div id="current">
@@ -1909,21 +1917,19 @@ async function initialize() {
     
     <div class="grid-container">
 
-    <div class="dd-container">
     <h2>
-    <img class="image-container" src="/static/dd.png">
+    <div class="dd-container" dd="dd">
     <div id="Deep-Dive-Normal" class="dd-missions">
     </div>
-    </h2>
     </div>
+    </h2>
 
-    <div class="dd-container">
     <h2>
-    <img class="image-container" src="/static/edd.png">
+    <div class="dd-container" dd="edd">
     <div id="Deep-Dive-Elite" class="dd-missions">
     </div>
-    </h2>
     </div>
+    </h2>
 
     </div>
     
@@ -1935,7 +1941,7 @@ async function initialize() {
     </div>
 
     <div class="jsonc">
-    <div class="jsonlinks"><span style="color: white;font-size: 30px;font-family: BebasNeue, sans-serif;"> <a class="jsonlink" href="${currentDateTimeHREF}">TODAY'S MISSION DATA</a> | <a class="jsonlink" href="${nextDateTimeHREF}">TOMORROW'S MISSION DATA</a> | <a class="jsonlink" href="${ddDatetimeHREF}">CURRENT DEEP DIVE DATA</a> | <a class="jsonlink" href="${dailyDealHREF}">CURRENT DAILY DEAL DATA</a> | <a class="jsonlink" href="/static/xp_calculator.html">CLASS XP CALCULATOR</a> | <a class="jsonlink" href="https://github.com/rolfosian/drgmissions/">GITHUB</a></span> </div>
+    <div class="jsonlinks"><span style="color: white;font-size: 30px;font-family: BebasNeue, sans-serif;"> <a id="currentDaysJsonLink" class="jsonlink" href="${currentDateTimeHREF}">TODAY'S DATA</a> | <a id="tomorrowDaysJsonLink" class="jsonlink" href="${nextDateTimeHREF}">TOMORROW'S DATA</a> | <a class="jsonlink" href="${ddDatetimeHREF}">CURRENT DEEP DIVE DATA</a> | <a class="jsonlink" href="/static/xp_calculator.html">CLASS XP CALCULATOR</a> | <a class="jsonlink" href="https://github.com/rolfosian/drgmissions/">GITHUB</a></span> </div>
     <span class="credits">Send credits (eth): 0xb9c8591A80A3158f7cFFf96EC3c7eA9adB7818E7</span>
     </div>
     <p class='gsgdisclaimer'><i>This website is a third-party platform and is not affiliated, endorsed, or sponsored by Ghost Ship Games. The use of Deep Rock Galactic's in-game assets on this website is solely for illustrative purposes and does not imply any ownership or association with the game or its developers. All copyrights and trademarks belong to their respective owners. For official information about Deep Rock Galactic, please visit the official Ghost Ship Games website.</i></p></div>
@@ -1943,7 +1949,7 @@ async function initialize() {
 
     let mainContent = document.getElementById('mainContent');
     mainContent.innerHTML = html;
-    setBiomeBanners()
+    setBiomeAndDeepDivesBanners()
 
     return [biomes_, dailyDeal_]
 }
@@ -2004,7 +2010,7 @@ function simpleHash(input) {
     return hash;
 }
 
-async function verifyStorages() {
+async function verifyStorages(date) {
     for (let key in localStorages) {
         // try {
             // if (key == 'img') {
@@ -2022,10 +2028,11 @@ async function verifyStorages() {
             //     continue
             // }
 
-            if (key == 'homepageScript') {
-                setStorages(key, null)
-                continue
-            }
+            // if (key == 'homepageScript') {
+            //     setStorages(key, null)
+            //     continue
+            // }
+
             let v = localStorage.getItem(key);
             if (v) {
                 if (localStoragesHashes.hasOwnProperty(key)) {
@@ -2033,12 +2040,12 @@ async function verifyStorages() {
                         localStorages[key] = JSON.parse(v);
                     } else {
                         console.log(key, simpleHash(v))
-                        localStorages[key] = null;
+                        setStorages(key, null);
                     }
  
                 } else if (key === 'currentDaysJson') {
                     let data = JSON.parse(v);
-                    if (data[0] != new Date().toISOString().slice(0, 10)) {
+                    if (data[0] != date.toISOString().slice(0, 10)) {
                         setStorages(key, null);
                     } else {
                         localStorages[key] = data;
@@ -2054,12 +2061,13 @@ async function verifyStorages() {
         //     console.log(key, error)
         // }
     
-        console.log(key, localStorages[key]);
+        // console.log(key, localStorages[key]);
         }
 
     if (!localStorages['homepageScript']) {
        setStorages('homepageScript', await preloadHomepageScript());
     }
+    // console.log(localStorages['homepageScript'])
 }
 function shouldNotLoadFromLocalStorage(storageType, verificationStatus) {
     return !localStorages[storageType] || !verificationStatus;
@@ -2078,9 +2086,9 @@ var localStorages = {
     'homepageScript' : null,
 };
 var localStoragesHashes = {
-    'img' : 118045380,
-    'fonts' : -1224859869,
-    'homepageScript' : 1570522210,
+    'img' : 530276585,
+    'fonts' : 906557479,
+    'homepageScript' : 717494654,
 };
 
 var cacheActive = false;
@@ -2099,7 +2107,9 @@ var initialized = false;
 document.addEventListener('DOMContentLoaded', async function() {
     // try {
         await waitRotation();
-        await verifyStorages();
+
+        let date = new Date()
+        await verifyStorages(date);
         
         if (localStorages['isBackgroundHidden']) {
             toggleBackground();
@@ -2107,9 +2117,11 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (localStorages['areButtonsHidden']) {
             toggleButtons();
         }
-        // if (localStorages['seasonSelected'] === 's4') {
-        //     document.getElementById('season').checked = true;
-        // }
+        if (localStorages['seasonSelected'] === 's4') {
+            document.getElementById('season').checked = true;
+        }
+
+
         // let seasonBoxValues = {
         //     's0' : 'No Season',
         //     's1': 'Season 1',
@@ -2124,10 +2136,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         //     option.value = season;
         //     option.textContent = seasonBoxValues[season];
         //     seasonBox.appendChild(option);
-        //     if (season === localStorages['seasonSelected']) {
-        //         seasonBox.value = seasonBoxValues[season]
-        //     }
         // }
+        // seasonBox.value = seasonBoxValues[localStorages['seasonSelected']]
+
         if (!localStorages['fonts']) {
             await preloadFonts();
         } else {
@@ -2139,20 +2150,24 @@ document.addEventListener('DOMContentLoaded', async function() {
             await loadImgsFromLocalStorageAll()
         }
 
-        var breakfast = await initialize();
+        var breakfast = await initialize(date);
         biomes = breakfast[0];
         dailyDeal = breakfast[1];
         breakfast = undefined;
 
         var homepageScript = document.createElement('script');
-        // homepageScript.textContent = localStorages['homepageScript']
+        homepageScript.textContent = localStorages['homepageScript']
         document.head.appendChild(homepageScript);
-        // await onLoad(); // bottom of homepage.js, access via console.log(localStorages['homepageScript] or /static/homepage.js)
+        homepageScript.onload = async () => {
+            await onLoad(); // bottom of homepage.js
+        }
+        await homepageScript.onload()
+        
 
-        homepageScript.src = "/static/homepage.js"
-        homepageScript.onload = async function () {
-           await onLoad(); // bottom of homepage.js
-        };
+        // homepageScript.src = "/static/homepage.js"
+        // homepageScript.onload = async function () {
+        //    await onLoad(); // bottom of homepage.js
+        // };
 
     // } catch (error) {
         // alert(error);

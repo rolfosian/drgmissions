@@ -3,7 +3,7 @@ import shutil
 import os
 from datetime import datetime, timedelta
 
-def split_json_raw(DRG):
+def split_json_bulkmissions_raw(DRG):
     if os.path.isdir('./static/json/bulkmissions'):
         shutil.rmtree('./static/json/bulkmissions')
         os.mkdir('./static/json/bulkmissions')
@@ -252,9 +252,47 @@ def main():
             split_json(num_days, DRG)
             return
 
-    split_json_raw(DRG)
+    split_json_bulkmissions_raw(DRG)
 
-# main()
+def group_by_day_and_split_all(DRG):
+    def group_json_by_days(DRG):
+        timestamps_dt = [datetime.fromisoformat(ts[:-1]) for ts in DRG.keys()]
+        
+        grouped_by_days = {}
+        for timestamp in timestamps_dt:
+            date = timestamp.date().strftime('%Y-%m-%d')
+            if date not in grouped_by_days:
+                grouped_by_days[date] = {}
+            timestamp = timestamp.strftime("%Y-%m-%dT%H:%M:%SZ")
+            grouped_by_days[date][timestamp] = DRG[timestamp]
+            
+        return grouped_by_days
+    def add_daily_deals_to_grouped_json(DRG):
+        with open('drgdailydeals.json', 'r') as f:
+            AllTheDeals = json.load(f)
+        
+            for timestamp, deal in AllTheDeals.items():
+                deal[timestamp] = timestamp
+                try:
+                    DRG[timestamp.split('T')[0]]['dailyDeal'] = deal
+                except:
+                    continue
+        return DRG
+    def split_json_bulkmissions_raw(DRG):
+        if os.path.isdir('./static/json/bulkmissions'):
+            shutil.rmtree('./static/json/bulkmissions')
+        os.mkdir('./static/json/bulkmissions')
+        
+        for timestamp, dictionary in DRG.items():
+            fname = timestamp.replace(':','-')
+            with open(f'./static/json/bulkmissions/{fname}.json', 'w') as f:
+                json.dump(dictionary, f)
+
+    to_split = group_json_by_days(DRG)
+    to_split = add_daily_deals_to_grouped_json(to_split)
+    split_json_bulkmissions_raw(to_split)
+
+main()
 
 # with open('drgmissionsgod.json', 'r') as f:
 #     DRG = json.load(f)
@@ -263,4 +301,6 @@ def main():
 # DRG = group_json_by_days(DRG)
 # DRG = add_daily_deals_to_grouped_json(DRG)
 # DRG = extract_days_from_json(DRG, 300)
-# print(len(list(DRG.keys())))
+# days = list(DRG.keys())
+# print(len(days))
+# [print(day) for day in days]

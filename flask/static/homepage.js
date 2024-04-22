@@ -81,9 +81,8 @@ function topMissionsCountdown() {
 
     function dispatchCacheEvent(isMidnightUpcoming_, date_) {
         let upcomingBiomeCacheEvent = new Event('upcomingBiomeCache');
-        let date__ = new Date(date_)
         upcomingBiomeCacheEvent.isMidnightUpcoming = isMidnightUpcoming_;
-        upcomingBiomeCacheEvent.date = date__;
+        upcomingBiomeCacheEvent.date = date_;
         document.dispatchEvent(upcomingBiomeCacheEvent);
     }
 
@@ -93,7 +92,7 @@ function topMissionsCountdown() {
         if (remainingTime >= 0){
             isMidnightUpcoming_ = isMidnightUpcoming(date_);
         }
-        if (remainingTime < 60 && !cacheActive && remainingTime > 0) {
+        if (remainingTime < 102 && !cacheActive && remainingTime > 0) {
             cacheActive = true;
             dispatchCacheEvent(isMidnightUpcoming_, date_)
         }
@@ -136,6 +135,7 @@ function topDailyDealCountdown() {
     let targetHour = 0;
     let targetTime = new Date();
     let countdownTimer;
+    let isDailyDealRefreshing;
 
     function startCountdown() {
         targetTime.setUTCHours(targetHour, 0, 0, 0);
@@ -146,7 +146,8 @@ function topDailyDealCountdown() {
         let date = new Date()
         let now = date.getTime();
         let remainingTime = targetTime.getTime() - now;
-        if (remainingTime <= 0) {
+        if (remainingTime < 0 && !isDailyDealRefreshing) {
+            isDailyDealRefreshing = true;
             clearInterval(countdownTimer);
             let event = new Event('refreshDailyDeal')
             event.dateString = date.toISOString().slice(0, 10)
@@ -169,8 +170,8 @@ function topDailyDealCountdown() {
         }
         await refreshDailyDeal();
         startCountdown();
+        isDailyDealRefreshing = false;
     });
-
 
     startCountdown();
 };
@@ -229,7 +230,7 @@ async function onLoad() {
     document.getElementById("upcoming").style.visibility = 'visible';
     initialized = true
 
-    setupIdleVideoPause('background-video', 180000)
+    setupIdleVideoPause('background-video', 10000)
     topDailyDealCountdown()
     topMissionsCountdown()
     deepDiveCountDown()

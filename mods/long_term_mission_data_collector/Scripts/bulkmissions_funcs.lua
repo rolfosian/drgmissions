@@ -112,11 +112,6 @@ function GetMissions(desired_season)
             elseif desired_season == 's4' then
                 S4On()
                 remotemissions = manager:GetAvailableMissions()
-                if HasOptedOutSeasonContent() then
-                    remotemissions = manager:GetAvailableMissionsWithSeasonContentCheck(false)
-                else
-                    remotemissions = manager:GetAvailableMissionsWithSeasonContentCheck(true)
-                end
             end
             if remotemissions then
                 for index, remotemission in pairs(remotemissions) do
