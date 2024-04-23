@@ -2049,8 +2049,6 @@ var localStoragesHashes = {
     'homepageScript' : 717494654,
 };
 
-var loadingT = document.getElementById('loading');
-
 var cacheActive = false;
 var isRefreshing = false;
 var tempBiomes;
@@ -2081,7 +2079,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             document.getElementById('season').checked = true;
         }
 
-
         // let seasonBoxValues = {
         //     's0' : 'No Season',
         //     's1': 'Season 1',
@@ -2099,20 +2096,17 @@ document.addEventListener('DOMContentLoaded', async function() {
         // }
         // seasonBox.value = seasonBoxValues[localStorages['seasonSelected']]
 
-        loadingT.textContent = 'Loading fonts...';
         if (!localStorages['fonts']) {
             await preloadFonts();
         } else {
             await loadFontsFromLocalStorageObj();
         }
-        loadingT.textContent = 'Loading images...';
         if (!localStorages['img']) {
             await preloadImagesAll();
         } else {
             await loadImgsFromLocalStorageAll();
         }
 
-        loadingT.textContent = 'Initializing...';
         var breakfast = await initialize(date);
         biomes = breakfast[0];
         dailyDeal = breakfast[1];
@@ -2125,7 +2119,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             await onLoad(); // bottom of homepage.js
         }
         await homepageScript.onload();
-        loadingT.textContent = '';
         
 
         // homepageScript.src = "/static/homepage.js"
