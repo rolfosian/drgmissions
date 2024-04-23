@@ -12,14 +12,14 @@ var biomeBanners = {
     'Hollow Bough': '/static/DeepDive_MissionBar_HollowBough.webp'
 }
 var biomeBannersImages = {};
-biomeBannersImages.name = 'biomeBanners'
+biomeBannersImages.name = 'biomeBanners';
 
 var deepDivesBanners = {
     'dd' : '/static/dd.webp',
     'edd' : '/static/edd.webp'
 };
 deepDivesBannersImages = {};
-deepDivesBannersImages.name = 'deepDivesBanners'
+deepDivesBannersImages.name = 'deepDivesBanners';
 
 function setBiomeAndDeepDivesBanners() {
     let minerals = {
@@ -49,8 +49,8 @@ function setBiomeAndDeepDivesBanners() {
 
     for (let deepDive in deepDivesBannersImages) {
         let div = document.querySelector(`div[dd="${deepDive}"]`);
-        deepDivesBannersImages[deepDive].classList.add('banner')
-        div.prepend(deepDivesBannersImages[deepDive])
+        deepDivesBannersImages[deepDive].classList.add('banner');
+        div.prepend(deepDivesBannersImages[deepDive]);
     }
 }
 
@@ -65,7 +65,7 @@ var primaryObjs = {
     'Industrial Sabotage': '/static/img/Sabotage_icon.webp'
 };
 var primaryObjsImages = {};
-primaryObjsImages.name = 'primaryObjsImages'
+primaryObjsImages.name = 'primaryObjsImages';
 
 var primaryObjResources = {
     'hexagon' : '/static/img/hexagon.webp',
@@ -79,7 +79,7 @@ var primaryObjResources = {
     'Industrial Sabotage': '/static/img/Icon_Facility_DataRack.webp'
 };
 var primaryObjResourcesImages = {};
-primaryObjResourcesImages.name = 'primaryObjResourcesImages'
+primaryObjResourcesImages.name = 'primaryObjResourcesImages';
 
 var secondaryObjs = {
     'ApocaBlooms': '/static/img/Apoca_bloom_icon.webp',
@@ -92,7 +92,7 @@ var secondaryObjs = {
     'Hollomite': '/static/img/Hollomite_icon.webp'
 };
 var secondaryObjsImages = {};
-secondaryObjsImages.name = 'secondaryObjsImages'
+secondaryObjsImages.name = 'secondaryObjsImages';
 
 var complexities = {
     '1': '/static/img/Icons_complexity_1.webp',
@@ -100,7 +100,7 @@ var complexities = {
     '3': '/static/img/Icons_complexity_3.webp'
 };
 var complexitiesImages = {};
-complexitiesImages.name = 'complexitiesImages'
+complexitiesImages.name = 'complexitiesImages';
 
 var lengths = {
     '1': '/static/img/Icons_length_1.webp',
@@ -108,7 +108,7 @@ var lengths = {
     '3': '/static/img/Icons_length_3.webp'
 };
 var lengthsImages = {};
-lengthsImages.name = 'lengthsImages'
+lengthsImages.name = 'lengthsImages';
 
 var mutators = {
     'Critical Weakness': '/static/img/Mutator_critical_weakness_icon.webp',
@@ -121,7 +121,7 @@ var mutators = {
     'Volatile Guts': '/static/img/Mutator_volatile_guts_icon.webp'
 };
 var mutatorsImages = {};
-mutatorsImages.name = 'mutatorsImages'
+mutatorsImages.name = 'mutatorsImages';
 
 var warnings = {
     'Cave Leech Cluster': '/static/img/Warning_cave_leech_cluster_icon.webp',
@@ -139,7 +139,7 @@ var warnings = {
     'Rival Presence': '/static/img/Warning_rival_presence_icon.webp'
 };
 var warningsImages = {};
-warningsImages.name = 'warningsImages'
+warningsImages.name = 'warningsImages';
 
 var secondaryObjsDD = {
     "Repair Minimules": "/static/img/Icon_Salvage_Mules_Objective_DDsecondaryobj.webp",
@@ -149,7 +149,7 @@ var secondaryObjsDD = {
     "Black Box": "/static/img/Blackbox_icon_DDsecondaryobj.webp"
 };
 var secondaryObjsDDImages = {};
-secondaryObjsDDImages.name = 'secondaryObjsDDImages'
+secondaryObjsDDImages.name = 'secondaryObjsDDImages';
 
 var biomesDD = {
     'Crystalline Caverns': '/static/img/DeepDive_MissionBar_CrystalCaves.webp',
@@ -164,7 +164,7 @@ var biomesDD = {
     'Hollow Bough': '/static/img/DeepDive_MissionBar_HollowBough.webp'
 };
 var biomesDDImages = {};
-biomesDDImages.name = 'biomesDDImages'
+biomesDDImages.name = 'biomesDDImages';
 
 var dailyDealResources = {
     'Bismor': '/static/img/Bismor_icon.webp',
@@ -177,7 +177,7 @@ var dailyDealResources = {
     'Bubble': '/static/img/Icon_TradeTerminal_SaleBubble.webp'
 };
 var dailyDealResourcesImages = {};
-dailyDealResourcesImages.name = 'dailyDealResourcesImages'
+dailyDealResourcesImages.name = 'dailyDealResourcesImages';
 
 var fontNamesAndUrls = {
     'CarbonThin-W00-Regular' : '/static/img/CarbonThin-W00-Regular.woff2',
@@ -211,10 +211,10 @@ async function fetchBinaryData(key, url) {
 
 async function preloadImages(imageObj, imageCache) {
     let promises = [];
-    base64LocalStoragesImg[imageCache.name] = {}
+    base64LocalStoragesImg[imageCache.name] = {};
 
     for (let key in imageObj) {
-        let promisedBinary = fetchBinaryData(key, imageObj[key])
+        let promisedBinary = fetchBinaryData(key, imageObj[key]);
         promises.push(promisedBinary);
     }
     let promisedBinaries = await Promise.all(promises);
@@ -222,17 +222,20 @@ async function preloadImages(imageObj, imageCache) {
     promises = [];
     for (let i = 0; i < promisedBinaries.length; i++) {
         let promisedBinary = promisedBinaries[i];
-        key = promisedBinary[0]
+        key = promisedBinary[0];
         let base64Data = arrayBufferToBase64(promisedBinary[1]);
         base64LocalStoragesImg[imageCache.name][key] = base64Data;
-        let img = new Image()
-        img.src = "data:image/webp;base64," + base64Data
+        let img = new Image();
+        img.src = "data:image/webp;base64," + base64Data;
         img.onload = async () => {
-            imageCache[key] = img
+            imageCache[key] = img;
         }
-        promises.push(img.onload())
+        promises.push(img.onload());
     }
-    await Promise.all(promises)
+    await Promise.all(promises);
+
+    delete imageCache.name;
+    imageObj = undefined;
 
     // alternative to above loop but i dont think the overhead on this is worth it, idk if its worth even promising that one either
     // promises = promisedBinaries.map(async promisedBinary => {
@@ -266,6 +269,9 @@ async function loadImgsFromLocalStorageObj(imageObj, imageCache) {
         promises.push(img.onload())
     }
     await Promise.all(promises)
+
+    delete imageCache.name;
+    imageObj = undefined;
 }
 
 async function loadImgsFromLocalStorageAll() {
@@ -284,29 +290,6 @@ async function loadImgsFromLocalStorageAll() {
         loadImgsFromLocalStorageObj(dailyDealResources, dailyDealResourcesImages)
     ]);
     base64LocalStoragesImg = undefined;
-    primaryObjs = undefined;
-    primaryObjResources = undefined;
-    secondaryObjs = undefined;
-    complexities = undefined;
-    lengths = undefined;
-    mutators = undefined;
-    warnings = undefined;
-    secondaryObjsDD = undefined;
-    biomeBanners = undefined;
-    dailyDealResources = undefined;
-    deepDivesBanners = undefined;
-
-    delete primaryObjsImages.name;
-    delete primaryObjResourcesImages.name;
-    delete secondaryObjsImages.name;
-    delete complexitiesImages.name;
-    delete lengthsImages.name;
-    delete mutatorsImages.name;
-    delete warningsImages.name;
-    delete secondaryObjsDDImages.name;
-    delete biomeBannersImages.name;
-    delete dailyDealResourcesImages.name;
-    delete deepDivesBannersImages.name;
 }
 
 async function preloadFonts(){
@@ -354,32 +337,8 @@ async function preloadImagesAll() {
         preloadImages(biomeBanners, biomeBannersImages),
         preloadImages(deepDivesBanners, deepDivesBannersImages)
     ]);
-    localStorage.setItem('img', JSON.stringify(base64LocalStoragesImg))
-
+    localStorage.setItem('img', JSON.stringify(base64LocalStoragesImg));
     base64LocalStoragesImg = undefined;
-    primaryObjs = undefined;
-    primaryObjResources = undefined;
-    secondaryObjs = undefined;
-    complexities = undefined;
-    lengths = undefined;
-    mutators = undefined;
-    warnings = undefined;
-    secondaryObjsDD = undefined;
-    biomeBanners = undefined;
-    dailyDealResources = undefined;
-    deepDivesBanners = undefined;
-
-    delete primaryObjsImages.name;
-    delete primaryObjResourcesImages.name;
-    delete secondaryObjsImages.name;
-    delete complexitiesImages.name;
-    delete lengthsImages.name;
-    delete mutatorsImages.name;
-    delete warningsImages.name;
-    delete secondaryObjsDDImages.name;
-    delete biomeBannersImages.name;
-    delete dailyDealResourcesImages.name;
-    delete deepDivesBannersImages.name;
 }
 
 async function preloadHomepageScript() {
@@ -567,7 +526,7 @@ async function waitRotation() {
         const currentMinute = currentDate.getMinutes();
         const currentSecond = currentDate.getSeconds() + currentDate.getMilliseconds() / 1000;
         if (currentSecond > 58.50 && inList(targetMinutes59, currentMinute)) {
-            await sleep(1500)
+            await sleep(1500);
             continue
         }
         break
@@ -616,33 +575,33 @@ function getPreviousThursdayTimestamp() {
 }
 
 function getCurrentMissionData() {
-    const datetime = roundTimeDown(getCurrentDateTimeUTC())
-    return localStorages['currentDaysJson'][1][datetime]
+    const datetime = roundTimeDown(getCurrentDateTimeUTC());
+    return localStorages['currentDaysJson'][1][datetime];
 }
 function getUpcomingMissionData() {
-    const datetime = roundTimeUp(getCurrentDateTimeUTC())
-    return localStorages['currentDaysJson'][1][datetime]
+    const datetime = roundTimeUp(getCurrentDateTimeUTC());
+    return localStorages['currentDaysJson'][1][datetime];
 }
 
 async function getDeepDiveData() {
-    let datetime = getPreviousThursdayTimestamp()
-    datetime = replaceCharactersAtIndices(datetime, [[13, '-'], [16,'-']])
+    let datetime = getPreviousThursdayTimestamp();
+    datetime = replaceCharactersAtIndices(datetime, [[13, '-'], [16,'-']]);
     let data;
     try {
-        data = await loadJSON(getDomainURL()+`/static/json/DD_${datetime}.json`)
+        data = await loadJSON(getDomainURL()+`/static/json/DD_${datetime}.json`);
     } catch {
     }
-    return data
+    return data;
 }
 
 function renderMission(m_d) {
     const div = document.createElement('div');
-    div.classList.add('mission-hover-zoom')
-    div.classList.add('mission')
-    div.id = m_d['CodeName']
+    div.classList.add('mission-hover-zoom');
+    div.classList.add('mission');
+    div.id = m_d['CodeName'];
 
     const canvas = document.createElement('canvas');
-    canvas.title = m_d["CodeName"]
+    canvas.title = m_d["CodeName"];
     canvas.width = 350;
     canvas.height = 300;
     var ctx = canvas.getContext('2d');
@@ -757,9 +716,9 @@ function renderBiomes_(dictionary) {
     let renderedBiomes = {};
 
     for (var season in dictionary) {
-        var Biomes = dictionary[season]['Biomes']
-        renderedBiomes[season] = {}
-        renderedBiomes[season]['Biomes'] = {}
+        var Biomes = dictionary[season]['Biomes'];
+        renderedBiomes[season] = {};
+        renderedBiomes[season]['Biomes'] = {};
 
         for (let biome in Biomes) {
             let biomeMissions = Biomes[biome];
@@ -786,9 +745,9 @@ function renderBiomes_(dictionary) {
 }
 function renderBiomesFlat(dictionary) {
     let renderedBiomes = {};
-    var Biomes = dictionary['Biomes']
-    renderedBiomes['Biomes'] = {}
-    renderedBiomes['timestamp'] = dictionary['timestamp']
+    var Biomes = dictionary['Biomes'];
+    renderedBiomes['Biomes'] = {};
+    renderedBiomes['timestamp'] = dictionary['timestamp'];
 
     for (let biome in Biomes) {
         let biomeMissions = Biomes[biome];
@@ -796,10 +755,10 @@ function renderBiomesFlat(dictionary) {
 
         for (let i = 0; i < biomeMissions.length; i++) {
             let mission = biomeMissions[i];
-            let mission1 = {}
+            let mission1 = {};
 
             if (mission.hasOwnProperty('season_modified')) {
-                mission1['season_modified'] = {}
+                mission1['season_modified'] = {};
                 for (let season in mission['season_modified']) {
                     let modifiedMission = mission['season_modified'][season];
                     mission1['season_modified'][season] = {};
@@ -827,13 +786,13 @@ function renderBiomesFlat(dictionary) {
 function renderBiomes(dictionary) {
     let bs;
     if (dictionary.hasOwnProperty('s0')) {
-        bs = renderBiomes_(dictionary)
-        // console.log(bs['timestamp'])
-        return bs
+        bs = renderBiomes_(dictionary);
+        // console.log(bs['timestamp']);
+        return bs;
     } else {
-        bs =  renderBiomesFlat(dictionary)
-        // console.log(bs['timestamp'])
-        return bs
+        bs =  renderBiomesFlat(dictionary);
+        // console.log(bs['timestamp']);
+        return bs;
     }
 }
 
@@ -869,7 +828,7 @@ async function tempCacheUpcomingBiomes(isMidnightUpcoming_, date) {
             break
     }
 
-    tempBiomes = [currentBiomes, upcomingBiomes]
+    tempBiomes = [currentBiomes, upcomingBiomes];
     // console.log('------')
     // console.log(tempBiomes)
     // console.log(date.toISOString())
@@ -908,7 +867,7 @@ async function getBiomesMidnight() {
     if (tempCurrentDaysJson) {
         // console.log(tempCurrentDaysJson)
         setStorages('currentDaysJson', tempCurrentDaysJson);
-        tempCurrentDaysJson = undefined
+        tempCurrentDaysJson = undefined;
     }
     let upcomingBiomes = tempBiomes[1];
     return [currentBiomes, upcomingBiomes];
@@ -920,42 +879,42 @@ function changeSeason(Biomes, season) {
         document.getElementById('currentButton').click();
     }
 
-    setStorages('seasonSelected', season)
+    setStorages('seasonSelected', season);
 }
 
 function toggleSeason4(Biomes, bool) {
     switch (bool) {
         case (true):
-            document.getElementById("season").value = 's4'
+            document.getElementById("season").value = 's4';
             arrayBiomes(Biomes, 's4');
-            setStorages('seasonSelected', 's4')
+            setStorages('seasonSelected', 's4');
             break
         case (false):
-            document.getElementById("season").value = 's0'
+            document.getElementById("season").value = 's0';
             arrayBiomes(Biomes, 's0');
-            setStorages('seasonSelected', 's0')
+            setStorages('seasonSelected', 's0');
             break
     }
 }
 
 function hasMidnightJustBeen(datestring) {
-    return datestring.slice(11, 19) === '00:00:00'
+    return datestring.slice(11, 19) === '00:00:00';
 }
 function rolloverCurrentDaysJsonLink (currentDaysTimestamp) {
     let currentDaysJsonLink = document.getElementById('currentDaysJsonLink'); 
-    currentDaysJsonLink.href = getDomainURL()+'/static/json/bulkmissions/'+currentDaysTimestamp.slice(0, 10)+'.json'
+    currentDaysJsonLink.href = getDomainURL()+'/static/json/bulkmissions/'+currentDaysTimestamp.slice(0, 10)+'.json';
 
     let tomorrowDaysJsonLink = document.getElementById('tomorrowDaysJsonLink');
-    tomorrowDaysJsonLink.href = getDomainURL()+'/static/json/bulkmissions/'+getNextDateMidnightUTC(currentDaysTimestamp).slice(0, 10)+'.json'
+    tomorrowDaysJsonLink.href = getDomainURL()+'/static/json/bulkmissions/'+getNextDateMidnightUTC(currentDaysTimestamp).slice(0, 10)+'.json';
 }
 async function refreshBiomes(isMidnightUpcoming_, retry=false) {
     let refreshDate = new Date();
-    let refreshDateISOString = refreshDate.toISOString().slice(0, 19)+'Z'
+    let refreshDateISOString = refreshDate.toISOString().slice(0, 19)+'Z';
     let expectedCurrentTimestamp = roundTimeDown(refreshDateISOString);
-    let expectedUpcomingTimestamp = roundTimeUp(refreshDate)
+    let expectedUpcomingTimestamp = roundTimeUp(refreshDate);
 
     if (tempBiomes[0]['timestamp'] != expectedCurrentTimestamp || tempBiomes[1]['timestamp'] != expectedUpcomingTimestamp) {
-        // console.log('BROWSER TAB INACTIVITY????????????????????????????????')
+        // console.log('BROWSER TAB INACTIVITY????????????????????????????????');
 
         isMidnightUpcoming_ = isMidnightUpcoming(refreshDateISOString)
         if (isMidnightUpcoming_) {
@@ -965,11 +924,11 @@ async function refreshBiomes(isMidnightUpcoming_, retry=false) {
         } else if (localStorages['currentDaysJson'][0] != refreshDateISOString.slice(0, 10)) {
             await getCurrentDaysJson(refreshDate);
             tempBiomes = getBiomesOnInit();
-            return await refreshBiomes(isMidnightUpcoming_, true)
+            return await refreshBiomes(isMidnightUpcoming_, true);
 
         } else {
             tempBiomes = getBiomesOnInit();
-            return await refreshBiomes(isMidnightUpcoming_, true)
+            return await refreshBiomes(isMidnightUpcoming_, true);
         }   
     }
 
@@ -983,7 +942,7 @@ async function refreshBiomes(isMidnightUpcoming_, retry=false) {
     }
 
     if (hasMidnightJustBeen(expectedCurrentTimestamp)) {
-        rolloverCurrentDaysJsonLink(expectedCurrentTimestamp)
+        rolloverCurrentDaysJsonLink(expectedCurrentTimestamp);
     }
     arrayBiomes(biomes, document.getElementById("season").value);
     if (document.getElementById('currentButton').textContent == 'Click here to see current missions') {
@@ -996,15 +955,15 @@ async function refreshBiomes(isMidnightUpcoming_, retry=false) {
 }
 async function refreshDailyDeal() {
     dailyDeal = await getDailyDealData();
-    arrayDailyDeal(dailyDeal)
+    arrayDailyDeal(dailyDeal);
 }
 async function refreshDeepDives() {
     deepDiveData = await getDeepDiveData();
     if (deepDiveData) {
-        arrayDeepDives(deepDiveData)
+        arrayDeepDives(deepDiveData);
 
     } else {
-        handleUnavailableDeepDiveData()
+        handleUnavailableDeepDiveData();
     } 
 }
 
@@ -1018,7 +977,7 @@ function handleUnavailableDeepDiveData() {
     let spanElement = document.createElement("span");
     spanElement.className = "scanners";
     spanElement.textContent = "// AWAITING UP TO DATE DATA \\\\";
-    deepDiveNormalDiv.appendChild(spanElement)
+    deepDiveNormalDiv.appendChild(spanElement);
 
     var deepDiveEliteDiv = document.getElementById('Deep Dive Elite');
     while(deepDiveEliteDiv.hasChildNodes()) {
@@ -1029,32 +988,32 @@ function handleUnavailableDeepDiveData() {
     spanElement = document.createElement("span");
     spanElement.className = "scanners";
     spanElement.textContent = "// AWAITING UP TO DATE DATA \\\\";
-    deepDiveEliteDiv.appendChild(spanElement)
+    deepDiveEliteDiv.appendChild(spanElement);
 }
 
 function arrayDailyDeal(dailyDeal) {
-    let dailyDealCanvas = renderDailyDeal(dailyDeal)
-    let dailyDealDiv = document.getElementById('DailyDeal')
+    let dailyDealCanvas = renderDailyDeal(dailyDeal);
+    let dailyDealDiv = document.getElementById('DailyDeal');
 
     while(dailyDealDiv.hasChildNodes()) {
         dailyDealDiv.removeChild(dailyDealDiv.lastChild);
     };
 
-    dailyDealDiv.appendChild(dailyDealCanvas)
+    dailyDealDiv.appendChild(dailyDealCanvas);
 }
 
 function arrayBiomes_(Biomes, season) { // deprecated, may need for debugging come season 5
-    var currentBiomes = Biomes[0][season]['Biomes']
-    var nextBiomes = Biomes[1][season]['Biomes']
+    var currentBiomes = Biomes[0][season]['Biomes'];
+    var nextBiomes = Biomes[1][season]['Biomes'];
     
     let biomes_ = ['Crystalline Caverns', 'Glacial Strata', 'Radioactive Exclusion Zone', 'Fungus Bogs', 'Dense Biozone', 'Salt Pits', 'Sandblasted Corridors', 'Magma Core', 'Azure Weald', 'Hollow Bough'];
     for (var i_ = 0; i_ < biomes_.length; i_++) {
         var biome = biomes_[i_];
+
         var biomeDiv = document.getElementById(biome);
         while(biomeDiv.hasChildNodes()) {
             biomeDiv.removeChild(biomeDiv.lastChild);
         };
-
         if (!(biome in currentBiomes)) {
             var spanElement = document.createElement("span");
             spanElement.className = "scanners";
@@ -1064,11 +1023,11 @@ function arrayBiomes_(Biomes, season) { // deprecated, may need for debugging co
             var biomeMissions = currentBiomes[biome];
             for (var i = 0; i < biomeMissions.length; i++) {
                 var mission = biomeMissions[i];
-                biomeDiv.appendChild(mission['rendered_mission'])
+                biomeDiv.appendChild(mission['rendered_mission']);
             };
         };
 
-        biomeDiv = document.getElementById(`next${biome}`)
+        biomeDiv = document.getElementById(`next${biome}`);
         while(biomeDiv.hasChildNodes()) {
             biomeDiv.removeChild(biomeDiv.lastChild);
         };
@@ -1081,26 +1040,26 @@ function arrayBiomes_(Biomes, season) { // deprecated, may need for debugging co
             var biomeMissions = nextBiomes[biome];
             for (var i = 0; i < biomeMissions.length; i++) {
                 var mission = biomeMissions[i];
-                biomeDiv.appendChild(mission['rendered_mission'])
+                biomeDiv.appendChild(mission['rendered_mission']);
             };
         };
     };
-    equalizeGridItems()
+    equalizeGridItems();
 }
 
 // array as a verb
 function arrayBiomes(Biomes, season) { // may need for debugging
     // if (Biomes[0].hasOwnProperty('s0')) {
-    //     arrayBiomes_(Biomes, season)
+    //     arrayBiomes_(Biomes, season);
     // } else {
-        arrayBiomesFlat(Biomes, season)
+        arrayBiomesFlat(Biomes, season);
     // }
 }
 function arrayBiomesFlat(Biomes, season) {
-    let currentBiomes = Biomes[0]['Biomes']
-    let nextBiomes = Biomes[1]['Biomes']
+    let currentBiomes = Biomes[0]['Biomes'];
+    let nextBiomes = Biomes[1]['Biomes'];
     let biomeMissions;
-    let isS0 = season === 's0'
+    let isS0 = season === 's0';
     
     let biomes_ = ['Crystalline Caverns', 'Glacial Strata', 'Radioactive Exclusion Zone', 'Fungus Bogs', 'Dense Biozone', 'Salt Pits', 'Sandblasted Corridors', 'Magma Core', 'Azure Weald', 'Hollow Bough'];
     for (let i_ = 0; i_ < biomes_.length; i_++) {
@@ -1119,7 +1078,7 @@ function arrayBiomesFlat(Biomes, season) {
             let spanElement = document.createElement("span");
             spanElement.className = "scanners";
             spanElement.textContent = "// SCANNERS OUT OF RANGE \\\\";
-            biomeDiv.appendChild(spanElement)
+            biomeDiv.appendChild(spanElement);
         } else {
             biomeMissions = currentBiomes[biome];
             for (let i = 0; i < biomeMissions.length; i++) {
@@ -1128,7 +1087,7 @@ function arrayBiomesFlat(Biomes, season) {
                     continue
                 }
                 if (mission.hasOwnProperty('season_modified') && !isS0) {
-                    mission = mission['season_modified'][season]
+                    mission = mission['season_modified'][season];
                 }
                 biomeDiv.appendChild(mission['rendered_mission']);
             }
@@ -1138,7 +1097,7 @@ function arrayBiomesFlat(Biomes, season) {
             let spanElement = document.createElement("span");
             spanElement.className = "scanners";
             spanElement.textContent = "// SCANNERS OUT OF RANGE \\\\";
-            nextBiomeDiv.appendChild(spanElement)
+            nextBiomeDiv.appendChild(spanElement);
         } else {
             biomeMissions = nextBiomes[biome];
             for (let i = 0; i < biomeMissions.length; i++) {
@@ -1147,13 +1106,13 @@ function arrayBiomesFlat(Biomes, season) {
                     continue
                 }
                 if (mission.hasOwnProperty('season_modified') && !isS0) {
-                    mission = mission['season_modified'][season]
+                    mission = mission['season_modified'][season];
                 }
                 nextBiomeDiv.appendChild(mission['rendered_mission']);
             }
         }
     };
-    equalizeGridItems()
+    equalizeGridItems();
 }
 
 function addShadowedTextToImage(canvas, texts, fontSize) {
@@ -1171,7 +1130,7 @@ function addShadowedTextToImage(canvas, texts, fontSize) {
         tempCtx.shadowColor = shadowColor;
         tempCtx.shadowBlur = 7;
         tempCtx.lineWidth = 5;
-        tempCtx.strokeStyle = 'black'
+        tempCtx.strokeStyle = 'black';
         tempCtx.strokeText(text, x, y);
         tempCtx.shadowBlur = 0
     }
@@ -1202,21 +1161,21 @@ function addShadowedTextToImage(canvas, texts, fontSize) {
 
     const codenameX = combinedX + descriptorWidth;
 
-    shadowText(codename, codenameX, y+15, 'black', fontSize, mainFontName)
-    drawText(codename, codenameX, y+15, 'white', fontSize, mainFontName)
+    shadowText(codename, codenameX, y+15, 'black', fontSize, mainFontName);
+    drawText(codename, codenameX, y+15, 'white', fontSize, mainFontName);
 
-    canvas.getContext('2d').drawImage(tempCanvas, 0, 0)
+    canvas.getContext('2d').drawImage(tempCanvas, 0, 0);
 }
 
 function renderDeepDiveBiomeCodename(biome, codename) {
     const texts = ['CODENAME: ', codename];
     const fontSize = 45;
     const canvas = document.createElement('canvas');
-    canvas.classList.add('dd-biome')
+    canvas.classList.add('dd-biome');
     const ctx = canvas.getContext('2d');
     for (let biomeName in biomesDD) {
         if (biomeName == biome) {
-            const img = biomesDDImages[biomeName]
+            const img = biomesDDImages[biomeName];
             canvas.width = img.width;
             canvas.height = img.height;
             ctx.drawImage(img, 0, 0);
@@ -1229,12 +1188,12 @@ function renderDeepDiveBiomeCodename(biome, codename) {
 
 function renderDeepDiveStage(m_d, stageCount) {
     const div = document.createElement('div');
-    div.classList.add('mission-hover-zoom')
-    div.classList.add('mission')
-    div.id = m_d['CodeName']
+    div.classList.add('mission-hover-zoom');
+    div.classList.add('mission');
+    div.id = m_d['CodeName'];
 
     const canvas = document.createElement('canvas');
-    canvas.title = `Stage ${stageCount.toString()}`
+    canvas.title = `Stage ${stageCount.toString()}`;
     canvas.width = 350;
     canvas.height = 300;
     var ctx = canvas.getContext('2d');
@@ -1294,7 +1253,7 @@ function renderDeepDiveStage(m_d, stageCount) {
         'Salvage Operation,default': '3'
     };
 
-    const hexagon = primaryObjResourcesImages['hexagon']
+    const hexagon = primaryObjResourcesImages['hexagon'];
     ctx.drawImage(hexagon, 21, 190, hexagon.width * 0.32, hexagon.height * 0.32);
     drawResource(m_d['PrimaryObjective'], m_d['Complexity'], m_d['Length']);
 
@@ -1322,13 +1281,13 @@ function renderDeepDiveStage(m_d, stageCount) {
         ctx.font = `${fontSize}px ${font}`;
         ctx.fillStyle = 'white';
         ctx.textAlign = 'center';
-        var y = 280
-        if (primaryObj == 'Mining Expedition') y -= 5
+        var y = 280;
+        if (primaryObj == 'Mining Expedition') y -= 5;
         ctx.fillText(text, 69, y);
     }
     ctx.save();
-    resizeCanvas(div, canvas, 0.35, 0.35)
-    div.appendChild(canvas)
+    resizeCanvas(div, canvas, 0.35, 0.35);
+    div.appendChild(canvas);
     return div;
 }
 
@@ -1345,7 +1304,7 @@ function sortDeepDiveStages(stages) {
         }
     }
     for (let i = 0; i < stages.length; i++) {
-        let stage = stages[i]
+        let stage = stages[i];
         if (hasId999 && hasId0) {
             if (stage['id'] === 999) {
                 stage['id'] = -1;
@@ -1380,7 +1339,7 @@ async function arrayDeepDives(deepDiveData) {
         var normalStages = sortDeepDiveStages(deepDiveNormal["Stages"]);
         var stageCount = 0;
         for (var i = 0; i < normalStages.length; i++) {
-            stage = normalStages[i]
+            stage = normalStages[i];
             stageCount += 1;
             stageDiv = renderDeepDiveStage(stage, stageCount);
             deepDiveNormalDiv.appendChild(stageDiv);
@@ -1389,7 +1348,7 @@ async function arrayDeepDives(deepDiveData) {
         var eliteStages = sortDeepDiveStages(deepDiveElite["Stages"]);
         stageCount = 0;
         for (var i = 0; i < eliteStages.length; i++) {
-            stage = eliteStages[i]
+            stage = eliteStages[i];
             stageCount += 1;
             stageDiv = renderDeepDiveStage(stage, stageCount);
             deepDiveEliteDiv.appendChild(stageDiv);
@@ -1401,9 +1360,9 @@ async function arrayDeepDives(deepDiveData) {
 
 function getDailyDealData(isMidnightUpcoming=false) {
     if (isMidnightUpcoming) {
-        return tempDailyDeal
+        return tempDailyDeal;
     }
-    return localStorages['currentDaysJson'][1]['dailyDeal']
+    return localStorages['currentDaysJson'][1]['dailyDeal'];
 }
 
 function scaleImage(ctx, image, scale) {
@@ -1445,8 +1404,8 @@ function renderDailyDeal(dealDict) {
         'Buy':'Savings!', 
         'Sell':'Profit!',
     };
-    var resourceAmount = dealDict['ResourceAmount']
-    var resource = dealDict['Resource']
+    var resourceAmount = dealDict['ResourceAmount'];
+    var resource = dealDict['Resource'];
 
     ctx.fillStyle = 'rgba(0, 44, 81, 255)';
     ctx.fillRect(0, 0, 400, 635);
@@ -1458,20 +1417,20 @@ function renderDailyDeal(dealDict) {
     var text = "TODAY'S OFFER:";
     var fillStyle = 'black';
     drawText(text, 200, 30, 'black', 45, 'CarbonBold-W00-Regular');
-    drawText(resource, 200, 75, 'black', 60, 'Bungee-Regular')
+    drawText(resource, 200, 75, 'black', 60, 'Bungee-Regular');
 
     var resourceImg = dailyDealResourcesImages[resource];
     var text = resourceAmount.toString();
     var fontName = 'Bungee-Regular';
-    ctx.font = `75px ${fontName}`
-    var textWidth = ctx.measureText(text).width
-    drawText(text, 200, 200, 'white', 75, fontName)
+    ctx.font = `75px ${fontName}`;
+    var textWidth = ctx.measureText(text).width;
+    drawText(text, 200, 200, 'white', 75, fontName);
 
-    var resourceImage = resizeImage(resourceImg, resourceImg.width*0.3, resourceImg.height*0.3)
+    var resourceImage = resizeImage(resourceImg, resourceImg.width*0.3, resourceImg.height*0.3);
     var x = ((canvas.width / 2) - textWidth) / 2;
 
     ctx.drawImage(resourceImage, x+25, 150);
-    ctx.save()
+    ctx.save();
 
     ctx.translate(canvas.width, 0);
     ctx.scale(-1, 1);
@@ -1482,7 +1441,7 @@ function renderDailyDeal(dealDict) {
     drawText(buyOrGet[dealDict['DealType']], 200, 290, 'white', 35, 'Bungee-Regular');
 
     var creditsImage = dailyDealResourcesImages['Credits'];
-    creditsImage = resizeImage(creditsImage, creditsImage.width*0.4, creditsImage.height*0.4)
+    creditsImage = resizeImage(creditsImage, creditsImage.width*0.4, creditsImage.height*0.4);
 
     text = dealDict['Credits'].toString();
     drawText(text, 200, 337, 'white', 75, 'Bungee-Regular');
@@ -1500,27 +1459,27 @@ function renderDailyDeal(dealDict) {
     ctx.rotate(20 * Math.PI / 180);
     ctx.drawImage(bubbleImage, 105, 337);
     
-    text = Math.round(dealDict['ChangePercent']).toString()
+    text = Math.round(dealDict['ChangePercent']).toString();
     if (text.length == 2) {
-        text = text.split('')
+        text = text.split('');
         let digit1 = text[0];
-        drawText(digit1, 248, 433, 'black', 75, 'Bungee-Regular')
+        drawText(digit1, 248, 433, 'black', 75, 'Bungee-Regular');
         let digit2 = text[1]+'%';
-        drawText(digit2, 340, 433, 'black', 75, 'Bungee-Regular')
+        drawText(digit2, 340, 433, 'black', 75, 'Bungee-Regular');
         
     } else {
-        text += '%'
-        drawText(text, 321, 433, 'black', 75, 'Bungee-Regular')
+        text += '%';
+        drawText(text, 321, 433, 'black', 75, 'Bungee-Regular');
     }
 
-    text = saveProfit[dealDict['DealType']]
-    drawText(text, 310, 480, 'black', 30, 'Bungee-Regular')
-    ctx.restore()
+    text = saveProfit[dealDict['DealType']];
+    drawText(text, 310, 480, 'black', 30, 'Bungee-Regular');
+    ctx.restore();
 
-    resizeCanvas(div, canvas, 0.5, 0.5)
-    canvas.classList.add('daily_trade')
-    div.appendChild(canvas)
-    return div
+    resizeCanvas(div, canvas, 0.5, 0.5);
+    canvas.classList.add('daily_trade');
+    div.appendChild(canvas);
+    return div;
 }
 function isElementVisible(el) {
     return (el.offsetParent !== null);
@@ -1691,7 +1650,7 @@ function toggleButtons() {
     let missionscountdown = document.getElementById('missionscountdown');
     let DAILYDEAL = document.getElementById('DAILYDEAL');
     let dailydealbutton = document.getElementById('dailydealbutton');
-    let seasonBox = document.getElementById('seasonSelect')
+    let seasonBox = document.getElementById('seasonSelect');
 
     if (buttonDiv.style.display === "none") {
         buttonDiv.style.display = 'block';
@@ -1706,9 +1665,9 @@ function toggleButtons() {
         buttonsbutton.textContent = " x ";
         $("#missionscountdown").slideToggle();
         $("#slideButton").text("Hide countdown");
-        setStorages('areButtonsHidden', false)
+        setStorages('areButtonsHidden', false);
     } else {
-        buttonDiv.style.display = "none"
+        buttonDiv.style.display = "none";
         missionscountdown.style.display = "none";
         backgroundbutton.style.display = "none";
         DAILYDEAL.style.display = "none";
@@ -1717,12 +1676,12 @@ function toggleButtons() {
         currentButton.style.display = "none";
         seasonBox.style.display = "none";
         buttonsbutton.textContent = "+";
-        setStorages('areButtonsHidden', true)
+        setStorages('areButtonsHidden', true);
     }
 };
 window.addEventListener('resize', function(event) {
     if (initialized) {
-        equalizeGridItems()
+        equalizeGridItems();
     }
 });
 async function initialize(date) {
@@ -1947,14 +1906,14 @@ async function initialize(date) {
 
     let mainContent = document.getElementById('mainContent');
     mainContent.innerHTML = html;
-    setBiomeAndDeepDivesBanners()
+    setBiomeAndDeepDivesBanners();
 
     return [biomes_, dailyDeal_]
 }
 
 async function getCurrentDaysJson(date, isMidnightUpcoming_=false) {
     let cdj;
-    const todaysDate = date.toISOString().slice(0, 10)
+    const todaysDate = date.toISOString().slice(0, 10);
 
     if (localStorages['currentDaysJson']) {
         cdj = localStorages['currentDaysJson'];
@@ -1973,11 +1932,11 @@ async function getCurrentDaysJson(date, isMidnightUpcoming_=false) {
                 ]);
                 tempDailyDeal = cdjs[0]['dailyDeal'];
                 setStorages('currentDaysJson', [tomorrowsDate, cdjs[1]]);
-                return [cdjs[0], cdjs[1]]
+                return [cdjs[0], cdjs[1]];
             }
 
         } else if (cdj[0] === todaysDate) {
-            return cdj[1]
+            return cdj[1];
         }
 
     } else if (isMidnightUpcoming_ && !localStorages['currentDaysJson']) {
@@ -1989,12 +1948,12 @@ async function getCurrentDaysJson(date, isMidnightUpcoming_=false) {
         tempDailyDeal = cdjs[0]['dailyDeal'];
         let cdjMidnight = [tomorrowsDate, cdjs[1]];
         setStorages('currentDaysJson', cdjMidnight);
-        return [cdjs[0], cdjs[1]]
+        return [cdjs[0], cdjs[1]];
         
     } else {
         cdj = [todaysDate, await loadJSON(getDomainURL()+`/static/json/bulkmissions/${todaysDate}.json`)];
         setStorages('currentDaysJson', cdj);
-        return cdj[1]
+        return cdj[1];
     }
 }
 
@@ -2037,7 +1996,7 @@ async function verifyStorages(date) {
                     if (simpleHash(v) === localStoragesHashes[key]) {
                         localStorages[key] = JSON.parse(v);
                     } else {
-                        console.log(key, simpleHash(v))
+                        console.log(key, simpleHash(v));
                         setStorages(key, null);
                     }
  
@@ -2063,7 +2022,8 @@ async function verifyStorages(date) {
         }
 
     if (!localStorages['homepageScript']) {
-       setStorages('homepageScript', await preloadHomepageScript());
+        loadingT.textContent = 'Fetching timer script...';
+        setStorages('homepageScript', await preloadHomepageScript());
     }
     // console.log(localStorages['homepageScript'])
 }
@@ -2089,6 +2049,8 @@ var localStoragesHashes = {
     'homepageScript' : 717494654,
 };
 
+var loadingT = document.getElementById('loading');
+
 var cacheActive = false;
 var isRefreshing = false;
 var tempBiomes;
@@ -2106,7 +2068,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     // try {
         await waitRotation();
 
-        let date = new Date()
+        let date = new Date();
         await verifyStorages(date);
         
         if (localStorages['isBackgroundHidden']) {
@@ -2137,17 +2099,20 @@ document.addEventListener('DOMContentLoaded', async function() {
         // }
         // seasonBox.value = seasonBoxValues[localStorages['seasonSelected']]
 
+        loadingT.textContent = 'Loading fonts...';
         if (!localStorages['fonts']) {
             await preloadFonts();
         } else {
-            await loadFontsFromLocalStorageObj()
+            await loadFontsFromLocalStorageObj();
         }
+        loadingT.textContent = 'Loading images...';
         if (!localStorages['img']) {
             await preloadImagesAll();
         } else {
-            await loadImgsFromLocalStorageAll()
+            await loadImgsFromLocalStorageAll();
         }
 
+        loadingT.textContent = 'Initializing...';
         var breakfast = await initialize(date);
         biomes = breakfast[0];
         dailyDeal = breakfast[1];
@@ -2159,7 +2124,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         homepageScript.onload = async () => {
             await onLoad(); // bottom of homepage.js
         }
-        await homepageScript.onload()
+        await homepageScript.onload();
+        loadingT.textContent = '';
         
 
         // homepageScript.src = "/static/homepage.js"

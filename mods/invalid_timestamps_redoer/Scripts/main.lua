@@ -49,6 +49,7 @@ function Main()
 
     -- Initialize Table
     local god = {}
+    utils.CreatePollFile('firstpoll.txt')
     for _, timestamp in pairs(timestamps) do
 
         -- Change System Clock
@@ -80,6 +81,8 @@ function Main()
             end
         end
         god[timestamp] = master
+
+        utils.CreatePollFile('poll.txt')
     end
 
     god = json.encode(god)

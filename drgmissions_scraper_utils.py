@@ -248,10 +248,9 @@ def toggle_system_time():
         print(f"Error {e}")
         
 def format_seconds(seconds):
-    timedelta_ = timedelta(seconds=seconds)
-    hours = int(timedelta_.total_seconds() // 3600)
-    minutes = int((timedelta_.total_seconds() % 3600) // 60)
-    remaining_seconds = timedelta_.total_seconds() % 60
+    hours = int(seconds // 3600)
+    minutes = int((seconds % 3600) // 60)
+    remaining_seconds = seconds % 60
     formatted_time = "{:02d}:{:02d}:{:05.2f}".format(hours, minutes, remaining_seconds)
     return formatted_time
 
@@ -311,6 +310,11 @@ def validate_drgmissions(DRG, patched):
     check_missions_length_complexity(DRG, invalid_keys)
     
     if invalid_keys:
+        if os.path.isfile('poll.txt'):
+            os.remove('poll.txt')
+        if os.path.isfile('firstpoll.txt'):
+            os.remove('firstpoll.txt')
+            
         print('Invalid timestamps found...')
         with open('invalid_timestamps_log.txt', 'w') as f:
             s = ''
@@ -336,33 +340,78 @@ def validate_drgmissions(DRG, patched):
             f.close()
         
         subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
+        
         files = []
-        timeout_seconds = (len(invalid_keys) * 1.9) + 120
-        estimated_time_completion = (len(invalid_keys) *1.7) + 30
-        start_time = time.monotonic()
+        total_increments = len(invalid_keys)
+        total_increments_ = int(str(total_increments))
+        timeout_seconds = (total_increments * 1.9) + 300
+        estimated_time_completion = (total_increments * 1.9) + 30
+        start_time = None
+        poll_switch = False
+        polls = 0
+        
         while True:
-            elapsed_time = time.monotonic() - start_time
-            print(f'{format_seconds(timeout_seconds-elapsed_time)} until timeout. Estimated time until completion: {format_seconds(estimated_time_completion-elapsed_time)}', end="\r")
-
+            if poll_switch:
+                elapsed_time = time.monotonic() - start_time
+                avg_poll_time = elapsed_time / polls
+                timeout_seconds = (total_increments * avg_poll_time) + 300
+                estimated_time_completion = total_increments * avg_poll_time
+                total_increments -= 1
+                print(f'{format_seconds(timeout_seconds)} until timeout. Estimated time until completion: {format_seconds(estimated_time_completion)}', end="\r")
+                poll_switch = False
+                
             if time.monotonic() - start_time > timeout_seconds:
-                print('TIMEOUT, GAME FROZE OR CRASHED. RESTARTING')
+                print('')
+                print('Timeout... process crashed or froze')
                 kill_process_by_name_starts_with('FSD')
                 kill_process_by_name_starts_with('Unreal')
+                
+                start_time = None
+                polls = 0
+                total_increments = int(str(total_increments_))
+                
+                if os.path.isfile('poll.txt'):
+                    os.remove('poll.txt')
                 time.sleep(4)
                 subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
-                start_time = time.monotonic()
+                
             for filename in os.listdir():
+                if filename == 'firstpoll.txt':
+                    start_time = time.monotonic()
+                    while True:
+                        try:
+                            os.remove('firstpoll.txt')
+                            break
+                        except:
+                            continue
+                    break
+                    
+                if filename == 'poll.txt':
+                    polls += 1
+                    poll_switch = True
+                    while True:
+                        try:
+                            os.remove('poll.txt')
+                            break
+                        except:
+                            continue
+                        
                 if filename == 'redonemissions.json':
                     time.sleep(5)
                     files.append(filename)
                     kill_process_by_name_starts_with('FSD')
                     kill_process_by_name_starts_with('Unreal')
+                    
             if files:
                 print(f'Estimated time until completion: {format_seconds(0.00)}')
                 print(f'\n---\nElapsed time: {format_seconds(elapsed_time)}               \n---')
                 break
-            time.sleep(0.1)
             
+            time.sleep(0.1)
+        
+        if os.path.isfile('poll.txt'):
+            os.remove('poll.txt')
+        
         with open('redonemissions.json', 'r') as f:
             redone_missions = f.read()
             redone_missions = re.sub(r':\d{2}Z', ':00Z', redone_missions)

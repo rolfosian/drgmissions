@@ -36,6 +36,7 @@ def main_loop(total_increments, current_time, AllTheDeals):
     game_times = []
     for i in range(total_increments+1):
         sleep(2)
+        
         #Start the game
         subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
         game_start_time = time.monotonic()
@@ -44,6 +45,7 @@ def main_loop(total_increments, current_time, AllTheDeals):
         waiting_for_json = True
         timeout = False
         wait_start_time = time.monotonic()
+        
         #Wait for JSON
         while waiting_for_json:
             if time.monotonic() - wait_start_time > 120:
@@ -54,6 +56,7 @@ def main_loop(total_increments, current_time, AllTheDeals):
                 sleep(3)
                 print('RESTARTING')
                 break
+            
             for filename in os.listdir():
                 if filename == 'drgdailydeal.json':
                     sleep(0.25)
@@ -65,7 +68,9 @@ def main_loop(total_increments, current_time, AllTheDeals):
                     kill_process_by_name_starts_with('Unreal')
                     sleep(3)
                     waiting_for_json = False
+                    
             sleep(0.5)
+            
         if timeout:
             current_time = current_time.replace(hour=0, minute=0, second=1)
             currytime = current_time.strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -84,6 +89,7 @@ def main_loop(total_increments, current_time, AllTheDeals):
         #Set clock forward 1 day
         subprocess.run(['date', reverse_date_format(newtime[0]), '&', 'time', newtime[1]], shell=True)
         total_increments -= 1
+        
     print(f'Estimated time remaining: {format_seconds(0)}')
     return AllTheDeals
 

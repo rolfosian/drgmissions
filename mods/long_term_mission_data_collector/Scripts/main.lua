@@ -54,6 +54,7 @@ function Main()
     local missionscount = 0
     local timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
     -- Loop for the increments
+    utils.CreatePollFile('firstpoll.txt')
     for i = 1, total_increments do
         local master = {}
         for _, season in pairs(seasons) do
@@ -100,11 +101,11 @@ function Main()
         os.execute(command)
 
         socket.sleep(1.4)
-        
+        utils.CreatePollFile('poll.txt')
     end
 
     god = json.encode(god)
-    local file = io.open('redonemissions.json', 'w')
+    local file = io.open('drgmissionsgod.json', 'w')
     if file then
         file:write(god)
         file:close()

@@ -1,3 +1,9 @@
+function CreatePollFile(filename)
+    local file = io.open(filename, 'w')
+    if file then
+        file:close()
+    end
+end
 function ReverseDateFormat(inputDate)
     local oldDate = Split(inputDate, "-")
     local year = oldDate[1]
@@ -420,5 +426,6 @@ return {
     UnpackStandardMission = UnpackStandardMission,
     GetBiome = GetBiome,
     Exit = Exit,
-    GetMissions = GetMissions
+    GetMissions = GetMissions,
+    CreatePollFile = CreatePollFile
 }

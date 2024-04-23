@@ -2,7 +2,7 @@ import subprocess
 import time
 from time import sleep
 import os
-import datetime
+from datetime import datetime
 import json
 import re
 from drgmissions_scraper_utils import(
@@ -21,7 +21,11 @@ def main():
     if 'RUNNING' not in time_service_query:
         enable_system_time()
         sleep(2)
-        
+    if os.path.isfile('poll.txt'):
+        os.remove('poll.txt')
+    if os.path.isfile('firstpoll.txt'):
+        os.remove('firstpoll.txt')
+
     #Set mods.txt for BulkMissions collector
 
     with open('./mods/mods.txt', 'w') as f:
@@ -29,7 +33,7 @@ def main():
         f.close()
 
     #Get target date from user input
-    current_time = datetime.datetime.now()
+    current_time = datetime.now()
     user_date = user_input_set_target_date(current_time)
             
     target_date_format = user_date.strftime("    local target_date = os.time{year=%Y, month=%m, day=%d, hour=%H, min=%M, sec=%S}\n")
@@ -44,21 +48,22 @@ def main():
             main_lines.append(line)
         else:
             main_lines.append(line)
+            
     with open('./mods/long_term_mission_data_collector/Scripts/main.lua', 'w') as f:
         f.writelines(main_lines)
         f.close()
     
     # Calculate the difference in seconds between the current UTC time and the target date
-    current_utc = datetime.datetime.utcnow()
+    current_utc = datetime.utcnow()
     diff_seconds = (user_date - current_utc).total_seconds()
     # Calculate the total amount of 30-minute increments between the current time and the target date
-    total_increments = int(diff_seconds // 1800)
-    total_increments += 1
+    total_increments = int(diff_seconds // 1800) + 1
+    total_increments_ = int(str(total_increments)) + 1
     print(f'Total 30 minute increments: {str(total_increments)}')
-    estimated_time_completion = (total_increments*1.5)+25
+    estimated_time_completion = (total_increments*1.8)+25
 
     #Calculate timeout total seconds duration
-    timeout_seconds = (total_increments * 1.6) + 120
+    timeout_seconds = (total_increments * 1.9) + 300
     print(f'{format_seconds(timeout_seconds)} until timeout\n')
 
     print(f'Estimated time until completion: {format_seconds(estimated_time_completion)}', end='\r')
@@ -70,30 +75,77 @@ def main():
     subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
 
     #Wait for JSON
+    polls = 0
+    poll_switch = False
     files = []
-    start_time = time.monotonic()
+    start_time = None
     while True:
-        elapsed_time = time.monotonic() - start_time
-        print(f'{format_seconds(timeout_seconds-elapsed_time)} until timeout. Estimated time until completion: {format_seconds(estimated_time_completion-elapsed_time)}', end="\r")
-
-        if time.monotonic() - start_time > timeout_seconds:
-            print('TIMEOUT, GAME FROZE OR CRASHED BEFORE TARGET DATE REACHED. RESTARTING')
-            kill_process_by_name_starts_with('FSD')
-            kill_process_by_name_starts_with('Unreal')
-            sleep(4)
-            subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
-            start_time = time.monotonic()
-        for filename in os.listdir():
-            if filename == 'drgmissionsgod.json':
-                sleep(5)
-                files.append(filename)
+        if poll_switch:
+            elapsed_time = time.monotonic() - start_time
+            avg_poll_time = elapsed_time / polls
+            timeout_seconds = (total_increments * avg_poll_time) + 300
+            estimated_time_completion = total_increments * avg_poll_time
+            print(avg_poll_time)
+            print(estimated_time_completion)
+            total_increments -= 1
+            print(f'{format_seconds(timeout_seconds)} until timeout. Estimated time until completion: {format_seconds(estimated_time_completion)}', end='\r')
+            poll_switch = False
+            
+            if time.monotonic() - start_time > timeout_seconds:
+                print('')
+                print('Timeout... process crashed or froze')
                 kill_process_by_name_starts_with('FSD')
                 kill_process_by_name_starts_with('Unreal')
+                
+                start_time = None
+                total_increments = int(str(total_increments_))
+                polls = 0
+                
+                if os.path.isfile('poll.txt'):
+                    os.remove('poll.txt')
+                if os.path.isfile('firstpoll.txt'):
+                    os.remove('firstpoll.txt')
+                    
+                sleep(4)
+                subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
+
+        for filename in os.listdir():
+            if filename == 'firstpoll.txt':
+                start_time = time.monotonic()
+                while True:
+                    try:
+                        os.remove('firstpoll.txt')
+                        break
+                    except:
+                        continue
+                break
+            
+            if filename == 'poll.txt':
+                polls += 1
+                poll_switch = True
+                while True:
+                    try:
+                        os.remove('poll.txt')
+                        break
+                    except:
+                        continue
+                    
+            if filename == 'drgmissionsgod.json':
+                files.append(filename)
+                sleep(5)
+                kill_process_by_name_starts_with('FSD')
+                kill_process_by_name_starts_with('Unreal')
+                break
+                
         if files:
+            print('\n')
             print(f'Estimated time until completion: {format_seconds(0.00)}')
             print(f'\n---\nElapsed time: {format_seconds(elapsed_time)}               \n---')
             break
-        sleep(0.1)
+
+
+    if os.path.isfile('poll.txt'):
+        os.remove('poll.txt')
         
     #Reset mods.txt
     with open('./mods/mods.txt', 'w') as f:

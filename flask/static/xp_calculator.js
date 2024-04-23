@@ -156,4 +156,17 @@ startsubmit();
 document.querySelector('p.loading').style.display = 'none';
 document.getElementById('scal').classList.toggle('collapsed');  
 };
-window.onload = onLoad();
+
+document.addEventListener('DOMContentLoaded', async () => {
+  let f = localStorage.getItem('fonts');
+  if (f) {
+    f = JSON.parse(f);
+    for (key in f) {
+      let base64data = f[key];
+      let font = new FontFace(key, `url(data:font/woff2;base64,${base64data})`);
+      await font.load();
+      document.fonts.add(font);
+    }
+  }
+  onLoad();
+});
