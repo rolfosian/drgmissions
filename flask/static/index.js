@@ -2022,13 +2022,9 @@ async function verifyStorages(date) {
         }
 
     if (!localStorages['homepageScript']) {
-        loadingT.textContent = 'Fetching timer script...';
         setStorages('homepageScript', await preloadHomepageScript());
     }
     // console.log(localStorages['homepageScript'])
-}
-function shouldNotLoadFromLocalStorage(storageType, verificationStatus) {
-    return !localStorages[storageType] || !verificationStatus;
 }
 function setStorages(key, value, storages=localStorages) {
     storages[key] = value;

@@ -64,7 +64,7 @@ def main():
 
     #Calculate timeout total seconds duration
     timeout_seconds = (total_increments * 1.9) + 300
-    print(f'{format_seconds(timeout_seconds)} until timeout\n')
+    print(f'\n{format_seconds(timeout_seconds)} until timeout\n')
 
     print(f'Estimated time until completion: {format_seconds(estimated_time_completion)}', end='\r')
     
@@ -77,16 +77,16 @@ def main():
     #Wait for JSON
     polls = 0
     poll_switch = False
+    poll_interval = None
+    poll_time = None
     files = []
     start_time = None
     while True:
         if poll_switch:
             elapsed_time = time.monotonic() - start_time
             avg_poll_time = elapsed_time / polls
-            timeout_seconds = (total_increments * avg_poll_time) + 300
-            estimated_time_completion = total_increments * avg_poll_time
-            print(avg_poll_time)
-            print(estimated_time_completion)
+            timeout_seconds = (total_increments * poll_interval) + 300
+            estimated_time_completion = total_increments * poll_interval
             total_increments -= 1
             print(f'{format_seconds(timeout_seconds)} until timeout. Estimated time until completion: {format_seconds(estimated_time_completion)}', end='\r')
             poll_switch = False
@@ -112,6 +112,7 @@ def main():
         for filename in os.listdir():
             if filename == 'firstpoll.txt':
                 start_time = time.monotonic()
+                poll_time = time.monotonic()
                 while True:
                     try:
                         os.remove('firstpoll.txt')
@@ -123,6 +124,8 @@ def main():
             if filename == 'poll.txt':
                 polls += 1
                 poll_switch = True
+                poll_interval = time.monotonic() - poll_time
+                poll_time = time.monotonic()
                 while True:
                     try:
                         os.remove('poll.txt')

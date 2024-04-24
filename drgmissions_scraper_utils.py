@@ -354,8 +354,8 @@ def validate_drgmissions(DRG, patched):
             if poll_switch:
                 elapsed_time = time.monotonic() - start_time
                 avg_poll_time = elapsed_time / polls
-                timeout_seconds = (total_increments * avg_poll_time) + 300
-                estimated_time_completion = total_increments * avg_poll_time
+                timeout_seconds = (total_increments * poll_interval) + 300
+                estimated_time_completion = total_increments * poll_interval
                 total_increments -= 1
                 print(f'{format_seconds(timeout_seconds)} until timeout. Estimated time until completion: {format_seconds(estimated_time_completion)}', end="\r")
                 poll_switch = False
@@ -378,6 +378,7 @@ def validate_drgmissions(DRG, patched):
             for filename in os.listdir():
                 if filename == 'firstpoll.txt':
                     start_time = time.monotonic()
+                    poll_time = time.monotonic()
                     while True:
                         try:
                             os.remove('firstpoll.txt')
@@ -389,6 +390,8 @@ def validate_drgmissions(DRG, patched):
                 if filename == 'poll.txt':
                     polls += 1
                     poll_switch = True
+                    poll_interval = time.monotonic() - poll_time
+                    poll_time = time.monotonic()
                     while True:
                         try:
                             os.remove('poll.txt')

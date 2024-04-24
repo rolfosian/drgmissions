@@ -12,12 +12,14 @@ from drgmissions_scraper_utils import (
 
 def main():
     print(os.getcwd())
+    
     time_service_query = subprocess.check_output('sc query w32time', stderr=subprocess.PIPE, shell=True).decode('utf-8')
     if 'RUNNING' not in time_service_query:
         enable_system_time()
         time.sleep(2)
     else:
         subprocess.run(['w32tm', '/resync'], stderr=subprocess.PIPE, shell=True)
+        
     wait_until_next_hour()
 
     with open('./mods/mods.txt', 'w') as f:
@@ -40,6 +42,7 @@ def main():
             subprocess.Popen(['start', 'steam://run/548430//-nullrhi'], shell=True)
             start_time = time.time()
             continue
+        
         for filename in os.listdir():
             if filename.startswith('DD_') and filename.endswith('.json'):
                 new_filename = re.sub(r'\d{2}-\d{2}-\d{2}Z', '11-00-00Z', filename)
@@ -48,11 +51,13 @@ def main():
                 files.append(new_filename)
                 kill_process_by_name_starts_with('FSD')
                 kill_process_by_name_starts_with('Unreal')
+                
         if files:
             for file in files:
                 upload_file(url, file, token)
                 os.remove(file)
             break
+        
         time.sleep(0.5)
 
     with open('./mods/mods.txt', 'w') as f:

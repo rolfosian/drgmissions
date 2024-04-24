@@ -1,3 +1,4 @@
+from signal import signal, SIGINT, SIGTERM
 from drgmissionslib import (
     select_timestamp_from_dict,
     render_xp_calc_index, 
@@ -24,6 +25,8 @@ from os import getcwd
 from shutil import copy as shutil_copy
 # import queue
 cwd = getcwd()
+go_flag = threading.Event()
+go_flag.set()
 
 # obsolete, may need for debugging later
 # def create_mission_icons_rotators(DRG, tstamp, next_tstamp):
@@ -61,56 +64,55 @@ AllTheDeals = AllTheDeals.replace(':01Z', ':00Z')
 AllTheDeals = json.loads(AllTheDeals)
 AllTheDeals = order_dictionary_by_date(AllTheDeals)
 
-#Current and upcoming timestamps rotator
-#tstamp = queue.Queue()
+# Current and upcoming timestamps rotator
+# tstamp = queue.Queue()
 tstamp = []
-#next_tstamp = queue.Queue()
+# next_tstamp = queue.Queue()
 next_tstamp = []
-tstampthread = threading.Thread(target=rotate_timestamps, args=(tstamp, next_tstamp,))
+tstampthread = threading.Thread(target=rotate_timestamps, args=(tstamp, next_tstamp, go_flag))
 
-#Daily Deal timestamp rotator
-#dailydeal_tstamp = queue.Queue()
+# Daily Deal timestamp rotator
+# dailydeal_tstamp = queue.Queue()
 dailydeal_tstamp = []
-dailydeal_tstampthread = threading.Thread(target=rotate_timestamp_from_dict, args=(AllTheDeals, dailydeal_tstamp, False))
+dailydeal_tstampthread = threading.Thread(target=rotate_timestamp_from_dict, args=(AllTheDeals, dailydeal_tstamp, False, go_flag))
 
-#Daily Deal rotator
-#dailydeal = queue.Queue()
+# Daily Deal rotator
+# dailydeal = queue.Queue()
 dailydeal = []
-dailydealthread = threading.Thread(target=rotate_dailydeal, args=(AllTheDeals, dailydeal_tstamp, dailydeal))
+dailydealthread = threading.Thread(target=rotate_dailydeal, args=(AllTheDeals, dailydeal_tstamp, dailydeal, go_flag))
 
-#Mission icons rotators
+# Mission icons rotators
 # biome_rotator_threads, rendering_events, biomes_lists = create_mission_icons_rotators(DRG, tstamp, next_tstamp)
 
 rendering_events = {'e' : threading.Event()}
-#currybiomes = queue.Queue()
-#nextbiomes = queue.Queue()
+# currybiomes = queue.Queue()
+# nextbiomes = queue.Queue()
 currybiomes = []
 nextbiomes = []
-biomesthread = threading.Thread(target=rotate_biomes_FLAT, args=(DRG, tstamp, next_tstamp, nextbiomes, currybiomes, rendering_events))
+biomesthread = threading.Thread(target=rotate_biomes_FLAT, args=(DRG, tstamp, next_tstamp, nextbiomes, currybiomes, rendering_events, go_flag))
 
 #Deep Dives rotator
 #DDs = queue.Queue()
 DDs = []
-ddsthread = threading.Thread(target=rotate_DDs, args=(DDs,))
+ddsthread = threading.Thread(target=rotate_DDs, args=(DDs, go_flag))    
 
+# Obsolete but kept the index event and rotation stuff just cause im not going to fix what isnt broken and i cant be bothered rewriting more stuff
+# Homepage HTML rotator, md5 hashes once to enable 304 on every 30 minute rollover and the home route doesn't need to render it again for every request and can just send copies
+# Clears index event and waits for rendering_event to be set before proceeding and then sets index event to enable homepage requests once more
 
-#Obsolete but kept the index event and rotation stuff just cause im not going to fix what isnt broken and i cant be bothered rewriting more stuff
-#Homepage HTML rotator, md5 hashes once to enable 304 on every 30 minute rollover and the home route doesn't need to render it again for every request and can just send copies
-#Clears index event and waits for rendering_event to be set before proceeding and then sets index event to enable homepage requests once more
-
-#old index is obsolete but i keep the rotator running witb bare event logic just in case
+# old index is obsolete but i keep the rotator running witb bare event logic just in case
 index_event = threading.Event()
-#index_Queue = queue.Queue()
+# index_Queue = queue.Queue()
 index_Queue = []
-index_thread = threading.Thread(target=rotate_index, args=(rendering_events, tstamp, next_tstamp, index_event, index_Queue))
+index_thread = threading.Thread(target=rotate_index, args=(rendering_events, tstamp, next_tstamp, index_event, index_Queue, go_flag))
 
-#Obsolete but kept the index event and rotation stuff just cause im not going to fix what isnt broken and i cant be bothered rewriting more stuff
-#Listener that clears the rendering event 1.5 seconds before the 30 minute mission rollover interval so the homepage won't load for clients until the rotators are done rendering the mission icons
-wait_rotationthread = threading.Thread(target=wait_rotation, args=(rendering_events, index_event))
+# Obsolete but kept the index event and rotation stuff just cause im not going to fix what isnt broken and i cant be bothered rewriting more stuff
+# Listener that clears the rendering event 1.5 seconds before the 30 minute mission rollover interval so the homepage won't load for clients until the rotators are done rendering the mission icons
+wait_rotationthread = threading.Thread(target=wait_rotation, args=(rendering_events, index_event, go_flag))
 
-#json splitting mechanism for static site, set to update the ./static/json/bulkmissions folder every 4 days just so i dont have to look at a directory with 5000 files in it
+# json splitting mechanism for static site, set to update the ./static/json/bulkmissions folder every 4 days just so i dont have to look at a directory with 5000 files in it
 # i dont trust this yet, its not needed when keys are grouped by day now anyway
-# json_thread = threading.Thread(target=rotate_split_jsons, args=(4, DRG, index_event))
+# json_thread = threading.Thread(target=rotate_split_jsons, args=(4, DRG, index_event, go_flag))
 
 def start_threads():
     tstampthread.start()
@@ -128,17 +130,45 @@ def start_threads():
     
     index_thread.start()
     
-#def join_threads():
+def join_threads():
     # for thread in biome_rotator_threads:
     #     thread.join()
-    #tstampthread.join()
-    #biomesthread.join()
-    #ddsthread.join()
-    #wait_rotationthread.join()
-    #dailydeal_tstampthread.join()
-    #dailydealthread.join()
-    #index_thread.join()
+    tstampthread.join()
+    biomesthread.join()
+    ddsthread.join()
+    wait_rotationthread.join()
+    dailydeal_tstampthread.join()
+    dailydealthread.join()
+    index_thread.join()
+    # json_thread.join()
+
+# no idea what im doing here 
+# def reset_threads(sig, frame, go_flag, tstamp, next_tstamp, dailydeal_tstamp, rendering_events, currybiomes, nextbiomes, DDs, index_Queue, index_event):
+#     go_flag.clear()
+#     join_threads()
     
+#     tstamp = []
+#     next_tstamp = []
+#     dailydeal_tstamp = []
+#     nextbiomes = []
+#     DDs = []
+#     index_Queue = []
+    
+#     index_event.clear()
+#     for event in rendering_events:
+#         rendering_events[event].clear()
+#     start_threads()
+
+def signal_handler_exit(sig, frame, go_flag):
+    go_flag.clear()
+    print(f"Received signal {sig}. Exiting...")
+    join_threads()
+    exit(0)
+
+def set_signal_handlers(SIGINT, SIGTERM, go_flag):
+    signal(SIGINT, lambda signum, frame: signal_handler_exit(signum, frame, go_flag))
+    signal(SIGTERM, lambda signum, frame: signal_handler_exit(signum, frame, go_flag))
+
 app = Flask(__name__, static_folder='./static')
 
 #Homepage
@@ -148,8 +178,8 @@ def home():
     # return send_file(BytesIO(index_Queue[0]['index']), mimetype='text/html', etag=index_Queue[0]['etag'])
     return send_file(f'{cwd}/static/index.html')
 
-#Sends current mission icons, arg format f"?img={Biome.replace(' ', '-')}{mission['CodeName'].replace(' ', '-')}{mission['season']}" - see rotate_biomes_FLAT in drgmissionslib.py
-#eg http://127.0.0.1:5000/png?img=Glacial-StrataSpiked-Shelters0 (mission['CodeName'] is 'Spiked Shelter' and the season is s0)
+# Sends current mission icons, arg format f"?img={Biome.replace(' ', '-')}{mission['CodeName'].replace(' ', '-')}{mission['season']}" - see rotate_biomes_FLAT in drgmissionslib.py
+# eg http://127.0.0.1:5000/png?img=Glacial-StrataSpiked-Shelters0 (mission['CodeName'] is 'Spiked Shelter' and the season is s0)
 @app.route('/png')
 def serve_img():
     try:
@@ -160,8 +190,8 @@ def serve_img():
         print(e)
         return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
 
-#Sends upcoming mission icons, arg format f"?img={Biome.replace(' ', '-')}{mission['CodeName'].replace(' ', '-')}{mission['season']}" - see rotate_biomes_FLAT in drgmissionslib.py
-#eg http://127.0.0.1:5000/upcoming_png?img=Glacial-StrataSpiked-Shelters0 (mission['CodeName'] is 'Spiked Shelter' and the season is s0)
+# Sends upcoming mission icons, arg format f"?img={Biome.replace(' ', '-')}{mission['CodeName'].replace(' ', '-')}{mission['season']}" - see rotate_biomes_FLAT in drgmissionslib.py
+# eg http://127.0.0.1:5000/upcoming_png?img=Glacial-StrataSpiked-Shelters0 (mission['CodeName'] is 'Spiked Shelter' and the season is s0)
 @app.route('/upcoming_png')
 def serve_next_img():
     try:
@@ -267,15 +297,20 @@ def upload():
             return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
         if 'file' not in request.files:
             return "No file in the request", 400
+        
         file_ = request.files['file']
         filename = file_.filename
+        
         if filename.endswith('.json') or filename.endswith('.py'):
             file_.save(f'{cwd}/{filename}')
             shutil_copy(f'{cwd}/{filename}', f'{cwd}/static/json/{filename}')
+            
         elif filename.endswith('icon.png'):
             file_.save(f'{cwd}{filename}')
+            
         else:
             file_.save(f'{cwd}/{filename}')
+            
         response_data = {'message': 'Success'}
         return jsonify(response_data)
     except:
@@ -287,4 +322,5 @@ def test():
 
 if __name__ == '__main__':
     start_threads()
+    set_signal_handlers(SIGINT, SIGTERM, go_flag)
     app.run(threaded=True, host='0.0.0.0', debug=True, port=5000)

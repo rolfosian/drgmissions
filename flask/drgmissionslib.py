@@ -830,43 +830,50 @@ def render_deepdives(DeepDives):
 
 #----------------------------------------------------------------
 #ICON SAVE, HASH, AND ARRAY ROTATORS
-def rotate_dailydeal(AllTheDeals, tstamp_Queue, deal_Queue):
+def rotate_dailydeal(AllTheDeals, tstamp_Queue, deal_Queue, go_flag):
     while len(tstamp_Queue) == 0:
         continue
+    
     deal_dict = AllTheDeals[tstamp_Queue[0]]
     dailydeal = {}
     rendered_dailydeal = render_dailydeal(deal_dict)
+    
     DailyDeal = BytesIO()
     rendered_dailydeal.save(DailyDeal, format='PNG')
     rendered_dailydeal.close()
     DailyDeal.seek(0)
     etag = md5(DailyDeal.getvalue()).hexdigest()
+    
     dailydeal['rendered_dailydeal'] = DailyDeal
     dailydeal['etag'] = etag
     deal_Queue.append(dailydeal)
     del dailydeal
     timestamp = tstamp_Queue[0]
-    while True:
+    
+    while go_flag.is_set():
         #applicable_timestamp = tstamp_Queue.queue[0]
         applicable_timestamp = tstamp_Queue[0]
         if applicable_timestamp != timestamp:
             deal_dict = AllTheDeals[applicable_timestamp]
             dailydeal = {}
             rendered_dailydeal = render_dailydeal(deal_dict)
+            
             DailyDeal = BytesIO()
             rendered_dailydeal.save(DailyDeal, format='PNG')
             rendered_dailydeal.close()
             DailyDeal.seek(0)
             etag = md5(DailyDeal.getvalue()).hexdigest()
+            
             dailydeal['rendered_dailydeal'] = DailyDeal
             dailydeal['etag'] = etag
             deal_Queue.append(dailydeal)
             deal_Queue.pop(0)
             del dailydeal
             timestamp = applicable_timestamp
+            
         sleep(0.75)
 
-def rotate_biomes(DRG, season, tstamp_Queue, next_tstamp_Queue, biomes_lists, rendering_event):
+def rotate_biomes(DRG, season, tstamp_Queue, next_tstamp_Queue, biomes_lists, rendering_event, go_flag):
     #order = ['Glacial Strata', 'Crystalline Caverns', 'Salt Pits', 'Magma Core', 'Azure Weald', 'Sandblasted Corridors', 'Fungus Bogs', 'Radioactive Exclusion Zone', 'Dense Biozone', 'Hollow Bough']
     #thread pools for saving and hashing PIL objects - microscopic gains. #TODO multiprocessing pools
     #def process_mission(mission):
@@ -935,7 +942,7 @@ def rotate_biomes(DRG, season, tstamp_Queue, next_tstamp_Queue, biomes_lists, re
     del Biomes
     del NextBiomes
     del _
-    while True:
+    while go_flag.is_set():
         applicable_timestamp = next_tstamp_Queue[0]
         if applicable_timestamp != timestamp_next:
             timestamp_next, NextBiomes = read_biomes(applicable_timestamp, season)
@@ -949,7 +956,7 @@ def rotate_biomes(DRG, season, tstamp_Queue, next_tstamp_Queue, biomes_lists, re
             del NextBiomes
         sleep(0.25)
 
-def rotate_biomes_FLAT(DRG, tstamp_Queue, next_tstamp_Queue, nextbiomes_Queue, biomes_Queue, rendering_events):
+def rotate_biomes_FLAT(DRG, tstamp_Queue, next_tstamp_Queue, nextbiomes_Queue, biomes_Queue, rendering_events, go_flag):
     def array_biomes(Biomes, timestamp):
         Biomes1 = {}
         for biome in Biomes.keys():
@@ -1008,7 +1015,7 @@ def rotate_biomes_FLAT(DRG, tstamp_Queue, next_tstamp_Queue, nextbiomes_Queue, b
     del Biomes
     del NextBiomes
     del _
-    while True:
+    while go_flag.is_set():
         applicable_timestamp = next_tstamp_Queue[0]
         if applicable_timestamp != timestamp_next:
             NextBiomes = render_biomes_FLAT(DRG[applicable_timestamp]['Biomes'])
@@ -1022,14 +1029,14 @@ def rotate_biomes_FLAT(DRG, tstamp_Queue, next_tstamp_Queue, nextbiomes_Queue, b
             del NextBiomes
         sleep(0.25)
 
-def rotate_DDs(DDs):
+def rotate_DDs(DDs, go_flag):
     def sort_dd_json_list_by_timestamp(json_pattern):
         json_list = glob.glob(json_pattern)
         sorted_json_list = sorted(json_list, key=lambda x: datetime.strptime(x.split('_')[1].split('.')[0], "%Y-%m-%dT%H-%M-%SZ"), reverse=True)
         return sorted_json_list
     json_pattern = './DD_*.json'
     current_json = None
-    while True:
+    while go_flag.is_set():
         json_list = sort_dd_json_list_by_timestamp(json_pattern)
         if current_json != json_list[0]:
             current_json = json_list[0]
@@ -1166,7 +1173,8 @@ def group_by_day_and_split_all(DRG):
     split_json_bulkmissions_raw(to_split)
 
 
-def rotate_jsons_days(DRG, num_days):
+def rotate_jsons_days(DRG, num_days, go_flag):
+    
     def extract_days_from_json(data, num_days):
         timestamps = {datetime.strptime(key, '%Y-%m-%d'): value for key, value in data.items()}
         sorted_timestamps = sorted(timestamps.items())
@@ -1211,7 +1219,7 @@ def rotate_jsons_days(DRG, num_days):
         with open(f'{dirpath}/{day}.json') as f:
             json.dump(timestamp, f)
             
-    while True:
+    while go_flag.is_set():
         sleep(num_days*86400-3600)
         days = group_json_by_days(DRG)
         days = extract_days_from_json(days, num_days)
@@ -1296,6 +1304,7 @@ def select_timestamp(next_):
     rounded_time_str = round_time(current_time, next_)
     return rounded_time_str
 
+# obsolete for its original purpose but serves to clear memory now
 def select_timestamp_from_dict(dictionary, next_):
     current_time = datetime.utcnow()
     keys = list(dictionary.keys())
@@ -1313,11 +1322,13 @@ def select_timestamp_from_dict(dictionary, next_):
             except KeyError:
                 pass
 
-def rotate_timestamp(tstamp_Queue, next_):
+# obsolete, consolidated into rotate_timestamps
+def rotate_timestamp(tstamp_Queue, next_, go_flag):
     applicable_timestamp = select_timestamp(next_=next_)
     tstamp_Queue.append(applicable_timestamp)
     timestamp = tstamp_Queue[0]
-    while True:
+    
+    while go_flag.is_set():
         applicable_timestamp = select_timestamp(next_=next_)
         if applicable_timestamp != timestamp:
             tstamp_Queue.append(applicable_timestamp)
@@ -1325,13 +1336,14 @@ def rotate_timestamp(tstamp_Queue, next_):
             timestamp = tstamp_Queue[0]
         sleep(0.25)
 
-def rotate_timestamps(tstamp_Queue, next_tstamp_Queue):
+def rotate_timestamps(tstamp_Queue, next_tstamp_Queue, go_flag):
     applicable_timestamp = select_timestamp(next_=False)
     applicable_next_timestamp = select_timestamp(next_=True)
     next_tstamp_Queue.append(applicable_next_timestamp)
     tstamp_Queue.append(applicable_timestamp)
     timestamp = tstamp_Queue[0]
-    while True:
+    
+    while go_flag.is_set():
         applicable_timestamp = select_timestamp(next_=False)
         if applicable_timestamp != timestamp:
             select_timestamp(next_=True)
@@ -1341,18 +1353,21 @@ def rotate_timestamps(tstamp_Queue, next_tstamp_Queue):
             tstamp_Queue.pop(0)
             timestamp = tstamp_Queue[0]
         sleep(0.25)
-        
-def rotate_timestamp_from_dict(dictionary, tstamp_Queue, next_):
+
+# this runs like shit for drgmissionsgod.json but i still use it for drgdailydeals.json because there arent that many keys in it
+def rotate_timestamp_from_dict(dictionary, tstamp_Queue, next_, go_flag):
     applicable_timestamp = select_timestamp_from_dict(dictionary, next_=next_)
     gc.collect()
     tstamp_Queue.append(applicable_timestamp)
     timestamp = tstamp_Queue[0]
-    while True:
+    
+    while go_flag.is_set():
         applicable_timestamp = select_timestamp_from_dict(dictionary, next_=next_)
         if applicable_timestamp != timestamp:
             tstamp_Queue.append(applicable_timestamp)
             tstamp_Queue.pop(0)
             timestamp = tstamp_Queue[0]
+            
         sleep(0.25)
 
 def round_time_down(datetime_string):
@@ -1363,6 +1378,7 @@ def round_time_down(datetime_string):
         new_datetime = datetime_string[:14] + '00:00Z'
     return new_datetime
 
+# combines seasons to one key while removing duplicates, see render_biomes_FLAT in this file and renderBiomesFlat/arrayBiomes in index.js for postprocessing
 def flatten_seasons(DRG):
     def compare_dicts(dict1, dict2, ignore_keys):
         dict1_filtered = {k: v for k, v in dict1.items() if k not in ignore_keys}
@@ -1421,36 +1437,37 @@ def flatten_seasons(DRG):
 
     return combined
 
-def wait_rotation(rendering_events, index_event):
+def wait_rotation(rendering_events, index_event, go_flag):
     target_minutes_59 = [29, 59]
-    while True:
+    while go_flag.is_set():
         current_time = datetime.now().time()
         current_minute = current_time.minute
         current_second = current_time.second + current_time.microsecond / 1e6
+        
         if current_second > 58.50 and current_minute in target_minutes_59:
             for s in rendering_events:
                 rendering_events[s].clear()
             index_event.clear()
         sleep(0.2)
         
-#def GARBAGE():
-    #while True:
+#def GARBAGE(go_flag):
+    #while go_flag.is_set():
         #sleep(43200)
         #gc.collect()
 #GARBAGE_thread = threading.Thread(target=GARBAGE)
 
-def SERVER_READY(index_event):
-    index_event.wait()
-    now = datetime.now()
-    formatted_datetime = now.strftime("%Y-%m-%d %H:%M:%S")
-    print(f'{formatted_datetime} DRGMISSIONS SERVER IS READY FOR REQUESTS')
-    return
+# def SERVER_READY(index_event):
+#     index_event.wait()
+#     now = datetime.now()
+#     formatted_datetime = now.strftime("%Y-%m-%d %H:%M:%S")
+#     print(f'{formatted_datetime} DRGMISSIONS SERVER IS READY FOR REQUESTS')
+#     return
 
 #----------------------------------------------------------------
 #HTML STRING RENDERERS
 
 #HOMEPAGE
-def rotate_index(rendering_events, current_timestamp_Queue, next_timestamp_Queue, index_event, index_Queue):
+def rotate_index(rendering_events, current_timestamp_Queue, next_timestamp_Queue, index_event, index_Queue, go_flag):
     seasons = rendering_events.keys()
     for s in seasons:
         rendering_events[s].wait()
@@ -1462,7 +1479,7 @@ def rotate_index(rendering_events, current_timestamp_Queue, next_timestamp_Queue
     # index['etag'] = etag
     # index_Queue.append(index)
     index_event.set()
-    while True:
+    while go_flag.is_set():
         applicable_timestamp = current_timestamp_Queue[0]
         if applicable_timestamp != current_timestamp:
             for s in seasons:
@@ -1502,6 +1519,7 @@ def rotate_index(rendering_events, current_timestamp_Queue, next_timestamp_Queue
 #         html += f'<div class="mission-hover-zoom"><img class="mission" title="Stage {fname}" src="/files/{folder_name}/{fname}.png"></div>\n'
 #     return html
 
+#obsolete, refer to index.html
 def render_index():
     html = '''<!doctype html>
 <html>
@@ -1747,6 +1765,7 @@ def render_index():
     return html
 
 #CLASS XP CALCULATOR
+# obsolete, refer to xp_calculator.html
 def render_xp_calc_index():
     index = {}
     index_ = '''<!DOCTYPE html>
