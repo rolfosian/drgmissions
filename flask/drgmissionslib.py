@@ -1456,12 +1456,19 @@ def wait_rotation(rendering_events, index_event, go_flag):
         #gc.collect()
 #GARBAGE_thread = threading.Thread(target=GARBAGE)
 
-# def SERVER_READY(index_event):
-#     index_event.wait()
-#     now = datetime.now()
-#     formatted_datetime = now.strftime("%Y-%m-%d %H:%M:%S")
-#     print(f'{formatted_datetime} DRGMISSIONS SERVER IS READY FOR REQUESTS')
-#     return
+def SERVER_READY(index_event):
+    index_event.wait()
+    now = datetime.now()
+    print('Server is ready for requests')
+    return
+
+def timestamped_print(func):
+    def wrapper(*args, **kwargs):
+        timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+        args = (f'{timestamp}', *args)
+        return func(*args, **kwargs)
+    return wrapper
+print = timestamped_print(print)
 
 #----------------------------------------------------------------
 #HTML STRING RENDERERS

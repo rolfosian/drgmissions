@@ -12,18 +12,27 @@ from drgmissions_scraper_utils import (
 import json
 
 if __name__ == '__main__':
-    with open('drgmissionsgod.json', 'r') as f:
+    if yes_or_no('run on .bak file?'):
+        filename = 'drgmissionsgod.json.bak'
+    else:
+        filename = 'drgmissionsgod.json'
+        
+        with open(filename, 'r') as f:
+            DRG = json.load(f)
+            f.close()
+        
+        if yes_or_no('Run JSON patcher? Y/N: '):
+            patched = False
+            DRG, patched = validate_drgmissions(DRG, patched)
+            if patched:
+                with open(filename, 'w') as f:
+                    json.dump(DRG, f)
+            input('Press enter to exit...')
+            quit()
+        
+    with open(filename, 'r') as f:
         DRG = json.load(f)
         f.close()
-
-    if yes_or_no('Run JSON patcher? Y/N: '):
-        patched = False
-        DRG, patched = validate_drgmissions(DRG, patched)
-        if patched:
-            with open('drgmissionsgod.json', 'w') as f:
-                json.dump(DRG, f)
-        input('Press enter to exit...')
-        quit()
 
     DRG = order_dictionary_by_date_FIRST_KEY_ROUNDING(DRG)
     DRG = reconstruct_dictionary(DRG)

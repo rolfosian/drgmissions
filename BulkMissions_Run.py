@@ -1,8 +1,8 @@
 import subprocess
 import time
-from time import sleep
 import os
 from datetime import datetime
+from shutil import copy as shutil_copy
 import json
 import re
 from drgmissions_scraper_utils import(
@@ -13,14 +13,15 @@ from drgmissions_scraper_utils import(
     format_seconds,
     kill_process_by_name_starts_with,
     user_input_set_target_date,
-    validate_drgmissions
+    validate_drgmissions,
+    print
 )
 
 def main():
     time_service_query = subprocess.check_output('sc query w32time', stderr=subprocess.PIPE, shell=True).decode('utf-8')
     if 'RUNNING' not in time_service_query:
         enable_system_time()
-        sleep(2)
+        time.sleep(2)
     if os.path.isfile('poll.txt'):
         os.remove('poll.txt')
     if os.path.isfile('firstpoll.txt'):
@@ -60,7 +61,7 @@ def main():
     total_increments = int(diff_seconds // 1800) + 1
     total_increments_ = int(str(total_increments)) + 1
     print(f'Total 30 minute increments: {str(total_increments)}')
-    estimated_time_completion = (total_increments*1.8)+25
+    estimated_time_completion = (total_increments * 1.9) + 25
 
     #Calculate timeout total seconds duration
     timeout_seconds = (total_increments * 1.9) + 300
@@ -70,44 +71,47 @@ def main():
     
     #Disable automatic time sync
     toggle_system_time()
-    sleep(1)
+    time.sleep(1)
     #Run Deep Rock Galactic headless
     subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
 
     #Wait for JSON
     polls = 0
     poll_switch = False
-    poll_interval = None
+    poll_interval = 1.9
     poll_time = None
     files = []
     start_time = None
+    elapsed_time = 0
     while True:
+        timeout_seconds = (total_increments * poll_interval) + 300
         if poll_switch:
             elapsed_time = time.monotonic() - start_time
-            avg_poll_time = elapsed_time / polls
-            timeout_seconds = (total_increments * poll_interval) + 300
+            # avg_poll_time = elapsed_time / polls
             estimated_time_completion = total_increments * poll_interval
             total_increments -= 1
             print(f'{format_seconds(timeout_seconds)} until timeout. Estimated time until completion: {format_seconds(estimated_time_completion)}', end='\r')
             poll_switch = False
             
-            if time.monotonic() - start_time > timeout_seconds:
-                print('')
-                print('Timeout... process crashed or froze')
-                kill_process_by_name_starts_with('FSD')
-                kill_process_by_name_starts_with('Unreal')
+        if elapsed_time > timeout_seconds:
+            print('')
+            print('Timeout... process crashed or froze')
+            kill_process_by_name_starts_with('FSD')
+            kill_process_by_name_starts_with('Unreal')
+            
+            start_time = None
+            total_increments = int(str(total_increments_))
+            polls = 0
+            poll_time = None
+            poll_interval = 1.9
+            
+            if os.path.isfile('poll.txt'):
+                os.remove('poll.txt')
+            if os.path.isfile('firstpoll.txt'):
+                os.remove('firstpoll.txt')
                 
-                start_time = None
-                total_increments = int(str(total_increments_))
-                polls = 0
-                
-                if os.path.isfile('poll.txt'):
-                    os.remove('poll.txt')
-                if os.path.isfile('firstpoll.txt'):
-                    os.remove('firstpoll.txt')
-                    
-                sleep(4)
-                subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
+            time.sleep(4)
+            subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
 
         for filename in os.listdir():
             if filename == 'firstpoll.txt':
@@ -135,7 +139,7 @@ def main():
                     
             if filename == 'drgmissionsgod.json':
                 files.append(filename)
-                sleep(5)
+                time.sleep(5)
                 kill_process_by_name_starts_with('FSD')
                 kill_process_by_name_starts_with('Unreal')
                 break
@@ -167,6 +171,8 @@ def main():
     DRG = reconstruct_dictionary(DRG)
     with open('drgmissionsgod.json', 'w') as f:
         json.dump(DRG, f)
+    shutil_copy('drgmissionsgod.json', 'drgmissionsgod.json.bak')
+    
     
     #Validate JSON
     patched = False
@@ -174,8 +180,6 @@ def main():
     if patched:
         with open('drgmissionsgod.json', 'w') as f:
             json.dump(DRG, f)
-
-    return DRG
             
 if __name__ == '__main__':
     try:

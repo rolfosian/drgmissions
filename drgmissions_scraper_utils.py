@@ -7,6 +7,14 @@ import requests
 import winreg
 import json
 import re
+def timestamped_print(func):
+    def wrapper(*args, **kwargs):
+        timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+        args = (f'{timestamp}', *args)
+        return func(*args, **kwargs)
+    return wrapper
+print = timestamped_print(print)
+
 
 #Validation
 #-----------------------
@@ -344,23 +352,26 @@ def validate_drgmissions(DRG, patched):
         files = []
         total_increments = len(invalid_keys)
         total_increments_ = int(str(total_increments))
-        timeout_seconds = (total_increments * 1.9) + 300
-        estimated_time_completion = (total_increments * 1.9) + 30
+        timeout_seconds = (total_increments * 2.0) + 300
+        estimated_time_completion = (total_increments * 2.0) + 30
         start_time = None
         poll_switch = False
+        poll_interval = 2.0
+        poll_time = None
         polls = 0
+        elapsed_time = 0
         
         while True:
+            timeout_seconds = (total_increments * poll_interval) + 300
             if poll_switch:
                 elapsed_time = time.monotonic() - start_time
-                avg_poll_time = elapsed_time / polls
-                timeout_seconds = (total_increments * poll_interval) + 300
+                # avg_poll_time = elapsed_time / polls
                 estimated_time_completion = total_increments * poll_interval
                 total_increments -= 1
                 print(f'{format_seconds(timeout_seconds)} until timeout. Estimated time until completion: {format_seconds(estimated_time_completion)}', end="\r")
                 poll_switch = False
                 
-            if time.monotonic() - start_time > timeout_seconds:
+            if elapsed_time > timeout_seconds:
                 print('')
                 print('Timeout... process crashed or froze')
                 kill_process_by_name_starts_with('FSD')
@@ -369,9 +380,14 @@ def validate_drgmissions(DRG, patched):
                 start_time = None
                 polls = 0
                 total_increments = int(str(total_increments_))
+                poll_time = None
+                poll_interval = 2.0
                 
                 if os.path.isfile('poll.txt'):
                     os.remove('poll.txt')
+                if os.path.isfile('firstpoll.txt'):
+                    os.remove('firstpoll.txt')
+                    
                 time.sleep(4)
                 subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
                 
@@ -409,8 +425,6 @@ def validate_drgmissions(DRG, patched):
                 print(f'Estimated time until completion: {format_seconds(0.00)}')
                 print(f'\n---\nElapsed time: {format_seconds(elapsed_time)}               \n---')
                 break
-            
-            time.sleep(0.1)
         
         if os.path.isfile('poll.txt'):
             os.remove('poll.txt')

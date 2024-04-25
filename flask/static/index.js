@@ -1,3 +1,15 @@
+function isLocalStorageAvailable(){
+    var test = 'test';
+    try {
+        localStorage.setItem(test, test);
+        localStorage.removeItem(test);
+        return true;
+    } catch(e) {
+        return false;
+    }
+}
+const isLocalStorageAvailable_ = isLocalStorageAvailable()
+
 // caching parameters
 var biomeBanners = {
     'Crystalline Caverns': '/static/DeepDive_MissionBar_CrystalCaves.webp',
@@ -337,7 +349,9 @@ async function preloadImagesAll() {
         preloadImages(biomeBanners, biomeBannersImages),
         preloadImages(deepDivesBanners, deepDivesBannersImages)
     ]);
-    localStorage.setItem('img', JSON.stringify(base64LocalStoragesImg));
+    if (isLocalStorageAvailable_) {
+        localStorage.setItem('img', JSON.stringify(base64LocalStoragesImg));
+    }
     base64LocalStoragesImg = undefined;
 }
 
@@ -1969,6 +1983,7 @@ function simpleHash(input) {
 
 async function verifyStorages(date) {
     for (let key in localStorages) {
+        let v;
         // try {
             // if (key == 'img') {
             //     setStorages(key, null)
@@ -1989,8 +2004,9 @@ async function verifyStorages(date) {
             //     setStorages(key, null)
             //     continue
             // }
-
-            let v = localStorage.getItem(key);
+            if (isLocalStorageAvailable_) {
+                v = localStorage.getItem(key);
+            }
             if (v) {
                 if (localStoragesHashes.hasOwnProperty(key)) {
                     if (simpleHash(v) === localStoragesHashes[key]) {
@@ -2019,16 +2035,19 @@ async function verifyStorages(date) {
         // }
     
         // console.log(key, localStorages[key]);
-        }
+    }
 
     if (!localStorages['homepageScript']) {
         setStorages('homepageScript', await preloadHomepageScript());
     }
     // console.log(localStorages['homepageScript'])
 }
+
 function setStorages(key, value, storages=localStorages) {
     storages[key] = value;
-    localStorage.setItem(key, JSON.stringify(value));
+    if (isLocalStorageAvailable_) {
+        localStorage.setItem(key, JSON.stringify(value));
+    }
 }
 var localStorages = { 
     'isBackgroundHidden' : false,

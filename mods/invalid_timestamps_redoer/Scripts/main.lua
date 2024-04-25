@@ -57,7 +57,7 @@ function Main()
         datetime[2] = datetime[2]:gsub('Z', '')
         local command = 'date '..utils.ReverseDateFormat(datetime[1])..' & time '..datetime[2]
         os.execute(command)
-        socket.sleep(2.5)
+        socket.sleep(1.5)
 
         -- Initialize Table
         local master = {}

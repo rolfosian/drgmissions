@@ -14,6 +14,8 @@ from drgmissionslib import (
     group_by_day_and_split_all,
     wait_rotation,
     flatten_seasons,
+    SERVER_READY,
+    print,
     class_xp_levels,
     Dwarf
     )
@@ -27,6 +29,7 @@ from shutil import copy as shutil_copy
 cwd = getcwd()
 go_flag = threading.Event()
 go_flag.set()
+
 
 # obsolete, may need for debugging later
 # def create_mission_icons_rotators(DRG, tstamp, next_tstamp):
@@ -45,15 +48,18 @@ go_flag.set()
 #     return threads, rendering_events, biomes_lists
 
 with open('drgmissionsgod.json', 'r') as f:
+    print('Loading bulkmissions json...')
     DRG = json.load(f)
     f.close()
-    #merge season branches to one
+    # merge season branches to one
+    print('Merging seasons...')
     DRG = flatten_seasons(DRG)
     
-    #split into individual json files for static site
+    # split into individual json files for static site
+    print('Adding daily deals, grouping timestamps by day and spltting for static site...')
     group_by_day_and_split_all(DRG)
     
-    #Remove past timestamps from memory
+    # Remove past timestamps from memory
     select_timestamp_from_dict(DRG, False)
 
 
@@ -91,8 +97,8 @@ currybiomes = []
 nextbiomes = []
 biomesthread = threading.Thread(target=rotate_biomes_FLAT, args=(DRG, tstamp, next_tstamp, nextbiomes, currybiomes, rendering_events, go_flag))
 
-#Deep Dives rotator
-#DDs = queue.Queue()
+# Deep Dives rotator
+# DDs = queue.Queue()
 DDs = []
 ddsthread = threading.Thread(target=rotate_DDs, args=(DDs, go_flag))    
 
@@ -109,6 +115,8 @@ index_thread = threading.Thread(target=rotate_index, args=(rendering_events, tst
 # Obsolete but kept the index event and rotation stuff just cause im not going to fix what isnt broken and i cant be bothered rewriting more stuff
 # Listener that clears the rendering event 1.5 seconds before the 30 minute mission rollover interval so the homepage won't load for clients until the rotators are done rendering the mission icons
 wait_rotationthread = threading.Thread(target=wait_rotation, args=(rendering_events, index_event, go_flag))
+
+SERVER_READY_thread = threading.Thread(target=SERVER_READY, args=(index_event,))
 
 # json splitting mechanism for static site, set to update the ./static/json/bulkmissions folder every 4 days just so i dont have to look at a directory with 5000 files in it
 # i dont trust this yet, its not needed when keys are grouped by day now anyway
@@ -129,8 +137,10 @@ def start_threads():
     dailydealthread.start()
     
     index_thread.start()
+    SERVER_READY_thread.start()
     
-def join_threads():
+def join_threads(go_flag):
+    go_flag.clear()
     # for thread in biome_rotator_threads:
     #     thread.join()
     tstampthread.join()
@@ -140,34 +150,27 @@ def join_threads():
     dailydeal_tstampthread.join()
     dailydealthread.join()
     index_thread.join()
+    SERVER_READY_thread.join()
     # json_thread.join()
-
-# no idea what im doing here 
-# def reset_threads(sig, frame, go_flag, tstamp, next_tstamp, dailydeal_tstamp, rendering_events, currybiomes, nextbiomes, DDs, index_Queue, index_event):
-#     go_flag.clear()
-#     join_threads()
     
-#     tstamp = []
-#     next_tstamp = []
-#     dailydeal_tstamp = []
-#     nextbiomes = []
-#     DDs = []
-#     index_Queue = []
-    
-#     index_event.clear()
-#     for event in rendering_events:
-#         rendering_events[event].clear()
-#     start_threads()
 
 def signal_handler_exit(sig, frame, go_flag):
-    go_flag.clear()
     print(f"Received signal {sig}. Exiting...")
-    join_threads()
+    join_threads(go_flag)
     exit(0)
 
 def set_signal_handlers(SIGINT, SIGTERM, go_flag):
     signal(SIGINT, lambda signum, frame: signal_handler_exit(signum, frame, go_flag))
     signal(SIGTERM, lambda signum, frame: signal_handler_exit(signum, frame, go_flag))
+
+# reloader override for flask debug server so it doesnt lock up on reload
+from werkzeug._reloader import StatReloaderLoop, reloader_loops
+class ReloaderLoop_(StatReloaderLoop):        
+    def trigger_reload(self, filename: str) -> None:
+        join_threads(go_flag)
+        return super().trigger_reload(filename)
+    
+reloader_loops['auto'] = ReloaderLoop_
 
 app = Flask(__name__, static_folder='./static')
 
@@ -320,7 +323,10 @@ def upload():
 def test():
     return '<!doctype html><html><head><script src="/static/test.js"></script></head><body bgcolor="#202020"><select id="season" name="season" class="seasonBox"></select></div></body></html>'
 
-if __name__ == '__main__':
+if __name__ == '__main__':        
+    print('Starting threads...')
     start_threads()
+    print('Setting signal handlers...')
     set_signal_handlers(SIGINT, SIGTERM, go_flag)
-    app.run(threaded=True, host='0.0.0.0', debug=True, port=5000)
+    print('Starting server...')
+    app.run(threaded=True, host='0.0.0.0', debug=True, port=5000, use_reloader=True)
