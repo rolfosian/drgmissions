@@ -642,7 +642,6 @@ function renderMission(m_d) {
     const secondaryImg = secondaryObjsImages[m_d['SecondaryObjective']];
     ctx.drawImage(secondaryImg, -11, -21, secondaryImg.width * 0.6, secondaryImg.height * 0.6);
 
- 
     if (m_d['MissionWarnings']) {
         let MissionWarnings = [];
         m_d['MissionWarnings'].forEach((warning) => {
@@ -689,11 +688,12 @@ function renderMission(m_d) {
         'Elimination,2': '2',
         'Elimination,default': '3',
         'Salvage Operation,2': '2',
-        'Salvage Operation,default': '3'
+        'Salvage Operation,default': '3',
+        // 'Deep Scan, ' : '',
     };
 
     const hexagon = primaryObjResourcesImages['hexagon']
-    ctx.drawImage(hexagon, 21, 190, hexagon.width * 0.32, hexagon.height * 0.32);
+    ctx.drawImage(hexagon, 15, 190, hexagon.width * 0.32, hexagon.height * 0.32);
     drawResource(m_d['PrimaryObjective'], m_d['Complexity'], m_d['Length']);
 
 
@@ -704,7 +704,7 @@ function renderMission(m_d) {
         else if (m_d['PrimaryObjective'] === 'Egg Hunt') scaleFactor = 0.20;
         else scaleFactor = 0.1;
 
-        ctx.drawImage(resource, 44, 205, resource.width * scaleFactor, resource.height * scaleFactor);
+        ctx.drawImage(resource, 38, 205, resource.width * scaleFactor, resource.height * scaleFactor);
 
         const text = getText(m_d['PrimaryObjective'], m_d['Complexity'], m_d['Length']);
         drawText(text, 'CarbonBold-W00-Regular', '35',  m_d['PrimaryObjective']);
@@ -723,7 +723,7 @@ function renderMission(m_d) {
         ctx.textAlign = 'center';
         var y = 280
         if (primaryObj == 'Mining Expedition') y -= 5
-        ctx.fillText(text, 69, y);
+        ctx.fillText(text, 63, y);
     }
     ctx.save();
 
@@ -1299,11 +1299,12 @@ function renderDeepDiveStage(m_d, stageCount) {
         'Elimination,2': '2',
         'Elimination,default': '3',
         'Salvage Operation,2': '2',
-        'Salvage Operation,default': '3'
+        'Salvage Operation,default': '3',
+        // 'Deep Scan, ' : '' : ''
     };
 
     const hexagon = primaryObjResourcesImages['hexagon'];
-    ctx.drawImage(hexagon, 21, 190, hexagon.width * 0.32, hexagon.height * 0.32);
+    ctx.drawImage(hexagon, 15, 190, hexagon.width * 0.32, hexagon.height * 0.32);
     drawResource(m_d['PrimaryObjective'], m_d['Complexity'], m_d['Length']);
 
     function drawResource() {
@@ -1313,7 +1314,7 @@ function renderDeepDiveStage(m_d, stageCount) {
         else if (m_d['PrimaryObjective'] === 'Egg Hunt') scaleFactor = 0.20;
         else scaleFactor = 0.1;
 
-        ctx.drawImage(resource, 44, 205, resource.width * scaleFactor, resource.height * scaleFactor);
+        ctx.drawImage(resource, 38, 205, resource.width * scaleFactor, resource.height * scaleFactor);
 
         const text = getText(m_d['PrimaryObjective'], m_d['Complexity'], m_d['Length']);
         drawText(text, 'CarbonBold-W00-Regular', '35',  m_d['PrimaryObjective']);
@@ -1332,7 +1333,7 @@ function renderDeepDiveStage(m_d, stageCount) {
         ctx.textAlign = 'center';
         var y = 280;
         if (primaryObj == 'Mining Expedition') y -= 5;
-        ctx.fillText(text, 69, y);
+        ctx.fillText(text, 63, y);
     }
     ctx.save();
     resizeCanvas(div, canvas, 0.35, 0.35);

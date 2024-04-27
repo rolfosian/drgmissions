@@ -1,4 +1,4 @@
-local json = require("./mods/dds_fetcher/Scripts/dkjson")
+local json = require("./mods/long_term_mission_data_collector/Scripts/dkjson")
 local utils = require('./mods/long_term_mission_data_collector/Scripts/bulkmissions_funcs')
 function UnpackDeepDiveMission(mission, master, t)
     local mission1 = {}
