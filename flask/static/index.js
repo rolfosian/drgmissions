@@ -540,8 +540,8 @@ async function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 async function waitRotation() {
+    const targetMinutes59 = [29, 59];
     while (true) {
-        const targetMinutes59 = [29, 59];
         const currentDate = new Date();
         const currentMinute = currentDate.getMinutes();
         const currentSecond = currentDate.getSeconds() + currentDate.getMilliseconds() / 1000;
@@ -552,7 +552,19 @@ async function waitRotation() {
         break
     }
 }
+function padZero(number) {
+    return number.toString().padStart(2, "0");
+}
+function getMissionsRemainderTimeOnInit(date) {
+    let targetTime = new Date(roundTimeUp(date))
+    let remainingTime = (targetTime - date)
 
+    let minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
+    let seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
+
+    let formattedTime = padZero(minutes) + ":" + padZero(seconds);
+    return formattedTime
+}
 async function loadJSONnoRetry(filePath) {
     try {
       const response = await fetch(filePath);
@@ -1697,12 +1709,24 @@ function toggleButtons() {
 
     if (buttonDiv.style.display === "none") {
         buttonDiv.style.display = 'block';
+        // for (let i = 0; i < buttonDiv.parentElement.childNodes.length; i++) {
+            // node = buttonDiv.parentElement.childNodes[i]
+            // if (node.nodeName === 'BR') {
+                // console.log(node)
+                // console.log(i)
+                
+            // }
+            // if (buttonDiv.parentElement.childNodes[9] == currentButtonLineBreak) {
+                buttonDiv.parentElement.removeChild(currentButtonLineBreak)
+            // }
+        // }
         // slideToggle('missionsCountdown', 'missionRotationSlideButton', ['Show Countdown', 'Hide Countdown']);
         document.getElementById('dailyDealButton').textContent = 'Click here to see Daily Deal';
         buttonsButton.textContent = "x";
         setStorages('areButtonsHidden', false);
     } else {
         buttonDiv.style.display = "none";
+        buttonDiv.parentElement.insertBefore(currentButtonLineBreak, document.getElementById('currentButton'))
         // slideToggle('missionsCountdown', 'missionRotationSlideButton', ['Show Countdown', 'Hide Countdown'])
         slideToggle('dailyDealMaster', 'dailyDealButton', ['Click here to see Daily Deal', 'Hide Daily Deal'])
         buttonsButton.textContent = "+";
@@ -1936,8 +1960,8 @@ async function initialize(date) {
     
     <div>
     
-    <div class="ddscountdown">NEW DEEP DIVES IN</div>
-    <span id="ddCountdown"></span>
+    <div class="deepDiveCountdownHead">NEW DEEP DIVES IN</div>
+    <span id="deepDiveCountdown"></span>
     <hr>
     </div>
 
@@ -2091,7 +2115,7 @@ var localStorages = {
 var localStoragesHashes = {
     'img' : 530276585,
     'fonts' : 906557479,
-    'homepageScript' : -580538435,
+    'homepageScript' : -1904996729,
 };
 
 var cacheActive = false;
@@ -2105,6 +2129,9 @@ var tempDailyDeal;
 
 var deepDiveData;
 
+var currentButtonLineBreak = document.createElement('br');
+currentButtonLineBreak.id = 'currentButtonLineBreak'
+
 var initialized = false;
 
 document.addEventListener('DOMContentLoaded', async function() {
@@ -2113,7 +2140,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         let date = new Date();
         await verifyStorages(date);
-        
+
         if (localStorages['isBackgroundHidden']) {
             toggleBackground();
         }
@@ -2151,11 +2178,12 @@ document.addEventListener('DOMContentLoaded', async function() {
         } else {
             await loadImgsFromLocalStorageAll();
         }
-
         var breakfast = await initialize(date);
         biomes = breakfast[0];
         dailyDeal = breakfast[1];
         breakfast = undefined;
+
+        document.getElementById('missionsCountdown').textContent = getMissionsRemainderTimeOnInit(date)
 
         var homepageScript = document.createElement('script');
         homepageScript.textContent = localStorages['homepageScript']

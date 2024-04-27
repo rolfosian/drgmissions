@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from copy import deepcopy
 import subprocess
 import time
 import psutil
@@ -98,10 +99,67 @@ def find_missing_timestamps(dictionary, invalid_keys):
     else:
         print('No missing timestamps found.')
 
+def find_duplicate_seasons(dictionary, invalid_keys):
+    def find_duplicate_strings(dictionary):
+        strings = []
+        keys = []
+        for key, value in dictionary.items():
+            if value in strings:
+                keys.append(key)
+            else:
+                strings.append(value)
+                
+        if keys:
+            return True
+        return False
+    dictionary_ = deepcopy(dictionary)
+    
+    god = {}
+    invalid_keys_ = []
+    for timestamp, seasons_dict in dictionary_.items():
+        god[timestamp] = {}
+        for season, master in seasons_dict.items():
+            god[timestamp][season] = {'Biomes' : {}, 'timestamp' : timestamp }
+            for k, v in master.items():
+                if k == 'Biomes':
+                    for biome, missions in v.items():
+                        for mission in missions:
+                            del mission['id']
+                        god[timestamp][season][k][biome] = missions
+                            
+            god[timestamp][season] = json.dumps(master)
+            
+        if find_duplicate_strings(god[timestamp]):
+            if timestamp not in invalid_keys_:
+                invalid_keys_.append((timestamp, find_duplicate_seasons.__name__))
+
+    if invalid_keys_:
+        print("Duplicate season data found:")
+        for timestamp, func_name in invalid_keys_:
+            print("Timestamp:", timestamp)
+            if timestamp not in invalid_keys:
+                invalid_keys.append((timestamp, func_name))
+    else:
+        print("No duplicate season data found.")
+
 def find_duplicates(dictionary, invalid_keys):
     god = {}
-    for key, value in dictionary.items():
+    dictionary_ = deepcopy(dictionary)
+
+    for timestamp, seasons_dict in dictionary_.items():
+        god[timestamp] = {}
+        for season, master in seasons_dict.items():
+            god[timestamp][season] = {'Biomes' : {}, 'timestamp' : timestamp }
+            for k, v in master.items():
+                if k == 'Biomes':
+                    for biome, missions in v.items():
+                        for mission in missions:
+                            del mission['id']
+                god[timestamp][season]['Biomes'] = v
+                
+    for key, value in dictionary_.items():
         god[key] = json.dumps(value)
+
     def find_duplicate_strings(dictionary):
         string_count = {}
         for key, value in dictionary.items():
@@ -114,14 +172,14 @@ def find_duplicates(dictionary, invalid_keys):
     
     duplicate_strings = find_duplicate_strings(god)
     if duplicate_strings:
-        print("Duplicate strings found:")
+        print("Duplicate timestamps found:")
         for value, keys in duplicate_strings.items():
             print("Keys:", keys)
             for key in keys:
                 if key not in invalid_keys:
                     invalid_keys.append((key, find_duplicates.__name__))
     else:
-        print("No duplicate strings found.")
+        print("No duplicate timestamps found.")
 
 def check_sum_of_missions(dictionary, invalid_keys):
     missions_keys = []
@@ -313,6 +371,7 @@ def validate_drgmissions(DRG, patched):
     invalid_keys = []
     find_missing_timestamps(DRG, invalid_keys)
     check_missions_keys(DRG, invalid_keys)
+    find_duplicate_seasons(DRG, invalid_keys)
     find_duplicates(DRG, invalid_keys)
     check_sum_of_missions(DRG, invalid_keys)   
     check_missions_length_complexity(DRG, invalid_keys)

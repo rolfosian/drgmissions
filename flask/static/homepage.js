@@ -1,10 +1,6 @@
 function scrollToTop() {
     window.scrollTo(0, 0);
-    }
-document.querySelectorAll('img').forEach((element)=> {
-    element.style.opacity = "1";
-});
-
+}
 async function deepDiveCountDown() {
     let targetDay = 4;
     let targetHour = 11;
@@ -27,15 +23,15 @@ async function deepDiveCountDown() {
         let remainingTime;
         if (!deepDiveData) {
             remainingTime = 0;
-            document.getElementById("ddCountdown").classList.add('glow-text-red-white');
+            document.getElementById("deepDiveCountdown").classList.add('glow-text-red-white');
         } else {
             now = Date.now();
             remainingTime = targetTime.getTime() - now;
-            document.getElementById("ddCountdown").classList.remove('glow-text-red-white');
+            document.getElementById("deepDiveCountdown").classList.remove('glow-text-red-white');
         }
         if (remainingTime <= 0) {
             clearInterval(countdownTimer);
-            document.getElementById("ddCountdown").innerHTML = "0:00:00:00";
+            document.getElementById("deepDiveCountdown").innerHTML = "0:00:00:00";
             refreshDeepDives().then(() => {
                 startCountdown();
             });
@@ -45,7 +41,7 @@ async function deepDiveCountDown() {
             let minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
             let seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
             let formattedTime = formatTime(days, hours, minutes, seconds);
-            document.getElementById("ddCountdown").innerHTML = formattedTime;
+            document.getElementById("deepDiveCountdown").innerHTML = formattedTime;
         }
     }
     function formatTime(days, hours, minutes, seconds) {
