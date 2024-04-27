@@ -141,17 +141,19 @@ def start_threads():
     
 def join_threads(go_flag):
     go_flag.clear()
-    # for thread in biome_rotator_threads:
-    #     thread.join()
+    
+    wait_rotationthread.join()
     tstampthread.join()
     biomesthread.join()
     ddsthread.join()
-    wait_rotationthread.join()
     dailydeal_tstampthread.join()
     dailydealthread.join()
     index_thread.join()
     SERVER_READY_thread.join()
+    
     # json_thread.join()
+    # for thread in biome_rotator_threads:
+    #     thread.join()
     
 
 def signal_handler_exit(sig, frame, go_flag):
@@ -163,14 +165,15 @@ def set_signal_handlers(SIGINT, SIGTERM, go_flag):
     signal(SIGINT, lambda signum, frame: signal_handler_exit(signum, frame, go_flag))
     signal(SIGTERM, lambda signum, frame: signal_handler_exit(signum, frame, go_flag))
 
-# reloader override for flask debug server so it doesnt lock up on reload
-from werkzeug._reloader import StatReloaderLoop, reloader_loops
-class ReloaderLoop_(StatReloaderLoop):        
-    def trigger_reload(self, filename: str) -> None:
-        join_threads(go_flag)
-        return super().trigger_reload(filename)
-    
-reloader_loops['auto'] = ReloaderLoop_
+if __name__ == '__main__':
+    # reloader override for flask debug server so it doesnt lock up on reload
+    from werkzeug._reloader import StatReloaderLoop, reloader_loops
+    class ReloaderLoop_(StatReloaderLoop):
+        def trigger_reload(self, filename: str) -> None:
+            join_threads(go_flag)
+            return super().trigger_reload(filename)
+        
+    reloader_loops['auto'] = ReloaderLoop_
 
 app = Flask(__name__, static_folder='./static')
 
@@ -306,7 +309,8 @@ def upload():
         
         if filename.endswith('.json') or filename.endswith('.py'):
             file_.save(f'{cwd}/{filename}')
-            shutil_copy(f'{cwd}/{filename}', f'{cwd}/static/json/{filename}')
+            if filename.startswith('DD'):
+                shutil_copy(f'{cwd}/{filename}', f'{cwd}/static/json/{filename}')
             
         elif filename.endswith('icon.png'):
             file_.save(f'{cwd}{filename}')

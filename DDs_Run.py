@@ -7,7 +7,8 @@ from drgmissions_scraper_utils import (
     upload_file,
     enable_system_time,
     wait_until_next_hour,
-    kill_process_by_name_starts_with
+    kill_process_by_name_starts_with,
+    print
 )
 
 def main():

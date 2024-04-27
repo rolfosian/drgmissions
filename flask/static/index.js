@@ -74,7 +74,8 @@ var primaryObjs = {
     'Escort Duty': '/static/img/Escort_icon.webp',
     'Point Extraction': '/static/img/Point_extraction_icon.webp',
     'Elimination': '/static/img/Elimination_icon.webp',
-    'Industrial Sabotage': '/static/img/Sabotage_icon.webp'
+    'Industrial Sabotage': '/static/img/Sabotage_icon.webp',
+    // 'Deep Scan' : './static/img/Deep_scan_icon.webp',
 };
 var primaryObjsImages = {};
 primaryObjsImages.name = 'primaryObjsImages';
@@ -88,7 +89,8 @@ var primaryObjResources = {
     'Escort Duty': '/static/img/Icon_FuelCannister_Simplified.webp',
     'Point Extraction': '/static/img/Icons_Resources_Outline_Aquarq.webp',
     'Elimination': '/static/img/Kill_Dreadnought_Objective_icon.webp',
-    'Industrial Sabotage': '/static/img/Icon_Facility_DataRack.webp'
+    'Industrial Sabotage': '/static/img/Icon_Facility_DataRack.webp',
+    // 'Deep Scan' : '/static/img/42069.webp'
 };
 var primaryObjResourcesImages = {};
 primaryObjResourcesImages.name = 'primaryObjResourcesImages';
@@ -130,8 +132,10 @@ var mutators = {
     'Low Gravity': '/static/img/Mutator_no_fall_damage_icon.webp',
     'Mineral Mania': '/static/img/Mutator_mineral_mania_icon.webp',
     'Rich Atmosphere': '/static/img/Mutator_rich_atmosphere_icon.webp',
-    'Volatile Guts': '/static/img/Mutator_volatile_guts_icon.webp'
-};
+    'Volatile Guts': '/static/img/Mutator_volatile_guts_icon.webp',
+    // 'Blood Sugar' : './static/img/Mutator_blood_sugar_icon.webp',
+    // 'Secret Secondary' : './static/img/Mutator_secret_secondary_icon.webp'
+        }
 var mutatorsImages = {};
 mutatorsImages.name = 'mutatorsImages';
 
@@ -148,7 +152,9 @@ var warnings = {
     'Elite Threat': '/static/img/Warning_elite_threat_icon.webp',
     'Swarmageddon': '/static/img/Warning_swarmageddon_icon.webp',
     'Lithophage Outbreak': '/static/img/Warning_lithophage_outbreak_icon.webp',
-    'Rival Presence': '/static/img/Warning_rival_presence_icon.webp'
+    'Rival Presence': '/static/img/Warning_rival_presence_icon.webp',
+    // 'Duck and Cover': './static/img/Warning_duck_and_cover_icon.webp',
+    // 'Ebonite Outbreak' : './static/img/Warning_ebonite_outbreak_icon.webp',
 };
 var warningsImages = {};
 warningsImages.name = 'warningsImages';
@@ -547,6 +553,16 @@ async function waitRotation() {
     }
 }
 
+async function loadJSONnoRetry(filePath) {
+    try {
+      const response = await fetch(filePath);
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      throw error;
+    }
+}
+
 async function loadJSON(filePath, maxRetries = 3, retryDelay = 5000 ) {
     let retries = 0;
     while (retries < maxRetries) {
@@ -602,7 +618,7 @@ async function getDeepDiveData() {
     datetime = replaceCharactersAtIndices(datetime, [[13, '-'], [16,'-']]);
     let data;
     try {
-        data = await loadJSON(getDomainURL()+`/static/json/DD_${datetime}.json`);
+        data = await loadJSONnoRetry(getDomainURL()+`/static/json/DD_${datetime}.json`);
     } catch {
     }
     return data;
@@ -975,14 +991,15 @@ async function refreshDeepDives() {
     deepDiveData = await getDeepDiveData();
     if (deepDiveData) {
         arrayDeepDives(deepDiveData);
-
     } else {
-        handleUnavailableDeepDiveData();
+        await handleUnavailableDeepDiveData();
     } 
 }
-
-function handleUnavailableDeepDiveData() {
-    let deepDiveNormalDiv = document.getElementById('Deep Dive Normal');
+function formatNumber(number) {
+    return number.toString().padStart(2, "0");
+}
+async function handleUnavailableDeepDiveData() {
+    let deepDiveNormalDiv = document.getElementById('Deep-Dive-Normal');
     while(deepDiveNormalDiv.hasChildNodes()) {
         deepDiveNormalDiv.removeChild(deepDiveNormalDiv.lastChild);
     };
@@ -992,8 +1009,12 @@ function handleUnavailableDeepDiveData() {
     spanElement.className = "scanners";
     spanElement.textContent = "// AWAITING UP TO DATE DATA \\\\";
     deepDiveNormalDiv.appendChild(spanElement);
+    deepDiveNormalDiv.appendChild(document.createElement('br'));
+    let normalCountdownSpanElement = document.createElement("span");
+    normalCountdownSpanElement.className = 'scanners';
+    deepDiveNormalDiv.appendChild(normalCountdownSpanElement);
 
-    var deepDiveEliteDiv = document.getElementById('Deep Dive Elite');
+    var deepDiveEliteDiv = document.getElementById('Deep-Dive-Elite');
     while(deepDiveEliteDiv.hasChildNodes()) {
         deepDiveEliteDiv.removeChild(deepDiveEliteDiv.lastChild);
     };
@@ -1003,6 +1024,20 @@ function handleUnavailableDeepDiveData() {
     spanElement.className = "scanners";
     spanElement.textContent = "// AWAITING UP TO DATE DATA \\\\";
     deepDiveEliteDiv.appendChild(spanElement);
+    deepDiveEliteDiv.appendChild(document.createElement('br'));
+    let eliteCountdownSpanElement = document.createElement("span");
+    eliteCountdownSpanElement.className = 'scanners';
+    deepDiveEliteDiv.appendChild(eliteCountdownSpanElement);
+
+    let timeLeft = 30;
+    let clockString;
+    while (timeLeft > 0) {
+        clockString = `00:${formatNumber(timeLeft)} until retry`;
+        normalCountdownSpanElement.textContent = clockString;
+        eliteCountdownSpanElement.textContent = clockString;
+        timeLeft--;
+        await sleep(1000);
+    }
 }
 
 function arrayDailyDeal(dailyDeal) {
@@ -1657,42 +1692,36 @@ window.addEventListener('configEvent', (event) => {
 });
 function toggleButtons() {
     let buttonDiv = document.getElementById('buttonDiv');
-    let buttonsbutton = document.getElementById('buttonsbutton');
-    let backgroundbutton = document.getElementById('backgroundButton');
-    let slideButton = document.getElementById('slideButton');
-    let currentButton = document.getElementById('currentButton');
-    let missionscountdown = document.getElementById('missionscountdown');
-    let DAILYDEAL = document.getElementById('DAILYDEAL');
-    let dailydealbutton = document.getElementById('dailydealbutton');
-    let seasonBox = document.getElementById('seasonSelect');
+    let buttonsButton = document.getElementById('buttonsButton');
 
     if (buttonDiv.style.display === "none") {
         buttonDiv.style.display = 'block';
-        backgroundbutton.style.display = "inline-block";
-        slideButton.style.display = "inline-block";
-        currentButton.style.display = "inline-block";
-        dailydealbutton.style.display = "inline-block";
-        dailydealbutton.textContent = "Click here to see Daily Deal";
-        DAILYDEAL.style.display = "none";
-        seasonBox.style.display = "inline-block";
-        missionscountdown.style.display = "none";
-        buttonsbutton.textContent = " x ";
-        $("#missionscountdown").slideToggle();
-        $("#slideButton").text("Hide countdown");
+        // slideToggle('missionsCountdown', 'missionRotationSlideButton', ['Show Countdown', 'Hide Countdown']);
+        document.getElementById('dailyDealButton').textContent = 'Click here to see Daily Deal';
+        buttonsButton.textContent = "x";
         setStorages('areButtonsHidden', false);
     } else {
         buttonDiv.style.display = "none";
-        missionscountdown.style.display = "none";
-        backgroundbutton.style.display = "none";
-        DAILYDEAL.style.display = "none";
-        dailydealbutton.style.display = "none";
-        slideButton.style.display = "none";
-        currentButton.style.display = "none";
-        seasonBox.style.display = "none";
-        buttonsbutton.textContent = "+";
+        // slideToggle('missionsCountdown', 'missionRotationSlideButton', ['Show Countdown', 'Hide Countdown'])
+        slideToggle('dailyDealMaster', 'dailyDealButton', ['Click here to see Daily Deal', 'Hide Daily Deal'])
+        buttonsButton.textContent = "+";
         setStorages('areButtonsHidden', true);
     }
 };
+async function slideToggle(elementId, buttonId, buttonTexts) {
+    let element = document.getElementById(elementId);
+    let button = document.getElementById(buttonId)
+    let currentHeight = element.clientHeight;
+    let contentHeight = element.scrollHeight;
+
+    if (currentHeight === 0) {
+        element.style.height = contentHeight + "px";
+        button.textContent = buttonTexts[1];
+    } else {
+        element.style.height = 0;
+        button.textContent = buttonTexts[0];
+    }
+}
 window.addEventListener('resize', function(event) {
     if (initialized) {
         equalizeGridItems();
@@ -1907,7 +1936,7 @@ async function initialize(date) {
     <div>
     
     <div class="ddscountdown">NEW DEEP DIVES IN</div>
-    <span id="ddcountdown"></span>
+    <span id="ddCountdown"></span>
     <hr>
     </div>
 
@@ -2061,7 +2090,7 @@ var localStorages = {
 var localStoragesHashes = {
     'img' : 530276585,
     'fonts' : 906557479,
-    'homepageScript' : 717494654,
+    'homepageScript' : -580538435,
 };
 
 var cacheActive = false;

@@ -18,7 +18,8 @@ function UnpackDeepDiveMission(mission, master, t)
         {pattern = "Refinery", result = "On-Site Refining"},
         {pattern = "1st_Salvage", result = "Salvage Operation"},
         {pattern = "1st_Facility", result = "Industrial Sabotage"},
-        {pattern = "Gather_AlienEggs", result = "Egg Hunt"}
+        {pattern = "Gather_AlienEggs", result = "Egg Hunt"},
+        -- {pattern = "DeepScan", result = "Deep Scan"}
     }
     for _, obj in ipairs(primary_objectives) do
         if string.find(PrimaryObjective, obj.pattern) then
@@ -58,7 +59,9 @@ function UnpackDeepDiveMission(mission, master, t)
         {pattern = 'CaveLeechDen', result = 'Cave Leech Cluster'},
         {pattern = 'RivalIncursion', result = 'Rival Presence'},
         {pattern = 'Ghost', result = 'Haunted Cave'},
-        {pattern = 'InfestedEnemies', result = 'Parasites'}
+        {pattern = 'InfestedEnemies', result = 'Parasites'},
+        -- {pattern = 'DuckAndCover', result = "Duck and Cover"},
+        -- {pattern = 'EboniteOutbreak', result = 'Ebonite Outbreak'}
     }
     local MissionWarnings = mission:GetPropertyValue("MissionWarnings")
     local num_MissionWarnings = MissionWarnings:GetArrayNum()
@@ -107,7 +110,9 @@ function UnpackDeepDiveMission(mission, master, t)
                 {pattern = 'XXXP', result = 'Double XP'},
                 {pattern = 'OxygenRich', result = 'Rich Atmosphere'},
                 {pattern = 'ExterminationContract', result = 'Golden Bugs'},
-                {pattern = 'ExplosiveEnemies', result = 'Volatile Guts'}
+                {pattern = 'ExplosiveEnemies', result = 'Volatile Guts'},
+                -- {pattern = 'BloodSugar', result = 'Blood Sugar'},
+                -- {pattern = 'SecretSecondary', result = 'Secret Secondary'}
             }
             for _, obj in ipairs(mutators) do
                 if string.find(MissionMutator, obj.pattern) then

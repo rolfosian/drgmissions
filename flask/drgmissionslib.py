@@ -227,7 +227,8 @@ def render_mission_obj_resource(primary_obj, complexity, length):
         'Escort Duty': './static/img/Icon_FuelCannister_Simplified.png',
         'Point Extraction': './static/img/Icons_Resources_Outline_Aquarq.png',
         'Elimination': './static/img/Kill_Dreadnought_Objective_icon.png',
-        'Industrial Sabotage': './static/img/Icon_Facility_DataRack.png'
+        'Industrial Sabotage': './static/img/Icon_Facility_DataRack.png',
+        'Deep Scan' : './static/img/42069.png'
             }
     values = {
         ('Mining Expedition', '1', '1'): '200',
@@ -248,6 +249,7 @@ def render_mission_obj_resource(primary_obj, complexity, length):
         ('Elimination', 'default'): '3',
         ('Salvage Operation', '2'): '2',
         ('Salvage Operation', 'default'): '3',
+        ('Deep Scan', '2') : ''
     }
     
     BACKGROUND = Image.new("RGBA", (256, 256), (0,0,0,0))
@@ -292,7 +294,8 @@ def render_mission(m_d, six):
         'Escort Duty': './static/img/Escort_icon.png',
         'Point Extraction': './static/img/Point_extraction_icon.png',
         'Elimination': './static/img/Elimination_icon.png',
-        'Industrial Sabotage': './static/img/Sabotage_icon.png'
+        'Industrial Sabotage': './static/img/Sabotage_icon.png',
+        'Deep Scan' : './static/img/Deep_scan_icon.png'
             }
     secondary_objs = {
         'ApocaBlooms': './static/img/Apoca_bloom_icon.png',
@@ -322,7 +325,9 @@ def render_mission(m_d, six):
         'Low Gravity': './static/img/Mutator_no_fall_damage_icon.png',
         'Mineral Mania': './static/img/Mutator_mineral_mania_icon.png',
         'Rich Atmosphere': './static/img/Mutator_rich_atmosphere_icon.png',
-        'Volatile Guts': './static/img/Mutator_volatile_guts_icon.png'
+        'Volatile Guts': './static/img/Mutator_volatile_guts_icon.png',
+        'Blood Sugar' : './static/img/Mutator_blood_sugar_icon.png',
+        'Secret Secondary' : './static/img/Mutator_secret_secondary_icon.png'
             }
     warnings = {
         'Cave Leech Cluster': './static/img/Warning_cave_leech_cluster_icon.png',
@@ -337,7 +342,9 @@ def render_mission(m_d, six):
         'Elite Threat': './static/img/Warning_elite_threat_icon.png',
         'Swarmageddon': './static/img/Warning_swarmageddon_icon.png',
         'Lithophage Outbreak': './static/img/Warning_lithophage_outbreak_icon.png',
-        'Rival Presence': './static/img/Warning_rival_presence_icon.png'
+        'Rival Presence': './static/img/Warning_rival_presence_icon.png',
+        'Duck and Cover': './static/img/Warning_duck_and_cover_icon.png',
+        'Ebonite Outbreak' : './static/img/Warning_ebonite_outbreak_icon.png',
             }
     
     BACKGROUND = Image.new("RGBA", (350, 300), (0,0,0,0))
@@ -574,7 +581,8 @@ def render_dd_stage(m_d):
         'Escort Duty': './static/img/Escort_icon.png',
         'Point Extraction': './static/img/Point_extraction_icon.png',
         'Elimination': './static/img/Elimination_icon.png',
-        'Industrial Sabotage': './static/img/Sabotage_icon.png'
+        'Industrial Sabotage': './static/img/Sabotage_icon.png',
+        'Deep Scan' : './static/img/Deep_scan_icon.png'
             }
     complexities = {
         '1': './static/img/Icons_complexity_1.png',
@@ -594,7 +602,9 @@ def render_dd_stage(m_d):
         'Low Gravity': './static/img/Mutator_no_fall_damage_icon.png',
         'Mineral Mania': './static/img/Mutator_mineral_mania_icon.png',
         'Rich Atmosphere': './static/img/Mutator_rich_atmosphere_icon.png',
-        'Volatile Guts': './static/img/Mutator_volatile_guts_icon.png'
+        'Volatile Guts': './static/img/Mutator_volatile_guts_icon.png',
+        'Blood Sugar' : './static/img/Mutator_blood_sugar_icon.png',
+        'Secret Secondary' : './static/img/Mutator_secret_secondary_icon.png'
             }
     warnings = {
         'Cave Leech Cluster': './static/img/Warning_cave_leech_cluster_icon.png',
@@ -609,7 +619,9 @@ def render_dd_stage(m_d):
         'Elite Threat': './static/img/Warning_elite_threat_icon.png',
         'Swarmageddon': './static/img/Warning_swarmageddon_icon.png',
         'Lithophage Outbreak': './static/img/Warning_lithophage_outbreak_icon.png',
-        'Rival Presence': './static/img/Warning_rival_presence_icon.png'
+        'Rival Presence': './static/img/Warning_rival_presence_icon.png',
+        'Duck and Cover': './static/img/Warning_duck_and_cover_icon.png',
+        'Ebonite Outbreak' : './static/img/Warning_ebonite_outbreak_icon.png',
             }
     
     BACKGROUND = Image.new("RGBA", (350, 300), (0,0,0,0))
@@ -1458,8 +1470,10 @@ def wait_rotation(rendering_events, index_event, go_flag):
 
 def SERVER_READY(index_event):
     index_event.wait()
-    now = datetime.now()
+    from psutil import Process
     print('Server is ready for requests')
+    print("Memory used by process:", round(Process().memory_info().rss / (1024 * 1024), 2), "MB")
+    del Process
     return
 
 def timestamped_print(func):

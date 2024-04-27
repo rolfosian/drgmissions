@@ -1,10 +1,6 @@
 input[type="checkbox"] {
 transform: scale(1.5);
 }
-.seasonselect {
-position: absolute;
-text-align: center;
-}
 body::-webkit-scrollbar {
 display: none;
 }
@@ -170,7 +166,7 @@ color: white;
 font-size: 35px;
 font-family: "BebasNeue";
 }
-@keyframes glowing {
+@keyframes glowing-red-white {
 0% {
 color: #ffffff;
 }
@@ -181,10 +177,10 @@ color: #ff0000;
 color: #ffffff;
 }
 }
-.glow-text {
-animation: glowing 2s infinite;
+.glow-text-red-white {
+animation: glowing-red-white 2s infinite;
 }
-span#countdown {
+span#missionsCountdown {
 white-space: nowrap;
 left: 50%;
 color: white;
@@ -192,7 +188,7 @@ font-size: 65px;
 transform: translate(-50%, -50%);
 font-family: "CarbonBold-W00-Regular";
 }
-span#ddcountdown {
+span#ddCountdown {
 margin-bottom: 0;
 display: flex;
 align-items: center;
@@ -201,7 +197,7 @@ font-size: 72px;
 justify-content: center;
 font-family: "CarbonBold-W00-Regular";
 }
-#countdowncontainer {
+#topCountdownContainer {
 position: fixed;
 top: 0;
 left: 50%;
@@ -209,10 +205,7 @@ transform: translateX(-50%);
 justify-content: center;
 z-index: 9998;
 }
-#buttonDiv {
-    display: none;
-}
-#slideButton {
+#missionRotationSlideButton {
 position: relative;
 text-align: center;
 left: 50%;
@@ -225,6 +218,10 @@ color: white;
 font-size: 15px;
 font-family: "BebasNeue";
 }
+.seasonselect {
+position: relative;
+text-align: center;
+}
 #currentButton {
 position: relative;
 left: 50%;
@@ -234,12 +231,13 @@ background-color: #303030;
 color: white;
 font-size: 15px;
 font-family: "BebasNeue";
-width: 194px;
+width: 195px;
 }
-#DAILYDEAL{
-display: none;
+#dailyDealMaster{
+overflow: hidden;
+transition: height 1.0s;
 }
-#dailydealbutton {
+#dailyDealButton {
 position: relative;
 left: 50%;
 text-align: center;
@@ -249,7 +247,7 @@ color: white;
 font-size: 15px;
 font-family: "BebasNeue";
 }
-span#DailyDealcountdown {
+span#dailyDealCountdown {
 white-space: nowrap;
 left: 50%;
 color: white;
@@ -257,20 +255,21 @@ font-size: 45px;
 transform: translate(-50%, -50%);
 font-family: "CarbonBold-W00-Regular";
 }
-#dailydealcountdown {
+#dailyDealCountdown {
 text-align: center;
 color: white;
 font-size: 15px;
 font-family: "BebasNeue";
 }
-#missionscountdown {
-display: none;
+#missionsCountdownMaster {
 text-align: center;
 color: white;
 font-size: 30px;
 font-family: "BebasNeue";
+overflow: hidden;
+transition: height 0.5s;
 }
-#dailydealhead {
+#dailyDealHead {
 text-align: center;
 color: white;
 font-size: 35px;
@@ -288,7 +287,7 @@ color: white;
 font-size: 15px;
 font-family: "BebasNeue";
 }
-#buttonsbutton {
+#buttonsButton {
 position: relative;
 float: right;
 top: 0;

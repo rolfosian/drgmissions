@@ -50,12 +50,12 @@ def main_loop(total_increments, current_time, AllTheDeals):
         #Wait for JSON
         while waiting_for_json:
             if time.monotonic() - wait_start_time > 120:
-                print('TIMEOUT.')
+                print('Timeout... process froze or crashed')
                 timeout = True
                 kill_process_by_name_starts_with('FSD')
                 kill_process_by_name_starts_with('Unreal')
                 sleep(3)
-                print('RESTARTING')
+                print('restarting...')
                 break
             
             for filename in os.listdir():

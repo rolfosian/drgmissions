@@ -1,11 +1,8 @@
 function scrollToTop() {
     window.scrollTo(0, 0);
     }
-$(document).ready(function() {
-$('img').on('load', function() {
-    scrollToTop();
-});
-scrollToTop();
+document.querySelectorAll('img').forEach((element)=> {
+    element.style.opacity = "1";
 });
 
 async function deepDiveCountDown() {
@@ -14,7 +11,7 @@ async function deepDiveCountDown() {
     let targetTime = new Date();
     let countdownTimer;
     
-    function startCountdown(interval) {
+    function startCountdown() {
         targetTime.setUTCHours(targetHour, 0, 0, 0);
         if (targetTime.getUTCDay() === targetDay && Date.now() > targetTime.getTime()) {
             targetTime.setUTCDate(targetTime.getUTCDate() + 7);
@@ -22,7 +19,7 @@ async function deepDiveCountDown() {
         while (targetTime.getUTCDay() !== targetDay) {
             targetTime.setUTCDate(targetTime.getUTCDate() + 1);
         }
-        countdownTimer = setInterval(updateCountdown, interval)
+        countdownTimer = setInterval(updateCountdown)
     }
 
     function updateCountdown() {
@@ -30,17 +27,17 @@ async function deepDiveCountDown() {
         let remainingTime;
         if (!deepDiveData) {
             remainingTime = 0;
-            document.getElementById("ddcountdown").classList.add('glow-text');
+            document.getElementById("ddCountdown").classList.add('glow-text-red-white');
         } else {
             now = Date.now();
             remainingTime = targetTime.getTime() - now;
-            document.getElementById("ddcountdown").classList.remove('glow-text');
+            document.getElementById("ddCountdown").classList.remove('glow-text-red-white');
         }
         if (remainingTime <= 0) {
             clearInterval(countdownTimer);
-            document.getElementById("ddcountdown").innerHTML = "0D 00:00:00";
+            document.getElementById("ddCountdown").innerHTML = "0:00:00:00";
             refreshDeepDives().then(() => {
-                startCountdown(30000);
+                startCountdown();
             });
         } else {(0)
             let days = Math.floor(remainingTime / (1000 * 60 * 60 * 24));
@@ -48,7 +45,7 @@ async function deepDiveCountDown() {
             let minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
             let seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
             let formattedTime = formatTime(days, hours, minutes, seconds);
-            document.getElementById("ddcountdown").innerHTML = formattedTime;
+            document.getElementById("ddCountdown").innerHTML = formattedTime;
         }
     }
     function formatTime(days, hours, minutes, seconds) {
@@ -62,7 +59,7 @@ async function deepDiveCountDown() {
 }
 
 function topMissionsCountdown() {
-    let countdownElement = document.getElementById('countdown');
+    let countdownElement = document.getElementById('missionsCountdown');
     let countdownTimer;
     let targetTime = new Date();
     let isMidnightUpcoming_;
@@ -157,7 +154,7 @@ function topDailyDealCountdown() {
             let minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
             let seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
             let formattedTime = padZero(hours) + ":" + padZero(minutes) + ":" + padZero(seconds);
-            document.getElementById("DailyDealcountdown").innerHTML = formattedTime;
+            document.getElementById("dailyDealCountdown").innerHTML = formattedTime;
         }
     
     function padZero(number) {
@@ -175,29 +172,6 @@ function topDailyDealCountdown() {
 
     startCountdown();
 };
-
-$(document).ready(function() {
-$("#slideButton").click(function() {
-    $("#missionscountdown").slideToggle(function() {
-    if ($("#missionscountdown").is(":hidden")) {
-        $("#slideButton").text("Show countdown");
-    } else {
-        $("#slideButton").text("Hide countdown");
-    }
-    });
-});
-});
-$(document).ready(function() {
-$("#dailydealbutton").click(function() {
-    $("#DAILYDEAL").slideToggle(700, function() {
-    if ($("#DAILYDEAL").is(":hidden")) {
-        $("#dailydealbutton").text("Click here to see Daily Deal");
-    } else {
-        $("#dailydealbutton").text("Hide Daily Deal");
-    }
-    });
-});
-});
 
 function toggleCollapse() {
     var current = document.getElementById("current");
@@ -233,7 +207,6 @@ async function onLoad() {
     setupIdleVideoPause('background-video', 10000)
     topDailyDealCountdown()
     topMissionsCountdown()
-    deepDiveCountDown()
 
     // let season = document.getElementById('season');
     // season.setAttribute('onchange', 'changeSeason(biomes, this.value)');
@@ -244,16 +217,30 @@ async function onLoad() {
     seasonClick.setAttribute('onclick', "document.getElementById('season').click()");
     seasonClick.disabled = false;
 
-    $(".biome-container").each(function() {
-    $(this).css("opacity", "1");
+    document.querySelectorAll('.biome-container').forEach((element)=> {
+        element.style.opacity = "1";
     });
-    if (!localStorages['areButtonsHidden']) {
-        $("#missionscountdown").slideToggle();
-    }
 
-    let buttonsButton = document.getElementById('buttonsbutton');
-    buttonsButton.setAttribute('onclick', 'toggleButtons()');
-    buttonsButton.disabled = false;
+    let dailyDealButton = document.getElementById('dailyDealButton')
+    dailyDealButton.setAttribute('onclick', "slideToggle('dailyDealMaster', 'dailyDealButton', ['Click here to see Daily Deal', 'Hide Daily Deal'])");
+    slideToggle('dailyDealMaster', 'dailyDealButton', ['Click here to see Daily Deal', 'Hide Daily Deal'])
+    dailyDealButton.disabled = false
+
+    // setupMissionRotationCountdownSlideToggle = async () => {
+    //     let missionRotationCountDownButton = document.getElementById('missionRotationSlideButton');
+    //     missionRotationCountDownButton.setAttribute('onclick', `slideToggle('missionsCountdownMaster', 'missionRotationSlideButton', ['Show Countdown', 'Hide Countdown'])`);
+    //     slideToggle('missionsCountdownMaster', 'missionRotationSlideButton', ['Show Countdown', 'Hide Countdown'])
+    //     while (document.getElementById('missionsCountdown').textContent === '') {
+    //         await sleep(1);
+    //     }
+    //     slideToggle('missionsCountdownMaster', 'missionRotationSlideButton', ['Show Countdown', 'Hide Countdown'])
+    //     missionRotationCountDownButton.disabled = false;
+    // }
+    // setupMissionRotationCountdownSlideToggle().then(() => {
+        let buttonsButton = document.getElementById('buttonsButton');
+        buttonsButton.setAttribute('onclick', 'toggleButtons()');
+        buttonsButton.disabled = false;
+    // });
     
     currentButton = document.getElementById('currentButton');
     currentButton.setAttribute('onclick', 'toggleCollapse()');
@@ -262,15 +249,21 @@ async function onLoad() {
     backgroundButton = document.getElementById('backgroundButton');
     backgroundButton.setAttribute('onclick', 'toggleBackground()');
     backgroundButton.disabled = false;
-    // document.getElementById('loading').textContent = 'An error occured, please refresh the page.'
 
-    try {
-        deepDiveData = await getDeepDiveData()
+    deepDiveData = await getDeepDiveData()
+    if (deepDiveData) {
         arrayDeepDives(deepDiveData);
-    } catch {
-        handleUnavailableDeepDiveData()
-    }
-    $(".dd-missions").each(function() {
-        $(this).css("opacity", "1");
+        document.querySelectorAll('.dd-missions').forEach((element)=> {
+            element.style.opacity = "1";
         });
-};
+    } else {
+        let deepDiveCountdownElement = document.getElementById("ddCountdown");
+        deepDiveCountdownElement.classList.add('glow-text-red-white');
+        deepDiveCountdownElement.innerHTML = "0:00:00:00";
+        document.querySelectorAll('.dd-missions').forEach((element)=> {
+            element.style.opacity = "1";
+        });
+        await handleUnavailableDeepDiveData();
+    };
+    deepDiveCountDown()
+}

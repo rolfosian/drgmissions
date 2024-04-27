@@ -12,7 +12,7 @@ from drgmissions_scraper_utils import (
 import json
 
 if __name__ == '__main__':
-    if yes_or_no('run on .bak file?'):
+    if yes_or_no('run on bak?'):
         filename = 'drgmissionsgod.json.bak'
     else:
         filename = 'drgmissionsgod.json'
