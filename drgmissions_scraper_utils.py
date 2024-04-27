@@ -49,6 +49,8 @@ def order_dictionary_by_date_FIRST_KEY_ROUNDING(dictionary):
         new_key = first_key[:14] + '00' + first_key[16:]
         dictionary[new_key] = dictionary[first_key]
         sorted_keys[0] = new_key
+    for season, value in dictionary[sorted_keys[0]].items():
+        value['timestamp'] = sorted_keys[0]
     
     ordered_dictionary = {}
     for key in sorted_keys:
@@ -119,13 +121,15 @@ def find_duplicate_seasons(dictionary, invalid_keys):
     for timestamp, seasons_dict in dictionary_.items():
         god[timestamp] = {}
         for season, master in seasons_dict.items():
-            god[timestamp][season] = {'Biomes' : {}, 'timestamp' : timestamp }
+            god[timestamp][season] = {'Biomes' : {} }
             for k, v in master.items():
                 if k == 'Biomes':
                     for biome, missions in v.items():
                         for mission in missions:
                             del mission['id']
                         god[timestamp][season][k][biome] = missions
+                else:
+                    god[timestamp][season][k] = v
                             
             god[timestamp][season] = json.dumps(master)
             
@@ -143,20 +147,27 @@ def find_duplicate_seasons(dictionary, invalid_keys):
         print("No duplicate season data found.")
 
 def find_duplicates(dictionary, invalid_keys):
+    def is_not_longer_than_1_hour(datetime1, datetime2):
+        time_difference = abs(datetime2 - datetime1)
+        one_hour = timedelta(hours=1)
+        
+        if time_difference > one_hour:
+            return False
+        else:
+            return True
+    
     god = {}
     dictionary_ = deepcopy(dictionary)
 
     for timestamp, seasons_dict in dictionary_.items():
-        god[timestamp] = {}
         for season, master in seasons_dict.items():
-            god[timestamp][season] = {'Biomes' : {}, 'timestamp' : timestamp }
+            del master['timestamp']
             for k, v in master.items():
                 if k == 'Biomes':
                     for biome, missions in v.items():
                         for mission in missions:
                             del mission['id']
-                god[timestamp][season]['Biomes'] = v
-                
+
     for key, value in dictionary_.items():
         god[key] = json.dumps(value)
 
@@ -175,9 +186,17 @@ def find_duplicates(dictionary, invalid_keys):
         print("Duplicate timestamps found:")
         for value, keys in duplicate_strings.items():
             print("Keys:", keys)
-            for key in keys:
+            datetime1 = datetime.strptime(keys[0], "%Y-%m-%dT%H:%M:%SZ")
+            datetime2 = datetime.strptime(keys[1], "%Y-%m-%dT%H:%M:%SZ")
+
+            if is_not_longer_than_1_hour(datetime1, datetime2):
+                print('Found invalid')
                 if key not in invalid_keys:
-                    invalid_keys.append((key, find_duplicates.__name__))
+                    invalid_keys.append((keys[0], find_duplicates.__name__))
+                    invalid_keys.append((keys[1], find_duplicates.__name__))
+            else:
+                print('Likely not invalid')
+
     else:
         print("No duplicate timestamps found.")
 

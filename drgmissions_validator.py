@@ -13,9 +13,10 @@ from drgmissions_scraper_utils import (
 )
 import json
 from os import path, getcwd
+cwd = getcwd()
 
 if __name__ == '__main__':
-    if path.isfile(getcwd()+'drgmissionsgod.json.bak'):
+    if path.isfile(cwd+'/drgmissionsgod.json.bak'):
         if yes_or_no('Run on .bak file? Y/N: '):
             filename = 'drgmissionsgod.json.bak'
     else:
@@ -25,7 +26,7 @@ if __name__ == '__main__':
             DRG = json.load(f)
             f.close()
             
-        if path.isfile(getcwd()+'FSD-Win64-Shipping.exe'):
+        if path.isfile(cwd+'/FSD-Win64-Shipping.exe'):
             if yes_or_no('Run JSON patcher? Y/N: '):
                 patched = False
                 DRG, patched = validate_drgmissions(DRG, patched)
