@@ -2115,7 +2115,7 @@ var localStorages = {
 var localStoragesHashes = {
     'img' : 530276585,
     'fonts' : 906557479,
-    'homepageScript' : -1904996729,
+    'homepageScript' : 550819065,
 };
 
 var cacheActive = false;

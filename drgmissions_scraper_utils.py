@@ -62,6 +62,7 @@ def reconstruct_dictionary(dictionary):
     mission_key_order = ['PrimaryObjective', 'SecondaryObjective', 'MissionWarnings', 'MissionMutator', 'Complexity', 'Length', 'CodeName', 'id']
     biome_order = ['Glacial Strata', 'Crystalline Caverns', 'Salt Pits', 'Magma Core', 'Azure Weald', 'Sandblasted Corridors', 'Fungus Bogs', 'Radioactive Exclusion Zone', 'Dense Biozone', 'Hollow Bough']
     for timestamp, seasons_dict in dictionary.items():
+        seasons_dict = sort_dictionary(seasons_dict, ['s0', 's1', 's2', 's3', 's4', 's5'])
         god[timestamp] = {}
         for season, master in seasons_dict.items():
             god[timestamp][season] = {}
@@ -440,9 +441,12 @@ def validate_drgmissions(DRG, patched):
         elapsed_time = 0
         
         while True:
-            timeout_seconds = (total_increments * poll_interval) + 300
-            if poll_switch:
+            timeout_seconds = (total_increments_ * poll_interval) + 300
+            if start_time:
                 elapsed_time = time.monotonic() - start_time
+            
+            if poll_switch:
+                print(elapsed_time, timeout_seconds)
                 # avg_poll_time = elapsed_time / polls
                 estimated_time_completion = total_increments * poll_interval
                 total_increments -= 1

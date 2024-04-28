@@ -132,14 +132,26 @@ function GetMissions(desired_season)
     return missions
 end
 function UnpackStandardMission(mission, master, b, missionscount, season)
+    _L = {
+        MissionName = nil,
+        PrimaryObjective = nil,
+        SecondaryObjective = nil,
+        MissionWarnings = nil,
+        MissionMutator = nil,
+        complexity = nil,
+        length = nil
+    }
     missionscount = missionscount + 1
     local mission1 = {}
     mission1['id'] = missionscount
+
     local MissionName = mission:GetPropertyValue("MissionName")
-    MissionName = MissionName:ToString()
-    mission1['CodeName'] = MissionName
+    _L.MissionName = MissionName:ToString()
+    mission1['CodeName'] = _L.MissionName
+
     local PrimaryObjective = mission:GetPropertyValue("PrimaryObjective")
     PrimaryObjective = string.format("%s",PrimaryObjective:GetFullName())
+    _L.PrimaryObjective = PrimaryObjective
     local primary_objectives = {
         {pattern = "PointExtraction", result = "Point Extraction"},
         {pattern = "Eliminate_Eggs", result = "Elimination"},
@@ -159,8 +171,10 @@ function UnpackStandardMission(mission, master, b, missionscount, season)
     end
     -- print(PrimaryObjective)
     mission1['PrimaryObjective'] = PrimaryObjective
+
     local SecondaryObjective = mission:GetPropertyValue("SecondaryObjectives")[1]
     SecondaryObjective = string.format("%s",SecondaryObjective:GetFullName())
+    _L.SecondaryObjective = SecondaryObjective
     local secondary_objectives = {
         {pattern = "Gunkseed", result = "Gunk Seeds"},
         {pattern = "Ebonut", result = "Ebonuts"},
@@ -179,6 +193,7 @@ function UnpackStandardMission(mission, master, b, missionscount, season)
     end
     -- print(SecondaryObjective)
     mission1['SecondaryObjective'] = SecondaryObjective
+
     local warnings = {
         {pattern = 'RegenerativeEnemies', result = 'Regenerative Bugs'},
         {pattern = 'ExploderInfestation', result = 'Exploder Infestation'},
@@ -209,7 +224,8 @@ function UnpackStandardMission(mission, master, b, missionscount, season)
             end
         end
         -- print(MissionWarning1)
-        mission1['MissionWarnings'] = {MissionWarning1}
+        _L.MissionWarnings = {MissionWarning1}
+        mission1['MissionWarnings'] = _L.MissionWarnings
     elseif num_MissionWarnings == 2 then
         local MissionWarning1 = MissionWarnings[1]:GetFullName()
         for _, obj in ipairs(warnings) do
@@ -226,10 +242,13 @@ function UnpackStandardMission(mission, master, b, missionscount, season)
                 break
             end
         end
-        mission1['MissionWarnings'] = {MissionWarning1, MissionWarning2}
+        -- print(MissionWarning2)
+        _L.MissionWarnings = {MissionWarning1, MissionWarning2}
+        mission1['MissionWarnings'] = _L.MissionWarnings
     end
+
     local MissionMutator = mission:GetPropertyValue("MissionMutator")
-    if MissionMutator then 
+    if MissionMutator then
         MissionMutator = string.format("%s",MissionMutator:GetFullName())
         if MissionMutator == 'nil' then
             mission1['MissionMutator'] = nil
@@ -254,11 +273,14 @@ function UnpackStandardMission(mission, master, b, missionscount, season)
                 end
             end
             -- print(MissionMutator)
+            _L.MissionMutator = MissionMutator
         end
     end
+
     local ComplexityLimit = mission:GetPropertyValue("ComplexityLimit")
     ComplexityLimit = string.format("%s",ComplexityLimit:GetFullName())
     local complexity = nil
+
     if string.find(ComplexityLimit,'Complexity_Simple') then
         complexity = '1'
     elseif string.find(ComplexityLimit, 'Complexity_Average') then
@@ -268,10 +290,14 @@ function UnpackStandardMission(mission, master, b, missionscount, season)
     elseif string.find(ComplexityLimit, 'nil') then
         complexity = 'Indefinite'
     end
+
+    _L.complexity = complexity
     mission1['Complexity'] = complexity
+
     local DurationLimit = mission:GetPropertyValue("DurationLimit")
     DurationLimit =  string.format("%s",DurationLimit:GetFullName())
     local length = nil
+
     if DurationLimit == 'nil' then
         length = 'Indefinite'
     elseif string.find(DurationLimit, 'Duration_Short') then
@@ -279,104 +305,111 @@ function UnpackStandardMission(mission, master, b, missionscount, season)
     elseif string.find(DurationLimit, 'Duration_Normal') then
         length = '2'
     end
+    
+    _L.length = length
     mission1['Length'] = length
 
     -- COMPLEXITY AND LENGTH FINALIZATION FOR INDEFINITE VALUES
     local MissionDNA = mission:GetPropertyValue("MissionDNA")
     MissionDNA = string.format("%s",MissionDNA:GetFullName())
-    -- Salvage DNA
-    if string.find(MissionDNA, "SalvageFractured_Complex") and complexity == 'Indefinite' and length == 'Indefinite' then
-        mission1['Complexity'] = '3'
-        mission1['Length'] = '3'
+
+    local MissionDNAs = {
+        -- Salvage
+        {pattern = 'SalvageFractured_Complex', result = {complexity = '3', length = '3'}},
+        {pattern = 'SalvageFractured_Medium', result = {complexity = '2', length = '2'}},
+        -- Point Extraction
+        {pattern = 'Motherlode_Short_C', result = {complexity = '3', length = '2'}},
+        {pattern = 'Motherlode_Long_C', result = {complexity = '3', length = '3'}},
+        -- Refinery
+        {pattern = 'Refinery_Complex', result = {complexity = '3', length = '2'}},
+        {pattern = 'Refinery_Medium_C', result = {complexity = '2', length = '2'}},
+        -- Mining Expedition
+        {pattern = 'DNA_2_01_C', result = {complexity = '1', length = '1'}},
+        {pattern = 'DNA_2_02_C', result = {complexity = '2', length = '2'}},
+        {pattern = 'DNA_2_03_C', result = {complexity = '1', length = '2'}},
+        {pattern = 'DNA_2_04_C', result = {complexity = '2', length = '3'}},
+        {pattern = 'DNA_2_05_C', result = {complexity = '3', length = '3'}},
+    }
+
+    local pe_length_condition = {pattern = 'Motherlode_Short_C', result = {complexity = '3', length = '2'}, conditions = {length = '2', complexity = 'Indefinite'}}
+    if PrimaryObjective == 'Point Extraction' and string.find(MissionDNA, pe_length_condition.pattern) and complexity == pe_length_condition.conditions.complexity and length == pe_length_condition.conditions.length then
+        mission1['Complexity'] = pe_length_condition.result.complexity
+        mission1['Length'] = pe_length_condition.result.length
+
+    elseif complexity == 'Indefinite' and length == 'Indefinite' then
+        for _, dna in pairs(MissionDNAs) do
+            if string.find(MissionDNA, dna.pattern) then
+                mission1['Complexity'] = dna.result.complexity
+                mission1['Length'] = dna.result.length
+                break
+            end
+        end
     end
-    if string.find(MissionDNA, 'SalvageFractured_Medium') and complexity == 'Indefinite' and length == 'Indefinite' then
-        mission1['Complexity'] = '2'
-        mission1['Length'] = '2'
+
+    local MissionDNAs_obscure = {}
+    MissionDNAs_obscure['Egg Hunt'] = {
+            {pattern = 'Fractured_Medium_C', result = {complexity = '2', length = '2'}},
+            {pattern = 'FracturedSimple_C', result = {complexity = '1', length = '1'}},
+            {pattern = 'FracturedSimple_C', result = {complexity = '1', length = '1'}},
+        }
+
+    MissionDNAs_obscure['Elimination'] = {
+        {pattern = 'Star_Medium_C', result = {complexity = '2', length = '2'}},
+        {pattern = 'Star_Complex_C', result = {complexity = '3', length = '3'}},
+    }
+
+    if PrimaryObjective == 'Egg Hunt' and mission1['Complexity'] == 'Indefinite' and mission1['Length'] == 'Indefinite' then
+        local complexity_gate_dna = {pattern = '_Complex', result = {complexity = '2', length = '3'}}
+        if string.find(MissionDNA, complexity_gate_dna.pattern) then
+            mission1['Complexity'] = complexity_gate_dna.result.complexity
+            mission1['Length'] = complexity_gate_dna.result.length
+            complexity = '2'
+        else
+            for _, dna in pairs(MissionDNAs_obscure[PrimaryObjective]) do
+                if string.find(MissionDNA, dna.pattern) then
+                    mission1['Complexity'] = dna.result.complexity
+                    mission1['Length'] = dna.result.length
+                    break
+                end
+            end
+        end
+
+    elseif PrimaryObjective == 'Elimination' and mission1['Complexity'] == 'Indefinite' and mission1['Length'] == 'Indefinite' then
+        for _, dna in pairs(MissionDNAs_obscure[PrimaryObjective]) do
+            if string.find(MissionDNA, dna.pattern) then
+                mission1['Complexity'] = dna.result.complexity
+                mission1['Length'] = dna.result.length
+                break
+            end
+        end
     end
-    -- Point Extraction DNA
-    if string.find(MissionDNA, 'Motherlode_Short_C') and PrimaryObjective == 'Point Extraction' and length == 'Indefinite' and complexity == 'Indefinite' then
-        mission1['Complexity'] = '3'
-        mission1['Length'] = '2'
+
+
+    local MissionDNAs_generic = {
+        {pattern = 'MediumComplex', result = {complexity = '3', length = '2'}},
+        {pattern = 'LongAverage', result = {complexity = '2', length = '3'}},
+        {pattern = 'LongComplex', result = {complexity = '3', length = '3'}},
+        {pattern = 'MediumAverage', result = {complexity = '2', length = '2'}},
+    }
+    if complexity == 'Indefinite' then
+        for _, dna in pairs(MissionDNAs_generic) do
+            if string.find(MissionDNA, dna.pattern) then
+                mission1['Length'] = dna.result.length
+                mission1['Complexity'] = dna.result.complexity
+                break
+            end
+        end
     end
-    if string.find(MissionDNA, 'Motherlode_Long_C') and PrimaryObjective == 'Point Extraction' and length == 'Indefinite' and complexity == 'Indefinite' then
-        mission1['Complexity'] = '3'
-        mission1['Length'] = '3'
-    end
-    -- Refinery DNA
-    if string.find(MissionDNA, 'Refinery_Complex') and complexity == 'Indefinite' and length == 'Indefinite' then
-        mission1['Complexity'] = '3'
-        mission1['Length'] = '2'
-    end
-    if string.find(MissionDNA, 'Refinery_Medium_C') and complexity == 'Indefinite' and length == 'Indefinite' then
-        mission1['Complexity'] = '2'
-        mission1['Length'] = '2'
-    end
-    -- Mining Expedition DNA
-    if string.find(MissionDNA, 'DNA_2_01_C') and complexity == 'Indefinite' and length == 'Indefinite' and PrimaryObjective == 'Mining Expedition' then
-        mission1['Complexity'] = '1'
-        mission1['Length'] = '1'
-    end
-    if string.find(MissionDNA, 'DNA_2_02_C') and complexity == 'Indefinite' and length == 'Indefinite' and PrimaryObjective == 'Mining Expedition' then
-        mission1['Complexity'] = '2'
-        mission1['Length'] = '2'
-    end
-    if string.find(MissionDNA, 'DNA_2_03_C') and complexity == 'Indefinite' and length == 'Indefinite' then
-        mission1['Complexity'] = '1'
-        mission1['Length'] = '2'
-    end
-    if string.find(MissionDNA, 'DNA_2_04_C') and complexity == 'Indefinite' and length == 'Indefinite' and PrimaryObjective == 'Mining Expedition' then
-        mission1['Complexity'] = '2'
-        mission1['Length'] = '3'
-    end
-    if string.find(MissionDNA, 'DNA_2_05_C') and complexity == 'Indefinite' and length == 'Indefinite' then
-        mission1['Complexity'] = '3'
-        mission1['Length'] = '3'
-    end
-    -- Egg Hunt DNA
-    if string.find(MissionDNA, '_Complex') and complexity == 'Indefinite' and length == 'Indefinite' and PrimaryObjective == 'Egg Hunt' then
-        mission1['Length'] = '3'
-        mission1['Complexity'] = '2'
-        complexity = '2'
-    end
-    if string.find(MissionDNA, 'Fractured_Medium_C') and PrimaryObjective == 'Egg Hunt' and length == 'Indefinite' and complexity == 'Indefinite' then
-        mission1['Length'] = '2'
-        mission1['Complexity'] = '2'
-    end 
-    if string.find(MissionDNA, 'FracturedSimple_C') and PrimaryObjective == 'Egg Hunt' then
-        mission1['Complexity'] = '1'
-        mission1['Length'] = '1'
-    end
-    -- Elimination DNA
-    if string.find(MissionDNA, 'Star_Medium_C') and PrimaryObjective == 'Elimination' then
-        mission1['Complexity'] = '2'
-        mission1['Length'] = '2'
-    end
-    if string.find(MissionDNA, 'Star_Complex_C') and PrimaryObjective == 'Elimination' then
-        mission1['Complexity'] = '3'
-        mission1['Length'] = '3' 
-    end
-    -- Generic finalization
-    if string.find(MissionDNA, 'MediumComplex') and complexity == 'Indefinite' then
-        mission1['Length'] = '2'
-        mission1['Complexity'] = '3'
-    end
-    if string.find(MissionDNA, 'LongAverage') and complexity == 'Indefinite' then
-        mission1['Length'] = '3'
-        mission1['Complexity'] = '2'
-    end
-    if string.find(MissionDNA, 'LongComplex') and complexity == 'Indefinite' then
-        mission1['Length'] = '3'
-        mission1['Complexity'] = '3'
-    end
-    if string.find(MissionDNA, 'MediumAverage') and complexity == 'Indefinite' then
-        mission1['Length'] = '2'
-        mission1['Complexity'] = '2'
-    end
-    if string.find(MissionDNA, 'Simple') and complexity == 'Indefinite' then
-        mission1['Complexity'] = '1'
-    end
-    if string.find(MissionDNA, '_Complex') and complexity == 'Indefinite' then
-        mission1['Complexity'] = '3'
+    local MissionDNAs_generic_complexity_nolength = {
+        {pattern = 'Simple', result = '1'},
+        {pattern = '_Complex', result = '3'},
+    }
+    if complexity == 'Indefinite' then
+        for _, dna in pairs(MissionDNAs_generic_complexity_nolength) do
+            if string.find(MissionDNA, dna.pattern) then
+                mission1['Complexity'] = dna.result
+            end
+        end
     end
     -- if mission1['Length'] == 'Indefinite' or mission1['Complexity'] == 'Indefinite' then
     --     print(missionfullname)

@@ -1,6 +1,0 @@
-long_term_mission_data_collector : 0
-dds_fetcher : 0
-GetDailyDeals : 0
-
-; Built-in keybinds, do not move up!
-Keybinds : 1

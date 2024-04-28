@@ -84,9 +84,12 @@ def main():
     start_time = None
     elapsed_time = 0
     while True:
-        timeout_seconds = (total_increments * poll_interval) + 300
-        if poll_switch:
+        timeout_seconds = (total_increments_ * poll_interval) + 300
+        if start_time:
             elapsed_time = time.monotonic() - start_time
+        
+        if poll_switch:
+            print(elapsed_time, timeout_seconds)
             # avg_poll_time = elapsed_time / polls
             estimated_time_completion = total_increments * poll_interval
             total_increments -= 1

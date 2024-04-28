@@ -3,3 +3,5 @@ ip.txt
 *swp
 __pycache__
 setup.py
+lua-5.4.2_Win64_bin
+comparejson.py
