@@ -1,5 +1,5 @@
 local json = require("./mods/long_term_mission_data_collector/Scripts/dkjson")
-local socket = require('./mods/long_term_mission_data_collector/Scripts/socket')
+-- local socket = require('./mods/long_term_mission_data_collector/Scripts/socket')
 local utils = require('./mods/long_term_mission_data_collector/Scripts/bulkmissions_funcs')
 
 function Main()
@@ -44,11 +44,18 @@ function Main()
         end
         invalid_keys:close()
     end
-    
-    local seasons = {'s0', 's4'}
+
+    local SeasonsAndFuncs = {
+        s0 = utils.S4Off,
+        s4 = utils.S4On
+    }
 
     -- Initialize Table
     local god = {}
+    local FSDGameInstance = FindFirstOf('FSDGameInstance')
+    local GlobalSeed = FSDGameInstance:GetGlobalMissionSeed()
+    local PreviousGlobalSeed = GlobalSeed
+    local missionscount = 0
     utils.CreatePollFile('firstpoll.txt')
     for _, timestamp in pairs(timestamps) do
 
@@ -57,17 +64,36 @@ function Main()
         datetime[2] = datetime[2]:gsub('Z', '')
         local command = 'date '..utils.ReverseDateFormat(datetime[1])..' & time '..datetime[2]
         os.execute(command)
-        socket.sleep(1.5)
 
+        while true do
+            GlobalSeed = FSDGameInstance:GetGlobalMissionSeed()
+            if GlobalSeed == PreviousGlobalSeed then
+                print('SEEN')
+            else
+                break
+            end
+        end
         -- Initialize Table
         local master = {}
-        local missionscount = 0
-        for _, season in pairs(seasons) do
+        local SeasonSeeds = {}
+        for season, season_func in pairs(SeasonsAndFuncs) do
+            season_func()
+            -- FSDGameInstance:UpdateGlobelMissionSeed() -- No, this is not a typo (but maybe it was on gsg's end)
+            while true do
+                GlobalSeed = FSDGameInstance:GetGlobalMissionSeed()
+                if utils.IsInTable(SeasonSeeds, GlobalSeed) then
+                    print('SEEN')
+                else
+                    break
+                end
+            end
+            SeasonSeeds[season] = GlobalSeed
+
             master[season] = {}
             master[season]['Biomes'] = {}
             -- Get GeneratedMission UObjects
             local b = nil
-            local missions = utils.GetMissions(season)
+            local missions = utils.GetMissions()
             if missions then
                 timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
                 master[season]['timestamp'] = timestamp
@@ -78,6 +104,7 @@ function Main()
                     end
                     missionscount = utils.UnpackStandardMission(mission, master, b, missionscount, season)
                 end
+            PreviousGlobalSeed = GlobalSeed
             end
         end
         god[timestamp] = master

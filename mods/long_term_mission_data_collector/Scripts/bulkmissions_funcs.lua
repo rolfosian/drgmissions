@@ -4,6 +4,14 @@ function CreatePollFile(filename)
         file:close()
     end
 end
+function IsInTable(tbl, val)
+    for key, value in pairs(tbl) do
+        if value == val then
+            return true
+        end
+    end
+    return false
+end
 function ReverseDateFormat(inputDate)
     local oldDate = Split(inputDate, "-")
     local year = oldDate[1]
@@ -103,7 +111,7 @@ function S4On()
         end
     end
 end
-function GetMissions(desired_season)
+function GetMissions()
     local remotemissions = nil
     local missions = {}
 
@@ -112,15 +120,10 @@ function GetMissions(desired_season)
         for index, manager in pairs(MissionGenerationManagers) do
             local fullname = string.format("%s",manager:GetFullName())
             if fullname == 'MissionGenerationManager /Script/FSD.Default__MissionGenerationManager' then goto continue end
-            if desired_season == 's0' then
-                S4Off()
-                remotemissions = manager:GetAvailableMissions()
-            elseif desired_season == 's4' then
-                S4On()
-                remotemissions = manager:GetAvailableMissions()
-            end
+
+            remotemissions = manager:GetAvailableMissions()
             if remotemissions then
-                for index, remotemission in pairs(remotemissions) do
+                for _, remotemission in pairs(remotemissions) do
                     local mission = remotemission:get()
                     table.insert(missions, mission)
                 end
@@ -348,10 +351,10 @@ function UnpackStandardMission(mission, master, b, missionscount, season)
 
     local MissionDNAs_obscure = {}
     MissionDNAs_obscure['Egg Hunt'] = {
-            {pattern = 'Fractured_Medium_C', result = {complexity = '2', length = '2'}},
-            {pattern = 'FracturedSimple_C', result = {complexity = '1', length = '1'}},
-            {pattern = 'FracturedSimple_C', result = {complexity = '1', length = '1'}},
-        }
+        {pattern = 'Fractured_Medium_C', result = {complexity = '2', length = '2'}},
+        {pattern = 'FracturedSimple_C', result = {complexity = '1', length = '1'}},
+        {pattern = 'FracturedSimple_C', result = {complexity = '1', length = '1'}},
+    }
 
     MissionDNAs_obscure['Elimination'] = {
         {pattern = 'Star_Medium_C', result = {complexity = '2', length = '2'}},
@@ -383,13 +386,13 @@ function UnpackStandardMission(mission, master, b, missionscount, season)
             end
         end
     end
-
-
     local MissionDNAs_generic = {
         {pattern = 'MediumComplex', result = {complexity = '3', length = '2'}},
         {pattern = 'LongAverage', result = {complexity = '2', length = '3'}},
         {pattern = 'LongComplex', result = {complexity = '3', length = '3'}},
         {pattern = 'MediumAverage', result = {complexity = '2', length = '2'}},
+        {pattern = 'Simple', result =  {complexity = '1', length = mission1['Length']}},
+        {pattern = '_Complex', result = {complexity = '3', length = mission1['Length']}},
     }
     if complexity == 'Indefinite' then
         for _, dna in pairs(MissionDNAs_generic) do
@@ -397,17 +400,6 @@ function UnpackStandardMission(mission, master, b, missionscount, season)
                 mission1['Length'] = dna.result.length
                 mission1['Complexity'] = dna.result.complexity
                 break
-            end
-        end
-    end
-    local MissionDNAs_generic_complexity_nolength = {
-        {pattern = 'Simple', result = '1'},
-        {pattern = '_Complex', result = '3'},
-    }
-    if complexity == 'Indefinite' then
-        for _, dna in pairs(MissionDNAs_generic_complexity_nolength) do
-            if string.find(MissionDNA, dna.pattern) then
-                mission1['Complexity'] = dna.result
             end
         end
     end
@@ -456,11 +448,14 @@ function Exit()
 end
 
 return {
+    IsInTable = IsInTable,
     ReverseDateFormat = ReverseDateFormat,
     IncrementDatetime = IncrementDatetime,
     TableToString = TableToString,
     Split = Split,
     HasKey = HasKey,
+    S4Off = S4Off,
+    S4On = S4On,
     UnpackStandardMission = UnpackStandardMission,
     GetBiome = GetBiome,
     Exit = Exit,

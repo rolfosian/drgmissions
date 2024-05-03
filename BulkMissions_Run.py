@@ -93,28 +93,30 @@ def main():
             # avg_poll_time = elapsed_time / polls
             estimated_time_completion = total_increments * poll_interval
             total_increments -= 1
+            # this is busted too
             print(f'{format_seconds(timeout_seconds)} until timeout. Estimated time until completion: {format_seconds(estimated_time_completion)}', end='\r')
             poll_switch = False
+        
+        # this is busted for now
+        # if elapsed_time > timeout_seconds:
+        #     print('')
+        #     print('Timeout... process crashed or froze')
+        #     kill_process_by_name_starts_with('FSD')
+        #     kill_process_by_name_starts_with('Unreal')
             
-        if elapsed_time > timeout_seconds:
-            print('')
-            print('Timeout... process crashed or froze')
-            kill_process_by_name_starts_with('FSD')
-            kill_process_by_name_starts_with('Unreal')
+        #     start_time = None
+        #     total_increments = int(str(total_increments_))
+        #     polls = 0
+        #     poll_time = None
+        #     poll_interval = 1.9
             
-            start_time = None
-            total_increments = int(str(total_increments_))
-            polls = 0
-            poll_time = None
-            poll_interval = 1.9
-            
-            if os.path.isfile('poll.txt'):
-                os.remove('poll.txt')
-            if os.path.isfile('firstpoll.txt'):
-                os.remove('firstpoll.txt')
+        #     if os.path.isfile('poll.txt'):
+        #         os.remove('poll.txt')
+        #     if os.path.isfile('firstpoll.txt'):
+        #         os.remove('firstpoll.txt')
                 
-            time.sleep(4)
-            subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
+        #     time.sleep(4)
+        #     subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
 
         for filename in os.listdir():
             if filename == 'firstpoll.txt':

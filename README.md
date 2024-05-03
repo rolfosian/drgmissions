@@ -23,11 +23,11 @@
 - Run `split_timestamps.py` (in the flask folder, make sure to select flat when prompted unless debugging) to accomodate json for new static website
 
 ## **TODO**
-- **Public Enemy Number One**: Check and Update Deep Dive scraper weekly to accomodate currently unknown configurations, **contingencies for if Steam misbehaves on wake**
+- **Public Enemy Number One**: Check and Update Deep Dive scraper weekly to accomodate currently unknown configurations (havent seen any unknowns in months), **contingencies for if Steam misbehaves**
 - Fix canvas mission icon jaggies
-- Figure out a solution to reduce required delay between iterations for accurate data to be collected by the 30 minute incrementer
+- ~~Figure out a solution to reduce required delay between iterations for accurate data to be collected by the 30 minute incrementer~~
 - Figure out how to manipulate wine(?) system clock with hook on linux
-- Clean up and convert Complexity/Length finalization to table lookup seriously look at it its so disgusting DO SOMETHING
+- ~~Clean up and convert Complexity/Length finalization to table lookup seriously look at it its so disgusting DO SOMETHING~~
 - ~~Parallelize png rendering and arraying functions and change png route args to codenames instead of indexing once possible~~ Moved png rendering and arraying to thread pools, but the gains are miniscule because of thread management overhead, the GIL and I/O bound image rendering. It also requires a hard restart of the interpreter so `gunicorn --reload` isn't feasible. Needs processing pools to see gains that are bigger than fractions of a millisecond, but the vps is only 1 vcore so I'm not going to bother debugging the circular multiprocessing import at this stage.
 
 -------------------------------------------------------------------------------------------

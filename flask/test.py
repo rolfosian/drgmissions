@@ -37,7 +37,7 @@ class DummyReloaderLoop(StatReloaderLoop):
     def trigger_reload(self, filename: str) -> None:
         join_threads(go_flag)
         return super().trigger_reload(filename)
-    
+
 reloader_loops['auto'] = DummyReloaderLoop
 
 app = Flask(__name__)

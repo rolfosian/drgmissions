@@ -60,11 +60,15 @@ def main_loop(total_increments, current_time, AllTheDeals):
             
             for filename in os.listdir():
                 if filename == 'drgdailydeal.json':
-                    sleep(0.25)
-                    with open(filename, 'r') as f:
-                        deal = json.loads(f.read())
+                    while True:
+                        try:
+                            with open(filename, 'r') as f:
+                                deal = json.loads(f.read())
+                            os.remove(filename)
+                            break
+                        except:
+                            continue
                     AllTheDeals[timestamp] = deal
-                    os.remove(filename)
                     kill_process_by_name_starts_with('FSD')
                     kill_process_by_name_starts_with('Unreal')
                     sleep(3)

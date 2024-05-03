@@ -1,5 +1,5 @@
 local json = require("./mods/long_term_mission_data_collector/Scripts/dkjson")
-local socket = require('./mods/long_term_mission_data_collector/Scripts/socket')
+-- local socket = require('./mods/long_term_mission_data_collector/Scripts/socket')
 local utils = require('./mods/long_term_mission_data_collector/Scripts/bulkmissions_funcs')
 
 function Main()
@@ -39,30 +39,58 @@ function Main()
     local firstdate = os.date("!*t")
     local current_time = os.time(firstdate)
     --Set target date
-    local target_date = os.time{year=2023, month=10, day=25, hour=00, min=00, sec=00}
+    local target_date = os.time{year=2024, month=07, day=01, hour=00, min=00, sec=00}
     -- Calculate the difference in seconds between the current UTC time and the target date
     local diff_seconds = os.difftime(target_date, current_time)
     -- Calculate total amount of 30 minute increments between current time and the target date
     local total_increments = math.floor(diff_seconds / 1800)
     total_increments = total_increments + 1
 
-    local seasons = {'s0', 's4'}
+    local SeasonsAndFuncs = {
+        s0 = utils.S4Off,
+        s4 = utils.S4On
+    }
 
     -- Initialize Table
     local god = {}
     local count = 0
     local missionscount = 0
     local timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
+    local GlobalSeed = nil
+    local PreviousGlobalSeed = nil
+    local FSDGameInstance = FindFirstOf('FSDGameInstance')
     -- Loop for the increments
     utils.CreatePollFile('firstpoll.txt')
     for i = 1, total_increments do
+        while true do
+            GlobalSeed = FSDGameInstance:GetGlobalMissionSeed()
+            if GlobalSeed == PreviousGlobalSeed then
+                print('SEEN')
+            else
+                break
+            end
+        end
+
         local master = {}
-        for _, season in pairs(seasons) do
+        local SeasonSeeds = {}
+        for season, season_func in pairs(SeasonsAndFuncs) do
+            season_func()
+            -- FSDGameInstance:UpdateGlobelMissionSeed() -- No, this is not a typo (but maybe it was on gsg's end)
+            while true do
+                GlobalSeed = FSDGameInstance:GetGlobalMissionSeed()
+                if utils.IsInTable(SeasonSeeds, GlobalSeed) then
+                    print('SEEN')
+                else
+                    break
+                end
+            end
+            SeasonSeeds[season] = GlobalSeed
+
             master[season] = {}
             master[season]['Biomes'] = {}
             -- Get GeneratedMission UObjects
             local b = nil
-            local missions = utils.GetMissions(season)
+            local missions = utils.GetMissions()
             if missions then
                 timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
                 master[season]['timestamp'] = timestamp
@@ -73,11 +101,13 @@ function Main()
                     end
                     missionscount = utils.UnpackStandardMission(mission, master, b, missionscount, season)
                 end
+                PreviousGlobalSeed = GlobalSeed
             end
+            -- socket.sleep(0.1)
         end
         god[timestamp] = master
         --Get 'current' time
-        local currytime = os.date("%Y-%m-%d %H:%M:%S")
+        currytime = os.date("%Y-%m-%d %H:%M:%S")
         local year, month, day, hour, minute, second = currytime:match("(%d+)-(%d+)-(%d+) (%d+):(%d+):(%d+)")
         minute = tonumber(minute)
         -- Round down to the nearest half-hour
@@ -100,7 +130,7 @@ function Main()
         print(tostring(count)..'\n')
         os.execute(command)
 
-        socket.sleep(1.4)
+        -- socket.sleep(1.4)
         utils.CreatePollFile('poll.txt')
     end
 

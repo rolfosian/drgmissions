@@ -9,26 +9,34 @@ function isLocalStorageAvailable(){
     }
 }
 const isLocalStorageAvailable_ = isLocalStorageAvailable()
+function getDomainURL(){
+    var currentDomain = window.location.protocol + "//" + window.location.hostname;
+    if (window.location.port !== "") {
+        currentDomain += ":" + window.location.port;
+    }
+    return currentDomain
+}
+const domainURL = getDomainURL()
 
 // caching parameters
 var biomeBanners = {
-    'Crystalline Caverns': '/static/DeepDive_MissionBar_CrystalCaves.webp',
-    'Glacial Strata' : '/static/DeepDive_MissionBar_GlacialStrata.webp',
-    'Radioactive Exclusion Zone': '/static/DeepDive_MissionBar_Radioactive.webp',
-    'Fungus Bogs': '/static/DeepDive_MissionBar_FungusBogs.webp',
-    'Dense Biozone': '/static/DeepDive_MissionBar_LushDownpour.webp',
-    'Salt Pits': '/static/DeepDive_MissionBar_SaltPits.webp',
-    'Sandblasted Corridors': '/static/DeepDive_MissionBar_Sandblasted.webp',
-    'Magma Core': '/static/DeepDive_MissionBar_MagmaCore.webp',
-    'Azure Weald': '/static/DeepDive_MissionBar_AzureWeald.webp',
-    'Hollow Bough': '/static/DeepDive_MissionBar_HollowBough.webp'
+    'Crystalline Caverns': `${domainURL}/static/DeepDive_MissionBar_CrystalCaves.webp`,
+    'Glacial Strata' : `${domainURL}/static/DeepDive_MissionBar_GlacialStrata.webp`,
+    'Radioactive Exclusion Zone': `${domainURL}/static/DeepDive_MissionBar_Radioactive.webp`,
+    'Fungus Bogs': `${domainURL}/static/DeepDive_MissionBar_FungusBogs.webp`,
+    'Dense Biozone': `${domainURL}/static/DeepDive_MissionBar_LushDownpour.webp`,
+    'Salt Pits': `${domainURL}/static/DeepDive_MissionBar_SaltPits.webp`,
+    'Sandblasted Corridors': `${domainURL}/static/DeepDive_MissionBar_Sandblasted.webp`,
+    'Magma Core': `${domainURL}/static/DeepDive_MissionBar_MagmaCore.webp`,
+    'Azure Weald': `${domainURL}/static/DeepDive_MissionBar_AzureWeald.webp`,
+    'Hollow Bough': `${domainURL}/static/DeepDive_MissionBar_HollowBough.webp`
 }
 var biomeBannersImages = {};
 biomeBannersImages.name = 'biomeBanners';
 
 var deepDivesBanners = {
-    'dd' : '/static/dd.webp',
-    'edd' : '/static/edd.webp'
+    'dd' : `${domainURL}/static/dd.webp`,
+    'edd' : `${domainURL}/static/edd.webp`
 };
 deepDivesBannersImages = {};
 deepDivesBannersImages.name = 'deepDivesBanners';
@@ -67,142 +75,142 @@ function setBiomeAndDeepDivesBanners() {
 }
 
 var primaryObjs = {
-    'Mining Expedition': '/static/img/Mining_expedition_icon.webp',
-    'Egg Hunt': '/static/img/Egg_collection_icon.webp',
-    'On-Site Refining': '/static/img/Refining_icon.webp',
-    'Salvage Operation': '/static/img/Salvage_icon.webp',
-    'Escort Duty': '/static/img/Escort_icon.webp',
-    'Point Extraction': '/static/img/Point_extraction_icon.webp',
-    'Elimination': '/static/img/Elimination_icon.webp',
-    'Industrial Sabotage': '/static/img/Sabotage_icon.webp',
-    // 'Deep Scan' : './static/img/Deep_scan_icon.webp',
+    'Mining Expedition': `${domainURL}/static/img/Mining_expedition_icon.webp`,
+    'Egg Hunt': `${domainURL}/static/img/Egg_collection_icon.webp`,
+    'On-Site Refining': `${domainURL}/static/img/Refining_icon.webp`,
+    'Salvage Operation': `${domainURL}/static/img/Salvage_icon.webp`,
+    'Escort Duty': `${domainURL}/static/img/Escort_icon.webp`,
+    'Point Extraction': `${domainURL}/static/img/Point_extraction_icon.webp`,
+    'Elimination': `${domainURL}/static/img/Elimination_icon.webp`,
+    'Industrial Sabotage': `${domainURL}/static/img/Sabotage_icon.webp`,
+    // 'Deep Scan' : `${domainURL}/static/img/Deep_scan_icon.webp`,
 };
 var primaryObjsImages = {};
 primaryObjsImages.name = 'primaryObjsImages';
 
 var primaryObjResources = {
-    'hexagon' : '/static/img/hexagon.webp',
-    'Mining Expedition': '/static/img/Morkite_icon.webp',
-    'Egg Hunt': '/static/img/Alien_egg_icon.webp',
-    'On-Site Refining': '/static/img/Icon_PumpingJack_Core_Simplified_Workfile.webp',
-    'Salvage Operation': '/static/img/Icon_Salvage_Mules_Objective.webp',
-    'Escort Duty': '/static/img/Icon_FuelCannister_Simplified.webp',
-    'Point Extraction': '/static/img/Icons_Resources_Outline_Aquarq.webp',
-    'Elimination': '/static/img/Kill_Dreadnought_Objective_icon.webp',
-    'Industrial Sabotage': '/static/img/Icon_Facility_DataRack.webp',
-    // 'Deep Scan' : '/static/img/42069.webp'
+    'hexagon' : `${domainURL}/static/img/hexagon.webp`,
+    'Mining Expedition': `${domainURL}/static/img/Morkite_icon.webp`,
+    'Egg Hunt': `${domainURL}/static/img/Alien_egg_icon.webp`,
+    'On-Site Refining': `${domainURL}/static/img/Icon_PumpingJack_Core_Simplified_Workfile.webp`,
+    'Salvage Operation': `${domainURL}/static/img/Icon_Salvage_Mules_Objective.webp`,
+    'Escort Duty': `${domainURL}/static/img/Icon_FuelCannister_Simplified.webp`,
+    'Point Extraction': `${domainURL}/static/img/Icons_Resources_Outline_Aquarq.webp`,
+    'Elimination': `${domainURL}/static/img/Kill_Dreadnought_Objective_icon.webp`,
+    'Industrial Sabotage': `${domainURL}/static/img/Icon_Facility_DataRack.webp`,
+    // 'Deep Scan' : `${domainURL}/static/img/42069.webp`
 };
 var primaryObjResourcesImages = {};
 primaryObjResourcesImages.name = 'primaryObjResourcesImages';
 
 var secondaryObjs = {
-    'ApocaBlooms': '/static/img/Apoca_bloom_icon.webp',
-    'Fossils': '/static/img/Fossil_icon.webp',
-    'Boolo Caps': '/static/img/Boolo_cap_icon.webp',
-    'Dystrum': '/static/img/Dystrum_icon.webp',
-    'Ebonuts': '/static/img/Ebonut_icon.webp',
-    'Fester Fleas': '/static/img/Fleas_icon.webp',
-    'Gunk Seeds': '/static/img/Gunk_seed_icon.webp',
-    'Hollomite': '/static/img/Hollomite_icon.webp'
+    'ApocaBlooms': `${domainURL}/static/img/Apoca_bloom_icon.webp`,
+    'Fossils': `${domainURL}/static/img/Fossil_icon.webp`,
+    'Boolo Caps': `${domainURL}/static/img/Boolo_cap_icon.webp`,
+    'Dystrum': `${domainURL}/static/img/Dystrum_icon.webp`,
+    'Ebonuts': `${domainURL}/static/img/Ebonut_icon.webp`,
+    'Fester Fleas': `${domainURL}/static/img/Fleas_icon.webp`,
+    'Gunk Seeds': `${domainURL}/static/img/Gunk_seed_icon.webp`,
+    'Hollomite': `${domainURL}/static/img/Hollomite_icon.webp`
 };
 var secondaryObjsImages = {};
 secondaryObjsImages.name = 'secondaryObjsImages';
 
 var complexities = {
-    '1': '/static/img/Icons_complexity_1.webp',
-    '2': '/static/img/Icons_complexity_2.webp',
-    '3': '/static/img/Icons_complexity_3.webp'
+    '1': `${domainURL}/static/img/Icons_complexity_1.webp`,
+    '2': `${domainURL}/static/img/Icons_complexity_2.webp`,
+    '3': `${domainURL}/static/img/Icons_complexity_3.webp`
 };
 var complexitiesImages = {};
 complexitiesImages.name = 'complexitiesImages';
 
 var lengths = {
-    '1': '/static/img/Icons_length_1.webp',
-    '2': '/static/img/Icons_length_2.webp',
-    '3': '/static/img/Icons_length_3.webp'
+    '1': `${domainURL}/static/img/Icons_length_1.webp`,
+    '2': `${domainURL}/static/img/Icons_length_2.webp`,
+    '3': `${domainURL}/static/img/Icons_length_3.webp`
 };
 var lengthsImages = {};
 lengthsImages.name = 'lengthsImages';
 
 var mutators = {
-    'Critical Weakness': '/static/img/Mutator_critical_weakness_icon.webp',
-    'Gold Rush': '/static/img/Mutator_gold_rush_icon.webp',
-    'Double XP': '/static/img/Mutator_triple_xp_icon.webp',
-    'Golden Bugs': '/static/img/Mutator_golden_bugs_icon.webp',
-    'Low Gravity': '/static/img/Mutator_no_fall_damage_icon.webp',
-    'Mineral Mania': '/static/img/Mutator_mineral_mania_icon.webp',
-    'Rich Atmosphere': '/static/img/Mutator_rich_atmosphere_icon.webp',
-    'Volatile Guts': '/static/img/Mutator_volatile_guts_icon.webp',
-    // 'Blood Sugar' : './static/img/Mutator_blood_sugar_icon.webp',
-    // 'Secret Secondary' : './static/img/Mutator_secret_secondary_icon.webp'
+    'Critical Weakness': `${domainURL}/static/img/Mutator_critical_weakness_icon.webp`,
+    'Gold Rush': `${domainURL}/static/img/Mutator_gold_rush_icon.webp`,
+    'Double XP': `${domainURL}/static/img/Mutator_triple_xp_icon.webp`,
+    'Golden Bugs': `${domainURL}/static/img/Mutator_golden_bugs_icon.webp`,
+    'Low Gravity': `${domainURL}/static/img/Mutator_no_fall_damage_icon.webp`,
+    'Mineral Mania': `${domainURL}/static/img/Mutator_mineral_mania_icon.webp`,
+    'Rich Atmosphere': `${domainURL}/static/img/Mutator_rich_atmosphere_icon.webp`,
+    'Volatile Guts': `${domainURL}/static/img/Mutator_volatile_guts_icon.webp`,
+    // 'Blood Sugar' : `${domainURL}/static/img/Mutator_blood_sugar_icon.webp`,
+    // 'Secret Secondary' : `${domainURL}/static/img/Mutator_secret_secondary_icon.webp`
         }
 var mutatorsImages = {};
 mutatorsImages.name = 'mutatorsImages';
 
 var warnings = {
-    'Cave Leech Cluster': '/static/img/Warning_cave_leech_cluster_icon.webp',
-    'Exploder Infestation': '/static/img/Warning_exploder_infestation_icon.webp',
-    'Haunted Cave': '/static/img/Warning_haunted_cave_icon.webp',
-    'Lethal Enemies': '/static/img/Warning_lethal_enemies_icon.webp',
-    'Low Oxygen': '/static/img/Warning_low_oxygen_icon.webp',
-    'Mactera Plague': '/static/img/Warning_mactera_plague_icon.webp',
-    'Parasites': '/static/img/Warning_parasites_icon.webp',
-    'Regenerative Bugs': '/static/img/Warning_regenerative_bugs_icon.webp',
-    'Shield Disruption': '/static/img/Warning_shield_disruption_icon.webp',
-    'Elite Threat': '/static/img/Warning_elite_threat_icon.webp',
-    'Swarmageddon': '/static/img/Warning_swarmageddon_icon.webp',
-    'Lithophage Outbreak': '/static/img/Warning_lithophage_outbreak_icon.webp',
-    'Rival Presence': '/static/img/Warning_rival_presence_icon.webp',
-    // 'Duck and Cover': './static/img/Warning_duck_and_cover_icon.webp',
-    // 'Ebonite Outbreak' : './static/img/Warning_ebonite_outbreak_icon.webp',
+    'Cave Leech Cluster': `${domainURL}/static/img/Warning_cave_leech_cluster_icon.webp`,
+    'Exploder Infestation': `${domainURL}/static/img/Warning_exploder_infestation_icon.webp`,
+    'Haunted Cave': `${domainURL}/static/img/Warning_haunted_cave_icon.webp`,
+    'Lethal Enemies': `${domainURL}/static/img/Warning_lethal_enemies_icon.webp`,
+    'Low Oxygen': `${domainURL}/static/img/Warning_low_oxygen_icon.webp`,
+    'Mactera Plague': `${domainURL}/static/img/Warning_mactera_plague_icon.webp`,
+    'Parasites': `${domainURL}/static/img/Warning_parasites_icon.webp`,
+    'Regenerative Bugs': `${domainURL}/static/img/Warning_regenerative_bugs_icon.webp`,
+    'Shield Disruption': `${domainURL}/static/img/Warning_shield_disruption_icon.webp`,
+    'Elite Threat': `${domainURL}/static/img/Warning_elite_threat_icon.webp`,
+    'Swarmageddon': `${domainURL}/static/img/Warning_swarmageddon_icon.webp`,
+    'Lithophage Outbreak': `${domainURL}/static/img/Warning_lithophage_outbreak_icon.webp`,
+    'Rival Presence': `${domainURL}/static/img/Warning_rival_presence_icon.webp`,
+    // 'Duck and Cover': `${domainURL}/static/img/Warning_duck_and_cover_icon.webp`,
+    // 'Ebonite Outbreak' : `${domainURL}/static/img/Warning_ebonite_outbreak_icon.webp`,
 };
 var warningsImages = {};
 warningsImages.name = 'warningsImages';
 
 var secondaryObjsDD = {
-    "Repair Minimules": "/static/img/Icon_Salvage_Mules_Objective_DDsecondaryobj.webp",
-    "Eliminate Dreadnought": "/static/img/Kill_Dreadnought_Objective_icon_DDsecondaryobj.webp",
-    "Mine Morkite": "/static/img/Morkite_icon_DDsecondaryobj.webp",
-    "Get Alien Eggs": "/static/img/Alien_egg_icon_DDsecondaryobj.webp",
-    "Black Box": "/static/img/Blackbox_icon_DDsecondaryobj.webp"
+    "Repair Minimules": `${domainURL}/static/img/Icon_Salvage_Mules_Objective_DDsecondaryobj.webp`,
+    "Eliminate Dreadnought": `${domainURL}/static/img/Kill_Dreadnought_Objective_icon_DDsecondaryobj.webp`,
+    "Mine Morkite": `${domainURL}/static/img/Morkite_icon_DDsecondaryobj.webp`,
+    "Get Alien Eggs": `${domainURL}/static/img/Alien_egg_icon_DDsecondaryobj.webp`,
+    "Black Box": `${domainURL}/static/img/Blackbox_icon_DDsecondaryobj.webp`
 };
 var secondaryObjsDDImages = {};
 secondaryObjsDDImages.name = 'secondaryObjsDDImages';
 
 var biomesDD = {
-    'Crystalline Caverns': '/static/img/DeepDive_MissionBar_CrystalCaves.webp',
-    'Glacial Strata': '/static/img/DeepDive_MissionBar_GlacialStrata.webp',
-    'Radioactive Exclusion Zone': '/static/img/DeepDive_MissionBar_Radioactive.webp',
-    'Fungus Bogs': '/static/img/DeepDive_MissionBar_FungusBogs.webp',
-    'Dense Biozone': '/static/img/DeepDive_MissionBar_LushDownpour.webp',
-    'Salt Pits': '/static/img/DeepDive_MissionBar_SaltPits.webp',
-    'Sandblasted Corridors': '/static/img/DeepDive_MissionBar_Sandblasted.webp',
-    'Magma Core': '/static/img/DeepDive_MissionBar_MagmaCore.webp',
-    'Azure Weald': '/static/img/DeepDive_MissionBar_AzureWeald.webp',
-    'Hollow Bough': '/static/img/DeepDive_MissionBar_HollowBough.webp'
+    'Crystalline Caverns': `${domainURL}/static/img/DeepDive_MissionBar_CrystalCaves.webp`,
+    'Glacial Strata': `${domainURL}/static/img/DeepDive_MissionBar_GlacialStrata.webp`,
+    'Radioactive Exclusion Zone': `${domainURL}/static/img/DeepDive_MissionBar_Radioactive.webp`,
+    'Fungus Bogs': `${domainURL}/static/img/DeepDive_MissionBar_FungusBogs.webp`,
+    'Dense Biozone': `${domainURL}/static/img/DeepDive_MissionBar_LushDownpour.webp`,
+    'Salt Pits': `${domainURL}/static/img/DeepDive_MissionBar_SaltPits.webp`,
+    'Sandblasted Corridors': `${domainURL}/static/img/DeepDive_MissionBar_Sandblasted.webp`,
+    'Magma Core': `${domainURL}/static/img/DeepDive_MissionBar_MagmaCore.webp`,
+    'Azure Weald': `${domainURL}/static/img/DeepDive_MissionBar_AzureWeald.webp`,
+    'Hollow Bough': `${domainURL}/static/img/DeepDive_MissionBar_HollowBough.webp`
 };
 var biomesDDImages = {};
 biomesDDImages.name = 'biomesDDImages';
 
 var dailyDealResources = {
-    'Bismor': '/static/img/Bismor_icon.webp',
-    'Croppa': '/static/img/Croppa_icon.webp',
-    'Enor Pearl': '/static/img/Enor_pearl_icon.webp',
-    'Jadiz': '/static/img/Jadiz_icon.webp',
-    'Magnite': '/static/img/Magnite_icon.webp',
-    'Umanite': '/static/img/Umanite_icon.webp',
-    'Credits': '/static/img/Credit.webp',
-    'Bubble': '/static/img/Icon_TradeTerminal_SaleBubble.webp'
+    'Bismor': `${domainURL}/static/img/Bismor_icon.webp`,
+    'Croppa': `${domainURL}/static/img/Croppa_icon.webp`,
+    'Enor Pearl': `${domainURL}/static/img/Enor_pearl_icon.webp`,
+    'Jadiz': `${domainURL}/static/img/Jadiz_icon.webp`,
+    'Magnite': `${domainURL}/static/img/Magnite_icon.webp`,
+    'Umanite': `${domainURL}/static/img/Umanite_icon.webp`,
+    'Credits': `${domainURL}/static/img/Credit.webp`,
+    'Bubble': `${domainURL}/static/img/Icon_TradeTerminal_SaleBubble.webp`
 };
 var dailyDealResourcesImages = {};
 dailyDealResourcesImages.name = 'dailyDealResourcesImages';
 
 var fontNamesAndUrls = {
-    'CarbonThin-W00-Regular' : '/static/img/CarbonThin-W00-Regular.woff2',
-    'CarbonBold-W00-Regular' : '/static/img/CarbonBold-W00-Regular.woff2',
-    'Bungee-Regular' : '/static/img/Bungee-Regular.woff2',
-    'RiftSoft-Regular' : '/static/img/RiftSoft-Regular.woff2',
-    'BebasNeue' : '/static/img/BebasNeue-Regular.woff2'
+    'CarbonThin-W00-Regular' : `${domainURL}/static/img/CarbonThin-W00-Regular.woff2`,
+    'CarbonBold-W00-Regular' : `${domainURL}/static/img/CarbonBold-W00-Regular.woff2`,
+    'Bungee-Regular' : `${domainURL}/static/img/Bungee-Regular.woff2`,
+    'RiftSoft-Regular' : `${domainURL}/static/img/RiftSoft-Regular.woff2`,
+    'BebasNeue' : `${domainURL}/static/img/BebasNeue-Regular.woff2`
 };
 
 var base64LocalStoragesImg = {};
@@ -362,7 +370,7 @@ async function preloadImagesAll() {
 }
 
 async function preloadHomepageScript() {
-    let response = await fetch('/static/homepage.js');
+    let response = await fetch(`${domainURL}/static/homepage.js`);
     return response.text();
 }
 
@@ -590,14 +598,6 @@ async function loadJSON(filePath, maxRetries = 3, retryDelay = 5000 ) {
     throw new Error(`Failed to load JSON data from ${filePath} after ${maxRetries} attempts.`);
 }
 
-function getDomainURL(){
-    var currentDomain = window.location.protocol + "//" + window.location.hostname;
-    if (window.location.port !== "") {
-        currentDomain += ":" + window.location.port;
-    }
-    return currentDomain
-}
-
 function getPreviousThursdayTimestamp() {
     var currentDate = new Date();
 
@@ -630,7 +630,7 @@ async function getDeepDiveData() {
     datetime = replaceCharactersAtIndices(datetime, [[13, '-'], [16,'-']]);
     let data;
     try {
-        data = await loadJSONnoRetry(getDomainURL()+`/static/json/DD_${datetime}.json`);
+        data = await loadJSONnoRetry(`${domainURL}/static/json/DD_${datetime}.json`);
     } catch {
     }
     return data;
@@ -861,7 +861,7 @@ async function tempCacheUpcomingBiomes(isMidnightUpcoming_, date) {
 
         case (roundTimeDown(date.toISOString()).slice(11, 19) == '23:00:00'):
             let nextDay = getNextDateMidnightUTC(date).split('T')[0];
-            tempCurrentDaysJson = [nextDay, await loadJSON(getDomainURL()+`/static/json/bulkmissions/${nextDay}.json`)];
+            tempCurrentDaysJson = [nextDay, await loadJSON(`${domainURL}/static/json/bulkmissions/${nextDay}.json`)];
             upcomingBiomes = renderBiomes(tempCurrentDaysJson[1][roundTimeUpNextUpcoming(date.toISOString())]);
             break
 
@@ -944,10 +944,10 @@ function hasMidnightJustBeen(datestring) {
 }
 function rolloverCurrentDaysJsonLink (currentDaysTimestamp) {
     let currentDaysJsonLink = document.getElementById('currentDaysJsonLink'); 
-    currentDaysJsonLink.href = getDomainURL()+'/static/json/bulkmissions/'+currentDaysTimestamp.slice(0, 10)+'.json';
+    currentDaysJsonLink.href = `${domainURL}/static/json/bulkmissions/${currentDaysTimestamp.slice(0, 10)}.json`;
 
     let tomorrowDaysJsonLink = document.getElementById('tomorrowDaysJsonLink');
-    tomorrowDaysJsonLink.href = getDomainURL()+'/static/json/bulkmissions/'+getNextDateMidnightUTC(currentDaysTimestamp).slice(0, 10)+'.json';
+    tomorrowDaysJsonLink.href = `${domainURL}/static/json/bulkmissions/${getNextDateMidnightUTC(currentDaysTimestamp).slice(0, 10)}.json`;
 }
 async function refreshBiomes(isMidnightUpcoming_, retry=false) {
     let refreshDate = new Date();
@@ -1775,14 +1775,14 @@ async function initialize(date) {
     }
 
     let currentDatetime = date.toISOString().slice(0, 10);
-    let currentDateTimeHREF = getDomainURL()+'/static/json/bulkmissions/'+currentDatetime+'.json';
+    let currentDateTimeHREF = `${domainURL}/static/json/bulkmissions/${currentDatetime}.json`;
 
     let nextDatetime = getNextDateMidnightUTC(date).split('T')[0];
-    let nextDateTimeHREF = getDomainURL()+'/static/json/bulkmissions/'+nextDatetime+'.json';
+    let nextDateTimeHREF = `${domainURL}/static/json/bulkmissions/${nextDatetime}.json`;
 
     let ddDatetime = getPreviousThursdayTimestamp();
     ddDatetime = replaceCharactersAtIndices(ddDatetime, [[13, '-'], [16,'-']]);
-    let ddDatetimeHREF = getDomainURL()+'/static/json/DD_'+ddDatetime+'.json';
+    let ddDatetimeHREF = `${domainURL}/static/json/DD_${ddDatetime}.json`;
 
     let html = `
     <div id="current">
@@ -1989,14 +1989,14 @@ async function getCurrentDaysJson(date, isMidnightUpcoming_=false) {
             const tomorrowsDate = getNextDateMidnightUTC(date).slice(0, 10);
 
             if (cdj[0] == todaysDate) {
-                let cdjMidnight = [tomorrowsDate, await loadJSON(getDomainURL()+`/static/json/bulkmissions/${tomorrowsDate}.json`)];
+                let cdjMidnight = [tomorrowsDate, await loadJSON(`${domainURL}/static/json/bulkmissions/${tomorrowsDate}.json`)];
                 tempDailyDeal = cdj[1]['dailyDeal'];
                 setStorages('currentDaysJson', cdjMidnight);
                 return [cdj[1], cdjMidnight[1]];
             } else {
                 let cdjs = await Promise.all([
-                    loadJSON(getDomainURL()+`/static/json/bulkmissions/${todaysDate}.json`),
-                    loadJSON(getDomainURL()+`/static/json/bulkmissions/${tomorrowsDate}.json`)
+                    loadJSON(`${domainURL}/static/json/bulkmissions/${todaysDate}.json`),
+                    loadJSON(`${domainURL}/static/json/bulkmissions/${tomorrowsDate}.json`)
                 ]);
                 tempDailyDeal = cdjs[0]['dailyDeal'];
                 setStorages('currentDaysJson', [tomorrowsDate, cdjs[1]]);
@@ -2010,8 +2010,8 @@ async function getCurrentDaysJson(date, isMidnightUpcoming_=false) {
     } else if (isMidnightUpcoming_ && !localStorages['currentDaysJson']) {
         const tomorrowsDate = getNextDateMidnightUTC(date).slice(0, 10);
         let cdjs = await Promise.all([
-            loadJSON(getDomainURL()+`/static/json/bulkmissions/${todaysDate}.json`),
-            loadJSON(getDomainURL()+`/static/json/bulkmissions/${tomorrowsDate}.json`)
+            loadJSON(`${domainURL}/static/json/bulkmissions/${todaysDate}.json`),
+            loadJSON(`${domainURL}/static/json/bulkmissions/${tomorrowsDate}.json`)
         ]);
         tempDailyDeal = cdjs[0]['dailyDeal'];
         let cdjMidnight = [tomorrowsDate, cdjs[1]];
@@ -2019,7 +2019,7 @@ async function getCurrentDaysJson(date, isMidnightUpcoming_=false) {
         return [cdjs[0], cdjs[1]];
         
     } else {
-        cdj = [todaysDate, await loadJSON(getDomainURL()+`/static/json/bulkmissions/${todaysDate}.json`)];
+        cdj = [todaysDate, await loadJSON(`${domainURL}/static/json/bulkmissions/${todaysDate}.json`)];
         setStorages('currentDaysJson', cdj);
         return cdj[1];
     }

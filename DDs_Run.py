@@ -64,7 +64,8 @@ def main():
     with open('./mods/mods.txt', 'w') as f:
         f.close()
 
-    subprocess.Popen(["rundll32.exe", "powrprof.dll,SetSuspendState", "Sleep"], shell=True)
+    # subprocess.Popen(["rundll32.exe", "powrprof.dll,SetSuspendState", "Sleep"], shell=True)
+    subprocess.Popen(['shutdown', '/s', '/f', '/t', '0'])
 
 try:
     main()

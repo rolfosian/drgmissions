@@ -16,6 +16,12 @@ def timestamped_print(func):
     return wrapper
 print = timestamped_print(print)
 
+def format_seconds(seconds):
+    hours = int(seconds // 3600)
+    minutes = int((seconds % 3600) // 60)
+    remaining_seconds = seconds % 60
+    formatted_time = "{:02d}:{:02d}:{:05.2f}".format(hours, minutes, remaining_seconds)
+    return formatted_time
 
 #Validation
 #-----------------------
@@ -281,13 +287,41 @@ def upload_file(url, file_path, bearer_token):
 
 def wait_until_next_hour():
     now = datetime.now()
+    
     if now.hour == 23:
         next_hour = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
     else:
         next_hour = now.replace(hour=now.hour + 1, minute=0, second=0, microsecond=0)
-    time_to_wait = (next_hour - now).total_seconds()
-    time.sleep(time_to_wait + 1)
         
+    time_to_wait = (next_hour - now).total_seconds()
+    
+    while time_to_wait > 0:
+        time_to_wait = (next_hour - datetime.utcnow()).total_seconds()
+        print(f"Time to wait: {format_seconds(time_to_wait)}", end="\r")
+        time.sleep(0.2)
+        
+    print(f"Time to wait: {format_seconds(0)}")
+
+def wait_until_next_thursday_11am_utc():
+    now = datetime.utcnow()
+    
+    days_until_thursday = (3 - now.weekday()) % 7
+    
+    next_thursday = now + timedelta(days=days_until_thursday)
+    next_thursday_11am_utc = datetime(next_thursday.year, next_thursday.month, next_thursday.day, 11, 0, 0)
+    
+    if days_until_thursday == 0 and now.hour >= 11:
+        next_thursday_11am_utc += timedelta(days=7)
+    
+    time_to_wait = (next_thursday_11am_utc - now).total_seconds()
+    
+    while time_to_wait > 0:
+        time_to_wait = (next_thursday_11am_utc - datetime.utcnow()).total_seconds()
+        print(f"Time to wait: {format_seconds(time_to_wait)}", end="\r")
+        time.sleep(0.2)
+    
+    print(f"Time to wait: {format_seconds(0)}")
+
 def kill_process_by_name_starts_with(start_string):
     try:
         for proc in psutil.process_iter(['pid', 'name']):
@@ -332,13 +366,6 @@ def toggle_system_time():
             enable_system_time()        
     except Exception as e:
         print(f"Error {e}")
-        
-def format_seconds(seconds):
-    hours = int(seconds // 3600)
-    minutes = int((seconds % 3600) // 60)
-    remaining_seconds = seconds % 60
-    formatted_time = "{:02d}:{:02d}:{:05.2f}".format(hours, minutes, remaining_seconds)
-    return formatted_time
 
 def calculate_average_float(float_list):
     total = 0.0
