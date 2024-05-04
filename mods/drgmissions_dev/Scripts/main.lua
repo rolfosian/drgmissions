@@ -1,46 +1,19 @@
 local json = require("./mods/long_term_mission_data_collector/Scripts/dkjson")
-local socket = require('./mods/long_term_mission_data_collector/Scripts/socket')
-local utils = require('./mods/long_term_mission_data_collector/Scripts/bulkmissions_funcs')
 
--- function ToggleS4()
---     local subsystems = FindAllOf('SeasonsSubsystem')
---     if subsystems then
---         for i, subsystem in pairs(subsystems) do
---             local fullname = string.format("%s",subsystem:GetFullName())
---             if fullname == 'SeasonsSubsystem /Script/FSD.Default__SeasonsSubsystem' then goto continue end
---             subsystem:SetHasOptedOutOfSeasonContent(true)
---             break
---             ::continue::
---         end
---     end
--- end
--- function S4Off()
---     local subsystems = FindAllOf('SeasonsSubsystem')
---     if subsystems then
---         for i, subsystem in pairs(subsystems) do
---             local fullname = string.format("%s",subsystem:GetFullName())
---             if fullname == 'SeasonsSubsystem /Script/FSD.Default__SeasonsSubsystem' then goto continue end
---             subsystem:SetHasOptedOutOfSeasonContent(true)
---             break
---             ::continue::
---         end
---     end
--- end
--- function S4On()
---     local subsystems = FindAllOf('SeasonsSubsystem')
---     if subsystems then
---         for i, subsystem in pairs(subsystems) do
---             local fullname = string.format("%s",subsystem:GetFullName())
---             if fullname == 'SeasonsSubsystem /Script/FSD.Default__SeasonsSubsystem' then goto continue end
---             subsystem:SetHasOptedOutOfSeasonContent(false)
---             break
---             ::continue::
---         end
---     end
--- end
-
-function Main()
-    -- Wait for start menu to load
+function IsLoaded()
+    local count = 0
+    local umgsequenceplayers = FindAllOf('UMGSequencePlayer')
+    if umgsequenceplayers then
+        if #umgsequenceplayers > 150 then
+            return true
+        else
+            return false
+        end
+    else
+        return false
+    end
+end
+function PressStartAndWaitForLoad()
     local startmenus = nil
     while true do
         startmenus = FindAllOf('Bp_StartMenu_PlayerController_C')
@@ -70,18 +43,52 @@ function Main()
             end
         end
     end
+end
+
+function Main()
+    -- -- Wait for start menu to load
+    if IsLoaded() then
+        goto isloaded
+    else
+        PressStartAndWaitForLoad()
+    end
+    ::isloaded::
+
+    local utils = require('./mods/long_term_mission_data_collector/Scripts/bulkmissions_funcs')
+    local SeasonsAndFuncs = {
+        s0 = utils.S4Off,
+        s4 = utils.S4On
+    }
 
     -- Initialize Table
+    local god = {}
     local missionscount = 0
-    local seasons = {'s0', 's4'}
     local master = {}
-    for i, season in pairs(seasons) do
+    local SeasonSeeds = {}
+    local GlobalSeed = nil
+    local PreviousGlobalSeed = nil
+    local FSDGameInstance = FindFirstOf('FSDGameInstance')
+    local timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
+    for season, season_switch in pairs(SeasonsAndFuncs) do
+        season_switch()
+
+        -- FSDGameInstance:UpdateGlobelMissionSeed() -- No, this is not a typo (but maybe it was on gsg's end). Unneeded - I believe GetGlobalMissionSeed calls this itself or uses a similar mechanism
+        while true do
+            GlobalSeed = FSDGameInstance:GetGlobalMissionSeed()
+            if utils.IsInTable(SeasonSeeds, GlobalSeed) then
+                print('SEEN')
+            else
+                break
+            end
+        end
+        SeasonSeeds[season] = GlobalSeed
+
         missionscount = 0
         master[season] = {}
         master[season]['Biomes'] = {}
         -- Get GeneratedMission UObjects
         local b = nil
-        local missions = utils.GetMissions(season)
+        local missions = utils.GetMissions()
         if missions then
             local timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
             master[season]['timestamp'] = timestamp
@@ -98,30 +105,15 @@ function Main()
     local indent = "    "
     local master_str = utils.TableToString(master, indent)
     print(master_str)
-    -- print('\n\n\n')
 
-    -- local master = {}
-    -- master['Biomes'] = {}
-    -- master['Season'] = desired_season
-    -- missionscount = 0
-    -- missions = utils.GetMissions('season4')
-    -- if missions then
-    --     local timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
-    --     master['timestamp'] = timestamp
-    --     for index, mission in pairs(missions) do
-    --         b = utils.GetBiome(mission)
-    --         if not utils.HasKey(master['Biomes'], b) then
-    --             master['Biomes'][b] = {}
-    --         end
-    --         missionscount = utils.UnpackStandardMission(mission, master, b, missionscount)
-    --     end
-    --     local indent = "    "
-    --     local master_str = utils.TableToString(master, indent)
-    --     print(master_str)
-    --     print('\nNo. of missions: '..tostring(missionscount))
-    -- end
+--     god[timestamp] = master
+--     god = json.encode(god)
+--     local file = io.open('drgmissionsdev.json', 'w')
+--     if file then
+--         file:write(god)
+--         file:close()
+--     end
 end
 
--- ToggleSeason()
 Main()
 -- utils.Exit()

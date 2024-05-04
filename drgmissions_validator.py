@@ -16,9 +16,9 @@ from os import path, getcwd
 cwd = getcwd()
 try:
     if __name__ == '__main__':
-        if path.isfile(cwd+'/drgmissionsgod.json.bak'):
-            if yes_or_no('Run on .bak file? Y/N: '):
-                filename = 'drgmissionsgod.json.bak'
+        if path.isfile(cwd+'/drgmissionsdev.json'):
+            if yes_or_no('Run on dev json? Y/N: '):
+                filename = 'drgmissionsdev.json'
             else:
                 filename = 'drgmissionsgod.json'
         else:

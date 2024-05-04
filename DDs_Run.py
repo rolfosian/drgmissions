@@ -6,7 +6,7 @@ import re
 from drgmissions_scraper_utils import (
     upload_file,
     enable_system_time,
-    wait_until_next_hour,
+    wait_until_next_thursday_11am_utc,
     kill_process_by_name_starts_with,
     print
 )
@@ -21,7 +21,7 @@ def main():
     else:
         subprocess.run(['w32tm', '/resync'], stderr=subprocess.PIPE, shell=True)
         
-    wait_until_next_hour()
+    wait_until_next_thursday_11am_utc()
 
     with open('./mods/mods.txt', 'w') as f:
         f.write('dds_fetcher : 1')

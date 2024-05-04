@@ -1,12 +1,8 @@
 local json = require("./mods/long_term_mission_data_collector/Scripts/dkjson")
 -- local socket = require('./mods/long_term_mission_data_collector/Scripts/socket')
-local utils = require('./mods/long_term_mission_data_collector/Scripts/bulkmissions_funcs')
 
-function Main()
+function PressStartAndWaitForLoad()
     local startmenus = nil
-    local currytime = nil
-
-    -- Wait for start menu to load
     while true do
         startmenus = FindAllOf('Bp_StartMenu_PlayerController_C')
         if startmenus then
@@ -17,6 +13,7 @@ function Main()
     for index, startmenu in pairs(startmenus) do
         startmenu:PressStart()
     end
+
     local waiting_for_load = true
     -- Wait for Space Rig to load
     while waiting_for_load do
@@ -34,6 +31,12 @@ function Main()
             end
         end
     end
+end
+
+function Main()
+    local currytime = nil
+
+    PressStartAndWaitForLoad()
 
     -- Get current UTC Time
     local firstdate = os.date("!*t")
@@ -46,6 +49,7 @@ function Main()
     local total_increments = math.floor(diff_seconds / 1800)
     total_increments = total_increments + 1
 
+    local utils = require('./mods/long_term_mission_data_collector/Scripts/bulkmissions_funcs')
     local SeasonsAndFuncs = {
         s0 = utils.S4Off,
         s4 = utils.S4On
@@ -73,9 +77,10 @@ function Main()
 
         local master = {}
         local SeasonSeeds = {}
-        for season, season_func in pairs(SeasonsAndFuncs) do
-            season_func()
-            -- FSDGameInstance:UpdateGlobelMissionSeed() -- No, this is not a typo (but maybe it was on gsg's end)
+        for season, season_switch in pairs(SeasonsAndFuncs) do
+            season_switch()
+
+            -- FSDGameInstance:UpdateGlobelMissionSeed() -- No, this is not a typo (but maybe it was on gsg's end). Unneeded - I believe GetGlobalMissionSeed calls this itself or uses a similar mechanism
             while true do
                 GlobalSeed = FSDGameInstance:GetGlobalMissionSeed()
                 if utils.IsInTable(SeasonSeeds, GlobalSeed) then
@@ -106,24 +111,30 @@ function Main()
             -- socket.sleep(0.1)
         end
         god[timestamp] = master
+
         --Get 'current' time
         currytime = os.date("%Y-%m-%d %H:%M:%S")
         local year, month, day, hour, minute, second = currytime:match("(%d+)-(%d+)-(%d+) (%d+):(%d+):(%d+)")
         minute = tonumber(minute)
+
         -- Round down to the nearest half-hour
         if minute >= 30 then
             minute = 30
         else
             minute = 0
         end
+
         -- Set the second to 1
         second = 1
         currytime = string.format("%04d-%02d-%02d %02d:%02d:%02d", year, month, day, hour, minute, second)
+
         -- Increment currytime forward by 30 minutes
         local newtime = utils.IncrementDatetime(currytime)
         newtime = utils.Split(newtime, ' ')
+
         -- Remove ReverseDateFormat function and just use newtime[1] if your system date format is YY-MM-DD
         local command = 'date '..utils.ReverseDateFormat(newtime[1])..' & time '..newtime[2]
+
         -- Set time forward 30 minutes
         print(command..'\n')
         count = count + 1

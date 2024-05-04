@@ -49,6 +49,30 @@ function IncrementDatetime(datetime)
     local updatedDatetime = string.format("%02d-%02d-%02d %02d:%02d:%02d", year % 100, month, day, hour, min, sec)
     return updatedDatetime
   end
+function IncrementDatetimeOneDay(datetime)
+    local year, month, day, hour, min, sec = datetime:match("(%d+)-(%d+)-(%d+) (%d+):(%d+):(%d+)")
+    year, month, day, hour, min, sec = tonumber(year), tonumber(month), tonumber(day), tonumber(hour), tonumber(min), tonumber(sec)
+    hour = hour + 24
+    if hour > 23 then
+      hour = hour - 24
+      day = day + 1
+    end
+    local daysInMonth = {31,28,31,30,31,30,31,31,30,31,30,31}
+    
+    if month == 2 and year % 4 == 0 and (year % 100 ~= 0 or year % 400 == 0) then
+      daysInMonth[2] = 29
+    end
+    if day > daysInMonth[month] then
+      day = day - daysInMonth[month]
+      month = month + 1
+    end
+    if month > 12 then
+      month = month - 12
+      year = year + 1
+    end
+    local updatedDatetime = string.format("%4d-%02d-%02d %02d:%02d:%02d", year, month, day, hour, min, sec)
+    return updatedDatetime
+end
 function TableToString(table, indent)
     indent = indent or ""
     local str = "{\n"
@@ -73,66 +97,230 @@ end
 function HasKey(table, key)
     return table[key] ~= nil
 end
-function HasOptedOutSeasonContent()
-    local subsystems = FindAllOf('SeasonsSubsystem')
-    local bool = nil
-    if subsystems then
-        for i, subsystem in pairs(subsystems) do
-            local fullname = string.format("%s",subsystem:GetFullName())
-            if fullname == 'SeasonsSubsystem /Script/FSD.Default__SeasonsSubsystem' then goto continue end
-            bool = subsystem:HasOptedOutOfSeasonContent()
-            break
-            ::continue::
-        end
-    end
-    return bool
+function TableIndexExists(table, index)
+    return table[index] ~= nil
 end
-function S4Off()
+function GetSeasonSubsystem()
     local subsystems = FindAllOf('SeasonsSubsystem')
     if subsystems then
         for i, subsystem in pairs(subsystems) do
             local fullname = string.format("%s",subsystem:GetFullName())
-            if fullname == 'SeasonsSubsystem /Script/FSD.Default__SeasonsSubsystem' then goto continue end
-            subsystem:SetHasOptedOutOfSeasonContent(true)
-            break
+            if fullname == 'SeasonsSubsystem /Script/FSD.Default__SeasonsSubsystem' then
+                goto continue
+            else
+                return subsystem
+            end
             ::continue::
         end
     end
 end
-function S4On()
-    local subsystems = FindAllOf('SeasonsSubsystem')
-    if subsystems then
-        for i, subsystem in pairs(subsystems) do
-            local fullname = string.format("%s",subsystem:GetFullName())
-            if fullname == 'SeasonsSubsystem /Script/FSD.Default__SeasonsSubsystem' then goto continue end
-            subsystem:SetHasOptedOutOfSeasonContent(false)
-            break
-            ::continue::
-        end
-    end
-end
-function GetMissions()
-    local remotemissions = nil
-    local missions = {}
+SeasonSubsystem = GetSeasonSubsystem()
 
+function GetMissionGenerationManager()
     local MissionGenerationManagers = FindAllOf('MissionGenerationManager')
     if MissionGenerationManagers then
         for index, manager in pairs(MissionGenerationManagers) do
             local fullname = string.format("%s",manager:GetFullName())
-            if fullname == 'MissionGenerationManager /Script/FSD.Default__MissionGenerationManager' then goto continue end
+            if fullname == 'MissionGenerationManager /Script/FSD.Default__MissionGenerationManager' then
+                goto continue
+            else
+                return manager
+            end
+            ::continue::
+        end
+    end
+end
+MissionGenerationManager = GetMissionGenerationManager()
 
-            remotemissions = manager:GetAvailableMissions()
+function S4Off()
+    -- local subsystems = FindAllOf('SeasonsSubsystem')
+    -- if subsystems then
+    --     for i, subsystem in pairs(subsystems) do
+    --         local fullname = string.format("%s",subsystem:GetFullName())
+    --         if fullname == 'SeasonsSubsystem /Script/FSD.Default__SeasonsSubsystem' then goto continue end
+    --         subsystem:SetHasOptedOutOfSeasonContent(true)
+    --         break
+    --         ::continue::
+    --     end
+    -- end
+    SeasonSubsystem:SetHasOptedOutOfSeasonContent(true)
+end
+function S4On()
+    -- local subsystems = FindAllOf('SeasonsSubsystem')
+    -- if subsystems then
+    --     for i, subsystem in pairs(subsystems) do
+    --         local fullname = string.format("%s",subsystem:GetFullName())
+    --         if fullname == 'SeasonsSubsystem /Script/FSD.Default__SeasonsSubsystem' then goto continue end
+    --         subsystem:SetHasOptedOutOfSeasonContent(false)
+    --         break
+    --         ::continue::
+    --     end
+    -- end
+    SeasonSubsystem:SetHasOptedOutOfSeasonContent(false)
+end
+function GetMissions()
+    local remotemissions = nil
+    local missions = {}
+    -- local MissionGenerationManagers = FindAllOf('MissionGenerationManager')
+    -- if MissionGenerationManagers then
+    --     for index, manager in pairs(MissionGenerationManagers) do
+    --         local fullname = string.format("%s",manager:GetFullName())
+    --         if fullname == 'MissionGenerationManager /Script/FSD.Default__MissionGenerationManager' then goto continue end
+            remotemissions = MissionGenerationManager:GetAvailableMissions()
             if remotemissions then
                 for _, remotemission in pairs(remotemissions) do
                     local mission = remotemission:get()
                     table.insert(missions, mission)
                 end
             end
-            break
-            ::continue::
+            -- break
+            -- ::continue::
+        -- end
+    -- end
+    return missions
+end
+
+PrimaryObjectives = {
+ ['BlueprintGeneratedClass /Game/GameElements/Objectives/OBJ_1st_PointExtraction.OBJ_1st_PointExtraction_C'] = 'Point Extraction',
+ ['BlueprintGeneratedClass /Game/GameElements/Objectives/Elimination/OBJ_Eliminate_Eggs.OBJ_Eliminate_Eggs_C'] = 'Elimination',
+ ['BlueprintGeneratedClass /Game/GameElements/Objectives/Escort/OBJ_1st_Escort.OBJ_1st_Escort_C'] = 'Escort Duty',
+ ['BlueprintGeneratedClass /Game/GameElements/Objectives/OBJ_1st_Extraction.OBJ_1st_Extraction_C'] = 'Mining Expedition',
+ ['BlueprintGeneratedClass /Game/GameElements/Objectives/Refinery/OBJ_1st_Refinery.OBJ_1st_Refinery_C'] = 'On-Site Refining',
+ ['BlueprintGeneratedClass /Game/GameElements/Objectives/Salvage/OBJ_1st_Salvage.OBJ_1st_Salvage_C'] = 'Salvage Operation',
+ ['BlueprintGeneratedClass /Game/GameElements/Objectives/Facility/OBJ_1st_Facility.OBJ_1st_Facility_C'] = 'Industrial Sabotage',
+ ['BlueprintGeneratedClass /Game/GameElements/Objectives/OBJ_1st_Gather_AlienEggs.OBJ_1st_Gather_AlienEggs_C'] = 'Egg Hunt',
+--  ['BlueprintGeneratedClass /Game/GameElements/Objectives/'] = 'Deep Scan'
+}
+function GetPrimaryObj(fullname)
+    return PrimaryObjectives[fullname]
+end
+SecondaryObjectives = {
+    ['BlueprintGeneratedClass /Game/GameElements/Objectives/OBJ_2nd_KillFleas.OBJ_2nd_KillFleas_C'] = 'Fester Fleas',
+    ['BlueprintGeneratedClass /Game/GameElements/Objectives/OBJ_2nd_Mine_Dystrum.OBJ_2nd_Mine_Dystrum_C'] = 'Dystrum',
+    ['BlueprintGeneratedClass /Game/GameElements/Objectives/OBJ_2nd_Mine_Hollomite.OBJ_2nd_Mine_Hollomite_C'] = 'Hollomite',
+    ['BlueprintGeneratedClass /Game/GameElements/Objectives/OBJ_2nd_Find_Gunkseed.OBJ_2nd_Find_Gunkseed_C'] = 'Gunk Seeds',
+    ['BlueprintGeneratedClass /Game/GameElements/Objectives/OBJ_2nd_Find_Fossil.OBJ_2nd_Find_Fossil_C'] = 'Fossils',
+    ['BlueprintGeneratedClass /Game/GameElements/Objectives/OBJ_2nd_Find_Ebonut.OBJ_2nd_Find_Ebonut_C'] = 'Ebonuts',
+    ['BlueprintGeneratedClass /Game/GameElements/Objectives/OBJ_2nd_Find_BooloCap.OBJ_2nd_Find_BooloCap_C'] = 'Boolo Caps',
+    ['BlueprintGeneratedClass /Game/GameElements/Objectives/OBJ_2nd_Find_ApocaBloom.OBJ_2nd_Find_ApocaBloom_C'] = 'ApocaBlooms'
+}
+function GetSecondaryObj(fullname)
+    return SecondaryObjectives[fullname]
+end
+MissionMutators = {
+    ['MissionMutator /Game/GameElements/Missions/Warnings/ExplosiveEnemies/MMUT_ExplosiveEnemies.MMUT_ExplosiveEnemies'] = 'Volatile Guts',
+    ['MissionMutator /Game/GameElements/Missions/Mutators/XXXP/MMUT_XXXP.MMUT_XXXP'] = 'Double XP',
+    ['MissionMutator /Game/GameElements/Missions/Mutators/Weakspot/MMUT_Weakspot.MMUT_Weakspot'] = 'Critical Weakness',
+    ['MissionMutator /Game/GameElements/Missions/Mutators/RichInMinerals/MMUT_RichInMinerals.MMUT_RichInMinerals'] = 'Mineral Mania',
+    ['MissionMutator /Game/GameElements/Missions/Mutators/OxygenRich/MMUT_OxygenRich.MMUT_OxygenRich'] = 'Rich Atmosphere',
+    ['MissionMutator /Game/GameElements/Missions/Mutators/LowGravity/MMUT_LowGravity.MMUT_LowGravity'] = 'Low Gravity',
+    ['MissionMutator /Game/GameElements/Missions/Mutators/GoldRush/MMUT_GoldRush.MMUT_GoldRush'] = 'Gold Rush',
+    ['MissionMutator /Game/GameElements/Missions/Mutators/EliminationContract/MMUT_ExterminationContract.MMUT_ExterminationContract'] = 'Golden Bugs',
+    -- ['BloodSugar'] = 'Blood Sugar',
+    -- ['SecretSecondary'] = 'Secret Secondary'
+}
+function GetMissionMutator(fullname)
+    return MissionMutators[fullname]
+end
+Warnings = {
+    ['MissionWarning /Game/GameElements/Missions/Warnings/ShieldDisruption/WRN_NoShields.WRN_NoShields'] = 'Shield Disruption',
+    ['MissionWarning /Game/GameElements/Missions/Warnings/Swarmageddon/WRN_Swarmagedon.WRN_Swarmagedon'] = 'Swarmageddon',
+    ['MissionWarning /Game/GameElements/Missions/Warnings/RivalIncursion/WRN_RivalIncursion.WRN_RivalIncursion'] = 'Rival Presence',
+    ['MissionWarning /Game/GameElements/Missions/Warnings/RegenerativeEnemies/WRN_RegenerativeEnemies.WRN_RegenerativeEnemies'] = 'Regenerative Bugs',
+    ['MissionWarning /Game/GameElements/Missions/Warnings/Plague/WRN_Plague.WRN_Plague'] = 'Lithophage Outbreak',
+    ['MissionWarning /Game/GameElements/Missions/Warnings/NoOxygen/WRN_NoOxygen.WRN_NoOxygen'] = 'Low Oxygen',
+    ['MissionWarning /Game/GameElements/Missions/Warnings/MacteraCave/WRN_MacteraCave.WRN_MacteraCave'] = 'Mactera Plague',
+    ['MissionWarning /Game/GameElements/Missions/Warnings/LethalEnemies/WRN_LethalEnemies.WRN_LethalEnemies'] = 'Lethal Enemies',
+    ['MissionWarning /Game/GameElements/Missions/Warnings/InfestedEnemies/WRN_InfestedEnemies.WRN_InfestedEnemies'] = 'Parasites',
+    ['MissionWarning /Game/GameElements/Missions/Warnings/HeroEnemies/WRN_HeroEnemies.WRN_HeroEnemies'] = 'Elite Threat',
+    ['MissionWarning /Game/GameElements/Missions/Warnings/Ghost/WRN_Ghost.WRN_Ghost'] = 'Haunted Cave',
+    ['MissionWarning /Game/GameElements/Missions/Warnings/ExploderInfestation/WRN_ExploderInfestation.WRN_ExploderInfestation'] = 'Exploder Infestation',
+    ['MissionWarning /Game/GameElements/Missions/Warnings/CaveLeechDen/WRN_CaveLeechDen.WRN_CaveLeechDen'] = 'Cave Leech Cluster',
+    -- ['DuckAndCover'] = 'Duck and Cover',
+    -- ['EboniteOutbreak'] = 'Ebonite Outbreak'
+}
+function GetMissionWarning(fullname)
+    return Warnings[fullname]
+end
+MissionDNAs = {
+    -- Salvage
+    ['BlueprintGeneratedClass /Game/GameElements/Missions/DNA_SalvageFractured_Complex.DNA_SalvageFractured_Complex_C'] = {complexity = '3', length = '3'},
+    ['BlueprintGeneratedClass /Game/GameElements/Missions/DNA_SalvageFractured_Medium.DNA_SalvageFractured_Medium_C'] = {complexity = '2', length = '2'},
+
+    -- Point Extraction
+    ['BlueprintGeneratedClass /Game/GameElements/Missions/DNA_Motherlode_Short.DNA_Motherlode_Short_C'] = {complexity = '3', length = '2'},
+    ['BlueprintGeneratedClass /Game/GameElements/Missions/DNA_Motherlode_Long.DNA_Motherlode_Long_C'] = {complexity = '3', length = '3'},
+
+    -- Refinery
+    ['BlueprintGeneratedClass /Game/GameElements/Missions/DNA_Refinery_Complex.DNA_Refinery_Complex_C'] = {complexity = '3', length = '2'},
+    ['BlueprintGeneratedClass /Game/GameElements/Missions/DNA_Refinery_Medium.DNA_Refinery_Medium_C'] = {complexity = '2', length = '2'},
+
+    -- Mining Expedition
+    ['BlueprintGeneratedClass /Game/GameElements/Missions/DNA_2_01.DNA_2_01_C'] = {complexity = '1', length = '1'},
+    ['BlueprintGeneratedClass /Game/GameElements/Missions/DNA_2_02.DNA_2_02_C'] = {complexity = '2', length = '2'},
+    ['BlueprintGeneratedClass /Game/GameElements/Missions/DNA_2_03.DNA_2_03_C'] = {complexity = '1', length = '2'},
+    ['BlueprintGeneratedClass /Game/GameElements/Missions/DNA_2_04.DNA_2_04_C'] = {complexity = '2', length = '3'},
+    ['BlueprintGeneratedClass /Game/GameElements/Missions/DNA_2_05.DNA_2_05_C'] = {complexity = '3', length = '3'},
+}
+MissionDNAs_obscure = {
+    ['Egg Hunt'] = {
+        ['BlueprintGeneratedClass /Game/GameElements/Missions/DNA_Fractured_Medium.DNA_Fractured_Medium_C'] = {complexity = '2', length = '2'},
+        ['BlueprintGeneratedClass /Game/GameElements/Missions/DNA_FracturedSimple.DNA_FracturedSimple_C'] = {complexity = '1', length = '1'},
+    },
+
+    ['Elimination'] = {
+        ['BlueprintGeneratedClass /Game/GameElements/Missions/DNA_Star_Medium.DNA_Star_Medium_C'] = {complexity = '2', length = '2'},
+        ['BlueprintGeneratedClass /Game/GameElements/Missions/DNA_Star_Complex.DNA_Star_Complex_C'] = {complexity = '3', length = '3'},
+    },
+}
+Pe_length_condition = {pattern = 'Motherlode_Short_C', result = {complexity = '3', length = '2'}, conditions = {length = '2', complexity = 'Indefinite'}}
+
+function FinalizeComplexityAndLength(mission1, MissionDNA, length, complexity)
+    if mission1['PrimaryObjective'] == 'Point Extraction' and string.find(MissionDNA, Pe_length_condition.pattern) and complexity == Pe_length_condition.conditions.complexity and length == Pe_length_condition.conditions.length then
+        mission1['Complexity'] = Pe_length_condition.result.complexity
+        mission1['Length'] = Pe_length_condition.result.length
+
+    elseif complexity == 'Indefinite' and length == 'Indefinite' then
+        local success, err = pcall(function()
+            mission1['Complexity'] = MissionDNAs[MissionDNA].complexity
+            mission1['Length'] = MissionDNAs[MissionDNA].length
+        end)
+    end
+
+    if mission1['PrimaryObjective'] == 'Egg Hunt' and mission1['Complexity'] == 'Indefinite' and mission1['Length'] == 'Indefinite' then
+        local complexity_gate_dna = {pattern = '_Complex', result = {complexity = '2', length = '3'}}
+        if string.find(MissionDNA, complexity_gate_dna.pattern) then
+            mission1['Complexity'] = complexity_gate_dna.result.complexity
+            mission1['Length'] = complexity_gate_dna.result.length
+            complexity = '2'
+        else
+            mission1['Complexity'] = MissionDNAs_obscure['Egg Hunt'][MissionDNA].complexity
+            mission1['Length'] = MissionDNAs_obscure['Egg Hunt'][MissionDNA].length
+        end
+
+    elseif mission1['PrimaryObjective'] == 'Elimination' and mission1['Complexity'] == 'Indefinite' and mission1['Length'] == 'Indefinite' then
+        mission1['Complexity'] = MissionDNAs_obscure['Elimination'][MissionDNA].complexity
+        mission1['Length'] = MissionDNAs_obscure['Elimination'][MissionDNA].length
+    end
+
+    if complexity == 'Indefinite' then
+        local MissionDNAs_generic = {
+            {pattern = 'MediumComplex', result = {complexity = '3', length = '2'}},
+            {pattern = 'LongAverage', result = {complexity = '2', length = '3'}},
+            {pattern = 'LongComplex', result = {complexity = '3', length = '3'}},
+            {pattern = 'MediumAverage', result = {complexity = '2', length = '2'}},
+            {pattern = 'Simple', result =  {complexity = '1', length = mission1['Length']}},
+            {pattern = '_Complex', result = {complexity = '3', length = mission1['Length']}}
+        }
+        for _, dna in pairs(MissionDNAs_generic) do
+            if string.find(MissionDNA, dna.pattern) then
+                mission1['Length'] = dna.result.length
+                mission1['Complexity'] = dna.result.complexity
+                break
+            end
         end
     end
-    return missions
+    return mission1
 end
 function UnpackStandardMission(mission, master, b, missionscount, season)
     _L = {
@@ -154,97 +342,102 @@ function UnpackStandardMission(mission, master, b, missionscount, season)
 
     local PrimaryObjective = mission:GetPropertyValue("PrimaryObjective")
     PrimaryObjective = string.format("%s",PrimaryObjective:GetFullName())
-    _L.PrimaryObjective = PrimaryObjective
-    local primary_objectives = {
-        {pattern = "PointExtraction", result = "Point Extraction"},
-        {pattern = "Eliminate_Eggs", result = "Elimination"},
-        {pattern = "Escort", result = "Escort Duty"},
-        {pattern = "1st_Extraction", result = "Mining Expedition"},
-        {pattern = "Refinery", result = "On-Site Refining"},
-        {pattern = "1st_Salvage", result = "Salvage Operation"},
-        {pattern = "1st_Facility", result = "Industrial Sabotage"},
-        {pattern = "Gather_AlienEggs", result = "Egg Hunt"},
-        -- {pattern = "DeepScan", result = "Deep Scan"}
-    }
-    for _, obj in ipairs(primary_objectives) do
-        if string.find(PrimaryObjective, obj.pattern) then
-            PrimaryObjective = obj.result
-            break
-        end
-    end
+    -- _L.PrimaryObjective = PrimaryObjective
+    -- local primary_objectives = {
+    --     {pattern = "PointExtraction", result = "Point Extraction"},
+    --     {pattern = "Eliminate_Eggs", result = "Elimination"},
+    --     {pattern = "Escort", result = "Escort Duty"},
+    --     {pattern = "1st_Extraction", result = "Mining Expedition"},
+    --     {pattern = "Refinery", result = "On-Site Refining"},
+    --     {pattern = "1st_Salvage", result = "Salvage Operation"},
+    --     {pattern = "1st_Facility", result = "Industrial Sabotage"},
+    --     {pattern = "Gather_AlienEggs", result = "Egg Hunt"},
+    --     -- {pattern = "DeepScan", result = "Deep Scan"}
+    -- }
+    -- for _, obj in ipairs(primary_objectives) do
+    --     print(PrimaryObjective)
+    --     if string.find(PrimaryObjective, obj.pattern) then
+    --         PrimaryObjective = obj.result
+    --         break
+    --     end
+    -- end
     -- print(PrimaryObjective)
-    mission1['PrimaryObjective'] = PrimaryObjective
+    mission1['PrimaryObjective'] = GetPrimaryObj(PrimaryObjective)
 
     local SecondaryObjective = mission:GetPropertyValue("SecondaryObjectives")[1]
     SecondaryObjective = string.format("%s",SecondaryObjective:GetFullName())
+    SecondaryObjective = GetSecondaryObj(SecondaryObjective)
     _L.SecondaryObjective = SecondaryObjective
-    local secondary_objectives = {
-        {pattern = "Gunkseed", result = "Gunk Seeds"},
-        {pattern = "Ebonut", result = "Ebonuts"},
-        {pattern = "ApocaBloom", result = "ApocaBlooms"},
-        {pattern = "BooloCap", result = "Boolo Caps"},
-        {pattern = "Fossil", result = "Fossils"},
-        {pattern = "Hollomite", result = "Hollomite"},
-        {pattern = "KillFleas", result = "Fester Fleas"},
-        {pattern = "Dystrum", result = "Dystrum"}
-    }
-    for _, obj in ipairs(secondary_objectives) do
-        if string.find(SecondaryObjective, obj.pattern) then
-            SecondaryObjective = obj.result
-            break
-        end
-    end
+    -- local secondary_objectives = {
+    --     {pattern = "Gunkseed", result = "Gunk Seeds"},
+    --     {pattern = "Ebonut", result = "Ebonuts"},
+    --     {pattern = "ApocaBloom", result = "ApocaBlooms"},
+    --     {pattern = "BooloCap", result = "Boolo Caps"},
+    --     {pattern = "Fossil", result = "Fossils"},
+    --     {pattern = "Hollomite", result = "Hollomite"},
+    --     {pattern = "KillFleas", result = "Fester Fleas"},
+    --     {pattern = "Dystrum", result = "Dystrum"}
+    -- }
+    -- for _, obj in ipairs(secondary_objectives) do
+    --     if string.find(SecondaryObjective, obj.pattern) then
+    --         SecondaryObjective = obj.result
+    --         break
+    --     end
+    -- end
     -- print(SecondaryObjective)
     mission1['SecondaryObjective'] = SecondaryObjective
 
-    local warnings = {
-        {pattern = 'RegenerativeEnemies', result = 'Regenerative Bugs'},
-        {pattern = 'ExploderInfestation', result = 'Exploder Infestation'},
-        {pattern = 'ShieldDisruption', result = 'Shield Disruption'},
-        {pattern = 'HeroEnemies', result = 'Elite Threat'},
-        {pattern = 'WRN_Plague', result = 'Lithophage Outbreak'},
-        {pattern = 'LethalEnemies', result = 'Lethal Enemies'},
-        {pattern = 'Swarmagedon', result = 'Swarmageddon'},
-        {pattern = 'MacteraCave', result = 'Mactera Plague'},
-        {pattern = 'NoOxygen', result = 'Low Oxygen'},
-        {pattern = 'CaveLeechDen', result = 'Cave Leech Cluster'},
-        {pattern = 'RivalIncursion', result = 'Rival Presence'},
-        {pattern = 'Ghost', result = 'Haunted Cave'},
-        {pattern = 'InfestedEnemies', result = 'Parasites'}
-        -- {pattern = 'DuckAndCover', result = "Duck and Cover"},
-        -- {pattern = 'EboniteOutbreak', result = 'Ebonite Outbreak'}
-    }
+    -- local warnings = {
+    --     {pattern = 'RegenerativeEnemies', result = 'Regenerative Bugs'},
+    --     {pattern = 'ExploderInfestation', result = 'Exploder Infestation'},
+    --     {pattern = 'ShieldDisruption', result = 'Shield Disruption'},
+    --     {pattern = 'HeroEnemies', result = 'Elite Threat'},
+    --     {pattern = 'WRN_Plague', result = 'Lithophage Outbreak'},
+    --     {pattern = 'LethalEnemies', result = 'Lethal Enemies'},
+    --     {pattern = 'Swarmagedon', result = 'Swarmageddon'},
+    --     {pattern = 'MacteraCave', result = 'Mactera Plague'},
+    --     {pattern = 'NoOxygen', result = 'Low Oxygen'},
+    --     {pattern = 'CaveLeechDen', result = 'Cave Leech Cluster'},
+    --     {pattern = 'RivalIncursion', result = 'Rival Presence'},
+    --     {pattern = 'Ghost', result = 'Haunted Cave'},
+    --     {pattern = 'InfestedEnemies', result = 'Parasites'}
+    --     -- {pattern = 'DuckAndCover', result = "Duck and Cover"},
+    --     -- {pattern = 'EboniteOutbreak', result = 'Ebonite Outbreak'}
+    -- }
     local MissionWarnings = mission:GetPropertyValue("MissionWarnings")
     local num_MissionWarnings = MissionWarnings:GetArrayNum()
     if num_MissionWarnings == 0 then
         mission1['MissionWarnings'] = nil
     elseif num_MissionWarnings == 1 then
         local MissionWarning1 = MissionWarnings[1]:GetFullName()
-        for _, obj in ipairs(warnings) do
-            if string.find(MissionWarning1, obj.pattern) then
-                MissionWarning1 = obj.result
-                break
-            end
-        end
+        MissionWarning1 = GetMissionWarning(MissionWarning1)
+        -- for _, obj in ipairs(warnings) do
+        --     if string.find(MissionWarning1, obj.pattern) then
+        --         MissionWarning1 = obj.result
+        --         break
+        --     end
+        -- end
         -- print(MissionWarning1)
         _L.MissionWarnings = {MissionWarning1}
         mission1['MissionWarnings'] = _L.MissionWarnings
     elseif num_MissionWarnings == 2 then
         local MissionWarning1 = MissionWarnings[1]:GetFullName()
-        for _, obj in ipairs(warnings) do
-            if string.find(MissionWarning1, obj.pattern) then
-                MissionWarning1 = obj.result
-                break
-            end
-        end
+        MissionWarning1 = GetMissionWarning(MissionWarning1)
+        -- for _, obj in ipairs(warnings) do
+        --     if string.find(MissionWarning1, obj.pattern) then
+        --         MissionWarning1 = obj.result
+        --         break
+        --     end
+        -- end
         -- print(MissionWarning1)
         local MissionWarning2 = MissionWarnings[2]:GetFullName()
-        for _, obj in ipairs(warnings) do
-            if string.find(MissionWarning2, obj.pattern) then
-                MissionWarning2 = obj.result
-                break
-            end
-        end
+        MissionWarning2 = GetMissionWarning(MissionWarning2)
+        -- for _, obj in ipairs(warnings) do
+        --     if string.find(MissionWarning2, obj.pattern) then
+        --         MissionWarning2 = obj.result
+        --         break
+        --     end
+        -- end
         -- print(MissionWarning2)
         _L.MissionWarnings = {MissionWarning1, MissionWarning2}
         mission1['MissionWarnings'] = _L.MissionWarnings
@@ -256,25 +449,27 @@ function UnpackStandardMission(mission, master, b, missionscount, season)
         if MissionMutator == 'nil' then
             mission1['MissionMutator'] = nil
         else
-            local mutators = {
-                {pattern = 'GoldRush', result = 'Gold Rush'},
-                {pattern = 'RichInMinerals', result = 'Mineral Mania'},
-                {pattern = 'Weakspot', result = 'Critical Weakness'},
-                {pattern = 'LowGravity', result = 'Low Gravity'},
-                {pattern = 'XXXP', result = 'Double XP'},
-                {pattern = 'OxygenRich', result = 'Rich Atmosphere'},
-                {pattern = 'ExterminationContract', result = 'Golden Bugs'},
-                {pattern = 'ExplosiveEnemies', result = 'Volatile Guts'}
-                -- {pattern = 'BloodSugar', result = 'Blood Sugar'},
-                -- {pattern = 'SecretSecondary', result = 'Secret Secondary'}
-            }
-            for _, obj in ipairs(mutators) do
-                if string.find(MissionMutator, obj.pattern) then
-                    MissionMutator = obj.result
-                    mission1['MissionMutator'] = MissionMutator
-                    break
-                end
-            end
+            MissionMutator = GetMissionMutator(MissionMutator)
+            mission1['MissionMutator'] = MissionMutator
+            -- local mutators = {
+            --     {pattern = 'GoldRush', result = 'Gold Rush'},
+            --     {pattern = 'RichInMinerals', result = 'Mineral Mania'},
+            --     {pattern = 'Weakspot', result = 'Critical Weakness'},
+            --     {pattern = 'LowGravity', result = 'Low Gravity'},
+            --     {pattern = 'XXXP', result = 'Double XP'},
+            --     {pattern = 'OxygenRich', result = 'Rich Atmosphere'},
+            --     {pattern = 'ExterminationContract', result = 'Golden Bugs'},
+            --     {pattern = 'ExplosiveEnemies', result = 'Volatile Guts'}
+            --     -- {pattern = 'BloodSugar', result = 'Blood Sugar'},
+            --     -- {pattern = 'SecretSecondary', result = 'Secret Secondary'}
+            -- }
+            -- for _, obj in ipairs(mutators) do
+            --     if string.find(MissionMutator, obj.pattern) then
+            --         MissionMutator = obj.result
+            --         mission1['MissionMutator'] = MissionMutator
+            --         break
+            --     end
+            -- end
             -- print(MissionMutator)
             _L.MissionMutator = MissionMutator
         end
@@ -315,122 +510,137 @@ function UnpackStandardMission(mission, master, b, missionscount, season)
     -- COMPLEXITY AND LENGTH FINALIZATION FOR INDEFINITE VALUES
     local MissionDNA = mission:GetPropertyValue("MissionDNA")
     MissionDNA = string.format("%s",MissionDNA:GetFullName())
+    mission1 = FinalizeComplexityAndLength(mission1, MissionDNA, length, complexity)
 
-    local MissionDNAs = {
-        -- Salvage
-        {pattern = 'SalvageFractured_Complex', result = {complexity = '3', length = '3'}},
-        {pattern = 'SalvageFractured_Medium', result = {complexity = '2', length = '2'}},
-        -- Point Extraction
-        {pattern = 'Motherlode_Short_C', result = {complexity = '3', length = '2'}},
-        {pattern = 'Motherlode_Long_C', result = {complexity = '3', length = '3'}},
-        -- Refinery
-        {pattern = 'Refinery_Complex', result = {complexity = '3', length = '2'}},
-        {pattern = 'Refinery_Medium_C', result = {complexity = '2', length = '2'}},
-        -- Mining Expedition
-        {pattern = 'DNA_2_01_C', result = {complexity = '1', length = '1'}},
-        {pattern = 'DNA_2_02_C', result = {complexity = '2', length = '2'}},
-        {pattern = 'DNA_2_03_C', result = {complexity = '1', length = '2'}},
-        {pattern = 'DNA_2_04_C', result = {complexity = '2', length = '3'}},
-        {pattern = 'DNA_2_05_C', result = {complexity = '3', length = '3'}},
-    }
+    -- local MissionDNAs = {
+    --     -- Salvage
+    --     {pattern = 'SalvageFractured_Complex', result = {complexity = '3', length = '3'}},
+    --     {pattern = 'SalvageFractured_Medium', result = {complexity = '2', length = '2'}},
+    --     -- Point Extraction
+    --     {pattern = 'Motherlode_Short_C', result = {complexity = '3', length = '2'}},
+    --     {pattern = 'Motherlode_Long_C', result = {complexity = '3', length = '3'}},
+    --     -- Refinery
+    --     {pattern = 'Refinery_Complex', result = {complexity = '3', length = '2'}},
+    --     {pattern = 'Refinery_Medium_C', result = {complexity = '2', length = '2'}},
+    --     -- Mining Expedition
+    --     {pattern = 'DNA_2_01_C', result = {complexity = '1', length = '1'}},
+    --     {pattern = 'DNA_2_02_C', result = {complexity = '2', length = '2'}},
+    --     {pattern = 'DNA_2_03_C', result = {complexity = '1', length = '2'}},
+    --     {pattern = 'DNA_2_04_C', result = {complexity = '2', length = '3'}},
+    --     {pattern = 'DNA_2_05_C', result = {complexity = '3', length = '3'}},
+    -- }
 
-    local pe_length_condition = {pattern = 'Motherlode_Short_C', result = {complexity = '3', length = '2'}, conditions = {length = '2', complexity = 'Indefinite'}}
-    if PrimaryObjective == 'Point Extraction' and string.find(MissionDNA, pe_length_condition.pattern) and complexity == pe_length_condition.conditions.complexity and length == pe_length_condition.conditions.length then
-        mission1['Complexity'] = pe_length_condition.result.complexity
-        mission1['Length'] = pe_length_condition.result.length
+    -- local pe_length_condition = {pattern = 'Motherlode_Short_C', result = {complexity = '3', length = '2'}, conditions = {length = '2', complexity = 'Indefinite'}}
+    -- if PrimaryObjective == 'Point Extraction' and string.find(MissionDNA, pe_length_condition.pattern) and complexity == pe_length_condition.conditions.complexity and length == pe_length_condition.conditions.length then
+    --     mission1['Complexity'] = pe_length_condition.result.complexity
+    --     mission1['Length'] = pe_length_condition.result.length
 
-    elseif complexity == 'Indefinite' and length == 'Indefinite' then
-        for _, dna in pairs(MissionDNAs) do
-            if string.find(MissionDNA, dna.pattern) then
-                mission1['Complexity'] = dna.result.complexity
-                mission1['Length'] = dna.result.length
-                break
-            end
-        end
-    end
+    -- elseif complexity == 'Indefinite' and length == 'Indefinite' then
+    --     for _, dna in pairs(MissionDNAs) do
+    --         if string.find(MissionDNA, dna.pattern) then
+    --             mission1['Complexity'] = dna.result.complexity
+    --             mission1['Length'] = dna.result.length
+    --             break
+    --         end
+    --     end
+    -- end
 
-    local MissionDNAs_obscure = {}
-    MissionDNAs_obscure['Egg Hunt'] = {
-        {pattern = 'Fractured_Medium_C', result = {complexity = '2', length = '2'}},
-        {pattern = 'FracturedSimple_C', result = {complexity = '1', length = '1'}},
-        {pattern = 'FracturedSimple_C', result = {complexity = '1', length = '1'}},
-    }
+    -- local MissionDNAs_obscure = {}
+    -- MissionDNAs_obscure['Egg Hunt'] = {
+    --     {pattern = 'Fractured_Medium_C', result = {complexity = '2', length = '2'}},
+    --     {pattern = 'FracturedSimple_C', result = {complexity = '1', length = '1'}},
+    --     {pattern = 'FracturedSimple_C', result = {complexity = '1', length = '1'}},
+    -- }
 
-    MissionDNAs_obscure['Elimination'] = {
-        {pattern = 'Star_Medium_C', result = {complexity = '2', length = '2'}},
-        {pattern = 'Star_Complex_C', result = {complexity = '3', length = '3'}},
-    }
+    -- MissionDNAs_obscure['Elimination'] = {
+    --     {pattern = 'Star_Medium_C', result = {complexity = '2', length = '2'}},
+    --     {pattern = 'Star_Complex_C', result = {complexity = '3', length = '3'}},
+    -- }
 
-    if PrimaryObjective == 'Egg Hunt' and mission1['Complexity'] == 'Indefinite' and mission1['Length'] == 'Indefinite' then
-        local complexity_gate_dna = {pattern = '_Complex', result = {complexity = '2', length = '3'}}
-        if string.find(MissionDNA, complexity_gate_dna.pattern) then
-            mission1['Complexity'] = complexity_gate_dna.result.complexity
-            mission1['Length'] = complexity_gate_dna.result.length
-            complexity = '2'
-        else
-            for _, dna in pairs(MissionDNAs_obscure[PrimaryObjective]) do
-                if string.find(MissionDNA, dna.pattern) then
-                    mission1['Complexity'] = dna.result.complexity
-                    mission1['Length'] = dna.result.length
-                    break
-                end
-            end
-        end
+    -- if PrimaryObjective == 'Egg Hunt' and mission1['Complexity'] == 'Indefinite' and mission1['Length'] == 'Indefinite' then
+    --     local complexity_gate_dna = {pattern = '_Complex', result = {complexity = '2', length = '3'}}
+    --     if string.find(MissionDNA, complexity_gate_dna.pattern) then
+    --         mission1['Complexity'] = complexity_gate_dna.result.complexity
+    --         mission1['Length'] = complexity_gate_dna.result.length
+    --         complexity = '2'
+    --     else
+    --         for _, dna in pairs(MissionDNAs_obscure[PrimaryObjective]) do
+    --             if string.find(MissionDNA, dna.pattern) then
+    --                 mission1['Complexity'] = dna.result.complexity
+    --                 mission1['Length'] = dna.result.length
+    --                 break
+    --             end
+    --         end
+    --     end
 
-    elseif PrimaryObjective == 'Elimination' and mission1['Complexity'] == 'Indefinite' and mission1['Length'] == 'Indefinite' then
-        for _, dna in pairs(MissionDNAs_obscure[PrimaryObjective]) do
-            if string.find(MissionDNA, dna.pattern) then
-                mission1['Complexity'] = dna.result.complexity
-                mission1['Length'] = dna.result.length
-                break
-            end
-        end
-    end
-    local MissionDNAs_generic = {
-        {pattern = 'MediumComplex', result = {complexity = '3', length = '2'}},
-        {pattern = 'LongAverage', result = {complexity = '2', length = '3'}},
-        {pattern = 'LongComplex', result = {complexity = '3', length = '3'}},
-        {pattern = 'MediumAverage', result = {complexity = '2', length = '2'}},
-        {pattern = 'Simple', result =  {complexity = '1', length = mission1['Length']}},
-        {pattern = '_Complex', result = {complexity = '3', length = mission1['Length']}},
-    }
-    if complexity == 'Indefinite' then
-        for _, dna in pairs(MissionDNAs_generic) do
-            if string.find(MissionDNA, dna.pattern) then
-                mission1['Length'] = dna.result.length
-                mission1['Complexity'] = dna.result.complexity
-                break
-            end
-        end
-    end
+    -- elseif PrimaryObjective == 'Elimination' and mission1['Complexity'] == 'Indefinite' and mission1['Length'] == 'Indefinite' then
+    --     for _, dna in pairs(MissionDNAs_obscure[PrimaryObjective]) do
+    --         if string.find(MissionDNA, dna.pattern) then
+    --             mission1['Complexity'] = dna.result.complexity
+    --             mission1['Length'] = dna.result.length
+    --             break
+    --         end
+    --     end
+    -- end
+    -- local MissionDNAs_generic = {
+    --     {pattern = 'MediumComplex', result = {complexity = '3', length = '2'}},
+    --     {pattern = 'LongAverage', result = {complexity = '2', length = '3'}},
+    --     {pattern = 'LongComplex', result = {complexity = '3', length = '3'}},
+    --     {pattern = 'MediumAverage', result = {complexity = '2', length = '2'}},
+    --     {pattern = 'Simple', result =  {complexity = '1', length = mission1['Length']}},
+    --     {pattern = '_Complex', result = {complexity = '3', length = mission1['Length']}},
+    -- }
+    -- if complexity == 'Indefinite' then
+    --     for _, dna in pairs(MissionDNAs_generic) do
+    --         if string.find(MissionDNA, dna.pattern) then
+    --             mission1['Length'] = dna.result.length
+    --             mission1['Complexity'] = dna.result.complexity
+    --             break
+    --         end
+    --     end
+    -- end
     -- if mission1['Length'] == 'Indefinite' or mission1['Complexity'] == 'Indefinite' then
     --     print(missionfullname)
     -- end
     table.insert(master[season]['Biomes'][b], mission1)
     return missionscount
 end
+
+Biomesmatch = {
+    ['Biome /Game/Landscape/Biomes/Biomes_Ingame/AzureWeald/BIOME_AzureWeald.BIOME_AzureWeald'] = 'Azure Weald',
+    ['Biome /Game/Landscape/Biomes/Biomes_Ingame/CrystalCaves/BIOME_CrystalCaves.BIOME_CrystalCaves'] = 'Crystalline Caverns',
+    ['Biome /Game/Landscape/Biomes/Biomes_Ingame/SaltCaves/BIOME_SaltCaves.BIOME_SaltCaves'] = 'Salt Pits',
+    ['Biome /Game/Landscape/Biomes/Biomes_Ingame/FungusBogs/BIOME_FungusBogs.BIOME_FungusBogs'] = "Fungus Bogs",
+    ['Biome /Game/Landscape/Biomes/Biomes_Ingame/MagmaCaves/BIOME_MagmaCaves.BIOME_MagmaCaves'] = 'Magma Core',
+    ['Biome /Game/Landscape/Biomes/Biomes_Ingame/IceCaves/BIOME_IceCaves.BIOME_IceCaves'] = 'Glacial Strata',
+    ['Biome /Game/Landscape/Biomes/Biomes_Ingame/HollowBough/BIOME_HollowBough.BIOME_HollowBough'] = 'Hollow Bough',
+    ['Biome /Game/Landscape/Biomes/Biomes_Ingame/SandblastedCorridors/BIOME_SandblastedCorridors.BIOME_SandblastedCorridors'] = 'Sandblasted Corridors',
+    ['Biome /Game/Landscape/Biomes/Biomes_Ingame/RadioactiveZone/BIOME_RadioactiveZone.BIOME_RadioactiveZone'] = 'Radioactive Exclusion Zone',
+    ['Biome /Game/Landscape/Biomes/Biomes_Ingame/LushDownpour/BIOME_LushDownpour.BIOME_LushDownpour'] = 'Dense Biozone'
+}
 function GetBiome(mission)
     local b = mission:GetPropertyValue('Biome')
     b = string.format("%s",b:GetFullName())
-    local biomesmatch = {
-    {pattern = 'BIOME_AzureWeald', result = 'Azure Weald'},
-    {pattern = 'BIOME_CrystalCaves', result = 'Crystalline Caverns'},
-    {pattern = 'BIOME_SaltCaves', result = 'Salt Pits'},
-    {pattern = 'BIOME_FungusBogs', result = "Fungus Bogs"},
-    {pattern = 'BIOME_MagmaCaves', result = 'Magma Core'},
-    {pattern = 'BIOME_IceCaves', result = 'Glacial Strata'},
-    {pattern = 'BIOME_HollowBough', result = 'Hollow Bough'},
-    {pattern = 'BIOME_SandblastedCorridors', result = 'Sandblasted Corridors'},
-    {pattern = 'BIOME_RadioactiveZone', result = 'Radioactive Exclusion Zone'},
-    {pattern = 'BIOME_LushDownpour', result = 'Dense Biozone'}
-    }
-    for _, obj in ipairs(biomesmatch) do
-        if string.find(b, obj.pattern) then
-            b = obj.result
-            break
-        end
-    end
-    return b
+    -- local biomesmatch = {
+    -- {pattern = 'BIOME_AzureWeald', result = 'Azure Weald'},
+    -- {pattern = 'BIOME_CrystalCaves', result = 'Crystalline Caverns'},
+    -- {pattern = 'BIOME_SaltCaves', result = 'Salt Pits'},
+    -- {pattern = 'BIOME_FungusBogs', result = "Fungus Bogs"},
+    -- {pattern = 'BIOME_MagmaCaves', result = 'Magma Core'},
+    -- {pattern = 'BIOME_IceCaves', result = 'Glacial Strata'},
+    -- {pattern = 'BIOME_HollowBough', result = 'Hollow Bough'},
+    -- {pattern = 'BIOME_SandblastedCorridors', result = 'Sandblasted Corridors'},
+    -- {pattern = 'BIOME_RadioactiveZone', result = 'Radioactive Exclusion Zone'},
+    -- {pattern = 'BIOME_LushDownpour', result = 'Dense Biozone'}
+    -- }
+        -- for _, obj in ipairs(biomesmatch) do
+    --     if string.find(b, obj.pattern) then
+    --         b = obj.result
+    --         break
+    --     end
+    -- end
+
+    return Biomesmatch[b]
 end
 function Exit()
     local playercontrollers = FindAllOf('BP_PlayerController_SpaceRig_C')
@@ -447,10 +657,18 @@ function Exit()
     end
 end
 
+function GetDNAValues(mission)
+    local dna = mission:GetPropertyValue("MissionDNA"):GetFullName()
+    local PrimaryObjective = GetPrimaryObj(mission:GetPropertyValue('PrimaryObjective'):GetFullName())
+    return {dna, PrimaryObjective}
+end
+
 return {
+    GetDNAValues = GetDNAValues,
     IsInTable = IsInTable,
     ReverseDateFormat = ReverseDateFormat,
     IncrementDatetime = IncrementDatetime,
+    IncrementDatetimeOneDay = IncrementDatetimeOneDay,
     TableToString = TableToString,
     Split = Split,
     HasKey = HasKey,

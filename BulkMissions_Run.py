@@ -14,6 +14,8 @@ from drgmissions_scraper_utils import(
     kill_process_by_name_starts_with,
     user_input_set_target_date,
     validate_drgmissions,
+    calculate_average,
+    MaxSizeList,
     print
 )
 
@@ -61,13 +63,13 @@ def main():
     total_increments = int(diff_seconds // 1800) + 1
     total_increments_ = int(str(total_increments)) + 1
     print(f'Total 30 minute increments: {str(total_increments)}')
-    estimated_time_completion = (total_increments * 1.9) + 25
+    estimated_time_completion = (total_increments * 0.5) + 25
 
     #Calculate timeout total seconds duration
-    timeout_seconds = (total_increments * 1.9) + 300
+    timeout_seconds = (total_increments * 0.7) + 300
     print(f'\n{format_seconds(timeout_seconds)} until timeout\n')
 
-    print(f'Estimated time until completion: {format_seconds(estimated_time_completion)}', end='\r')
+    print(f'Estimated time until completion: {format_seconds(estimated_time_completion)}')
     
     #Disable automatic time sync
     toggle_system_time()
@@ -76,7 +78,7 @@ def main():
     subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
 
     #Wait for JSON
-    polls = 0
+    polls = MaxSizeList(50)
     poll_switch = False
     poll_interval = 1.9
     poll_time = None
@@ -84,17 +86,18 @@ def main():
     start_time = None
     elapsed_time = 0
     while True:
-        timeout_seconds = (total_increments_ * poll_interval) + 300
+        timeout_seconds = (total_increments_ * calculate_average(polls)) + 300
         if start_time:
             elapsed_time = time.monotonic() - start_time
         
         if poll_switch:
-            print(elapsed_time, timeout_seconds)
             # avg_poll_time = elapsed_time / polls
-            estimated_time_completion = total_increments * poll_interval
+            polls.append(poll_interval)
+            # estimated_time_completion = total_increments * poll_interval
+            estimated_time_completion =  total_increments * calculate_average(polls)
+            
             total_increments -= 1
-            # this is busted too
-            print(f'{format_seconds(timeout_seconds)} until timeout. Estimated time until completion: {format_seconds(estimated_time_completion)}', end='\r')
+            print(f"Timestamps remaining: {total_increments} Elapsed time: {format_seconds(elapsed_time)} ", f'{format_seconds(timeout_seconds)} until timeout. Estimated time until completion: {format_seconds(estimated_time_completion)}', end='\r')
             poll_switch = False
         
         # this is busted for now
@@ -131,7 +134,6 @@ def main():
                 break
             
             if filename == 'poll.txt':
-                polls += 1
                 poll_switch = True
                 poll_interval = time.monotonic() - poll_time
                 poll_time = time.monotonic()

@@ -23,6 +23,19 @@ def format_seconds(seconds):
     formatted_time = "{:02d}:{:02d}:{:05.2f}".format(hours, minutes, remaining_seconds)
     return formatted_time
 
+class MaxSizeList(list):
+    def __init__(self, max_size):
+        super().__init__()
+        self.max_size = max_size
+
+    def append(self, item):
+        if len(self) >= self.max_size:
+            self.pop(0)  # Delete the oldest item
+        super().append(item)
+
+def calculate_average(nums):
+    return sum(nums) / len(nums)
+        
 #Validation
 #-----------------------
 def sort_dictionary(dictionary, custom_order):
@@ -173,7 +186,10 @@ def find_duplicates(dictionary, invalid_keys):
                 if k == 'Biomes':
                     for biome, missions in v.items():
                         for mission in missions:
-                            del mission['id']
+                            try:
+                                del mission['id']
+                            except:
+                                pass
 
     for key, value in dictionary_.items():
         god[key] = json.dumps(value)
