@@ -15,7 +15,7 @@ from drgmissions_scraper_utils import (
     sanitize_datetime,
     reverse_date_format,
     order_dictionary_by_date,
-    print
+    print,
 )
 
 def increment_datetime(datetime_str):

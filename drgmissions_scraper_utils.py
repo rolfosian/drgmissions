@@ -8,10 +8,51 @@ import requests
 import winreg
 import json
 import re
+from ctypes import WinDLL
+import threading
+
+def wrap_with_color(string, color):
+    return f"\033[0;{color}m{string}\033[0m"
+
+def subprocess_wrapper(command, shell=False, print_=True):
+    def wrapper():
+        event = threading.Event()
+        event.set()
+        process = subprocess.Popen(command, shell=shell, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+
+        def read_stdout(event, process, print_):
+            if not print_:
+                return
+            while event.is_set():
+                for line in process.stdout:
+                    if line.endswith('\n'):
+                        line = line[:-1]
+                    print(line)
+
+        stdout_thread = threading.Thread(target=read_stdout, args=(event, process, print_))
+        stdout_thread.start()
+
+        process.wait()
+
+        event.clear()
+        stdout_thread.join()
+        try:
+            return process.communicate()[0]
+        except:
+            return process.communicate()[1]
+        
+    return wrapper
+
 def timestamped_print(func):
     def wrapper(*args, **kwargs):
-        timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
-        args = (f'{timestamp}', *args)
+        include_timestamp = kwargs.pop('include_timestamp', True)
+        args = [str(arg) for arg in args]
+        
+        if include_timestamp:
+            concatenated_args = ''.join(args)
+            if concatenated_args.strip() != '':
+                timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+                args = (f'{timestamp}', *args)
         return func(*args, **kwargs)
     return wrapper
 print = timestamped_print(print)
@@ -19,23 +60,19 @@ print = timestamped_print(print)
 def format_seconds(seconds):
     hours = int(seconds // 3600)
     minutes = int((seconds % 3600) // 60)
-    remaining_seconds = seconds % 60
-    formatted_time = "{:02d}:{:02d}:{:05.2f}".format(hours, minutes, remaining_seconds)
+    remaining_seconds = int(round(seconds % 60))
+    if remaining_seconds == 60:
+        minutes += 1
+        remaining_seconds = 0
+    formatted_time = "{:02d}:{:02d}:{:02d}".format(hours, minutes, remaining_seconds)
     return formatted_time
 
-class MaxSizeList(list):
-    def __init__(self, max_size):
-        super().__init__()
-        self.max_size = max_size
-
-    def append(self, item):
-        if len(self) >= self.max_size:
-            self.pop(0)  # Delete the oldest item
-        super().append(item)
-
-def calculate_average(nums):
-    return sum(nums) / len(nums)
-        
+def maximize_window():
+    user32 = WinDLL('user32')
+    SW_MAXIMIZE = 3
+    hWnd = user32.GetForegroundWindow()
+    user32.ShowWindow(hWnd, SW_MAXIMIZE)
+    
 #Validation
 #-----------------------
 def sort_dictionary(dictionary, custom_order):
@@ -333,8 +370,8 @@ def wait_until_next_thursday_11am_utc():
     
     while time_to_wait > 0:
         time_to_wait = (next_thursday_11am_utc - datetime.utcnow()).total_seconds()
-        print(f"Time to wait: {format_seconds(time_to_wait)}", end="\r")
-        time.sleep(0.2)
+        print(f"Time to wait: {format_seconds(round(time_to_wait))}", end="\r")
+        time.sleep(0.5)
     
     print(f"Time to wait: {format_seconds(0)}")
 
@@ -346,31 +383,33 @@ def kill_process_by_name_starts_with(start_string):
                 proc.kill()
     except:
         return
-            
+
 def enable_system_time():
     try:
-        print('-------------------------------------------------------------------------')
+        print('-------------------------------------------------------------------------', include_timestamp=False)
         key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r'SYSTEM\\CurrentControlSet\\Services\\W32Time\\Parameters', 0, winreg.KEY_WRITE)
         winreg.SetValueEx(key, 'Type', 0, winreg.REG_SZ, 'NTP')
         winreg.CloseKey(key)
-        subprocess.run(['sc', 'config', 'w32time', 'start=', 'auto'], shell=True)
-        subprocess.run(['net', 'start', 'w32time'], shell=True)
+        subprocess_wrapper(['sc', 'config', 'w32time', 'start=', 'auto'], shell=True)()
+        subprocess_wrapper(['net', 'start', 'w32time'], shell=True)()
         time.sleep(2)
-        subprocess.run(['w32tm', '/resync'], stderr=subprocess.PIPE, shell=True)
-        print("Automatic system time enabled.\n-------------------------------------------------------------------------\n")
+        subprocess_wrapper(['w32tm', '/resync'], shell=True)()
+        print("Automatic system time enabled.")
+        print("-------------------------------------------------------------------------", include_timestamp=False)
     except Exception as e:
         print(f"Error: {e}")
 def disable_system_time():
     try:
-        print('-------------------------------------------------------------------------')
+        print('-------------------------------------------------------------------------', include_timestamp=False)
         output = subprocess.check_output('sc query w32time', stderr=subprocess.PIPE, shell=True).decode('utf-8')
         if 'RUNNING' in output:
             key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r'SYSTEM\\CurrentControlSet\\Services\\W32Time\\Parameters', 0, winreg.KEY_WRITE)
             winreg.SetValueEx(key, 'Type', 0, winreg.REG_SZ, 'NoSync')
             winreg.CloseKey(key)
-            subprocess.run(['sc', 'config', 'w32time', 'start=', 'disabled'], shell=True)
-            subprocess.run(['net', 'stop', 'w32time'], shell=True)
-            print("Automatic system time disabled.\n-------------------------------------------------------------------------\n")
+            subprocess_wrapper(['sc', 'config', 'w32time', 'start=', 'disabled'], shell=True)()
+            subprocess_wrapper(['net', 'stop', 'w32time'], shell=True)()
+            print("Automatic system time disabled.")
+            print("-------------------------------------------------------------------------", include_timestamp=False)
     except Exception as e:
         print(f"Error: {e}")
 def toggle_system_time():
@@ -466,7 +505,7 @@ def validate_drgmissions(DRG, patched):
             f.close()
 
         with open('./mods/mods.txt', 'w') as f:
-            f.write('invalid_timestamps_redoer : 1')
+            f.write('InvalidTimestampsScraper : 1')
             f.close()
         
         subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
@@ -474,52 +513,34 @@ def validate_drgmissions(DRG, patched):
         files = []
         total_increments = len(invalid_keys)
         total_increments_ = int(str(total_increments))
-        timeout_seconds = (total_increments * 2.0) + 300
-        estimated_time_completion = (total_increments * 2.0) + 30
-        start_time = None
-        poll_switch = False
-        poll_interval = 2.0
-        poll_time = None
-        polls = 0
-        elapsed_time = 0
+        timeout_seconds = (total_increments * 1) + 300
+        estimated_time_completion = (total_increments * 0.8) + 30
         
+        #Wait for JSON
+        polls = 0
+        poll_switch = False
+        avg_poll_time = 1
+        files = []
+        start_time = None
+        elapsed_time = 0
         while True:
-            timeout_seconds = (total_increments_ * poll_interval) + 300
+            timeout_seconds = (total_increments_ * avg_poll_time) + 300
             if start_time:
                 elapsed_time = time.monotonic() - start_time
             
             if poll_switch:
-                print(elapsed_time, timeout_seconds)
-                # avg_poll_time = elapsed_time / polls
-                estimated_time_completion = total_increments * poll_interval
+                polls += 1
+                avg_poll_time = elapsed_time / polls
+                estimated_time_completion =  total_increments * avg_poll_time
+                
                 total_increments -= 1
-                print(f'{format_seconds(timeout_seconds)} until timeout. Estimated time until completion: {format_seconds(estimated_time_completion)}', end="\r")
+                percent = round((total_increments_ - total_increments) / total_increments_ * 100, 2)
+                print(f"{percent}% Completed | Elapsed time: {format_seconds(elapsed_time)} | {format_seconds(timeout_seconds - elapsed_time)} until timeout | Estimated time until completion: {format_seconds(estimated_time_completion)}    ", end='\r')
                 poll_switch = False
-                
-            if elapsed_time > timeout_seconds:
-                print('')
-                print('Timeout... process crashed or froze')
-                kill_process_by_name_starts_with('FSD')
-                kill_process_by_name_starts_with('Unreal')
-                
-                start_time = None
-                polls = 0
-                total_increments = int(str(total_increments_))
-                poll_time = None
-                poll_interval = 2.0
-                
-                if os.path.isfile('poll.txt'):
-                    os.remove('poll.txt')
-                if os.path.isfile('firstpoll.txt'):
-                    os.remove('firstpoll.txt')
-                    
-                time.sleep(4)
-                subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
-                
+
             for filename in os.listdir():
                 if filename == 'firstpoll.txt':
                     start_time = time.monotonic()
-                    poll_time = time.monotonic()
                     while True:
                         try:
                             os.remove('firstpoll.txt')
@@ -527,12 +548,9 @@ def validate_drgmissions(DRG, patched):
                         except:
                             continue
                     break
-                    
+                
                 if filename == 'poll.txt':
-                    polls += 1
                     poll_switch = True
-                    poll_interval = time.monotonic() - poll_time
-                    poll_time = time.monotonic()
                     while True:
                         try:
                             os.remove('poll.txt')
@@ -541,15 +559,36 @@ def validate_drgmissions(DRG, patched):
                             continue
                         
                 if filename == 'redonemissions.json':
-                    time.sleep(5)
                     files.append(filename)
+                    print(f"100.00% Completed | Elapsed time: {format_seconds(elapsed_time)} | {format_seconds(timeout_seconds - elapsed_time)} until timeout | Estimated time until completion: {format_seconds(estimated_time_completion)}    ")
+                    print('Complete. Ending FSD & Unreal processes...')
+                    time.sleep(3)
                     kill_process_by_name_starts_with('FSD')
                     kill_process_by_name_starts_with('Unreal')
+                    break
                     
             if files:
-                print(f'Estimated time until completion: {format_seconds(0.00)}')
-                print(f'\n---\nElapsed time: {format_seconds(elapsed_time)}               \n---')
                 break
+            
+            if elapsed_time > timeout_seconds:
+                print('')
+                print('Timeout... process crashed or froze')
+                kill_process_by_name_starts_with('FSD')
+                kill_process_by_name_starts_with('Unreal')
+                
+                start_time = None
+                total_increments = int(str(total_increments_))
+                polls = 0
+                
+                if os.path.isfile('poll.txt'):
+                    os.remove('poll.txt')
+                if os.path.isfile('firstpoll.txt'):
+                    os.remove('firstpoll.txt')
+                
+                enable_system_time()
+                time.sleep(4)
+                disable_system_time()
+                subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
         
         if os.path.isfile('poll.txt'):
             os.remove('poll.txt')

@@ -1,5 +1,4 @@
-local json = require("./mods/long_term_mission_data_collector/Scripts/dkjson")
-local utils = require('./mods/long_term_mission_data_collector/Scripts/bulkmissions_funcs')
+local json = require("./mods/BulkMissionsScraper/Scripts/dkjson")
 function UnpackDeepDiveMission(mission, master, t)
     _L = {
         MissionName = nil,
@@ -417,6 +416,9 @@ function Main()
             end
         end
     end
+
+    local utils = require('./mods/BulkMissionsScraper/Scripts/bulkmissions_funcs')
+
     local currentDateTime = os.date("!%Y-%m-%dT%H-%M-%SZ")
     currentDateTime = 'DD_'..currentDateTime
     -- Initialize Table

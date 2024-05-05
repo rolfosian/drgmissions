@@ -1,7 +1,6 @@
-local json = require("./mods/long_term_mission_data_collector/Scripts/dkjson")
+local json = require("./mods/BulkMissionsScraper/Scripts/dkjson")
 
 function IsLoaded()
-    local count = 0
     local umgsequenceplayers = FindAllOf('UMGSequencePlayer')
     if umgsequenceplayers then
         if #umgsequenceplayers > 150 then
@@ -54,7 +53,7 @@ function Main()
     end
     ::isloaded::
 
-    local utils = require('./mods/long_term_mission_data_collector/Scripts/bulkmissions_funcs')
+    local utils = require('./mods/BulkMissionsScraper/Scripts/bulkmissions_funcs')
     local SeasonsAndFuncs = {
         s0 = utils.S4Off,
         s4 = utils.S4On

@@ -1478,8 +1478,14 @@ def SERVER_READY(index_event):
 
 def timestamped_print(func):
     def wrapper(*args, **kwargs):
-        timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
-        args = (f'{timestamp}', *args)
+        include_timestamp = kwargs.pop('include_timestamp', True)
+        args = [str(arg) for arg in args]
+        
+        if include_timestamp:
+            concatenated_args = ''.join(args)
+            if concatenated_args.strip() != '':
+                timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+                args = (f'{timestamp}', *args)
         return func(*args, **kwargs)
     return wrapper
 print = timestamped_print(print)

@@ -1,6 +1,4 @@
-local json = require("./mods/long_term_mission_data_collector/Scripts/dkjson")
--- local socket = require('./mods/long_term_mission_data_collector/Scripts/socket')
-local utils = require('./mods/long_term_mission_data_collector/Scripts/bulkmissions_funcs')
+local json = require("./mods/BulkMissionsScraper/Scripts/dkjson")
 
 function Main()
     local startmenus = nil
@@ -33,6 +31,7 @@ function Main()
         end
     end
 
+    local utils = require('./mods/BulkMissionsScraper/Scripts/bulkmissions_funcs')
     local invalid_keys = io.open("invalid_keys.txt", "r")
     local timestamps = {}
     if invalid_keys then
@@ -68,7 +67,7 @@ function Main()
         while true do
             GlobalSeed = FSDGameInstance:GetGlobalMissionSeed()
             if GlobalSeed == PreviousGlobalSeed then
-                print('SEEN')
+                print('SEEN') -- has never seen as far as i can tell, prob ditch the stall when i trust GetGlobalMissionSeed enough
             else
                 break
             end
@@ -76,13 +75,14 @@ function Main()
         -- Initialize Table
         local master = {}
         local SeasonSeeds = {}
-        for season, season_func in pairs(SeasonsAndFuncs) do
-            season_func()
+        for season, season_switch in pairs(SeasonsAndFuncs) do
+            season_switch()
+
             -- FSDGameInstance:UpdateGlobelMissionSeed() -- No, this is not a typo (but maybe it was on gsg's end)
             while true do
                 GlobalSeed = FSDGameInstance:GetGlobalMissionSeed()
                 if utils.IsInTable(SeasonSeeds, GlobalSeed) then
-                    print('SEEN')
+                    print('SEEN') -- has never seen as far as i can tell, prob ditch the stall when i trust GetGlobalMissionSeed enough
                 else
                     break
                 end

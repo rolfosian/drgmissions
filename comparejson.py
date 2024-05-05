@@ -58,10 +58,10 @@ def compare_gods():
     with open('drgmissionsgod.json', 'r') as f:
         DRG = json.load(f)
     with open('drgmissionsdev.json', 'r') as f:
-        # DRG_NEW = f.read()
-        DRG_NEW = re.sub(r':\d{2}Z', ':00Z', f.read())
-        DRG_NEW = json.loads(DRG_NEW)
-        DRG_NEW = order_dictionary_by_date_FIRST_KEY_ROUNDING(DRG_NEW)
+        DRG_NEW = json.load(f)
+        # DRG_NEW = re.sub(r':\d{2}Z', ':00Z', f.read())
+        # DRG_NEW = json.loads(DRG_NEW)
+        # DRG_NEW = order_dictionary_by_date_FIRST_KEY_ROUNDING(DRG_NEW)
 
     DRG = reconstruct_dictionary(DRG)
     DRG_NEW = reconstruct_dictionary(DRG_NEW)

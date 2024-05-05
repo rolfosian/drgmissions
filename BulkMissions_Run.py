@@ -8,22 +8,24 @@ import re
 from drgmissions_scraper_utils import(
     order_dictionary_by_date_FIRST_KEY_ROUNDING,
     reconstruct_dictionary,
-    toggle_system_time,
+    disable_system_time,
     enable_system_time,
     format_seconds,
     kill_process_by_name_starts_with,
     user_input_set_target_date,
     validate_drgmissions,
-    calculate_average,
-    MaxSizeList,
-    print
+    maximize_window,
+    print,
 )
 
 def main():
+    maximize_window()
     time_service_query = subprocess.check_output('sc query w32time', stderr=subprocess.PIPE, shell=True).decode('utf-8')
     if 'RUNNING' not in time_service_query:
         enable_system_time()
+        print('')
         time.sleep(2)
+        
     if os.path.isfile('poll.txt'):
         os.remove('poll.txt')
     if os.path.isfile('firstpoll.txt'):
@@ -32,7 +34,7 @@ def main():
     #Set mods.txt for BulkMissions collector
 
     with open('./mods/mods.txt', 'w') as f:
-        f.write('long_term_mission_data_collector : 1')
+        f.write('BulkMissionsScraper : 1')
         f.close()
 
     #Get target date from user input
@@ -41,7 +43,7 @@ def main():
             
     target_date_format = user_date.strftime("    local target_date = os.time{year=%Y, month=%m, day=%d, hour=%H, min=%M, sec=%S}\n")
     #Set the target date in the lua script
-    with open('./mods/long_term_mission_data_collector/Scripts/main.lua', 'r') as f:
+    with open('./mods/BulkMissionsScraper/Scripts/main.lua', 'r') as f:
         main = f.readlines()
         f.close()
     main_lines = []
@@ -52,7 +54,7 @@ def main():
         else:
             main_lines.append(line)
             
-    with open('./mods/long_term_mission_data_collector/Scripts/main.lua', 'w') as f:
+    with open('./mods/BulkMissionsScraper/Scripts/main.lua', 'w') as f:
         f.writelines(main_lines)
         f.close()
     
@@ -67,64 +69,43 @@ def main():
 
     #Calculate timeout total seconds duration
     timeout_seconds = (total_increments * 0.7) + 300
-    print(f'\n{format_seconds(timeout_seconds)} until timeout\n')
+    print(f'{format_seconds(timeout_seconds)} until timeout')
 
     print(f'Estimated time until completion: {format_seconds(estimated_time_completion)}')
+    print('')
     
     #Disable automatic time sync
-    toggle_system_time()
+    disable_system_time()
+    print('')
     time.sleep(1)
     #Run Deep Rock Galactic headless
     subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
 
     #Wait for JSON
-    polls = MaxSizeList(50)
+    polls = 0
     poll_switch = False
-    poll_interval = 1.9
-    poll_time = None
+    avg_poll_time = 1
     files = []
     start_time = None
     elapsed_time = 0
     while True:
-        timeout_seconds = (total_increments_ * calculate_average(polls)) + 300
+        timeout_seconds = (total_increments_ * avg_poll_time) + 300
         if start_time:
             elapsed_time = time.monotonic() - start_time
         
         if poll_switch:
-            # avg_poll_time = elapsed_time / polls
-            polls.append(poll_interval)
-            # estimated_time_completion = total_increments * poll_interval
-            estimated_time_completion =  total_increments * calculate_average(polls)
+            polls += 1
+            avg_poll_time = elapsed_time / polls
+            estimated_time_completion =  total_increments * avg_poll_time
             
             total_increments -= 1
-            print(f"Timestamps remaining: {total_increments} Elapsed time: {format_seconds(elapsed_time)} ", f'{format_seconds(timeout_seconds)} until timeout. Estimated time until completion: {format_seconds(estimated_time_completion)}', end='\r')
+            percent = round((total_increments_ - total_increments) / total_increments_ * 100, 2)
+            print(f"{percent}% Completed | Elapsed time: {format_seconds(elapsed_time)} | {format_seconds(timeout_seconds - elapsed_time)} until timeout | Estimated time until completion: {format_seconds(estimated_time_completion)}    ", end='\r')
             poll_switch = False
-        
-        # this is busted for now
-        # if elapsed_time > timeout_seconds:
-        #     print('')
-        #     print('Timeout... process crashed or froze')
-        #     kill_process_by_name_starts_with('FSD')
-        #     kill_process_by_name_starts_with('Unreal')
-            
-        #     start_time = None
-        #     total_increments = int(str(total_increments_))
-        #     polls = 0
-        #     poll_time = None
-        #     poll_interval = 1.9
-            
-        #     if os.path.isfile('poll.txt'):
-        #         os.remove('poll.txt')
-        #     if os.path.isfile('firstpoll.txt'):
-        #         os.remove('firstpoll.txt')
-                
-        #     time.sleep(4)
-        #     subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
 
         for filename in os.listdir():
             if filename == 'firstpoll.txt':
                 start_time = time.monotonic()
-                poll_time = time.monotonic()
                 while True:
                     try:
                         os.remove('firstpoll.txt')
@@ -135,8 +116,6 @@ def main():
             
             if filename == 'poll.txt':
                 poll_switch = True
-                poll_interval = time.monotonic() - poll_time
-                poll_time = time.monotonic()
                 while True:
                     try:
                         os.remove('poll.txt')
@@ -146,17 +125,35 @@ def main():
                     
             if filename == 'drgmissionsgod.json':
                 files.append(filename)
-                time.sleep(5)
+                print(f"100.00% Completed | Elapsed time: {format_seconds(elapsed_time)} | {format_seconds(timeout_seconds - elapsed_time)} until timeout | Estimated time until completion: {format_seconds(estimated_time_completion)}    ")
+                print('Complete. Ending FSD & Unreal processes...')
+                time.sleep(3)
                 kill_process_by_name_starts_with('FSD')
                 kill_process_by_name_starts_with('Unreal')
                 break
                 
         if files:
-            print('\n')
-            print(f'Estimated time until completion: {format_seconds(0.00)}')
-            print(f'\n---\nElapsed time: {format_seconds(elapsed_time)}               \n---')
             break
 
+        if elapsed_time > timeout_seconds:
+            print('')
+            print('Timeout... process crashed or froze')
+            kill_process_by_name_starts_with('FSD')
+            kill_process_by_name_starts_with('Unreal')
+            
+            start_time = None
+            total_increments = int(str(total_increments_))
+            polls = 0
+            
+            if os.path.isfile('poll.txt'):
+                os.remove('poll.txt')
+            if os.path.isfile('firstpoll.txt'):
+                os.remove('firstpoll.txt')
+            
+            enable_system_time()
+            time.sleep(4)
+            disable_system_time()
+            subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
 
     if os.path.isfile('poll.txt'):
         os.remove('poll.txt')
@@ -166,7 +163,7 @@ def main():
         f.close()
         
     #Enable automatic time sync
-    toggle_system_time()
+    enable_system_time()
 
     with open('drgmissionsgod.json', 'r') as f:
         DRG = f.read()

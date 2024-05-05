@@ -11,9 +11,11 @@ from drgmissions_scraper_utils import (
     yes_or_no,
     print
 )
+import sys
 import json
 from os import path, getcwd
 cwd = getcwd()
+
 try:
     if __name__ == '__main__':
         if path.isfile(cwd+'/drgmissionsdev.json'):

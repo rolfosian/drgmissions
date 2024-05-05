@@ -8,18 +8,21 @@ from drgmissions_scraper_utils import (
     enable_system_time,
     wait_until_next_thursday_11am_utc,
     kill_process_by_name_starts_with,
-    print
+    maximize_window,
+    subprocess_wrapper,
+    print,
 )
 
 def main():
+    maximize_window()
     print(os.getcwd())
     
-    time_service_query = subprocess.check_output('sc query w32time', stderr=subprocess.PIPE, shell=True).decode('utf-8')
+    time_service_query = subprocess_wrapper(['sc', 'query', 'w32time'], print_=False)()
     if 'RUNNING' not in time_service_query:
         enable_system_time()
         time.sleep(2)
     else:
-        subprocess.run(['w32tm', '/resync'], stderr=subprocess.PIPE, shell=True)
+        subprocess_wrapper(['w32tm', '/resync'])
         
     wait_until_next_thursday_11am_utc()
 

@@ -1,5 +1,4 @@
-local json = require("./mods/long_term_mission_data_collector/Scripts/dkjson")
--- local socket = require('./mods/long_term_mission_data_collector/Scripts/socket')
+local json = require("./mods/BulkMissionsScraper/Scripts/dkjson")
 
 function PressStartAndWaitForLoad()
     local startmenus = nil
@@ -49,7 +48,7 @@ function Main()
     local total_increments = math.floor(diff_seconds / 1800)
     total_increments = total_increments + 1
 
-    local utils = require('./mods/long_term_mission_data_collector/Scripts/bulkmissions_funcs')
+    local utils = require('./mods/BulkMissionsScraper/Scripts/bulkmissions_funcs')
     local SeasonsAndFuncs = {
         s0 = utils.S4Off,
         s4 = utils.S4On
@@ -69,7 +68,7 @@ function Main()
         while true do
             GlobalSeed = FSDGameInstance:GetGlobalMissionSeed()
             if GlobalSeed == PreviousGlobalSeed then
-                print('SEEN')
+                print('SEEN') -- has never seen as far as i can tell, prob ditch the stall when i trust GetGlobalMissionSeed enough
             else
                 break
             end
@@ -84,7 +83,7 @@ function Main()
             while true do
                 GlobalSeed = FSDGameInstance:GetGlobalMissionSeed()
                 if utils.IsInTable(SeasonSeeds, GlobalSeed) then
-                    print('SEEN')
+                    print('SEEN') -- has never seen as far as i can tell, prob ditch the stall when i trust GetGlobalMissionSeed enough
                 else
                     break
                 end
@@ -108,7 +107,6 @@ function Main()
                 end
                 PreviousGlobalSeed = GlobalSeed
             end
-            -- socket.sleep(0.1)
         end
         god[timestamp] = master
 
@@ -141,7 +139,6 @@ function Main()
         print(tostring(count)..'\n')
         os.execute(command)
 
-        -- socket.sleep(1.4)
         utils.CreatePollFile('poll.txt')
     end
 
