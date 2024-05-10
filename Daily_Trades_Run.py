@@ -7,10 +7,9 @@ import re
 from time import sleep
 from drgmissions_scraper_utils import (
     kill_process_by_name_starts_with,
-    calculate_average_float,
     enable_system_time,
-    toggle_system_time,
-    user_input_set_target_date,
+    disable_system_time,
+    maximize_window,
     format_seconds,
     sanitize_datetime,
     reverse_date_format,
@@ -18,87 +17,12 @@ from drgmissions_scraper_utils import (
     print,
 )
 
-def increment_datetime(datetime_str):
-    year, month, day, hour, min, sec = map(int, datetime_str[:10].split("-") + datetime_str[11:19].split(":"))
-    day += 1
-    days_in_month = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-    if month == 2 and year % 4 == 0 and (year % 100 != 0 or year % 400 == 0):
-        days_in_month[1] = 29
-    if day > days_in_month[month - 1]:
-        day = day - days_in_month[month - 1]
-        month += 1
-    if month > 12:
-        month = month - 12
-        year += 1
-    updated_datetime = "{:02d}-{:02d}-{:02d}T{:02d}:{:02d}:{:02d}Z".format(day, month, year %100, hour, min, sec)
-    return updated_datetime
-
-def main_loop(total_increments, current_time, AllTheDeals):
-    game_times = []
-    for i in range(total_increments+1):
-        sleep(2)
-        
-        #Start the game
-        subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
-        game_start_time = time.monotonic()
-        timestamp = current_time.strftime("%Y-%m-%dT%H:%M:%SZ")
-        timestamp = re.sub(r':\d{2}Z', ':00Z', timestamp)
-        waiting_for_json = True
-        timeout = False
-        wait_start_time = time.monotonic()
-        
-        #Wait for JSON
-        while waiting_for_json:
-            if time.monotonic() - wait_start_time > 120:
-                print('Timeout... process froze or crashed')
-                timeout = True
-                kill_process_by_name_starts_with('FSD')
-                kill_process_by_name_starts_with('Unreal')
-                sleep(3)
-                print('restarting...')
-                break
-            
-            for filename in os.listdir():
-                if filename == 'drgdailydeal.json':
-                    while True:
-                        try:
-                            with open(filename, 'r') as f:
-                                deal = json.loads(f.read())
-                            os.remove(filename)
-                            break
-                        except:
-                            continue
-                    AllTheDeals[timestamp] = deal
-                    kill_process_by_name_starts_with('FSD')
-                    kill_process_by_name_starts_with('Unreal')
-                    sleep(3)
-                    waiting_for_json = False
-                    
-            sleep(0.5)
-            
-        if timeout:
-            current_time = current_time.replace(hour=0, minute=0, second=1)
-            currytime = current_time.strftime("%Y-%m-%dT%H:%M:%SZ")
-            currytime = datetime.datetime.strptime(sanitize_datetime(currytime), "%d-%m-%yT%H:%M:%SZ")
-            currytime = str(currytime).split(' ')
-            subprocess.run(['date', reverse_date_format(currytime[0]), '&', 'time', currytime[1]], shell=True)
-            return main_loop(total_increments, current_time, AllTheDeals)
-        
-        time_for_json = time.monotonic() - game_start_time
-        game_times.append(time_for_json)
-        print(f'Estimated time remaining: {format_seconds(calculate_average_float(game_times)*total_increments)}', end='\r')
-        
-        current_time = datetime.datetime.strptime(increment_datetime(timestamp), "%d-%m-%yT%H:%M:%SZ")
-        current_time = current_time.replace(hour=0, minute=0, second=1)
-        newtime = str(current_time).split(' ')
-        #Set clock forward 1 day
-        subprocess.run(['date', reverse_date_format(newtime[0]), '&', 'time', newtime[1]], shell=True)
-        total_increments -= 1
-        
-    print(f'Estimated time remaining: {format_seconds(0)}')
-    return AllTheDeals
-
 def main():
+    maximize_window()
+    if os.path.isfile('poll.txt'):
+        os.remove('poll.txt')
+    if os.path.isfile('firstpoll.txt'):
+        os.remove('firstpoll.txt')
     time_service_query = subprocess.check_output('sc query w32time', stderr=subprocess.PIPE, shell=True).decode('utf-8')
     if 'RUNNING' not in time_service_query:
         enable_system_time()
@@ -115,50 +39,123 @@ def main():
     currytime = current_time.strftime("%Y-%m-%dT%H:%M:%SZ")
     currytime = datetime.datetime.strptime(sanitize_datetime(currytime), "%d-%m-%yT%H:%M:%SZ")
     currytime = str(currytime).split(' ')
+    total_increments = 365
+    total_increments_ = 365
     
-    # Set the target date
-    target_date = user_input_set_target_date(current_time)
-
     #Disable automatic system time
-    toggle_system_time()
+    disable_system_time()
     sleep(2)
     
     # Set the clock to 00:00:00
     subprocess.run(['date', reverse_date_format(currytime[0]), '&', 'time', currytime[1]], shell=True)
 
-    # Calculate the difference between the target date and the current time
-    diff_seconds = (target_date - current_time).total_seconds()
+    #Run Deep Rock Galactic headless
+    subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
 
-    # Calculate the total number of 24-hour increments
-    total_increments = int(diff_seconds // 86400)
-    total_increments += 1
-    print(f'Total daily deals to be fetched: {total_increments}')
+    #Wait for JSON
+    AllTheDeals = None
+    polls = 0
+    poll_switch = False
+    avg_poll_time = 1
+    files = False
+    start_time = None
+    elapsed_time = 0
+    while True:
+        timeout_seconds = (total_increments_ * avg_poll_time) + 300
+        if start_time:
+            elapsed_time = time.monotonic() - start_time
+        
+        if poll_switch:
+            polls += 1
+            avg_poll_time = elapsed_time / polls
+            estimated_time_completion =  total_increments * avg_poll_time
+            
+            total_increments -= 1
+            percent = round((total_increments_ - total_increments) / total_increments_ * 100, 2)
+            print(f"{percent}% Completed | Elapsed time: {format_seconds(elapsed_time)} | {format_seconds(timeout_seconds - elapsed_time)} until timeout | Estimated time until completion: {format_seconds(estimated_time_completion)}    ", end='\r')
+            poll_switch = False
 
-    #Initialize master dictionary
-    AllTheDeals = {}
+        for filename in os.listdir():
+            if filename == 'firstpoll.txt':
+                start_time = time.monotonic()
+                while True:
+                    try:
+                        os.remove('firstpoll.txt')
+                        break
+                    except:
+                        continue
+                break
+            
+            if filename == 'poll.txt':
+                poll_switch = True
+                while True:
+                    try:
+                        os.remove('poll.txt')
+                        break
+                    except:
+                        continue
+                    
+            if filename == 'drgdailydeals.json':
+                files = True
+                print(f"{percent}% Completed | Elapsed time: {format_seconds(elapsed_time)} | {format_seconds(timeout_seconds - elapsed_time)} until timeout | Estimated time until completion: {format_seconds(estimated_time_completion)}    ")
+                print('Complete. Ending FSD & Unreal processes...')
+                time.sleep(3)
+                kill_process_by_name_starts_with('FSD')
+                kill_process_by_name_starts_with('Unreal')
+                break
+                
+        if files:
+            break
+
+        if elapsed_time > timeout_seconds:
+            print('')
+            print('Timeout... process crashed or froze')
+            kill_process_by_name_starts_with('FSD')
+            kill_process_by_name_starts_with('Unreal')
+            
+            start_time = None
+            total_increments = int(str(total_increments_))
+            polls = 0
+            
+            if os.path.isfile('poll.txt'):
+                os.remove('poll.txt')
+            if os.path.isfile('firstpoll.txt'):
+                os.remove('firstpoll.txt')
+            
+            enable_system_time()
+            time.sleep(4)
+            disable_system_time()
+            subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
+
+    if os.path.isfile('poll.txt'):
+        os.remove('poll.txt')
+        
+    #Reset mods.txt
+    with open('./mods/mods.txt', 'w') as f:
+        f.close()
     
-    # Loop for the increments
-    start_time = time.monotonic()
-    AllTheDeals = main_loop(total_increments, current_time, AllTheDeals)
+    with open('drgdailydeals.json', 'r') as f:
+        AllTheDeals = f.read()
+        AllTheDeals = re.sub(r':\d{2}Z', ':00Z', AllTheDeals)
+        AllTheDeals = json.loads(AllTheDeals)
+        
     AllTheDeals = order_dictionary_by_date(AllTheDeals)
-    AllTheDeals = re.sub(r':\d{2}Z', ':00Z', json.dumps(AllTheDeals))
-    print(f'Total time elapsed: {format_seconds(time.monotonic() - start_time)}')
-    sleep(2)
+
     #Reset mods.txt
     with open('./mods/mods.txt', 'w') as f:
         f.close()
     
     #Write AllTheDeals JSON
     with open('drgdailydeals.json', 'w') as f:
-        f.write(AllTheDeals)
-        f.close()
+        json.dump(AllTheDeals, f)
     
     #Enable Automatic system time
-    toggle_system_time()
-    sleep(4)
+    enable_system_time()
+    input('Press enter to exit...')
+    
 try:
-    if os.path.isfile('drgdailydeal.json'):
-        os.remove('drgdailydeal.json')
+    if os.path.isfile('drgdailydeals.json'):
+        os.remove('drgdailydeals.json')
     print(os.getcwd(), '\n')
     main()
 except Exception as e:

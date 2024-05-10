@@ -1,4 +1,15 @@
 local json = require("./mods/BulkMissionsScraper/Scripts/dkjson")
+function Split(str, separator)
+    local result = {}
+    local pattern = string.format("([^%s]+)", separator)
+    for match in string.gmatch(str, pattern) do
+        table.insert(result, match)
+    end
+    return result
+end
+function HasKey(table, key)
+    return table[key] ~= nil
+end
 function UnpackDeepDiveMission(mission, master, t)
     _L = {
         MissionName = nil,
@@ -384,9 +395,8 @@ function GetDeepDiveCodename(t) -- Get DD Codename terminal label widget assets
         return name
     end
 end
-function Main()
+function PressStartAndWaitForLoad()
     local startmenus = nil
-    -- Wait for start menu to load
     while true do
         startmenus = FindAllOf('Bp_StartMenu_PlayerController_C')
         if startmenus then
@@ -394,11 +404,10 @@ function Main()
         end
     end
     -- Execute the function that 'press any key' invokes
-    if startmenus then
-        for index, startmenu in pairs(startmenus) do
-            startmenu:PressStart()
-        end
+    for index, startmenu in pairs(startmenus) do
+        startmenu:PressStart()
     end
+
     local waiting_for_load = true
     -- Wait for Space Rig to load
     while waiting_for_load do
@@ -416,8 +425,9 @@ function Main()
             end
         end
     end
-
-    local utils = require('./mods/BulkMissionsScraper/Scripts/bulkmissions_funcs')
+end
+function Main()
+    PressStartAndWaitForLoad()
 
     local currentDateTime = os.date("!%Y-%m-%dT%H-%M-%SZ")
     currentDateTime = 'DD_'..currentDateTime
@@ -440,11 +450,11 @@ function Main()
 
             if MissionStructure == 1 then
                 t = 'Deep Dive Normal'
-                if not utils.HasKey(master['Deep Dives'][t], 'Biome') then
-                    b = utils.GetBiome(mission)
+                if not HasKey(master['Deep Dives'][t], 'Biome') then
+                    b = GetBiome(mission)
                     master['Deep Dives'][t]['Biome'] = b
                 end
-                if not utils.HasKey(master['Deep Dives'][t], 'CodeName') then
+                if not HasKey(master['Deep Dives'][t], 'CodeName') then
                     local codename = GetDeepDiveCodename(t)
                     master['Deep Dives'][t]['CodeName'] = codename
                 end
@@ -452,11 +462,11 @@ function Main()
 
             elseif MissionStructure == 2 then
                 t = 'Deep Dive Elite'
-                if not utils.HasKey(master['Deep Dives'][t], 'Biome') then
-                    b = utils.GetBiome(mission)
+                if not HasKey(master['Deep Dives'][t], 'Biome') then
+                    b = GetBiome(mission)
                     master['Deep Dives'][t]['Biome'] = b
                 end
-                if not utils.HasKey(master['Deep Dives'][t], 'CodeName') then
+                if not HasKey(master['Deep Dives'][t], 'CodeName') then
                     local codename = GetDeepDiveCodename(t)
                     master['Deep Dives'][t]['CodeName'] = codename
                 end
@@ -472,8 +482,6 @@ function Main()
             file:write(master)
             file:close()
         end
-        
-        utils.Exit()
     end
 end
 Main()

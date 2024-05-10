@@ -58,25 +58,21 @@ def main():
         f.writelines(main_lines)
         f.close()
     
-    # Calculate the difference in seconds between the current UTC time and the target date
     current_utc = datetime.utcnow()
     diff_seconds = (user_date - current_utc).total_seconds()
-    # Calculate the total amount of 30-minute increments between the current time and the target date
     total_increments = int(diff_seconds // 1800) + 1
     total_increments_ = int(str(total_increments)) + 1
-    print(f'Total 30 minute increments: {str(total_increments)}')
     estimated_time_completion = (total_increments * 0.5) + 25
 
-    #Calculate timeout total seconds duration
     timeout_seconds = (total_increments * 0.7) + 300
-    print(f'{format_seconds(timeout_seconds)} until timeout')
-
-    print(f'Estimated time until completion: {format_seconds(estimated_time_completion)}')
-    print('')
     
     #Disable automatic time sync
     disable_system_time()
-    print('')
+    print('', include_timestamp=False)
+    print(f'Total 30 minute increments: {str(total_increments)}')
+    print(f'{format_seconds(timeout_seconds)} until timeout')
+    print(f'Estimated time until completion: {format_seconds(estimated_time_completion)}')
+    print('', include_timestamp=False)
     time.sleep(1)
     #Run Deep Rock Galactic headless
     subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
@@ -85,7 +81,7 @@ def main():
     polls = 0
     poll_switch = False
     avg_poll_time = 1
-    files = []
+    files = False
     start_time = None
     elapsed_time = 0
     while True:
@@ -124,8 +120,8 @@ def main():
                         continue
                     
             if filename == 'drgmissionsgod.json':
-                files.append(filename)
-                print(f"100.00% Completed | Elapsed time: {format_seconds(elapsed_time)} | {format_seconds(timeout_seconds - elapsed_time)} until timeout | Estimated time until completion: {format_seconds(estimated_time_completion)}    ")
+                files = True
+                print(f"{percent}% Completed | Elapsed time: {format_seconds(elapsed_time)} | {format_seconds(timeout_seconds - elapsed_time)} until timeout | Estimated time until completion: {format_seconds(estimated_time_completion)}    ")
                 print('Complete. Ending FSD & Unreal processes...')
                 time.sleep(3)
                 kill_process_by_name_starts_with('FSD')

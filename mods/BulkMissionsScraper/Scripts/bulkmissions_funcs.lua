@@ -1,7 +1,15 @@
 function CreatePollFile(filename)
-    local file = io.open(filename, 'w')
-    if file then
-        file:close()
+    while true do
+        local success, error = pcall(function()
+            local file = io.open(filename, 'w')
+            if file then
+                file:close()
+            end
+        end
+        )
+        if success then
+            return
+        end
     end
 end
 function IsInTable(tbl, val)
@@ -196,8 +204,8 @@ MissionMutators = {
     ['MissionMutator /Game/GameElements/Missions/Mutators/LowGravity/MMUT_LowGravity.MMUT_LowGravity'] = 'Low Gravity',
     ['MissionMutator /Game/GameElements/Missions/Mutators/GoldRush/MMUT_GoldRush.MMUT_GoldRush'] = 'Gold Rush',
     ['MissionMutator /Game/GameElements/Missions/Mutators/EliminationContract/MMUT_ExterminationContract.MMUT_ExterminationContract'] = 'Golden Bugs',
-    -- ['MissionMutator /Game/GameElements/Missions/Mutators/BloodSugar'] = 'Blood Sugar',
-    -- ['MissionMutator /Game/GameElements/Missions/Mutators/SecretSecondary'] = 'Secret Secondary'
+    -- ['MissionMutator /Game/GameElements/Missions/Mutators/BloodSugar/MMUT_BloodSugar.MMUT_BloodSugar'] = 'Blood Sugar',
+    -- ['MissionMutator /Game/GameElements/Missions/Mutators/SecretSecondary/MMUT_SecretSecondary.MMUT_SecretSecondary'] = 'Secret Secondary'
 }
 function GetMissionMutator(fullname)
     return MissionMutators[fullname]
@@ -216,8 +224,8 @@ Warnings = {
     ['MissionWarning /Game/GameElements/Missions/Warnings/Ghost/WRN_Ghost.WRN_Ghost'] = 'Haunted Cave',
     ['MissionWarning /Game/GameElements/Missions/Warnings/ExploderInfestation/WRN_ExploderInfestation.WRN_ExploderInfestation'] = 'Exploder Infestation',
     ['MissionWarning /Game/GameElements/Missions/Warnings/CaveLeechDen/WRN_CaveLeechDen.WRN_CaveLeechDen'] = 'Cave Leech Cluster',
-    -- ['MissionWarning /Game/GameElements/Missions/Warnings/DuckAndCover'] = 'Duck and Cover',
-    -- ['MissionWarning /Game/GameElements/Missions/Warnings/EboniteOutbreak'] = 'Ebonite Outbreak'
+    -- ['MissionWarning /Game/GameElements/Missions/Warnings/DuckAndCover/WRN_DuckAndCover.WRN_DuckAndCover'] = 'Duck and Cover',
+    -- ['MissionWarning /Game/GameElements/Missions/Warnings/EboniteOutbreak/WRN_EboniteOutbreak.WRN_EboniteOutbreak'] = 'Ebonite Outbreak'
 }
 function GetMissionWarning(fullname)
     return Warnings[fullname]
@@ -279,7 +287,7 @@ function FinalizeComplexityAndLength(mission1, MissionDNA, length, complexity)
         mission1['Length'] = Pe_length_condition.result.length
 
     elseif complexity == 'Indefinite' and length == 'Indefinite' then
-        local success, err = pcall(function()
+        pcall(function()
             mission1['Complexity'] = MissionDNAs[MissionDNA].complexity
             mission1['Length'] = MissionDNAs[MissionDNA].length
         end)

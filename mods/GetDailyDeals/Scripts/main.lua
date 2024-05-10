@@ -1,40 +1,17 @@
 local json = require("./mods/BulkMissionsScraper/Scripts/dkjson")
-function Split(str, separator)
-  local result = {}
-  local pattern = string.format("([^%s]+)", separator)
-  for match in string.gmatch(str, pattern) do
-      table.insert(result, match)
-  end
-  return result
-end
-function TableToString(table, indent)
-  indent = indent or ""
-  local str = "{\n"
-  for key, value in pairs(table) do
-    if type(value) == "table" then
-      str = str .. indent .. "[" .. tostring(key) .. "] = " .. TableToString(value, indent .. "  ") .. ",\n"
-    else
-      str = str .. indent .. "[" .. tostring(key) .. "] = " .. tostring(value) .. ",\n"
-    end
-  end
-  str = str .. indent:sub(1, -3) .. "}"
-  return str
-end
-function Main()
+function PressStartAndWaitForLoad()
   local startmenus = nil
-  -- Wait for start menu to load
   while true do
       startmenus = FindAllOf('Bp_StartMenu_PlayerController_C')
       if startmenus then
           break
       end
   end
-  -- Execute the function that 'press any key' evokes
-  if startmenus then
-      for index, startmenu in pairs(startmenus) do
-          startmenu:PressStart()
-      end
+  -- Execute the function that 'press any key' invokes
+  for index, startmenu in pairs(startmenus) do
+      startmenu:PressStart()
   end
+
   local waiting_for_load = true
   -- Wait for Space Rig to load
   while waiting_for_load do
@@ -52,74 +29,94 @@ function Main()
           end
       end
   end
-  -- Initialize Table
-  local DailyDeal = {}
-  local resources = {
-    {pattern = 'Jadiz', result = 'Jadiz'},
-    {pattern = 'Enor', result = 'Enor Pearl'},
-    {pattern = 'Magnite', result = 'Magnite'},
-    {pattern = 'Umanite', result = 'Umanite'},
-    {pattern = 'Croppa', result = 'Croppa'},
-    {pattern = 'Bismor', result = 'Bismor'},
-  }
-  local fullname = nil
-  local resource = nil
-  local resourceamount = nil
-  local dealtype = nil
-  local credits = nil
-  local changepercent = nil
-  local dailydeals = FindAllOf('_MENU_Trading_C')
-  if dailydeals then
-      for index, dailydeal in pairs(dailydeals) do
-          fullname = string.format("%s",dailydeal:GetFullName())
-          if fullname == '_MENU_Trading_C /Game/UI/Menu_Trading/_MENU_Trading.Default___MENU_Trading_C' then goto continue end
-          dailydeal = dailydeal:GetPropertyValue('WND_DailyDeal')
-          dailydeal = dailydeal:GetPropertyValue('CurrDeal')
+end
+function Main()
+    PressStartAndWaitForLoad()
+    
+    local utils = require('./mods/BulkMissionsScraper/Scripts/bulkmissions_funcs')
+    local total_days = 365
+    local DailyDealSettings = FindFirstOf('DailyDealSettings')
+    local DailyDeals = {}
+    local Seed = nil
+    local PreviousSeed = nil
+    local currytime = nil
+    local newtime = nil
+    local count = 0
 
-          resource = dailydeal.Resource
-          resource = string.format("%s",resource:GetFullName())
-          for _, obj in ipairs(resources) do
-            if string.find(resource, obj.pattern) then
-                resource = obj.result
-                break
-            end
-          end
-          DailyDeal['Resource'] = resource
-          DailyDeal['ResourceAmount'] = dailydeal.ResourceAmount
+    local resources = {
+      {pattern = 'Jadiz', result = 'Jadiz'},
+      {pattern = 'Enor', result = 'Enor Pearl'},
+      {pattern = 'Magnite', result = 'Magnite'},
+      {pattern = 'Umanite', result = 'Umanite'},
+      {pattern = 'Croppa', result = 'Croppa'},
+      {pattern = 'Bismor', result = 'Bismor'},
+    }
+    local dealtypes = {
+      [0] = 'Buy',
+      [1] = 'Sell'
+    }
 
-          dealtype = dailydeal.DealType
-          if dealtype == 0 then
-            dealtype = 'Buy'
+    utils.CreatePollFile('firstpoll.txt')
+    for i = 1, total_days do
+    -- Initialize Table
+      local DailyDeal = {}
+      while true do
+          Seed = DailyDealSettings:GetDailyDealSeed()
+          if Seed == PreviousSeed then
+              print('SEEN') -- never seen, but keeping this just in case
           else
-            dealtype = 'Sell'
+              break
           end
-          DailyDeal['DealType'] = dealtype
-
-          DailyDeal['Credits'] =  dailydeal.Credits
-          DailyDeal['ChangePercent'] = dailydeal.ChangePercent
-          ::continue::
       end
-  end
+      PreviousSeed = Seed
+    
+      DailyDealSettings:GetDailyDeal(DailyDeal)
 
-  DailyDeal = json.encode(DailyDeal)
-  local file = io.open('drgdailydeal.json', 'w')
-  if file then
-    file:write(DailyDeal)
-    file:close()
-  end
-
-  local playercontrollers = FindAllOf('BP_PlayerController_SpaceRig_C')
-  if playercontrollers then
-      for index, playercontroller in pairs(playercontrollers) do
-          playercontroller = playercontroller
-          local fullname = string.format("%s",playercontroller:GetFullName())
-          if fullname == 'BP_PlayerController_SpaceRig_C /Game/Game/SpaceRig/BP_PlayerController_SpaceRig.Default__BP_PlayerController_SpaceRig_C' then goto continue end
-          local escape_menu = playercontroller:GetEscapeMenu()
-          -- Execute function to quit the game 'organically' rather than terminate externally
-          escape_menu:Yes_1ADE94D8445F020C5D27B8822516025E()
+      DailyDeal.Resource = string.format("%s",DailyDeal.Resource:GetFullName())
+      for _, tbl in ipairs(resources) do
+        if string.find(DailyDeal.Resource, tbl.pattern) then
+          DailyDeal.Resource = tbl.result
           break
-          ::continue::
+        end
       end
-  end
+
+      DailyDeal.DealType = dealtypes[DailyDeal.DealType]
+
+      local timestamp = os.date("!%Y-%m-%dT00:00:00Z")
+      DailyDeals[timestamp] = DailyDeal
+
+
+      --Get 'current' time
+      currytime = os.date("%Y-%m-%d %H:%M:%S")
+      local year, month, day, hour, minute, second = currytime:match("(%d+)-(%d+)-(%d+) (%d+):(%d+):(%d+)")
+
+      hour = tonumber(hour)
+      hour = 0
+      minute = tonumber(minute)
+      minute = 0
+      second = 1
+
+      currytime = string.format("%04d-%02d-%02d %02d:%02d:%02d", year, month, day, hour, minute, second)
+
+      newtime = utils.IncrementDatetimeOneDay(currytime)
+      newtime = utils.Split(newtime, ' ')
+
+      -- Remove ReverseDateFormat function and just use newtime[1] if your system date format is YY-MM-DD
+      local command = 'date '..utils.ReverseDateFormat(newtime[1])..' & time '..newtime[2]
+
+      -- Set time forward 30 minutes
+      print(command..'\n')
+      count = count + 1
+      print(tostring(count)..'\n')
+      os.execute(command)
+      utils.CreatePollFile('poll.txt')
+    end
+
+    DailyDeals = json.encode(DailyDeals)
+    local file = io.open('drgdailydeals.json', 'w')
+    if file then
+      file:write(DailyDeals)
+      file:close()
+    end
 end
 Main()

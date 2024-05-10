@@ -5,7 +5,32 @@ from drgmissions_scraper_utils import (
     order_dictionary_by_date_FIRST_KEY_ROUNDING,
     find_duplicates
 )
+from datetime import datetime
 import re
+
+def find_duplicates(dictionary):
+    god = {}
+    for key, value in dictionary.items():
+        god[key] = json.dumps(value)
+
+    def find_duplicate_strings(dictionary):
+        string_count = {}
+        for key, value in dictionary.items():
+            if value in string_count:
+                string_count[value].append(key)
+            else:
+                string_count[value] = [key]
+        duplicate_strings = {value: keys for value, keys in string_count.items() if len(keys) > 1}
+        return duplicate_strings
+    
+    duplicate_strings = find_duplicate_strings(god)
+    if duplicate_strings:
+        print("Duplicate timestamps found:")
+        for value, keys in duplicate_strings.items():
+            print("Keys:", keys)
+
+    else:
+        print("No duplicate timestamps found.")
 
 def reconstruct_deep_dive_dictionary(dictionary, num):
     dictionary_ = {}
@@ -43,7 +68,7 @@ def compare_dd_dicts(filename1, filename2):
     d1 = reconstruct_deep_dive_dictionary(d1, 1)
     d2 = reconstruct_deep_dive_dictionary(d2, 2)
 
-    print(d1 == d2)
+    print(compare_dd_dicts.__name__, d1 == d2)
     
 # compare_dd_dicts('DD_2024-04-28T10-08-22Z.json', 'DD_2024-04-25T11-00-00Z.json')
 
@@ -92,7 +117,7 @@ def compare_gods():
         # print (DRG_NEW[timestamp]['s0'] == DRG[timestamp]['s4'])
         # break
     
-    print(god == DRG_NEW)
+    print(compare_gods.__name__, god == DRG_NEW)
     
     # for timestamp, dict_ in god.items():
     #     print(json.dumps(dict_['s0'], indent=2))
@@ -109,7 +134,26 @@ def compare_gods():
     #     break
 
     
-compare_gods()
+# compare_gods()
+
+def comparedeals():
+    with open('drgdailydeals.json', 'r') as f:
+        dailydealsold = json.load(f)
+    with open('drgdailydealsdev.json', 'r') as f:
+        dailydealsnew_ = json.load(f)
+    dailydealsold = {k: sort_dictionary(v, ['Resource', 'DealType', 'ResourceAmount', 'ChangePercent', 'Credits']) for k, v in dailydealsold.items()}
+    dailydealsnew_ = {k: sort_dictionary(v, ['Resource', 'DealType', 'ResourceAmount', 'ChangePercent', 'Credits']) for k, v in dailydealsnew_.items()}
+    
+    dailydealsnew = {}
+    for timestamp in list(dailydealsold.keys()):
+        if timestamp in dailydealsnew_:
+            dailydealsnew[timestamp] = dailydealsnew_[timestamp]
+        else:
+            del dailydealsold[timestamp]
+
+    print(comparedeals.__name__, dailydealsnew == dailydealsold)
+
+comparedeals()
 
 # with open('drgmissionsgod.json', 'r') as f:
 #     drg = json.load(f)

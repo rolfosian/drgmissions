@@ -22,7 +22,7 @@ def main():
         enable_system_time()
         time.sleep(2)
     else:
-        subprocess_wrapper(['w32tm', '/resync'])
+        subprocess_wrapper(['w32tm', '/resync'])()
         
     wait_until_next_thursday_11am_utc()
 

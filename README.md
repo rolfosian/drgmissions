@@ -9,18 +9,14 @@
 - The socket folder in [/mods/long_term_mission_data_collector/Scripts/x64](https://github.com/rolfosian/drgmissions/blob/main/mods/long_term_mission_data_collector/Scripts/x64) is also required in `Deep Rock Galactic\FSD\Binaries\Win64` for this script to work.
 - `Deep Rock Galactic\FSD.exe` **AND** `Deep Rock Galactic\FSD\Binaries\Win64\FSD-Win64-Shipping.exe` **AND ALSO** `Steam.exe` **ARE ALL** required to be run with administrator privileges in order for this script to be able to modify the system clock and run without errors!
 
-- [This script](https://github.com/rolfosian/drgmissions/blob/main/mods/GetDailyDeals/Scripts/main.lua) and its [corresponding python script](https://github.com/rolfosian/drgmissions/blob/main/Daily_Trades_Run.py) will fetch all of the daily deals up until the date set by the user input in the python script. **UTC System Clock Timezone is required for this script, as are administrator privileges for the python interpreter.** I tried to do it like the standard missions collector but the game would just hang after the second or third time the clock was changed, so this method restarts the game for every daily deal. Please let me know if you figure out how to build a new DailyDealSettings or something so this isn't required.
-- If running the clock changing scripts in a VM, make sure to turn off guest/host timesync, IE: https://www.virtualbox.org/manual/ch09.html#disabletimesync, and pad the timeout/estimated total time variables if desired
+- [This script](https://github.com/rolfosian/drgmissions/blob/main/mods/GetDailyDeals/Scripts/main.lua) and its [corresponding python script](https://github.com/rolfosian/drgmissions/blob/main/Daily_Trades_Run.py) will fetch all of the daily deals up until the date set by the user input in the python script. **UTC System Clock Timezone is required for this script, as are administrator privileges for the python interpreter.** 
+- If running the clock changing scripts in a VM, make sure to turn off guest/host timesync, IE: https://www.virtualbox.org/manual/ch09.html#disabletimesync
 
 - The `.*_Run.py` python scripts will handle toggling the automatic time sync settings on and off.
 
 
 - [This script will fetch the current DD data and exit the game in short order](https://github.com/rolfosian/drgmissions/blob/main/mods/dds_fetcher/Scripts/main.lua)
 - I have set a crontab entry: `59 10 * * 4 /usr/bin/wakeonlan XX:XX:XX:XX:XX:XX` on my home server to automate this. (cron of course requires adjustment if system clock is not UTC). It sends magic packets to wake a junker hardware tertiary machine I built out of old trash every Thursday at 10:59 which in turn runs [this script](https://github.com/rolfosian/drgmissions/blob/main/DDs_Run.py) via [this .bat](https://github.com/rolfosian/drgmissions/blob/main/Run_DDs.bat) and Task Scheduler On event - Log: System, Source: Microsoft-Windows-Power-Troubleshooter, Event ID: 1 (On wake from sleep). Requires automatic logon of administrator account. This of course could also be done with a Virtual Machine instead.
-
-- ~~Consider using [SteamCMD](https://developer.valvesoftware.com/wiki/SteamCMD) for even less overhead and easier automation for updates etc~~ - Doesn't work, the game just says it can't find the Steam service and won't load the start menu.
-
-- Run `split_timestamps.py` (in the flask folder, make sure to select flat when prompted unless debugging) to accomodate json for new static website
 
 ## **TODO**
 - **Public Enemy Number One**: Check and Update Deep Dive scraper weekly to accomodate currently unknown configurations (havent seen any unknowns in months), **contingencies for if Steam misbehaves**
