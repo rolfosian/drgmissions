@@ -50,7 +50,12 @@ def main():
         for filename in os.listdir():
             if filename.startswith('DD_') and filename.endswith('.json'):
                 new_filename = re.sub(r'\d{2}-\d{2}-\d{2}Z', '11-00-00Z', filename)
-                os.rename(filename, new_filename)
+                while True:
+                    try:
+                        os.rename(filename, new_filename)
+                        break
+                    except:
+                        continue
                 time.sleep(2)
                 files.append(new_filename)
                 kill_process_by_name_starts_with('FSD')

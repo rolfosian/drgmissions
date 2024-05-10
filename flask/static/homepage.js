@@ -222,21 +222,10 @@ async function onLoad() {
     slideToggle('dailyDealMaster', 'dailyDealButton', ['Click here to see Daily Deal', 'Hide Daily Deal'])
     dailyDealButton.disabled = false
 
-    // setupMissionRotationCountdownSlideToggle = async () => {
-    //     let missionRotationCountDownButton = document.getElementById('missionRotationSlideButton');
-    //     missionRotationCountDownButton.setAttribute('onclick', `slideToggle('missionsCountdownMaster', 'missionRotationSlideButton', ['Show Countdown', 'Hide Countdown'])`);
-    //     slideToggle('missionsCountdownMaster', 'missionRotationSlideButton', ['Show Countdown', 'Hide Countdown'])
-    //     while (document.getElementById('missionsCountdown').textContent === '') {
-    //         await sleep(1);
-    //     }
-    //     slideToggle('missionsCountdownMaster', 'missionRotationSlideButton', ['Show Countdown', 'Hide Countdown'])
-    //     missionRotationCountDownButton.disabled = false;
-    // }
-    // setupMissionRotationCountdownSlideToggle().then(() => {
-        let buttonsButton = document.getElementById('buttonsButton');
-        buttonsButton.setAttribute('onclick', 'toggleButtons()');
-        buttonsButton.disabled = false;
-    // });
+    let buttonsButton = document.getElementById('buttonsButton');
+    buttonsButton.setAttribute('onclick', 'toggleButtons()');
+    buttonsButton.disabled = false;
+
     
     currentButton = document.getElementById('currentButton');
     currentButton.setAttribute('onclick', 'toggleCollapse()');
@@ -253,7 +242,7 @@ async function onLoad() {
             element.style.opacity = "1";
         });
     } else {
-        let deepDiveCountdownElement = document.getElementById("ddCountdown");
+        let deepDiveCountdownElement = document.getElementById("deepDiveCountdown");
         deepDiveCountdownElement.classList.add('glow-text-red-white');
         deepDiveCountdownElement.innerHTML = "0:00:00:00";
         document.querySelectorAll('.dd-missions').forEach((element)=> {

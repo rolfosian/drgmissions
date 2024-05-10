@@ -624,13 +624,34 @@ function getUpcomingMissionData() {
     const datetime = roundTimeUp(getCurrentDateTimeUTC());
     return localStorages['currentDaysJson'][1][datetime];
 }
+function verifyDeepDiveData(data) {
+    try {
+        for (let deepDive in data['Deep Dives']) {
+            let stages = data['Deep Dives'][deepDive]['Stages'];
 
+            for (let i = 0; i < stages.length; i++) {
+                let stage = stages[i];
+                if (stage['Complexity'] === 'Indefinite' || stage['Length'] === 'Indefinite') {
+                    return false;
+                }
+            }
+        }
+        return true;
+    } catch {
+        return false;
+    }
+}
 async function getDeepDiveData() {
     let datetime = getPreviousThursdayTimestamp();
     datetime = replaceCharactersAtIndices(datetime, [[13, '-'], [16,'-']]);
     let data;
     try {
         data = await loadJSONnoRetry(`${domainURL}/static/json/DD_${datetime}.json`);
+        if (verifyDeepDiveData(data)) {
+            return data;
+        } else {
+            return undefined;
+        }
     } catch {
     }
     return data;
@@ -2115,7 +2136,7 @@ var localStorages = {
 var localStoragesHashes = {
     'img' : 530276585,
     'fonts' : 906557479,
-    'homepageScript' : 550819065,
+    'homepageScript' : 384585401,
 };
 
 var cacheActive = false;
