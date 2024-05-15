@@ -14,6 +14,7 @@ from drgmissions_scraper_utils import (
     sanitize_datetime,
     reverse_date_format,
     order_dictionary_by_date,
+    delete_file,
     print,
 )
 
@@ -30,7 +31,7 @@ def main():
     
     #Set mods.txt for GetDailyDeals
     with open('./mods/mods.txt', 'w') as f:
-        f.write('GetDailyDeals : 1')
+        f.write('DailyDealsScraper : 1')
         f.close()
 
     # Get the current UTC date
@@ -78,22 +79,12 @@ def main():
         for filename in os.listdir():
             if filename == 'firstpoll.txt':
                 start_time = time.monotonic()
-                while True:
-                    try:
-                        os.remove('firstpoll.txt')
-                        break
-                    except:
-                        continue
-                break
+                delete_file('firstpoll.txt')
+
             
             if filename == 'poll.txt':
                 poll_switch = True
-                while True:
-                    try:
-                        os.remove('poll.txt')
-                        break
-                    except:
-                        continue
+                delete_file('poll.txt')
                     
             if filename == 'drgdailydeals.json':
                 files = True
@@ -118,9 +109,9 @@ def main():
             polls = 0
             
             if os.path.isfile('poll.txt'):
-                os.remove('poll.txt')
+                delete_file('poll.txt')
             if os.path.isfile('firstpoll.txt'):
-                os.remove('firstpoll.txt')
+                delete_file('firstpoll.txt')
             
             enable_system_time()
             time.sleep(4)
@@ -128,7 +119,7 @@ def main():
             subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
 
     if os.path.isfile('poll.txt'):
-        os.remove('poll.txt')
+        delete_file('poll.txt')
         
     #Reset mods.txt
     with open('./mods/mods.txt', 'w') as f:
@@ -155,7 +146,7 @@ def main():
     
 try:
     if os.path.isfile('drgdailydeals.json'):
-        os.remove('drgdailydeals.json')
+        delete_file('drgdailydeals.json')
     print(os.getcwd(), '\n')
     main()
 except Exception as e:

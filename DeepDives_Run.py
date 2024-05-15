@@ -1,12 +1,12 @@
-#Automatically run with bat file on system wake from sleep via Task Scheduler on On event - Log: System, Source: Microsoft-Windows-Power-Troubleshooter, Event ID: 1
+#Automatically run with bat file on system startup
 import subprocess
 import time
 import os
-import re
 from drgmissions_scraper_utils import (
     upload_file,
     enable_system_time,
     wait_until_next_thursday_11am_utc,
+    get_previous_thursday_date,
     kill_process_by_name_starts_with,
     maximize_window,
     subprocess_wrapper,
@@ -27,7 +27,7 @@ def main():
     wait_until_next_thursday_11am_utc()
 
     with open('./mods/mods.txt', 'w') as f:
-        f.write('dds_fetcher : 1')
+        f.write('DeepDivesScraper : 1')
         f.close()
         
     subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
@@ -49,14 +49,13 @@ def main():
         
         for filename in os.listdir():
             if filename.startswith('DD_') and filename.endswith('.json'):
-                new_filename = re.sub(r'\d{2}-\d{2}-\d{2}Z', '11-00-00Z', filename)
+                new_filename = get_previous_thursday_date()+'T11-00-00Z.json'
                 while True:
                     try:
                         os.rename(filename, new_filename)
                         break
                     except:
                         continue
-                time.sleep(2)
                 files.append(new_filename)
                 kill_process_by_name_starts_with('FSD')
                 kill_process_by_name_starts_with('Unreal')
@@ -72,7 +71,6 @@ def main():
     with open('./mods/mods.txt', 'w') as f:
         f.close()
 
-    # subprocess.Popen(["rundll32.exe", "powrprof.dll,SetSuspendState", "Sleep"], shell=True)
     subprocess.Popen(['shutdown', '/s', '/f', '/t', '0'])
 
 try:

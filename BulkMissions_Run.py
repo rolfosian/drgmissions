@@ -15,6 +15,7 @@ from drgmissions_scraper_utils import(
     user_input_set_target_date,
     validate_drgmissions,
     maximize_window,
+    delete_file,
     print,
 )
 
@@ -27,9 +28,9 @@ def main():
         time.sleep(2)
         
     if os.path.isfile('poll.txt'):
-        os.remove('poll.txt')
+        delete_file('poll.txt')
     if os.path.isfile('firstpoll.txt'):
-        os.remove('firstpoll.txt')
+        delete_file('firstpoll.txt')
 
     #Set mods.txt for BulkMissions collector
 
@@ -102,22 +103,12 @@ def main():
         for filename in os.listdir():
             if filename == 'firstpoll.txt':
                 start_time = time.monotonic()
-                while True:
-                    try:
-                        os.remove('firstpoll.txt')
-                        break
-                    except:
-                        continue
+                delete_file('firstpoll.txt')
                 break
             
             if filename == 'poll.txt':
                 poll_switch = True
-                while True:
-                    try:
-                        os.remove('poll.txt')
-                        break
-                    except:
-                        continue
+                delete_file('poll.txt')
                     
             if filename == 'drgmissionsgod.json':
                 files = True
@@ -142,9 +133,9 @@ def main():
             polls = 0
             
             if os.path.isfile('poll.txt'):
-                os.remove('poll.txt')
+                delete_file('poll.txt')
             if os.path.isfile('firstpoll.txt'):
-                os.remove('firstpoll.txt')
+                delete_file('firstpoll.txt')
             
             enable_system_time()
             time.sleep(4)
@@ -152,7 +143,7 @@ def main():
             subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
 
     if os.path.isfile('poll.txt'):
-        os.remove('poll.txt')
+        delete_file('poll.txt')
         
     #Reset mods.txt
     with open('./mods/mods.txt', 'w') as f:
@@ -184,7 +175,7 @@ def main():
 if __name__ == '__main__':
     try:
         if os.path.isfile('drgmissionsgod.json'):
-            os.remove('drgmissionsgod.json')
+            delete_file('drgmissionsgod.json')
         print(os.getcwd(), '\n')
         main()
         input('Press enter to exit...')

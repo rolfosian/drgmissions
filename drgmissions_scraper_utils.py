@@ -43,6 +43,14 @@ def subprocess_wrapper(command, shell=False, print_=True):
         
     return wrapper
 
+def delete_file(filename):
+    while True:
+        try:
+            os.remove(filename)
+            break
+        except:
+            continue
+
 def timestamped_print(func):
     def wrapper(*args, **kwargs):
         include_timestamp = kwargs.pop('include_timestamp', True)
@@ -375,6 +383,17 @@ def wait_until_next_thursday_11am_utc():
     
     print(f"Time to wait: {format_seconds(0)}")
 
+def get_previous_thursday_date():
+    today = datetime.today()
+
+    if today.weekday() == 3:
+        previous_thursday = today
+    else:
+        days_to_subtract = (today.weekday() - 3) % 7
+        previous_thursday = today - timedelta(days=days_to_subtract)
+
+    return previous_thursday.date().isoformat()
+
 def kill_process_by_name_starts_with(start_string):
     try:
         for proc in psutil.process_iter(['pid', 'name']):
@@ -480,9 +499,9 @@ def validate_drgmissions(DRG, patched):
     
     if invalid_keys:
         if os.path.isfile('poll.txt'):
-            os.remove('poll.txt')
+            delete_file('poll.txt')
         if os.path.isfile('firstpoll.txt'):
-            os.remove('firstpoll.txt')
+            delete_file('firstpoll.txt')
             
         print('Invalid timestamps found...')
         with open('invalid_timestamps_log.txt', 'w') as f:
@@ -491,7 +510,7 @@ def validate_drgmissions(DRG, patched):
                 s += f'{key} found invalid using {func} function\n'
             f.write(s)
             f.close()
-            
+
         patched = True
         
         disable_system_time()
@@ -541,22 +560,12 @@ def validate_drgmissions(DRG, patched):
             for filename in os.listdir():
                 if filename == 'firstpoll.txt':
                     start_time = time.monotonic()
-                    while True:
-                        try:
-                            os.remove('firstpoll.txt')
-                            break
-                        except:
-                            continue
-                    break
-                
+                    delete_file('firstpoll.txt')
+
                 if filename == 'poll.txt':
                     poll_switch = True
-                    while True:
-                        try:
-                            os.remove('poll.txt')
-                            break
-                        except:
-                            continue
+                    delete_file('poll.txt')
+
                         
                 if filename == 'redonemissions.json':
                     files.append(filename)
@@ -581,9 +590,9 @@ def validate_drgmissions(DRG, patched):
                 polls = 0
                 
                 if os.path.isfile('poll.txt'):
-                    os.remove('poll.txt')
+                    delete_file('poll.txt')
                 if os.path.isfile('firstpoll.txt'):
-                    os.remove('firstpoll.txt')
+                    delete_file('firstpoll.txt')
                 
                 enable_system_time()
                 time.sleep(4)
@@ -591,7 +600,7 @@ def validate_drgmissions(DRG, patched):
                 subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
         
         if os.path.isfile('poll.txt'):
-            os.remove('poll.txt')
+            delete_file('poll.txt')
         
         with open('redonemissions.json', 'r') as f:
             redone_missions = f.read()
