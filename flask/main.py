@@ -177,6 +177,12 @@ if __name__ == '__main__':
 
 app = Flask(__name__, static_folder='./static')
 
+if __name__ == '__main__':
+    from time import sleep
+    @app.before_request
+    def add_latency():
+        sleep(0.25)
+
 #Homepage
 @app.route('/')
 def home():
@@ -325,7 +331,7 @@ def upload():
 
 @app.route('/test')
 def test():
-    return '<!doctype html><html><head><script src="/static/test.js"></script></head><body bgcolor="#202020"><select id="season" name="season" class="seasonBox"></select></div></body></html>'
+    return '<!doctype html><html><head><link rel ="stylesheet" href="/static/styles.css" type="text/css"><script src="/static/test.js"></script></head><body bgcolor="#202020"><select id="season" name="season" class="seasonBox"></select></div><p class="loading">Loading...</p></body></html>'
 
 if __name__ == '__main__':        
     print('Starting threads...')

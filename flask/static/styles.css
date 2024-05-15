@@ -6,18 +6,15 @@ display: none;
 }
 .loading {
 position: fixed;
-top: 40%;
+top: 35%;
 left: 50%;
 transform: translate(-50%, -50%);
 color: red;
 font-family: "CarbonThin-W00-Regular";
-font-size: 60px;
+font-size: 50px;
 display: inline-block;
-width: 10ch;
+width: 9ch;
 text-align: center;
-white-space: nowrap;
-text-overflow: ellipsis;
-overflow: hidden;
 }
 #background-video {
 position: fixed;

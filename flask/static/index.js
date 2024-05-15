@@ -19,6 +19,9 @@ function getDomainURL(){
 const domainURL = getDomainURL()
 
 // caching parameters
+var totalImages = 0;
+var loadedImages = 0;
+
 var biomeBanners = {
     'Crystalline Caverns': `${domainURL}/static/DeepDive_MissionBar_CrystalCaves.webp`,
     'Glacial Strata' : `${domainURL}/static/DeepDive_MissionBar_GlacialStrata.webp`,
@@ -31,6 +34,7 @@ var biomeBanners = {
     'Azure Weald': `${domainURL}/static/DeepDive_MissionBar_AzureWeald.webp`,
     'Hollow Bough': `${domainURL}/static/DeepDive_MissionBar_HollowBough.webp`
 }
+totalImages += Object.keys(biomeBanners).length;
 var biomeBannersImages = {};
 biomeBannersImages.name = 'biomeBanners';
 
@@ -38,6 +42,7 @@ var deepDivesBanners = {
     'dd' : `${domainURL}/static/dd.webp`,
     'edd' : `${domainURL}/static/edd.webp`
 };
+totalImages += Object.keys(deepDivesBanners).length;
 deepDivesBannersImages = {};
 deepDivesBannersImages.name = 'deepDivesBanners';
 
@@ -85,6 +90,7 @@ var primaryObjs = {
     'Industrial Sabotage': `${domainURL}/static/img/Sabotage_icon.webp`,
     // 'Deep Scan' : `${domainURL}/static/img/Deep_scan_icon.webp`,
 };
+totalImages += Object.keys(primaryObjs).length;
 var primaryObjsImages = {};
 primaryObjsImages.name = 'primaryObjsImages';
 
@@ -100,6 +106,7 @@ var primaryObjResources = {
     'Industrial Sabotage': `${domainURL}/static/img/Icon_Facility_DataRack.webp`,
     // 'Deep Scan' : `${domainURL}/static/img/42069.webp`
 };
+totalImages += Object.keys(primaryObjResources).length;
 var primaryObjResourcesImages = {};
 primaryObjResourcesImages.name = 'primaryObjResourcesImages';
 
@@ -113,6 +120,7 @@ var secondaryObjs = {
     'Gunk Seeds': `${domainURL}/static/img/Gunk_seed_icon.webp`,
     'Hollomite': `${domainURL}/static/img/Hollomite_icon.webp`
 };
+totalImages += Object.keys(secondaryObjs).length;
 var secondaryObjsImages = {};
 secondaryObjsImages.name = 'secondaryObjsImages';
 
@@ -121,6 +129,7 @@ var complexities = {
     '2': `${domainURL}/static/img/Icons_complexity_2.webp`,
     '3': `${domainURL}/static/img/Icons_complexity_3.webp`
 };
+totalImages += Object.keys(complexities).length;
 var complexitiesImages = {};
 complexitiesImages.name = 'complexitiesImages';
 
@@ -129,6 +138,7 @@ var lengths = {
     '2': `${domainURL}/static/img/Icons_length_2.webp`,
     '3': `${domainURL}/static/img/Icons_length_3.webp`
 };
+totalImages += Object.keys(lengths).length;
 var lengthsImages = {};
 lengthsImages.name = 'lengthsImages';
 
@@ -143,7 +153,8 @@ var mutators = {
     'Volatile Guts': `${domainURL}/static/img/Mutator_volatile_guts_icon.webp`,
     // 'Blood Sugar' : `${domainURL}/static/img/Mutator_blood_sugar_icon.webp`,
     // 'Secret Secondary' : `${domainURL}/static/img/Mutator_secret_secondary_icon.webp`
-        }
+};
+totalImages += Object.keys(mutators).length;
 var mutatorsImages = {};
 mutatorsImages.name = 'mutatorsImages';
 
@@ -164,6 +175,7 @@ var warnings = {
     // 'Duck and Cover': `${domainURL}/static/img/Warning_duck_and_cover_icon.webp`,
     // 'Ebonite Outbreak' : `${domainURL}/static/img/Warning_ebonite_outbreak_icon.webp`,
 };
+totalImages += Object.keys(warnings).length;
 var warningsImages = {};
 warningsImages.name = 'warningsImages';
 
@@ -174,6 +186,7 @@ var secondaryObjsDD = {
     "Get Alien Eggs": `${domainURL}/static/img/Alien_egg_icon_DDsecondaryobj.webp`,
     "Black Box": `${domainURL}/static/img/Blackbox_icon_DDsecondaryobj.webp`
 };
+totalImages += Object.keys(secondaryObjsDD).length;
 var secondaryObjsDDImages = {};
 secondaryObjsDDImages.name = 'secondaryObjsDDImages';
 
@@ -189,6 +202,7 @@ var biomesDD = {
     'Azure Weald': `${domainURL}/static/img/DeepDive_MissionBar_AzureWeald.webp`,
     'Hollow Bough': `${domainURL}/static/img/DeepDive_MissionBar_HollowBough.webp`
 };
+totalImages += Object.keys(biomesDD).length;
 var biomesDDImages = {};
 biomesDDImages.name = 'biomesDDImages';
 
@@ -202,6 +216,7 @@ var dailyDealResources = {
     'Credits': `${domainURL}/static/img/Credit.webp`,
     'Bubble': `${domainURL}/static/img/Icon_TradeTerminal_SaleBubble.webp`
 };
+totalImages += Object.keys(dailyDealResources).length;
 var dailyDealResourcesImages = {};
 dailyDealResourcesImages.name = 'dailyDealResourcesImages';
 
@@ -245,62 +260,43 @@ async function preloadImages(imageObj, imageCache) {
     }
     let promisedBinaries = await Promise.all(promises);
 
-    promises = [];
     for (let i = 0; i < promisedBinaries.length; i++) {
         let promisedBinary = promisedBinaries[i];
         key = promisedBinary[0];
         let base64Data = arrayBufferToBase64(promisedBinary[1]);
         base64LocalStoragesImg[imageCache.name][key] = base64Data;
+
         let img = new Image();
         img.src = "data:image/webp;base64," + base64Data;
-        img.onload = async () => {
-            imageCache[key] = img;
-        }
-        promises.push(img.onload());
+
+        imageCache[key] = img;
+        loadedImages++;
+        let progress = (loadedImages / totalImages) * 100;
+        document.querySelector('.loading').textContent = `Loading icons ${progress.toFixed(2)}%`;
     }
-    await Promise.all(promises);
 
     delete imageCache.name;
     imageObj = undefined;
-
-    // alternative to above loop but i dont think the overhead on this is worth it, idk if its worth even promising that one either
-    // promises = promisedBinaries.map(async promisedBinary => {
-    //     const key = promisedBinary[0];
-    //     const base64Data = arrayBufferToBase64(promisedBinary[1]);
-    //     base64LocalStoragesImg[imageCache.name][key] = base64Data;
-    
-    //     return new Promise((resolve, reject) => {
-    //         const img = new Image();
-    //         img.src = "data:image/webp;base64," + base64Data;
-    //         img.onload = () => {
-    //             imageCache[key] = img;
-    //             resolve();
-    //         };
-    //         img.onerror = (error) => {
-    //              throw new Error(error);
-    //         }
-    //     });
-    // });
-    // await Promise.all(promises)
 }
 async function loadImgsFromLocalStorageObj(imageObj, imageCache) {
-    let promises = [];
     for (let key in imageObj) {
-        let base64Data =  localStorages['img'][imageCache.name][key]
-        let img = new Image()
+        let base64Data =  localStorages['img'][imageCache.name][key];
+
+        let img = new Image();
         img.src = "data:image/webp;base64," + base64Data;
-        img.onload = async () => {
-            imageCache[key] = img
-        }
-        promises.push(img.onload())
+
+        imageCache[key] = img;
+        loadedImages++;
+        let progress = (loadedImages / totalImages) * 100;
+        document.querySelector('.loading').textContent = `${progress.toFixed(2)}%`;
     }
-    await Promise.all(promises)
 
     delete imageCache.name;
     imageObj = undefined;
 }
 
 async function loadImgsFromLocalStorageAll() {
+    document.querySelector('.loading').textContent = `Loading icons 0.00%`;
     await Promise.all([
         loadImgsFromLocalStorageObj(primaryObjs, primaryObjsImages),
         loadImgsFromLocalStorageObj(primaryObjResources, primaryObjResourcesImages),
@@ -319,6 +315,7 @@ async function loadImgsFromLocalStorageAll() {
 }
 
 async function preloadFonts(){
+    document.querySelector('.loading').textContent = 'Loading fonts'
     let promises = [];
     let fontsBinaries;
 
@@ -349,6 +346,7 @@ async function preloadFonts(){
 }
 
 async function preloadImagesAll() {
+    document.querySelector('.loading').textContent = `Loading icons 0.00%`;
     await Promise.all([
         preloadImages(primaryObjs, primaryObjsImages),
         preloadImages(primaryObjResources, primaryObjResourcesImages),
@@ -1643,11 +1641,11 @@ function checkOverflowAndFixScanners(containers) {
     if (window.matchMedia("(min-width: 1440px)").matches) {
         scanners.forEach(container => {
             container.style.height = `${mostCommonNumber(heights)-10}px`;
-        })
+        });
     } else {
         scanners.forEach(container => {
             container.style.height = `auto`;
-        })
+        });
     }
 
     containers.forEach(container => {
@@ -1798,7 +1796,7 @@ async function initialize(date) {
     let currentDatetime = date.toISOString().slice(0, 10);
     let currentDateTimeHREF = `${domainURL}/static/json/bulkmissions/${currentDatetime}.json`;
 
-    let nextDatetime = getNextDateMidnightUTC(date).split('T')[0];
+    let nextDatetime = getNextDateMidnightUTC(date).slice(0, 10);
     let nextDateTimeHREF = `${domainURL}/static/json/bulkmissions/${nextDatetime}.json`;
 
     let ddDatetime = getPreviousThursdayTimestamp();
@@ -2001,6 +1999,7 @@ async function initialize(date) {
 }
 
 async function getCurrentDaysJson(date, isMidnightUpcoming_=false) {
+    document.querySelector('.loading').textContent = `Loading today's data...`;
     let cdj;
     const todaysDate = date.toISOString().slice(0, 10);
 
@@ -2136,7 +2135,7 @@ var localStorages = {
 var localStoragesHashes = {
     'img' : 530276585,
     'fonts' : 906557479,
-    'homepageScript' : 384585401,
+    'homepageScript' : -347621500,
 };
 
 var cacheActive = false;
@@ -2209,10 +2208,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         var homepageScript = document.createElement('script');
         homepageScript.textContent = localStorages['homepageScript']
         document.head.appendChild(homepageScript);
-        homepageScript.onload = async () => {
-            await onLoad(); // bottom of homepage.js
-        }
-        await homepageScript.onload();
+        await onLoad();
+        // await homepageScript.onload();
         
 
         // homepageScript.src = "/static/homepage.js"
