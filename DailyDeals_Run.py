@@ -40,9 +40,19 @@ def main():
     currytime = current_time.strftime("%Y-%m-%dT%H:%M:%SZ")
     currytime = datetime.datetime.strptime(sanitize_datetime(currytime), "%d-%m-%yT%H:%M:%SZ")
     currytime = str(currytime).split(' ')
+    
     total_increments = 365
     total_increments_ = 365
-    
+    #In case different amount is defined in script
+    with open('./mods/DailyDealsScraper/Scripts/main.lua', 'r') as f:
+        script = f.readlines()
+        for line in script:
+            if 'local total_days' in line:
+                total_increments = int(line.split('=')[1].strip())
+                total_increments_ = int(str(total_increments))
+                break
+        f.close()
+                
     #Disable automatic system time
     disable_system_time()
     sleep(2)

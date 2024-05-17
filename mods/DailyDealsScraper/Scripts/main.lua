@@ -104,7 +104,7 @@ function Main()
       -- Remove ReverseDateFormat function and just use newtime[1] if your system date format is YY-MM-DD
       local command = 'date '..utils.ReverseDateFormat(newtime[1])..' & time '..newtime[2]
 
-      -- Set time forward 30 minutes
+      -- Set time forward one day
       print(command..'\n')
       count = count + 1
       print(tostring(count)..'\n')

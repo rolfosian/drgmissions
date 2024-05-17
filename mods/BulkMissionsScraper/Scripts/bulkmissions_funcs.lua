@@ -20,6 +20,9 @@ function IsInTable(tbl, val)
     end
     return false
 end
+function IsTableEmpty(t)
+    return next(t) == nil
+end
 function ReverseDateFormat(inputDate)
     local oldDate = Split(inputDate, "-")
     local year = oldDate[1]
@@ -422,7 +425,20 @@ function UnpackStandardMission(mission, master, b, missionscount, season)
     table.insert(master[season]['Biomes'][b], mission1)
     return missionscount
 end
-
+function BiomesTable()
+    return {
+        ['Crystalline Caverns'] = {},
+        ['Glacial Strata'] = {},
+        ['Radioactive Exclusion Zone'] = {},
+        ['Fungus Bogs'] = {},
+        ['Dense Biozone'] = {},
+        ['Salt Pits'] = {},
+        ['Sandblasted Corridors'] = {},
+        ['Magma Core'] = {},
+        ['Azure Weald'] = {},
+        ['Hollow Bough'] = {}
+    }
+end
 Biomesmatch = {
     ['Biome /Game/Landscape/Biomes/Biomes_Ingame/AzureWeald/BIOME_AzureWeald.BIOME_AzureWeald'] = 'Azure Weald',
     ['Biome /Game/Landscape/Biomes/Biomes_Ingame/CrystalCaves/BIOME_CrystalCaves.BIOME_CrystalCaves'] = 'Crystalline Caverns',
@@ -464,6 +480,7 @@ end
 return {
     GetDNAValues = GetDNAValues,
     IsInTable = IsInTable,
+    IsTableEmpty = IsTableEmpty,
     ReverseDateFormat = ReverseDateFormat,
     IncrementDatetime = IncrementDatetime,
     IncrementDatetimeOneDay = IncrementDatetimeOneDay,
@@ -473,6 +490,7 @@ return {
     S4Off = S4Off,
     S4On = S4On,
     UnpackStandardMission = UnpackStandardMission,
+    BiomesTable = BiomesTable,
     GetBiome = GetBiome,
     Exit = Exit,
     GetMissions = GetMissions,

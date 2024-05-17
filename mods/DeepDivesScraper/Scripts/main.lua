@@ -7,8 +7,18 @@ function Split(str, separator)
     end
     return result
 end
-function HasKey(table, key)
-    return table[key] ~= nil
+function TableToString(table, indent)
+    indent = indent or ""
+    local str = "{\n"
+    for key, value in pairs(table) do
+      if type(value) == "table" then
+        str = str .. indent .. "[" .. tostring(key) .. "] = " .. TableToString(value, indent .. "  ") .. ",\n"
+      else
+        str = str .. indent .. "[" .. tostring(key) .. "] = " .. tostring(value) .. ",\n"
+      end
+    end
+    str = str .. indent:sub(1, -3) .. "}"
+    return str
 end
 function UnpackDeepDiveMission(mission, master, t)
     _L = {
@@ -185,25 +195,13 @@ function UnpackDeepDiveMission(mission, master, t)
         length = '2'
     end
 
+    mission1['Length'] = length
+    _L.length = length
+
     local MissionDNA = mission:GetPropertyValue("MissionDNA")
     MissionDNA = string.format("%s",MissionDNA:GetFullName())
 
     -- Complexity and Length finalization
-    if length == 'Indefinite' then
-        local twolength_objs = {
-            "On-Site Refining",
-            "Industrial Sabotage",
-        }
-        for _, obj in pairs(twolength_objs) do
-            if obj == PrimaryObjective then
-                length = '2'
-                break
-            end
-        end
-    end
-    mission1['Length'] = length
-    _L.length = length
-
     local MissionDNAs = {
         -- Salvage
         {pattern = 'SalvageFractured_Complex', result = {complexity = '3', length = '3'}},
@@ -230,13 +228,32 @@ function UnpackDeepDiveMission(mission, master, t)
             end
         end
     end
-    
+    if PrimaryObjective == "On-Site Refining" and mission1['Complexity'] == 'Indefinite' then
+        mission1['Complexity'] = '2'
+        mission1['Length'] = '2'
+    end
+
     -- Industrial Sabotage DNA
     if string.find(MissionDNA, 'Facility_Simple_C') and complexity == 'Indefinite' then
         mission1['Complexity'] = '2'
     end
     if string.find(MissionDNA, 'Facility_Simple_C') and length == 'Indefinite' then
         mission1['Length'] = '2'
+    end
+
+    if length == 'Indefinite' then
+        local twolength_objs = {
+            "On-Site Refining",
+            "Industrial Sabotage",
+        }
+        for _, obj in pairs(twolength_objs) do
+            if obj == PrimaryObjective then
+                length = '2'
+                mission1['Length'] = length
+                _L.length = length
+                break
+            end
+        end
     end
 
     -- Mining Expedition finalization
@@ -342,6 +359,10 @@ function UnpackDeepDiveMission(mission, master, t)
             end
         end
     end
+    -- if mission1['Length'] == 'Indefinite' or mission1['Complexity'] == 'Indefinite' then
+    --     print(missionfullname)
+    --     print(TableToString(mission1, "  "))
+    -- end
     table.insert(master['Deep Dives'][t]['Stages'], mission1)
 end
 function GetMissions()
@@ -395,6 +416,21 @@ function GetDeepDiveCodename(t) -- Get DD Codename terminal label widget assets
         return name
     end
 end
+function HasKey(table, key)
+    return table[key] ~= nil
+end
+function IsLoaded()
+    local GeneratedMissions = FindAllOf('GeneratedMission')
+    if GeneratedMissions then
+        if #GeneratedMissions > 6 then
+            return true
+        else
+            return false
+        end
+    else
+        return false
+    end
+end
 function PressStartAndWaitForLoad()
     local startmenus = nil
     while true do
@@ -427,7 +463,13 @@ function PressStartAndWaitForLoad()
     end
 end
 function Main()
-    PressStartAndWaitForLoad()
+    if IsLoaded() then
+        goto isloaded
+    else
+        PressStartAndWaitForLoad()
+    end
+    ::isloaded::
+    -- local utils = require('./mods/BulkMissionsScraper/Scripts/old/bulkmissions_funcs')
 
     local currentDateTime = os.date("!%Y-%m-%dT%H-%M-%SZ")
     currentDateTime = 'DD_'..currentDateTime
@@ -435,7 +477,9 @@ function Main()
     local master = {}
     master['Deep Dives'] = {}
     master['Deep Dives']['Deep Dive Normal'] = {}
+    master['Deep Dives']['Deep Dive Normal']['CodeName'] = GetDeepDiveCodename('Deep Dive Normal')
     master['Deep Dives']['Deep Dive Elite'] = {}
+    master['Deep Dives']['Deep Dive Elite']['CodeName'] = GetDeepDiveCodename('Deep Dive Elite')
     master['Deep Dives']['Deep Dive Normal']['Stages'] = {}
     master['Deep Dives']['Deep Dive Elite']['Stages'] = {}
     -- Get GeneratedMission UObjects
@@ -454,10 +498,6 @@ function Main()
                     b = GetBiome(mission)
                     master['Deep Dives'][t]['Biome'] = b
                 end
-                if not HasKey(master['Deep Dives'][t], 'CodeName') then
-                    local codename = GetDeepDiveCodename(t)
-                    master['Deep Dives'][t]['CodeName'] = codename
-                end
                 UnpackDeepDiveMission(mission, master, t)
 
             elseif MissionStructure == 2 then
@@ -466,22 +506,20 @@ function Main()
                     b = GetBiome(mission)
                     master['Deep Dives'][t]['Biome'] = b
                 end
-                if not HasKey(master['Deep Dives'][t], 'CodeName') then
-                    local codename = GetDeepDiveCodename(t)
-                    master['Deep Dives'][t]['CodeName'] = codename
-                end
                 UnpackDeepDiveMission(mission, master, t)
 
             end
         end
-
         -- Press X to json
-        master = json.encode(master)
+        -- master = TableToString(master)
+        -- print(master)
+        master = json.encode(master, {indent=true})
         local file = io.open(currentDateTime..'.json', 'w')
         if file then
             file:write(master)
             file:close()
         end
+        -- utils.Exit()
     end
 end
 Main()

@@ -1,9 +1,9 @@
 local json = require("./mods/BulkMissionsScraper/Scripts/dkjson")
 
 function IsLoaded()
-    local umgsequenceplayers = FindAllOf('UMGSequencePlayer')
-    if umgsequenceplayers then
-        if #umgsequenceplayers > 150 then
+    local GeneratedMissions = FindAllOf('GeneratedMission')
+    if GeneratedMissions then
+        if #GeneratedMissions > 6 then
             return true
         else
             return false
@@ -44,8 +44,51 @@ function PressStartAndWaitForLoad()
     end
 end
 
+function TestSeasonSeeds()
+    if IsLoaded() then
+        goto isloaded
+    else
+        PressStartAndWaitForLoad()
+    end
+    ::isloaded::
+
+    local utils = require('./mods/BulkMissionsScraper/Scripts/bulkmissions_funcs')
+    local SeasonsAndFuncs = {
+        s0 = utils.S4Off,
+        s4 = utils.S4On
+    }
+
+    -- Initialize Table
+    local god = {}
+    local missionscount = 0
+    local master = {}
+    local SeasonSeeds = {}
+    local GlobalSeed = nil
+    local PreviousGlobalSeed = nil
+    local FSDGameInstance = FindFirstOf('FSDGameInstance')
+    local timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
+    for season, season_switch in pairs(SeasonsAndFuncs) do
+        season_switch()
+
+        -- FSDGameInstance:UpdateGlobelMissionSeed() -- No, this is not a typo (but maybe it was on gsg's end). Unneeded - I believe GetGlobalMissionSeed calls this itself or uses a similar mechanism
+        while true do
+            GlobalSeed = FSDGameInstance:GetGlobalMissionSeed()
+            if utils.IsInTable(SeasonSeeds, GlobalSeed) then
+                print('SEED DUPLICATES FOUND: ')
+                for s, seed in pairs(SeasonSeeds) do
+                    if seed == GlobalSeed then
+                        print(s)
+                    end
+                end
+            else
+                break
+            end
+        end
+        SeasonSeeds[season] = GlobalSeed
+    end
+end
+
 function Main()
-    -- -- Wait for start menu to load
     if IsLoaded() then
         goto isloaded
     else
@@ -84,7 +127,8 @@ function Main()
 
         missionscount = 0
         master[season] = {}
-        master[season]['Biomes'] = {}
+        master[season]['Biomes'] = utils.BiomesTable()
+
         -- Get GeneratedMission UObjects
         local b = nil
         local missions = utils.GetMissions()
@@ -93,20 +137,25 @@ function Main()
             master[season]['timestamp'] = timestamp
             for index, mission in pairs(missions) do
                 b = utils.GetBiome(mission)
-                if not utils.HasKey(master[season]['Biomes'], b) then
-                    master[season]['Biomes'][b] = {}
-                end
                 missionscount = utils.UnpackStandardMission(mission, master, b, missionscount, season)
             end
             print('\nNo. of missions in '..season..': '..tostring(missionscount))
+        end
+
+        for biome, ms  in pairs(master[season]['Biomes']) do
+            if utils.IsTableEmpty(ms) then
+                master[season]['Biomes'][biome] = nil
+            end
         end
     end
     local indent = "    "
     local master_str = utils.TableToString(master, indent)
     print(master_str)
 
---     god[timestamp] = master
---     god = json.encode(god)
+    -- god[timestamp] = master
+    -- god = json.encode(god, {indent=true})
+    -- print(god)
+
 --     local file = io.open('drgmissionsdev.json', 'w')
 --     if file then
 --         file:write(god)

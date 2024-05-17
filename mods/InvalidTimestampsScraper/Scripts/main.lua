@@ -31,6 +31,7 @@ function Main()
         end
     end
 
+    local biomes_ = {'Crystalline Caverns', 'Glacial Strata', 'Radioactive Exclusion Zone', 'Fungus Bogs', 'Dense Biozone', 'Salt Pits', 'Sandblasted Corridors', 'Magma Core', 'Azure Weald', 'Hollow Bough'}
     local utils = require('./mods/BulkMissionsScraper/Scripts/bulkmissions_funcs')
     local invalid_keys = io.open("invalid_keys.txt", "r")
     local timestamps = {}
@@ -67,7 +68,7 @@ function Main()
         while true do
             GlobalSeed = FSDGameInstance:GetGlobalMissionSeed()
             if GlobalSeed == PreviousGlobalSeed then
-                print('SEEN') -- has never seen as far as i can tell, prob ditch the stall when i trust GetGlobalMissionSeed enough
+                print('SEEN') -- has never seen as far as i can tell, prob ditch the stall when GetGlobalMissionSeed trusted enough
             else
                 break
             end
@@ -82,7 +83,7 @@ function Main()
             while true do
                 GlobalSeed = FSDGameInstance:GetGlobalMissionSeed()
                 if utils.IsInTable(SeasonSeeds, GlobalSeed) then
-                    print('SEEN') -- has never seen as far as i can tell, prob ditch the stall when i trust GetGlobalMissionSeed enough
+                    print('SEEN') -- has never seen as far as i can tell, prob ditch the stall GetGlobalMissionSeed trusted enough
                 else
                     break
                 end
@@ -90,7 +91,8 @@ function Main()
             SeasonSeeds[season] = GlobalSeed
 
             master[season] = {}
-            master[season]['Biomes'] = {}
+            master[season]['Biomes'] = utils.BiomesTable()
+
             -- Get GeneratedMission UObjects
             local b = nil
             local missions = utils.GetMissions()
@@ -99,12 +101,15 @@ function Main()
                 master[season]['timestamp'] = timestamp
                 for index, mission in pairs(missions) do
                     b = utils.GetBiome(mission)
-                    if not utils.HasKey(master[season]['Biomes'], b) then
-                        master[season]['Biomes'][b] = {}
-                    end
                     missionscount = utils.UnpackStandardMission(mission, master, b, missionscount, season)
                 end
             PreviousGlobalSeed = GlobalSeed
+            end
+
+            for biome, ms  in pairs(master[season]['Biomes']) do
+                if utils.IsTableEmpty(ms) then
+                    master[season]['Biomes'][biome] = nil
+                end
             end
         end
         god[timestamp] = master

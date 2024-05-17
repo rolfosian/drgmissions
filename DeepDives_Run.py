@@ -14,6 +14,10 @@ from drgmissions_scraper_utils import (
 )
 
 def main():
+    for f in os.listdir():
+        if f.startswith('DD_') and f.endswith('.json'):
+            os.remove(f)
+            
     maximize_window()
     print(os.getcwd())
     

@@ -2163,6 +2163,8 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         if (localStorages['isBackgroundHidden']) {
             toggleBackground();
+        } else {
+            document.getElementById('background-video').play();
         }
         if (localStorages['areButtonsHidden']) {
             toggleButtons();

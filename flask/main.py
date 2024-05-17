@@ -4,13 +4,11 @@ from drgmissionslib import (
     render_xp_calc_index, 
     order_dictionary_by_date,
     rotate_biomes_FLAT,
-    # rotate_biomes, obsolete, may need for debugging later
     rotate_dailydeal,
     rotate_DDs,
     rotate_index,
     rotate_timestamps,
     rotate_timestamp_from_dict,
-    # rotate_split_jsons, i dont trust this yet, its not needed when keys are grouped by day now anyway
     group_by_day_and_split_all,
     wait_rotation,
     flatten_seasons,
@@ -117,10 +115,6 @@ index_thread = threading.Thread(target=rotate_index, args=(rendering_events, tst
 wait_rotationthread = threading.Thread(target=wait_rotation, args=(rendering_events, index_event, go_flag))
 
 SERVER_READY_thread = threading.Thread(target=SERVER_READY, args=(index_event,))
-
-# json splitting mechanism for static site, set to update the ./static/json/bulkmissions folder every 4 days just so i dont have to look at a directory with 5000 files in it
-# i dont trust this yet, its not needed when keys are grouped by day now anyway
-# json_thread = threading.Thread(target=rotate_split_jsons, args=(4, DRG, index_event, go_flag))
 
 def start_threads():
     tstampthread.start()
