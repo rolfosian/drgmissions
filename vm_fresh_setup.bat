@@ -17,8 +17,8 @@ echo UAC Disabled.
 tzutil /s "UTC"
 
 :: Change date format to DD-MM-YYYY
-reg add "HKCU\Control Panel\International" /v sShortDate /t REG_SZ /d "d/MM/yyyy" /f
-reg add "HKCU\Control Panel\International" /v sTimeFormat /t REG_SZ /d "h:mm:ss tt" /f
+reg add "HKCU\Control Panel\International" /v sShortDate /t REG_SZ /d "d/MM/yyyy" /f >nul
+reg add "HKCU\Control Panel\International" /v sTimeFormat /t REG_SZ /d "h:mm:ss tt" /f >nul
 
 echo System timezone has been changed to UTC and date format to DD-MM-YYYY.
 echo -----------------------------------------------
@@ -139,6 +139,22 @@ echo Compatibility setting applied for %processName% to run as administrator.
 
 ::Set the registry key to run the Steam process as administrator
 reg add "HKCU\SOFTWARE\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers" /v "!STEAM_PATH!\steam.exe" /t REG_SZ /d "~ RUNASADMIN" /f >nul
+for /f "tokens=*" %%i in ('reg query HKU') do (
+    set "userKey=%%i"
+    reg query "!userKey!\SOFTWARE" >nul 2>&1
+    if !errorlevel! equ 0 (
+        ver >nul
+        reg query "!userKey!\SOFTWARE\Valve" >nul 2>&1
+        if !errorlevel! equ 0 (
+            ver >nul
+            reg query "!userKey!\SOFTWARE\Valve\Steam" >nul 2>&1
+            if !errorlevel! equ 0 (
+                ver >nul
+                reg add "!userKey!\SOFTWARE\Valve\Steam" /v IgnoreCompatMode#Steam_WindowsCompat_Description_2 /t REG_DWORD /d 1 /f >nul
+            )
+        )
+    )
+)
 echo Compatibility setting applied for steam.exe to run as administrator.
 
 ::Set the registry keys to run the DRG processes as administrator
