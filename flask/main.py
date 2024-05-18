@@ -215,8 +215,8 @@ def serve_dailydeal_png():
     except:
         return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
 
-#Dictionary endpoints
-#jsonify isn't very merciful when it comes to ram use for repeated requests of large dictionaries. It liked to use 300MB+ RAM as it doesn't hash what it serves and likes to keep it in memory up until a point so I took the full mission JSON out
+#json endpoint
+#eg http://127.0.0.1:5000/json?data=current for current mission metadata
 @app.route('/json')
 def serve_json():
     try:
