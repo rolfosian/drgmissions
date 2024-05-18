@@ -9,6 +9,10 @@ IF %ERRORLEVEL% EQU 0 (
 )
 :startScript
 
+:: Disable UAC
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" /v ConsentPromptBehaviorAdmin /t REG_DWORD /d 0 /f >nul
+echo UAC Disabled.
+
 :: Change timezone to UTC
 tzutil /s "UTC"
 
@@ -19,11 +23,7 @@ reg add "HKCU\Control Panel\International" /v sTimeFormat /t REG_SZ /d "h:mm:ss 
 echo System timezone has been changed to UTC and date format to DD-MM-YYYY.
 echo -----------------------------------------------
 
-ver >nul
-echo Please disable UAC
-C:\Windows\System32\UserAccountControlSettings.exe
-
-echo Adjust windows gui options for best performance if you would like
+echo Adjust Windows GUI options for best performance if you would like.
 C:\Windows\System32\SystemPropertiesPerformance.exe
 echo -----------------------------------------------
 
@@ -35,6 +35,7 @@ setlocal enabledelayedexpansion
 reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v NoAutoUpdate /t REG_DWORD /d 1 /f >nul
 reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows" /v NoAutoUpdate /t REG_DWORD /d 1 /f >nul
 PowerShell.exe -Command "Set-ItemProperty -Path 'HKLM:\Software\Policies\Microsoft\Windows\WindowsUpdate\AU' -Name AUOptions -Value 0" >nul
+ver >nul
 
 echo Automatic Windows Updates disabled.
 
@@ -51,6 +52,16 @@ if "%PASSWORD%"=="%CONFIRM_PASSWORD%" (
     goto :PromptPassword
 )
 :ConfirmedPassword
+
+:: Verify password
+net use \\localhost\IPC$ /user:%CURRENT_USERNAME% %PASSWORD% >nul 2>&1
+if %errorlevel% neq 0 (
+    echo Invalid password.
+    goto :PromptPassword
+) else (
+    net use \\localhost\IPC$ /delete >nul 2>&1
+)
+ver >nul
 
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon" /v DefaultUserName /t REG_SZ /d "%CURRENT_USERNAME%" /f >nul
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon" /v DefaultPassword /t REG_SZ /d "%PASSWORD%" /f >nul
