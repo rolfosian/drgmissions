@@ -13,8 +13,8 @@ IF %ERRORLEVEL% EQU 0 (
 tzutil /s "UTC"
 
 :: Change date format to DD-MM-YYYY
-reg add "HKCU\Control Panel\International" /v iDate /t REG_SZ /d "dd/MM/yyyy" /f
-reg add "HKCU\Control Panel\International" /v iTime /t REG_SZ /d "HH:mm:ss" /f
+reg add "HKCU\Control Panel\International" /v sShortDate /t REG_SZ /d "d/MM/yyyy" /f
+reg add "HKCU\Control Panel\International" /v sTimeFormat /t REG_SZ /d "h:mm:ss tt" /f
 
 echo System timezone has been changed to UTC and date format to DD-MM-YYYY.
 echo -----------------------------------------------

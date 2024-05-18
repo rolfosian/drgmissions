@@ -968,7 +968,7 @@ function rolloverCurrentDaysJsonLink (currentDaysTimestamp) {
     let tomorrowDaysJsonLink = document.getElementById('tomorrowDaysJsonLink');
     tomorrowDaysJsonLink.href = `${domainURL}/static/json/bulkmissions/${getNextDateMidnightUTC(currentDaysTimestamp).slice(0, 10)}.json`;
 }
-async function refreshBiomes(isMidnightUpcoming_, retry=false) {
+async function refreshBiomes(isMidnightUpcoming_) {
     let refreshDate = new Date();
     let refreshDateISOString = refreshDate.toISOString().slice(0, 19)+'Z';
     let expectedCurrentTimestamp = roundTimeDown(refreshDateISOString);
@@ -979,17 +979,17 @@ async function refreshBiomes(isMidnightUpcoming_, retry=false) {
 
         isMidnightUpcoming_ = isMidnightUpcoming(refreshDateISOString)
         if (isMidnightUpcoming_) {
-            tempBiomes = await getBiomesMidnightOnInit();
-            return await refreshBiomes(isMidnightUpcoming_, true);
+            tempBiomes = await getBiomesMidnightOnInit(refreshDate);
+            return await refreshBiomes(isMidnightUpcoming_);
 
         } else if (localStorages['currentDaysJson'][0] != refreshDateISOString.slice(0, 10)) {
             await getCurrentDaysJson(refreshDate);
             tempBiomes = getBiomesOnInit();
-            return await refreshBiomes(isMidnightUpcoming_, true);
+            return await refreshBiomes(isMidnightUpcoming_);
 
         } else {
             tempBiomes = getBiomesOnInit();
-            return await refreshBiomes(isMidnightUpcoming_, true);
+            return await refreshBiomes(isMidnightUpcoming_);
         }   
     }
 
