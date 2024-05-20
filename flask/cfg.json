@@ -1,0 +1,8 @@
+{
+    "domain_name" : "doublexp.net",
+    "service_name" : "DRGMISSIONS",
+    "service_bind" : "127.0.0.1:5000",
+    "max_body_size" : 200000000,
+    "use_https" : true, 
+    "auth_token" : ""
+}

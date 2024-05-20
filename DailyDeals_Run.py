@@ -7,6 +7,8 @@ import re
 from time import sleep
 from drgmissions_scraper_utils import (
     kill_process_by_name_starts_with,
+    upload_file,
+    yes_or_no,
     enable_system_time,
     disable_system_time,
     maximize_window,
@@ -16,6 +18,7 @@ from drgmissions_scraper_utils import (
     order_dictionary_by_date,
     delete_file,
     print,
+    cfg
 )
 
 def main():
@@ -152,6 +155,10 @@ def main():
     
     #Enable Automatic system time
     enable_system_time()
+    
+    if yes_or_no('Upload JSON? Y/N: '):
+        upload_file(cfg, 'drgdailydeals.json')
+    
     input('Press enter to exit...')
     
 try:

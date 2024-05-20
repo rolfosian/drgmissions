@@ -702,19 +702,31 @@ def render_dd_stage(m_d):
     BACKGROUND = scale_image(BACKGROUND, 0.46)
     PRIMARY_OBJ_RESOURCE.close()
     
-    #BACKGROUND.save('TEST.png', format='PNG')
-    #subprocess.run(['gwenview', 'TEST.png'])
     return BACKGROUND 
 
-#dev
-#deal_dict = {"ChangePercent": 225.62124633789, "DealType": "Sell", "Credits": 42069, "ResourceAmount": 78, "Resource": "Enor Pearl"}
-#render_dailydeal(deal_dict)
+if __name__ == '__main__':
+    import subprocess
+    # dev
+    # deal_dict = {"ChangePercent": 225.62124633789, "DealType": "Sell", "Credits": 42069, "ResourceAmount": 78, "Resource": "Enor Pearl"}
+    # img = render_dailydeal(deal_dict)
 
-#m_d = {"CodeName":" ","Complexity":"2","Length":"2","MissionWarnings":["Lithophage Outbreak","Lethal Enemies"],"MissionMutator":"Double XP","PrimaryObjective":"Salvage Operation","SecondaryObjective":"Mine Morkite","id":654}
-#render_dd_stage(m_d)
+    # m_d = {"CodeName":" ","Complexity":"2","Length":"2","MissionWarnings":["Lithophage Outbreak","Lethal Enemies"],"MissionMutator":"Double XP","PrimaryObjective":"Salvage Operation","SecondaryObjective":"Mine Morkite","id":654}
+    # img = render_dd_stage(m_d)
 
-#m_d = {"CodeName":" ","Complexity":"2","Length":"2","MissionWarnings":["Lithophage Outbreak","Lethal Enemies"],"MissionMutator":"Double XP","PrimaryObjective":"Salvage Operation","SecondaryObjective":"Hollomite","id":654}
-#render_mission(m_d)
+    m_d = {"CodeName":" ","Complexity":"2","Length":"2","MissionWarnings":["Lithophage Outbreak","Lethal Enemies"],"MissionMutator":"Double XP","PrimaryObjective":"Salvage Operation","SecondaryObjective":"Hollomite","id":654}
+    img = render_mission(m_d)
+    
+    os_name = os.name
+    if os_name == 'nt':
+        img.save('TEST.png', format='PNG')
+        subprocess.run(['"C:\\Program Files\\IrfanView\\i_view64.exe"', 'TEST.png'], shell=True)
+        os.remove('TEST.png')
+        quit()
+    elif os_name == 'posix':
+        img.save('TEST.png', format='PNG')
+        subprocess.run(['gwenview', 'TEST.png'])
+        os.remove('TEST.png')
+        quit()
 #-------------------------------------------------------------------------------------------------------------------------------
 
 #PRE-HASH PIL OBJECT ARRAYING
@@ -1489,6 +1501,19 @@ def timestamped_print(func):
         return func(*args, **kwargs)
     return wrapper
 print = timestamped_print(print)
+
+def cfg_():
+    with open('cfg.json', 'r') as f:
+        cfg = json.load(f)
+    return cfg
+cfg = cfg_()
+
+def merge_parts(part_files, output_file):
+    sorted_part_files = sorted(part_files)
+    with open(output_file, 'wb') as merged_file:
+        for part_file in sorted_part_files:
+            with open(part_file, 'rb') as part:
+                merged_file.write(part.read())
 
 #----------------------------------------------------------------
 #HTML STRING RENDERERS

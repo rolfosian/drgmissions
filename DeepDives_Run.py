@@ -2,6 +2,7 @@
 import subprocess
 import time
 import os
+import json
 from drgmissions_scraper_utils import (
     upload_file,
     enable_system_time,
@@ -11,6 +12,7 @@ from drgmissions_scraper_utils import (
     maximize_window,
     subprocess_wrapper,
     print,
+    cfg
 )
 
 def main():
@@ -36,10 +38,6 @@ def main():
         
     subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
 
-    with open('token.txt') as f:
-        token = f.read().strip()
-
-    url = 'https://doublexp.net/upload'
     files = []
     start_time = time.time()
     while True:
@@ -63,10 +61,11 @@ def main():
                 files.append(new_filename)
                 kill_process_by_name_starts_with('FSD')
                 kill_process_by_name_starts_with('Unreal')
+                break
                 
         if files:
             for file in files:
-                upload_file(url, file, token)
+                upload_file(cfg, file)
                 os.remove(file)
             break
         

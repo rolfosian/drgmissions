@@ -11,6 +11,12 @@ import re
 from ctypes import WinDLL
 import threading
 
+def cfg_():
+    with open('scraper_cfg.json', 'r') as f:
+        cfg = json.load(f)
+    return cfg
+cfg = cfg_()
+
 def wrap_with_color(string, color):
     return f"\033[0;{color}m{string}\033[0m"
 
@@ -336,14 +342,61 @@ def round_time_down(datetime_string):
 
 #------------------------------------------------------------------------------------------------------
 
-def upload_file(url, file_path, bearer_token):
+def split_file(file_path, max_size):
+    file_parts = []
+    part_number = 1
+    total_size = os.path.getsize(file_path)
+    read_so_far = 0
+    
+    with open(file_path, 'rb') as f:
+        while True:
+            chunk = f.read(max_size)
+            if not chunk:
+                break
+            
+            read_so_far += len(chunk)
+            if read_so_far >= total_size:
+                part_filename = f"{file_path}_{part_number}_last_part"
+            else:
+                part_filename = f"{file_path}_{part_number}_part"
+                
+            with open(part_filename, 'wb') as chunk_file:
+                chunk_file.write(chunk)
+                
+            file_parts.append(part_filename)
+            part_number += 1
+    
+    return file_parts
+
+def upload_file(cfg, file_path, max_body_size):
+    domain_name = cfg['domain_name']
+    bearer_token = cfg['auth_token']
+    max_body_size = cfg['max_body_size']
+    
+    if domain_name.startswith('127'):
+        domain_name = cfg['service_bind']
+    elif domain_name[0].isdigit():
+        domain_name = domain_name+cfg['service_bind'].split(':')[1]
+
+    protocol = 'https' if cfg['use_https'] else 'http'
+    
+    url = f'{protocol}://{domain_name}/upload' if domain_name != "" else f"{protocol}://{cfg['service_bind']}/upload"
+    
     headers = {
         'Authorization': 'Bearer ' + bearer_token
     }
 
-    with open(file_path, 'rb') as file:
-        files = {'file': file}
-        response = requests.post(url, headers=headers, files=files)
+    file_size = os.path.getsize(file_path)
+    if file_size > max_body_size:
+        file_parts = split_file(file_path, max_body_size)
+    else:
+        file_parts = [file_path]
+
+    for part in file_parts:
+        with open(part, 'rb') as file:
+            files = {'file': file}
+            response = requests.post(url, headers=headers, files=files)
+            
     return response
 
 def wait_until_next_hour():

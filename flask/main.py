@@ -13,7 +13,9 @@ from drgmissionslib import (
     wait_rotation,
     flatten_seasons,
     SERVER_READY,
+    merge_parts,
     print,
+    cfg,
     class_xp_levels,
     Dwarf
     )
@@ -122,14 +124,10 @@ def start_threads():
     # for thread in biome_rotator_threads:
     #     thread.start()
     biomesthread.start()
-    
     ddsthread.start()
-    # json_thread.start()
     wait_rotationthread.start()
-    
     dailydeal_tstampthread.start()
     dailydealthread.start()
-    
     index_thread.start()
     SERVER_READY_thread.start()
     
@@ -145,7 +143,6 @@ def join_threads(go_flag):
     index_thread.join()
     SERVER_READY_thread.join()
     
-    # json_thread.join()
     # for thread in biome_rotator_threads:
     #     thread.join()
     
@@ -171,18 +168,18 @@ if __name__ == '__main__':
 
 app = Flask(__name__, static_folder='./static')
 
-if __name__ == '__main__':
-    from time import sleep
-    @app.before_request
-    def add_latency():
-        sleep(0.25)
+# if __name__ == '__main__':
+#     from time import sleep
+#     @app.before_request
+#     def add_latency():
+#         sleep(0.25)
 
 #Homepage
 @app.route('/')
 def home():
     # index_event.wait()
     # return send_file(BytesIO(index_Queue[0]['index']), mimetype='text/html', etag=index_Queue[0]['etag'])
-    return send_file(f'{cwd}/static/index.html')
+    return send_file(f'{cwd}/static/index.html', mimetype='text/html')
 
 # Sends current mission icons, arg format f"?img={Biome.replace(' ', '-')}{mission['CodeName'].replace(' ', '-')}{mission['season']}" - see rotate_biomes_FLAT in drgmissionslib.py
 # eg http://127.0.0.1:5000/png?img=Glacial-StrataSpiked-Shelters0 (mission['CodeName'] is 'Spiked Shelter' and the season is s0)
@@ -290,11 +287,10 @@ def xp_calc():
         print(e)
         return '<!doctype html><html lang="en"><title>400 Bad Request</title><h1>Bad Request</h1><p>The server could not understand your request. Please make sure you have entered the correct information and try again.</p>', 400
 
-with open('token.txt', 'r') as f:
-    AUTH_TOKEN = f.read().strip()
-    f.close()
+AUTH_TOKEN = cfg['auth_token']
 
 #Route for deployment of weekly deep dive metadata
+file_parts = {}
 @app.route('/upload', methods=['GET', 'POST'])
 def upload():
     try:
@@ -307,7 +303,26 @@ def upload():
         file_ = request.files['file']
         filename = file_.filename
         
-        if filename.endswith('.json') or filename.endswith('.py'):
+        if filename.endswith('_part'):
+            actual_filename = filename.split('.json')[0]+'.json'
+            if actual_filename not in file_parts:
+                file_parts[actual_filename] = []
+                
+            if filename.endswith('last_part'):
+                file_.save(f'{cwd}/{filename}')
+                file_parts[actual_filename].append(filename)
+                
+                merge_parts(file_parts[actual_filename], actual_filename)
+                del file_parts[actual_filename]
+                
+                response_data = {'message': 'Success'}
+                return jsonify(response_data)
+                
+            else:
+                file_.save(f'{cwd}/{filename}')
+                file_parts[actual_filename].append(filename)
+           
+        elif filename.endswith('.json') or  filename.endswith('.py'):
             file_.save(f'{cwd}/{filename}')
             if filename.startswith('DD'):
                 shutil_copy(f'{cwd}/{filename}', f'{cwd}/static/json/{filename}')
@@ -325,7 +340,7 @@ def upload():
 
 @app.route('/test')
 def test():
-    return '<!doctype html><html><head><link rel ="stylesheet" href="/static/styles.css" type="text/css"><script src="/static/test.js"></script></head><body bgcolor="#202020"><select id="season" name="season" class="seasonBox"></select></div><p class="loading">Loading...</p></body></html>'
+    return send_file(f"{cwd}/static/test.html", mimetype='text/html')
 
 if __name__ == '__main__':        
     print('Starting threads...')

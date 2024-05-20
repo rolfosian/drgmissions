@@ -32,12 +32,22 @@ echo Make sure time sync is disabled on the host machine if using vm software th
 echo -----------------------------------------------
 setlocal enabledelayedexpansion
 
+:: Disable Automatic Windows Updates
 reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v NoAutoUpdate /t REG_DWORD /d 1 /f >nul
 reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows" /v NoAutoUpdate /t REG_DWORD /d 1 /f >nul
 PowerShell.exe -Command "Set-ItemProperty -Path 'HKLM:\Software\Policies\Microsoft\Windows\WindowsUpdate\AU' -Name AUOptions -Value 0" >nul
 ver >nul
-
 echo Automatic Windows Updates disabled.
+
+:: Disable Game DVR
+reg add "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\GameDVR" /v AppCaptureEnabled /t REG_DWORD /d 0 /f
+reg add "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\GameDVR" /v GameDVR_Enabled /t REG_DWORD /d 0 /f
+
+:: Disable Game Bar
+reg add "HKEY_CURRENT_USER\Software\Microsoft\GameBar" /v AllowAutoGameMode /t REG_DWORD /d 0 /f
+reg add "HKEY_CURRENT_USER\Software\Microsoft\GameBar" /v AutoGameModeEnabled /t REG_DWORD /d 0 /f
+reg add "HKEY_CURRENT_USER\Software\Microsoft\GameBar" /v UseNexusForGameBarEnabled /t REG_DWORD /d 0 /f
+echo Game Bar has been disabled.
 
 :PromptPassword
 set CURRENT_USERNAME=%USERNAME%
@@ -123,6 +133,17 @@ if not %ERRORLEVEL% equ 0 (
     set STEAM_PATH=!steampath:~32,-16!
 )
 ver >nul
+if not exist "!STEAM_PATH!\steamapps" (
+    mkdir "!STEAM_PATH!\steamapps"
+)
+if not exist "!STEAM_PATH!\steamapps\common" (
+    mkdir "!STEAM_PATH!\steamapps\common"
+)
+if not exist "!STEAM_PATH!\steamapps\common\Deep Rock Galactic" (
+    mkdir "!STEAM_PATH!\steamapps\common\Deep Rock Galactic"
+    mkdir "!STEAM_PATH!\steamapps\common\Deep Rock Galactic\FSD\Binaries
+    mkdir "!STEAM_PATH!\steamapps\common\Deep Rock Galactic\FSD\Binaries\Win64"
+)
 
 ::Specify the name of the python process
 set processName=python.exe
@@ -139,6 +160,7 @@ echo Compatibility setting applied for %processName% to run as administrator.
 
 ::Set the registry key to run the Steam process as administrator
 reg add "HKCU\SOFTWARE\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers" /v "!STEAM_PATH!\steam.exe" /t REG_SZ /d "~ RUNASADMIN" /f >nul
+reg add "HKCU\SOFTWARE\Valve\Steam" /v IgnoreCompatMode#Steam_WindowsCompat_Description_2 /t REG_DWORD /d 1 /f >nul
 for /f "tokens=*" %%i in ('reg query HKU') do (
     set "userKey=%%i"
     reg query "!userKey!\SOFTWARE" >nul 2>&1
@@ -180,7 +202,7 @@ mklink "%TARGET%" "%SOURCE%" >nul
     echo: 
     echo cd /d %%~dp0
     echo: 
-    echo %PYTHON_PATH% %SCRIPT_PATH%
+    echo %%PYTHON_PATH%% %%SCRIPT_PATH%%
     echo: 
     echo exit
 ) > "%DESKTOP%\Run_DeepDives.bat"

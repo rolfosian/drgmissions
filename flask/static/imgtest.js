@@ -118,19 +118,14 @@ function getPreviousThursdayTimestamp() {
     return timestamp;
 }
 
-async function getCurrentMissionData() {
-    var datetime = roundTimeDown(getCurrentDateTimeUTC())
-    datetime = replaceCharactersAtIndices(datetime, [[13, '-'], [16,'-']])
-    datetime = 'drgmissions' // dev
-    var data = await loadJSON(getDomainURL()+`/static/json/${datetime}.json`)
+async function getTodaysData() {
+    var todaysDate = new Date().toISOString().slice(0, 10)
+    var data = await loadJSON(getDomainURL()+`/static/json/${todaysDate}.json`)
     return data
 }
-async function getUpcomingMissionData() {
-    var datetime = roundTimeUp(getCurrentDateTimeUTC())
-    datetime = replaceCharactersAtIndices(datetime, [[13, '-'], [16,'-']])
-    datetime = 'drgmissionsupcoming' // dev
-    var data = await loadJSON(getDomainURL()+`/static/json/${datetime}.json`)
-    return data
+function getCurrentData(todaysData) {
+    let date = roundTimeDown(new Date().toISOString())
+    return todaysData[date]
 }
 function resizeCanvas(div, canvas, x, y) {
     const newWidth = canvas.width * x;
@@ -549,44 +544,86 @@ function renderDeepDiveStage(m_d, stageCount) {
 }
 
 async function getBiomes() {
-    var dictionary = await getCurrentMissionData();
+    var dictionary = await getTodaysMissionData();
+    dictionary = getCurrentData(dictionary)['Biomes']
     // var currentBiomes = await renderBiomes(dictionary);
     // var dictionary_ = await getUpcomingMissionData();
     // var upcomingBiomes = await renderBiomes(dictionary_);
 
     return [dictionary];
 }
-async function renderBiomes(dictionary) {
+// async function renderBiomes(dictionary) {
+//     let renderedBiomes = {};
+
+//     for (var season in dictionary) {
+//         var Biomes = dictionary[season]['Biomes']
+//         renderedBiomes[season] = {}
+//         renderedBiomes[season]['Biomes'] = {}
+
+//         for (let biome in Biomes) {
+//             let biomeMissions = Biomes[biome];
+//             let biome1 = [];
+
+//             let six = biomeMissions.length > 5;
+
+//             for (let i = 0; i < biomeMissions.length; i++) {
+//                 let mission = biomeMissions[i];
+//                 let mission1 = {};
+
+//                 mission1['CodeName'] = mission['CodeName'];
+//                 mission1['id'] = mission['id'];
+
+//                 let mission_icon_canvas_div = renderMission(mission);
+//                 mission1['rendered_mission'] = mission_icon_canvas_div;
+
+//                 biome1.push(mission1);
+//             }
+
+//             renderedBiomes[season]['Biomes'][biome] = biome1;
+//         };
+//     };
+
+//     return renderedBiomes;
+// }
+
+function renderBiomes(dictionary) {
     let renderedBiomes = {};
+    var Biomes = dictionary['Biomes'];
+    renderedBiomes['Biomes'] = {};
+    renderedBiomes['timestamp'] = dictionary['timestamp'];
 
-    for (var season in dictionary) {
-        var Biomes = dictionary[season]['Biomes']
-        renderedBiomes[season] = {}
-        renderedBiomes[season]['Biomes'] = {}
+    for (let biome in Biomes) {
+        let biomeMissions = Biomes[biome];
+        let biome1 = [];
 
-        for (let biome in Biomes) {
-            let biomeMissions = Biomes[biome];
-            let biome1 = [];
+        for (let i = 0; i < biomeMissions.length; i++) {
+            let mission = biomeMissions[i];
+            let mission1 = {};
 
-            let six = biomeMissions.length > 5;
-
-            for (let i = 0; i < biomeMissions.length; i++) {
-                let mission = biomeMissions[i];
-                let mission1 = {};
-
-                mission1['CodeName'] = mission['CodeName'];
-                mission1['id'] = mission['id'];
-
-                let mission_icon_canvas_div = renderMission(mission);
-                mission1['rendered_mission'] = mission_icon_canvas_div;
-
-                biome1.push(mission1);
+            if (mission.hasOwnProperty('season_modified')) {
+                mission1['season_modified'] = {};
+                for (let season in mission['season_modified']) {
+                    let modifiedMission = mission['season_modified'][season];
+                    mission1['season_modified'][season] = {};
+                    mission1['season_modified'][season]['CodeName'] = modifiedMission['CodeName'];
+                    mission1['season_modified'][season]['id'] = modifiedMission['id'];
+                    mission1['season_modified'][season]['season'] = modifiedMission['season'];
+                    let mission_icon_canvas_div = renderMission(modifiedMission);
+                    mission1['season_modified'][season]['rendered_mission'] = mission_icon_canvas_div;
+                }
             }
 
-            renderedBiomes[season]['Biomes'][biome] = biome1;
-        };
-    };
+            mission1['CodeName'] = mission['CodeName'];
+            mission1['id'] = mission['id'];
+            mission1['season'] = mission['season'];
 
+            let mission_icon_canvas_div = renderMission(mission);
+            mission1['rendered_mission'] = mission_icon_canvas_div;
+
+            biome1.push(mission1);
+        }
+        renderedBiomes['Biomes'][biome] = biome1;
+    };
     return renderedBiomes;
 }
 
@@ -776,23 +813,29 @@ var biomes;
 var dailyDealData;
 document.addEventListener('DOMContentLoaded', async function() {
     await preloadImagesAll();
-    await preloadFonts();
-    dailyDealData = await getDailyDealData()
-    document.getElementById('canvascontainer').appendChild(renderDeepDiveBiomeCodename('Magma Core', 'Distant Summit'))
-    // biomes =  await getBiomes();
-    // biomes = biomes[0]
-    // biomes = await renderBiomes(biomes)
-    // console.log(biomes)
-    // for (let season in biomes) {
-    //     console.log(season)
-    //     for (let biome in biomes[season]['Biomes']) {
-    //         let biomeMissions = biomes[season]['Biomes'][biome]
-    //         for (let i = 0; i < biomeMissions.length; i++) {
-    //             let mission = biomeMissions[i]
-    //             console.log(mission['CodeName'])
-    //             document.getElementById('canvascontainer').appendChild(mission['rendered_mission'])
-    //         }
-    //     }
-    // }
-
+    // await preloadFonts();
+    // dailyDealData = await getDailyDealData()
+    // document.getElementById('canvascontainer').appendChild(renderDeepDiveBiomeCodename('Magma Core', 'Distant Summit'))
+    let seasons = ['s0', 's1', 's2', 's3', 's4', 's5']
+    biomes =  await getBiomes();
+    biomes = biomes[0]
+    biomes = renderBiomes(biomes)
+    console.log(biomes)
+    for (let biome in biomes) {
+        let biomeMissions = biomes[biome]
+        for (let i = 0; i < biomeMissions.length; i++) {
+            let mission = biomeMissions[i]
+            if (mission.hasOwnProperty('season_modified')) {
+                for (let i = 0; i < seasons.length; i++) {
+                    let season = seasons[i]
+                    if (mission['season_modified'].hasOwnProperty(season)) {
+                        let mission1 = mission['season_modified'][season]
+                        document.getElementById('canvascontainer').appendChild(mission1['rendered_mission'])
+                    }
+                }
+            }
+            console.log(mission['CodeName'])
+            document.getElementById('canvascontainer').appendChild(mission['rendered_mission'])
+        }
+    }
 });

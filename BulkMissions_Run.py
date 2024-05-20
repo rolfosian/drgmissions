@@ -7,6 +7,8 @@ import json
 import re
 from drgmissions_scraper_utils import(
     order_dictionary_by_date_FIRST_KEY_ROUNDING,
+    upload_file,
+    yes_or_no,
     reconstruct_dictionary,
     disable_system_time,
     enable_system_time,
@@ -17,6 +19,7 @@ from drgmissions_scraper_utils import(
     maximize_window,
     delete_file,
     print,
+    cfg
 )
 
 def main():
@@ -171,6 +174,9 @@ def main():
     if patched:
         with open('drgmissionsgod.json', 'w') as f:
             json.dump(DRG, f)
+    
+    if yes_or_no('Upload JSON? Y/N: '):
+        upload_file(cfg, 'drgmissionsgod.json')
             
 if __name__ == '__main__':
     try:
