@@ -60,7 +60,7 @@ def yes_or_no(prompt):
 
 def confirm_user_input(prompt):
     while True:
-        user_input = input(f'{prompt}: ').replace(' ', '-')
+        user_input = input(f'{prompt}: ')
         if yes_or_no(f'Confirm {user_input}? Y/N: '):
             break
         else:
@@ -231,7 +231,9 @@ def initialize_service(service_name):
     subprocess.run(["systemctl", "enable", service_name])
 
 def main():
-    cwd = os.getcwd()
+    cwd = os.path.abspath(__file__)
+    cwd = '/'.join(cwd.split('/')[:-1])
+    
     service_name = confirm_user_input('Enter service name')
     service_bind = confirm_user_input('Enter service bind (eg 127.0.0.1:5000 ')
     set_gconf_bind(service_bind)
@@ -287,6 +289,11 @@ def main():
     initialize_service(service_name)
     print(f"{service_name} service enabled and running.")
     deactivate_venv(proj_cwd)
+    
+    print('Cleaning up...')
+    if os.getcwd() == cwd:
+        os.chdir('..')
+    shutil.rmtree(cwd)
 
 if __name__ == "__main__":
     distribution_name = get_linux_distribution()
