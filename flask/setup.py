@@ -211,9 +211,9 @@ def set_cfg(domain_name, service_bind, auth_token, max_body_size, use_https=Fals
     with open('cfg.json', 'w') as f:
         f.write(cfg)
         f.close()
-    print("\x1b[4;33m!!!!MAKE SURE TO COPY THIS TO YOUR scraper_cfg.json IN THE DEEP ROCK GALACTIC\BINARIES\WIN64 FOLDER!!!!\x1b[0m", include_color=False)
+    print("\x1b[4;33m!!!!MAKE SURE TO COPY THIS TO YOUR scraper_cfg.json IN THE DEEP ROCK GALACTIC\BINARIES\WIN64 FOLDER!!!!\x1b[0m\n", include_color=False)
     print(cfg)
-    print('------------------------------------------------------------------------------------------------------')
+    print('\n------------------------------------------------------------------------------------------------------')
     return cfg
 
 def set_gconf_bind(service_bind):
