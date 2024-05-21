@@ -1,4 +1,5 @@
 from pwd import getpwnam
+from grp import getgrnam
 import os
 import subprocess
 import shutil
@@ -6,8 +7,7 @@ import json
 import random
 import string
 import re
-print('this script is a work in progress dont run it idiot')
-quit()
+
 def get_linux_distribution():
     try:
         result = subprocess.run(['lsb_release', '-is'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -60,14 +60,11 @@ def yes_or_no(prompt):
 
 def confirm_user_input(prompt):
     while True:
-        user_input = input(f'{prompt}: ')
-        confirmation = yes_or_no(f'Confirm {user_input}? Y/N: ')
-        if confirmation:
+        user_input = input(f'{prompt}: ').replace(' ', '-')
+        if yes_or_no(f'Confirm {user_input}? Y/N: '):
             break
         else:
-            abort = yes_or_no('Abort setup? Y/N:')
-            if abort:
-                quit()
+            continue
     return user_input
 
 def user_exists(username):
@@ -77,19 +74,28 @@ def user_exists(username):
     except:
         return False
 
-def change_ownership_recursively(directory_path, new_owner):
+def create_group(group_name):
+    subprocess.run(['groupadd', group_name])
+
+def add_user_to_group(user_name, group_name):
+    subprocess.run(['usermod', '-aG', group_name, user_name])
+
+def change_ownership_recursively(directory_path, user_name, group_name ):
     try:
+        uid = getpwnam(user_name).pw_uid
+        gid = getgrnam(group_name).gr_gid
+        
         for root, dirs, files in os.walk(directory_path):
             for file in files:
                 file_path = os.path.join(root, file)
-                os.chown(file_path, new_owner, -1)
+                os.chown(file_path, uid, gid)
                 
             for directory in dirs:
                 dir_path = os.path.join(root, directory)
-                os.chown(dir_path, new_owner, -1)
+                os.chown(dir_path, uid, gid)
     except OSError as e:
         print(f"Failed to change ownership recursively for directory '{directory_path}': {e}")
-    
+
 
 def create_venv(proj_cwd):
     result = subprocess.run(["python3", "-m", "venv", f"{proj_cwd}/venv"], capture_output=True, text=True)
@@ -118,14 +124,14 @@ def match_item(item, ignore_list):
     return False
 
 def copy_directory(source, target, ignore_list):
-    os.makedirs(target, exist_ok=True)
+    os.mkdir(target+'/flask')
 
     for item in os.listdir(source):
         if match_item(item, ignore_list):
             continue
 
         source_item = os.path.join(source, item)
-        target_item = os.path.join(target, item)
+        target_item = os.path.join(target+'/flask', item)
 
         if os.path.isdir(source_item):
             shutil.copytree(source_item, target_item, ignore=shutil.ignore_patterns(*ignore_list), dirs_exist_ok=True)
@@ -164,7 +170,7 @@ def set_nginx_reverse_proxy(domain_name, service_bind, max_body_size, auth_token
     client_max_body_size {max_body_size};
 
     location / {{
-        proxy_pass ://{service_bind};
+        proxy_pass http://{service_bind};
         include proxy_params;
     }}
     
@@ -207,7 +213,7 @@ def set_cfg(domain_name, service_bind, auth_token, max_body_size, use_https=Fals
         f.close()
     print("\x1b[4;37m!!!!MAKE SURE TO COPY THIS TO YOUR scraper_cfg.json IN THE DEEP ROCK GALACTIC\BINARIES\WIN64 FOLDER!!!!\x1b[0m", include_color=False)
     print(cfg)
-    print('----------------------------------------------------------------------------------------------------------')
+    print('------------------------------------------------------------------------------------------------------')
     return cfg
 
 def set_gconf_bind(service_bind):
@@ -220,28 +226,27 @@ def set_gconf_bind(service_bind):
         f.close()
         
 def initialize_service(service_name):
-    subprocess.run(["systemctl", "daemon-reload"], shell=True)
-    subprocess.run(["systemctl," "start", service_name], shell=True)
-    subprocess.run(["systemctl", "enable", service_name], shell=True)
+    subprocess.run(["systemctl", "daemon-reload"])
+    subprocess.run(["systemctl", "start", service_name])
+    subprocess.run(["systemctl", "enable", service_name])
 
 def main():
     cwd = os.getcwd()
-    service_name = confirm_user_input('Enter service name').replace(' ', '-')
-    service_bind = confirm_user_input('Enter service bind (eg \x1b[1;37m127.0.0.1:5000\x1b[0m)')
+    service_name = confirm_user_input('Enter service name')
+    service_bind = confirm_user_input('Enter service bind (eg 127.0.0.1:5000 ')
     set_gconf_bind(service_bind)
     
     print('Generating auth token...')
     auth_token = generate_random_string()
     cfg = set_cfg("", service_bind, auth_token, 200000000)
     
-    proj_cwd = cwd+'/'+service_name
-    os.mkdir(service_name)
-    
     while True:
         service_user = confirm_user_input('Enter service user')
         if user_exists(service_user):
             break
-        print('Please enter a valid username.')
+        print('Please enter an existing valid username.')
+    
+    proj_cwd = f'/home/{service_user}/{service_name}'
     
     print('Creating venv...')
     create_venv(proj_cwd)
@@ -266,14 +271,17 @@ def main():
                     break
                 
         set_cfg(domain_name, service_bind, auth_token, max_body_size)
-        set_nginx_reverse_proxy(domain_name, service_bind, max_body_size)
+        set_nginx_reverse_proxy(domain_name, service_bind, max_body_size, auth_token)
     
     print('Copying files...')
     copy_directory(cwd, proj_cwd, ignore_list=['requirements.txt', 'setup.py', 'test.py', 'split_timestamps.py', 'test.js', 'imgest.js', '\..*'])
     print('Creating systemd service...')
     create_systemd_service(service_name, service_user, proj_cwd)
+    
+    create_group(service_name)
+    add_user_to_group(service_user, service_name)
     print(f'Changing directory owner to {service_user}')
-    change_ownership_recursively(proj_cwd, service_user)
+    change_ownership_recursively(proj_cwd, service_user, service_name)
     
     print('Initializing service...')
     initialize_service(service_name)
