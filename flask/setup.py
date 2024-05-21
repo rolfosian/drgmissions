@@ -234,6 +234,8 @@ def main():
     cwd = os.path.abspath(__file__)
     cwd = '/'.join(cwd.split('/')[:-1])
     
+    print('Welcome to the drgmissions service setup. Follow the prompts and make sure to copy down the cfg.json when it is generated.')
+    print('------------------------------------------------------------------------------------------------------------------------')
     service_name = confirm_user_input('Enter service name')
     service_bind = confirm_user_input('Enter service bind (eg 127.0.0.1:5000 ')
     set_gconf_bind(service_bind)
