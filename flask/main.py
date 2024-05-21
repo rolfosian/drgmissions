@@ -181,8 +181,8 @@ def home():
     # return send_file(BytesIO(index_Queue[0]['index']), mimetype='text/html', etag=index_Queue[0]['etag'])
     return send_file(f'{cwd}/static/index.html', mimetype='text/html')
 
-# Sends current mission icons, arg format f"?img={Biome.replace(' ', '-')}{mission['CodeName'].replace(' ', '-')}{mission['season']}" - see rotate_biomes_FLAT in drgmissionslib.py
-# eg http://127.0.0.1:5000/png?img=Glacial-StrataSpiked-Shelters0 (mission['CodeName'] is 'Spiked Shelter' and the season is s0)
+# Sends current mission icons, arg format f"?img={mission['CodeName'].replace(' ', '-')}{mission['season']}" - see rotate_biomes_FLAT in drgmissionslib.py
+# eg http://127.0.0.1:5000/png?img=Spiked-Shelters0 (mission['CodeName'] is 'Spiked Shelter' and the season is s0)
 @app.route('/png')
 def serve_img():
     try:
@@ -194,7 +194,7 @@ def serve_img():
         return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
 
 # Sends upcoming mission icons, arg format f"?img={Biome.replace(' ', '-')}{mission['CodeName'].replace(' ', '-')}{mission['season']}" - see rotate_biomes_FLAT in drgmissionslib.py
-# eg http://127.0.0.1:5000/upcoming_png?img=Glacial-StrataSpiked-Shelters0 (mission['CodeName'] is 'Spiked Shelter' and the season is s0)
+# eg http://127.0.0.1:5000/upcoming_png?img=Spiked-Shelters0 (mission['CodeName'] is 'Spiked Shelter' and the season is s0)
 @app.route('/upcoming_png')
 def serve_next_img():
     try:

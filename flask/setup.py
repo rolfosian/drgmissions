@@ -211,7 +211,7 @@ def set_cfg(domain_name, service_bind, auth_token, max_body_size, use_https=Fals
     with open('cfg.json', 'w') as f:
         f.write(cfg)
         f.close()
-    print("\x1b[4;37m!!!!MAKE SURE TO COPY THIS TO YOUR scraper_cfg.json IN THE DEEP ROCK GALACTIC\BINARIES\WIN64 FOLDER!!!!\x1b[0m", include_color=False)
+    print("\x1b[4;33m!!!!MAKE SURE TO COPY THIS TO YOUR scraper_cfg.json IN THE DEEP ROCK GALACTIC\BINARIES\WIN64 FOLDER!!!!\x1b[0m", include_color=False)
     print(cfg)
     print('------------------------------------------------------------------------------------------------------')
     return cfg
@@ -265,7 +265,7 @@ def main():
     install_packages(proj_cwd)
     
     if yes_or_no('Set up nginx reverse proxy site? Y/N: '):
-        domain_name = confirm_user_input('Enter domain name for site eg \x1b[1;37mexample.com\x1b[0m, or enter a lan address eg \x1b[1;37m192.168.1.69\x1b[0m')
+        domain_name = confirm_user_input('Enter domain name for site eg example.com, or enter your machine\'s LAN address (be sure it\'s configured to be static).')
         while True:
             try:
                 max_body_size = int(confirm_user_input('Enter max_body_size byte integer value for uploads (leave blank for default 200M, minimum 1M)'))
