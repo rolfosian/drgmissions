@@ -217,12 +217,17 @@ def set_cfg(domain_name, service_bind, auth_token, max_body_size, use_https=Fals
     return cfg
 
 def set_gconf_bind(service_bind):
+    gconf = ""
     with open('gunicorn.conf.py', 'r') as f:
-        gconf = f.readlines()
-        gconf = [line.replace("bind = '127.0.0.1:5000'", f"bind = '{service_bind}'") for line in gconf]
+        gconf_ = f.readlines()
+        for line in gconf_:
+            if line.startswith('bind'):
+                line = f"bind = '{service_bind}'"
+            gconf += f"{line}\n"
         f.close()
+        
     with open('gunicorn.conf.py', 'w') as f:
-        f.writelines(gconf)
+        f.write(gconf)
         f.close()
         
 def initialize_service(service_name):
