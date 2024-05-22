@@ -17,3 +17,6 @@ reload = True
 reload_extra_files = ['drgmissionsgod.json', 'drgdailydeals.json']
 threads = 8
 bind = '127.0.0.1:5000'
+keyfile = None
+certfile = None
+cert_reqs = 0
