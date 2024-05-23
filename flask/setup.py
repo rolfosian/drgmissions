@@ -24,7 +24,7 @@ def check_root_privileges():
     if os.geteuid() == 0:
         return
     else:
-        print("Please run this script with root privileges.")
+        print("Please run this setup script with root privileges.")
         quit()
 
 def wrap_with_color(string, color=37):
@@ -83,7 +83,7 @@ def confirm_user_input(prompt):
 invalid_user_group_chars = [
     '/', ':', ';', '|', ',', '&', '*', '<', '>', '?', '\\', '"', "'", '(', ')', '[', ']', '{', '}', ' ', '\t', '\n', '\r', '\0', '\x0b'
 ]
-def validate_user_group_string_valid_chars(s):
+def validate_user_group_chars(s):
     for char in invalid_user_group_chars:
         if char in s:
             raise Exception(f'Invalid character in {s}: {char}')
@@ -113,7 +113,7 @@ def validate_service_bind(service_bind):
         raise Exception('Port number is outside the valid range (0-65535).')
     
     if is_port_in_use(port, ip_address):
-        raise Exception('Port is in use.')
+        raise Exception('Port is in use or address is out of range.')
     
     return True
 
@@ -186,16 +186,25 @@ def create_user(username):
             print(f"Error: Failed to create user '{username}': {e}")
 
 def create_group(group_name):
+    print(f'Creating group {group_name}...')
+    c = 0
+    while True:
+        c += 1
+        result = subprocess.run(['getent', 'group', group_name], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False, text=True).stdout.strip()
+        if result != '':
+            print(f'Group {group_name} already exists. Using {group_name}{c} instead...')
+            group_name = group_name+str(c)
+            continue
+        break
+    
     subprocess.run(['groupadd', group_name])
+    return group_name
 
 def add_user_to_group(user_name, group_name):
     subprocess.run(['usermod', '-aG', group_name, user_name])
 
-def change_directory_ownership(directory_path, user_name, group_name ):
+def change_directory_ownership(directory_path, uid, gid ):
     try:
-        uid = getpwnam(user_name).pw_uid
-        gid = getgrnam(group_name).gr_gid
-        
         for root, dirs, files in os.walk(directory_path):
             for file in files:
                 file_path = os.path.join(root, file)
@@ -260,34 +269,32 @@ WantedBy=multi-user.target
 
 
 def get_cert_or_key_path_from_nginx_conf(nginx_conf_file_path, key_or_cert):
-    with open('{nginx_conf_file_path}', 'r') as f:
+    with open(f'{nginx_conf_file_path}', 'r') as f:
         conf = f.readlines()
         for line in conf:
             stripped_line = line.strip()
             if stripped_line.startswith(key_or_cert):
-                result = stripped_line.split(' ')
-                return result[1] if len(result) == 2 else ''.join(result.strip()).replace(key_or_cert, '') 
+                return ''.join(stripped_line.split(' ')).replace(key_or_cert, '')
 
 def create_certbot_deploy_hook_script(proj_cwd, nginx_conf_file_path, uid, gid):
     script = """import shutil
 import os
 
 def get_cert_or_key_path_from_nginx_conf(nginx_conf_file_path, key_or_cert):
-    with open('{nginx_conf_file_path}', 'r') as f:
+    with open(nginx_conf_file_path, 'r') as f:
         conf = f.readlines()
         for line in conf:
             stripped_line = line.strip()
             if stripped_line.startswith(key_or_cert):
-                result = stripped_line.split(' ')
-                return result[1] if len(result) == 2 else ''.join(result.strip()).replace(key_or_cert, '') 
+                return  ''.join(stripped_line.split(' ')).replace(key_or_cert, '') 
 
-ssl_key_path = get_cert_or_key_path_from_nginx_conf(nginx_conf_file_path, 'ssl_certificate')
+ssl_key_path = get_cert_or_key_path_from_nginx_conf('{nginx_conf_file_path}', 'ssl_certificate')
 ssl_key_fname = ssl_key_path.split('/')[-1]
-ssl_cert_path = get_cert_or_key_path_from_nginx_conf(nginx_conf_file_path, 'ssl_certificate_key')
+ssl_cert_path = get_cert_or_key_path_from_nginx_conf('{nginx_conf_file_path}', 'ssl_certificate_key')
 ssl_cert_fname = ssl_cert_path.split('/')[-1]
 
-new_ssl_cert_path = f"{proj_cwd}/flask/{ssl_cert_fname}"
-new_ssl_key_path = f"{proj_cwd}/flask/{ssl_key_fname}"
+new_ssl_cert_path = f"{proj_cwd}/flask/{{ssl_cert_fname}}"
+new_ssl_key_path = f"{proj_cwd}/flask/{{ssl_key_fname}}"
 
 shutil.copy(ssl_cert_path, new_ssl_cert_path)
 os.chown(new_ssl_cert_path, {uid}, {gid})
@@ -301,8 +308,8 @@ os.chmod(new_ssl_key_path, 0o640)
 
     return script
 
-def set_certbot_deploy_hook(script, domain_name, proj_cwd):
-    with open(f'certbot_deploy_hook.py', 'w') as f:
+def set_certbot_deploy_hook(script, domain_name, proj_cwd, cwd):
+    with open(f'{cwd}/certbot_deploy_hook.py', 'w') as f:
         f.write(script)
         f.close()
     
@@ -321,8 +328,8 @@ def set_certbot_deploy_hook(script, domain_name, proj_cwd):
         
     return
 
-def set_nginx_reverse_proxy(domain_name, service_bind, max_body_size, service_user, service_name, proj_cwd, cwd):
-    def handle_https_nginx_conf(line):
+def set_nginx_reverse_proxy(domain_name, service_bind, max_body_size, uid, gid, proj_cwd, cwd):
+    def handle_https_nginx_conf_line(line):
         stripped_line = line.strip()
         if stripped_line.startswith('listen 80'):
             return ''
@@ -333,10 +340,9 @@ def set_nginx_reverse_proxy(domain_name, service_bind, max_body_size, service_us
         else:
             return line
 
-    uid = getpwnam(service_user).pw_uid
-    gid = getgrnam(service_name).gr_gid
     max_body_size = str(max_body_size)
     use_https = False
+    use_certbot = False
 
     site_conf = """server {{
     listen 80;
@@ -368,6 +374,7 @@ def set_nginx_reverse_proxy(domain_name, service_bind, max_body_size, service_us
         use_https = True
         if not ''.join(domain_name.split('.')).isdigit():
             if yes_or_no('Run certbot for site? (Requires an actual domain name that you own) Y/N: '):
+                use_certbot = True
                 while True:
                     try:
                         subprocess.run(['apt', 'install', '-y', 'certbot', 'python3-certbot-nginx'], check=True)
@@ -385,7 +392,7 @@ def set_nginx_reverse_proxy(domain_name, service_bind, max_body_size, service_us
                         shutil.copy(ssl_cert_path, f'{cwd}/{ssl_cert_fname}')
                         
                         deploy_hook_script = create_certbot_deploy_hook_script(proj_cwd, domain_name, nginx_conf_file_path, uid, gid)
-                        set_certbot_deploy_hook(deploy_hook_script, domain_name, proj_cwd)
+                        set_certbot_deploy_hook(deploy_hook_script, domain_name, proj_cwd, cwd)
                         break
                     except Exception as e:
                         print('Error:', e, 'Try Again.')
@@ -406,7 +413,7 @@ def set_nginx_reverse_proxy(domain_name, service_bind, max_body_size, service_us
                     
                     except Exception as e:
                         print('Error:', e)
-                        if yes_or_no('Retry? Y to re-enter paths and try again, or N to abort: '):
+                        if yes_or_no('Retry? Y/N: '):
                             continue
                         
                         use_https = False
@@ -422,19 +429,24 @@ def set_nginx_reverse_proxy(domain_name, service_bind, max_body_size, service_us
         set_gconf(service_bind, ssl_reqs=(ssl_key_fname, ssl_cert_fname))
         
         with open(nginx_conf_file_path, 'r') as f:
-            site_conf = [handle_https_nginx_conf(line) for line in f.readlines()]
+            site_conf = [handle_https_nginx_conf_line(line) for line in f.readlines()]
             f.close()
-        
-        site_conf_ = ""
-        for line in site_conf:
-            if line.startswith('    client_max_body_size'):
-                line = f'{line}\n    ssl_certificate {proj_cwd}/flask/{ssl_cert_fname};\n    ssl_certificate_key {proj_cwd}/flask/{ssl_key_fname};'
-            site_conf_ += f"{line}\n"
-            
-        with open(nginx_conf_file_path, 'w') as f:
-            f.write(site_conf_)
-            f.close()
+
+        if not use_certbot:
+            site_conf_ = ""
+            for line in site_conf:
+                if line.startswith('    client_max_body_size'):
+                    line = f'{line}\n    ssl_certificate {proj_cwd}/flask/{ssl_cert_fname};\n    ssl_certificate_key {proj_cwd}/flask/{ssl_key_fname};'
+                site_conf_ += f"{line}\n"
                 
+            with open(nginx_conf_file_path, 'w') as f:
+                f.write(site_conf_)
+                f.close()
+        else:
+            with open(nginx_conf_file_path, 'w') as f:
+                f.writelines(site_conf)
+                f.close()
+
     return use_https
 
 def set_cfg(domain_name, service_bind, auth_token, max_body_size, use_https=False):
@@ -502,7 +514,7 @@ def main():
             continue
 
         try:
-            validate_user_group_string_valid_chars(service_name)
+            validate_user_group_chars(service_name)
             if systemd_service_exists(service_name):
                 print(f'{service_name} systemd service already exists. Please choose a different name.')
                 continue
@@ -513,7 +525,7 @@ def main():
     while True:
         service_user = confirm_user_input('Enter service user')
         try:
-            validate_user_group_string_valid_chars(service_user)
+            validate_user_group_chars(service_user)
         except Exception as e:
             print(f'Error: {e}')
             continue
@@ -524,17 +536,27 @@ def main():
             if yes_or_no(f'{service_user} is not an existing user. Create user? Y/N: '):
                 create_user(service_user)
                 break
+            
+    group_name = create_group(service_name)
+    print(f'Adding {service_user} to {group_name} group...')
+    add_user_to_group(service_user, group_name)
     
-    print(f'Creating group {service_name}...')
-    create_group(service_name)
-    print(f'Adding {service_user} to {service_name} group...')
-    add_user_to_group(service_user, service_name)
+    uid = getpwnam(service_user).pw_uid
+    gid = getgrnam(group_name).gr_gid
     
     proj_cwd = f'/home/{service_user}/{service_name}'
-    if proj_cwd.startswith(cwd):
-        cleanup_all = False
-    
-    if yes_or_no(f'Project root set to {proj_cwd}. Specify a different project root directory? Y/N: '):
+    print()
+    while True:
+        try:
+            validate_proj_cwd(proj_cwd, cwd)
+            print(f'Project root set to {proj_cwd}.')
+            break
+        except Exception as e:
+            print(f'Error: {e}')
+            proj_cwd = confirm_user_input('Specify Project root').strip()
+            continue
+
+    if yes_or_no(f'Specify a different project root directory? Y/N: '):
         while True:
             proj_cwd = confirm_user_input('Enter Project root').strip()
             try:
@@ -601,7 +623,7 @@ def main():
     create_systemd_service(service_name, service_user, proj_cwd)
     
     print(f'Changing directory owner to {service_user}...')
-    change_directory_ownership(proj_cwd, service_user, service_name)
+    change_directory_ownership(proj_cwd, uid, gid)
     
     print('Initializing service...')
     initialize_service(service_name)
