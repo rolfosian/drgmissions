@@ -463,7 +463,7 @@ def set_cfg(domain_name, service_bind, auth_token, max_body_size, use_https=Fals
         f.close()
     print("\x1b[4;33m!!!!MAKE SURE TO COPY THIS TO YOUR scraper_cfg.json IN THE DEEP ROCK GALACTIC\BINARIES\WIN64 FOLDER!!!!\x1b[0m\n", include_color=False)
     print(cfg)
-    print('\n------------------------------------------------------------------------------------------------------')
+    print('\n--------------------------------------------------------------------------------')
     return cfg
 
 def set_gconf(service_bind, ssl_reqs=None):
@@ -505,7 +505,7 @@ def main():
     cleanup_all = True
     
     print('Welcome to the drgmissions service setup. Follow the prompts and make sure to copy down the cfg.json when it is generated.')
-    print('------------------------------------------------------------------------------------------------------------------------')
+    print('--------------------------------------------------------------------------------')
     
     while True:
         service_name = confirm_user_input('Enter service name')
