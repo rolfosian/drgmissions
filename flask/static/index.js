@@ -339,6 +339,7 @@ async function preloadFonts(){
         document.fonts.add(fontFace);
     }
 
+    // console.log(`New fonts hash: ${simpleHash(JSON.stringify(base64LocalStoragesFonts))}`)
     localStorage.setItem('fonts', JSON.stringify(base64LocalStoragesFonts));
 
     base64LocalStoragesFonts = undefined;
@@ -362,6 +363,7 @@ async function preloadImagesAll() {
         preloadImages(deepDivesBanners, deepDivesBannersImages)
     ]);
     if (isLocalStorageAvailable_) {
+        // console.log(`New img hash: ${simpleHash(JSON.stringify(base64LocalStoragesImg))}`)
         localStorage.setItem('img', JSON.stringify(base64LocalStoragesImg));
     }
     base64LocalStoragesImg = undefined;
@@ -369,6 +371,7 @@ async function preloadImagesAll() {
 
 async function preloadHomepageScript() {
     let response = await fetch(`${domainURL}/static/homepage.js`);
+    // console.log(`New homepagescript hash: ${simpleHash(JSON.stringify(response.text()))}`)
     return response.text();
 }
 
@@ -1496,7 +1499,6 @@ function renderDailyDeal(dealDict) {
     ctx.textBaseline = 'middle';
 
     var text = "TODAY'S OFFER:";
-    var fillStyle = 'black';
     drawText(text, 200, 30, 'black', 45, 'CarbonBold-W00-Regular');
     drawText(resource, 200, 75, 'black', 60, 'Bungee-Regular');
 
@@ -2086,7 +2088,7 @@ async function verifyStorages(date) {
                     if (simpleHash(v) === localStoragesHashes[key]) {
                         localStorages[key] = JSON.parse(v);
                     } else {
-                        console.log(key, simpleHash(v));
+                        // console.log(`Old hash of ${key}:`, simpleHash(v));
                         setStorages(key, null);
                     }
  
@@ -2211,6 +2213,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         homepageScript.textContent = localStorages['homepageScript']
         document.head.appendChild(homepageScript);
         await onLoad();
+
         // await homepageScript.onload();
         
 

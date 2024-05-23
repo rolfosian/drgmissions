@@ -277,15 +277,15 @@ def find_duplicates(dictionary, invalid_keys):
 def check_sum_of_missions(dictionary, invalid_keys):
     missions_keys = []
     for timestamp, seasons_dict in dictionary.items():
-        for season, master in seasons_dict.items():
+        for master in seasons_dict.values():
             mission_count = 0
-            biomes = []
-            for biome, missions in master['Biomes'].items():
-                mission_count += len(missions)
+            for biome in master['Biomes']:
+                mission_count += len(master['Biomes'][biome])
             if mission_count not in [19, 20, 21, 22, 23, 24]:
                 missions_keys.append(timestamp)
                 if timestamp not in invalid_keys:
                     invalid_keys.append((timestamp, check_sum_of_missions.__name__))
+                    
     if missions_keys:
         print('Invalid number of missions in:')
         for key in missions_keys:
@@ -296,10 +296,9 @@ def check_sum_of_missions(dictionary, invalid_keys):
 def check_missions_keys(dictionary, invalid_keys):
     missions_keys = []
     for timestamp, seasons_dict in dictionary.items():
-        for season, master in seasons_dict.items():
-            biomes = []
-            for biome, missions in master['Biomes'].items():
-                for mission in missions:
+        for master in seasons_dict.values():
+            for biome in master['Biomes']:
+                for mission in master['Biomes'][biome]:
                     key_count = len(list(mission.keys()))
                     if key_count not in [6, 7, 8]:
                         missions_keys.append(f'{key}: {biome}')
@@ -312,23 +311,22 @@ def check_missions_keys(dictionary, invalid_keys):
     else:
         print('No sum of missions keys outside range.')
 
-def check_missions_length_complexity(dictionary, invalid_keys):
+def check_missions_length_complexity(dictionary):
     missions_keys = []
+    log = open('indefinite_lengths_complexities_log.txt', 'w')
     for timestamp, seasons_dict in dictionary.items():
-        for season, master in seasons_dict.items():
-            biomes = []
-            for biome, missions in master['Biomes'].items():
-                biomes.append(biome)
-            for biome in biomes:
+        for master in seasons_dict.values():
+            for biome in master['Biomes']:
                 for mission in master['Biomes'][biome]:
                     if mission['Complexity'] == 'Indefinite' or mission['Length'] == 'Indefinite':
-                        missions_keys.append(f'{timestamp}: {biome}')
-                        if timestamp not in invalid_keys:
-                            invalid_keys.append((timestamp, check_missions_length_complexity.__name__))
+                        missions_keys.append(f'{timestamp}: {mission["CodeName"]}')
+
     if missions_keys:
+        log.write('Indefinite complexity or length for mission(s) in:\n\n')
         print('Indefinite complexity or length for mission(s) in:')
-        for key_biome in missions_keys:
-            print(f'Key and Biome: {key_biome}')
+        for timestamp_codename in missions_keys:
+            log.write(f'Timestamp and CodeName: {timestamp_codename}\n')
+            print(f'Timestamp and CodeName: {timestamp_codename}')
     else:
         print('No indefinite complexities or lengths found.')
 
@@ -548,7 +546,7 @@ def validate_drgmissions(DRG, patched):
     find_duplicate_seasons(DRG, invalid_keys)
     find_duplicates(DRG, invalid_keys)
     check_sum_of_missions(DRG, invalid_keys)   
-    check_missions_length_complexity(DRG, invalid_keys)
+    check_missions_length_complexity(DRG)
     
     if invalid_keys:
         if os.path.isfile('poll.txt'):

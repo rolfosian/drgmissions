@@ -105,6 +105,9 @@ function Split(str, separator)
     end
     return result
 end
+function Strip(s)
+    return (s:gsub("^%s*(.-)%s*$", "%1"))
+end
 function HasKey(table, key)
     return table[key] ~= nil
 end
@@ -494,5 +497,6 @@ return {
     GetBiome = GetBiome,
     Exit = Exit,
     GetMissions = GetMissions,
-    CreatePollFile = CreatePollFile
+    CreatePollFile = CreatePollFile,
+    Strip = Strip
 }

@@ -313,31 +313,24 @@ async function preloadFonts(){
     }
 }
 
-function renderMission(m_d, six) {
+function renderMission(m_d) {
     const div = document.createElement('div');
-    div.classList.add('mission-hover-zoom')
-    div.classList.add('mission')
-    div.id = m_d['CodeName']
-    // Create a new canvas element
+    div.classList.add('mission-hover-zoom');
+    div.classList.add('mission');
+    div.id = m_d['CodeName'];
+
     const canvas = document.createElement('canvas');
-    canvas.title = m_d["CodeName"]
+    canvas.title = m_d["CodeName"];
     canvas.width = 350;
     canvas.height = 300;
     var ctx = canvas.getContext('2d');
 
-    // Draw background
-    ctx.fillStyle = 'rgba(0, 0, 0, 0)';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // Draw primary objective
     const primaryImg = primaryObjsImages[m_d['PrimaryObjective']];
     ctx.drawImage(primaryImg, 83, 58, primaryImg.width * 0.4, primaryImg.height * 0.4);
 
-    // Draw secondary objective
     const secondaryImg = secondaryObjsImages[m_d['SecondaryObjective']];
     ctx.drawImage(secondaryImg, -11, -21, secondaryImg.width * 0.6, secondaryImg.height * 0.6);
 
-    // Draw mission warnings if available
     if (m_d['MissionWarnings']) {
         let MissionWarnings = [];
         m_d['MissionWarnings'].forEach((warning) => {
@@ -355,20 +348,17 @@ function renderMission(m_d, six) {
         }
     }
 
-    // Draw mission mutator if available
     if (m_d['MissionMutator']) {
         const mutatorImg = mutatorsImages[m_d['MissionMutator']];
         ctx.drawImage(mutatorImg, 27, 92, mutatorImg.width * 0.38, mutatorImg.height * 0.38);
     }
 
-    // Draw complexity and length icons
     const complexityImg = complexitiesImages[m_d['Complexity']];
     ctx.drawImage(complexityImg, 107, 2, complexityImg.width * 0.45, complexityImg.height * 0.45);
 
     const lengthImg = lengthsImages[m_d['Length']];
     ctx.drawImage(lengthImg, 107, 242, lengthImg.width * 0.45, lengthImg.height * 0.45);
 
-    // Draw primary objective resource
     const values_resource = {
         'Mining Expedition,1,1': '200',
         'Mining Expedition,1,2': '225',
@@ -387,12 +377,14 @@ function renderMission(m_d, six) {
         'Elimination,2': '2',
         'Elimination,default': '3',
         'Salvage Operation,2': '2',
-        'Salvage Operation,default': '3'
+        'Salvage Operation,default': '3',
+        // 'Deep Scan, ' : '',
     };
 
     const hexagon = primaryObjResourcesImages['hexagon']
-    ctx.drawImage(hexagon, 21, 190, hexagon.width * 0.32, hexagon.height * 0.32);
+    ctx.drawImage(hexagon, 15, 190, hexagon.width * 0.32, hexagon.height * 0.32);
     drawResource(m_d['PrimaryObjective'], m_d['Complexity'], m_d['Length']);
+
 
     function drawResource() {
         const resource = primaryObjResourcesImages[m_d['PrimaryObjective']];
@@ -401,7 +393,7 @@ function renderMission(m_d, six) {
         else if (m_d['PrimaryObjective'] === 'Egg Hunt') scaleFactor = 0.20;
         else scaleFactor = 0.1;
 
-        ctx.drawImage(resource, 44, 205, resource.width * scaleFactor, resource.height * scaleFactor);
+        ctx.drawImage(resource, 38, 205, resource.width * scaleFactor, resource.height * scaleFactor);
 
         const text = getText(m_d['PrimaryObjective'], m_d['Complexity'], m_d['Length']);
         drawText(text, 'CarbonBold-W00-Regular', '35',  m_d['PrimaryObjective']);
@@ -420,40 +412,43 @@ function renderMission(m_d, six) {
         ctx.textAlign = 'center';
         var y = 280
         if (primaryObj == 'Mining Expedition') y -= 5
-        ctx.fillText(text, 69, y);
+        ctx.fillText(text, 63, y);
     }
     ctx.save();
 
-    resizeCanvas(div, ctx, canvas, 0.35, 0.35)
+    resizeCanvas(div, canvas, 0.35, 0.35)
     div.appendChild(canvas)
     return div;
 }
 
+function resizeCanvas(div, canvas, x, y) {
+    const newWidth = canvas.width * x;
+    const newHeight = canvas.height * y;
+
+    canvas.style.width = `${newWidth.toString()}px`;
+    canvas.style.height = `${newHeight.toString()}px`;
+    div.style.width = `${newWidth.toString()}px`;
+    div.style.height = `${newHeight.toString()}px`;
+}
+
 function renderDeepDiveStage(m_d, stageCount) {
     const div = document.createElement('div');
-    div.classList.add('mission-hover-zoom')
-    div.classList.add('mission')
-    div.id = m_d['CodeName']
-    // Create a new canvas element
+    div.classList.add('mission-hover-zoom');
+    div.classList.add('mission');
+    div.id = m_d['CodeName'];
+
     const canvas = document.createElement('canvas');
-    canvas.title = `Stage ${stageCount.toString()}`
+    canvas.title = `Stage ${stageCount.toString()}`;
     canvas.width = 350;
     canvas.height = 300;
     var ctx = canvas.getContext('2d');
 
-    // Draw background
-    ctx.fillStyle = 'rgba(0, 0, 0, 0)';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // Draw primary objective
     const primaryImg = primaryObjsImages[m_d['PrimaryObjective']];
     ctx.drawImage(primaryImg, 83, 58, primaryImg.width * 0.4, primaryImg.height * 0.4);
 
-    // Draw secondary objective
     const secondaryImg = secondaryObjsDDImages[m_d['SecondaryObjective']];
     ctx.drawImage(secondaryImg, -11, -21, secondaryImg.width * 0.6, secondaryImg.height * 0.6);
 
-    // Draw mission warnings if available
     if (m_d['MissionWarnings']) {
         let MissionWarnings = [];
         m_d['MissionWarnings'].forEach((warning) => {
@@ -471,19 +466,17 @@ function renderDeepDiveStage(m_d, stageCount) {
         }
     }
 
-    // Draw mission mutator if available
     if (m_d['MissionMutator']) {
         const mutatorImg = mutatorsImages[m_d['MissionMutator']];
         ctx.drawImage(mutatorImg, 27, 92, mutatorImg.width * 0.38, mutatorImg.height * 0.38);
     }
 
-    // Draw complexity and length icons
     const complexityImg = complexitiesImages[m_d['Complexity']];
     ctx.drawImage(complexityImg, 107, 2, complexityImg.width * 0.45, complexityImg.height * 0.45);
 
     const lengthImg = lengthsImages[m_d['Length']];
     ctx.drawImage(lengthImg, 107, 242, lengthImg.width * 0.45, lengthImg.height * 0.45);
-    // Draw primary objective resource        
+
     const values_resource = {
         'Mining Expedition,1,1': '200',
         'Mining Expedition,1,2': '225',
@@ -502,11 +495,12 @@ function renderDeepDiveStage(m_d, stageCount) {
         'Elimination,2': '2',
         'Elimination,default': '3',
         'Salvage Operation,2': '2',
-        'Salvage Operation,default': '3'
+        'Salvage Operation,default': '3',
+        // 'Deep Scan, ' : '' : ''
     };
 
-    const hexagon = primaryObjResourcesImages['hexagon']
-    ctx.drawImage(hexagon, 21, 190, hexagon.width * 0.32, hexagon.height * 0.32);
+    const hexagon = primaryObjResourcesImages['hexagon'];
+    ctx.drawImage(hexagon, 15, 190, hexagon.width * 0.32, hexagon.height * 0.32);
     drawResource(m_d['PrimaryObjective'], m_d['Complexity'], m_d['Length']);
 
     function drawResource() {
@@ -516,7 +510,7 @@ function renderDeepDiveStage(m_d, stageCount) {
         else if (m_d['PrimaryObjective'] === 'Egg Hunt') scaleFactor = 0.20;
         else scaleFactor = 0.1;
 
-        ctx.drawImage(resource, 44, 205, resource.width * scaleFactor, resource.height * scaleFactor);
+        ctx.drawImage(resource, 38, 205, resource.width * scaleFactor, resource.height * scaleFactor);
 
         const text = getText(m_d['PrimaryObjective'], m_d['Complexity'], m_d['Length']);
         drawText(text, 'CarbonBold-W00-Regular', '35',  m_d['PrimaryObjective']);
@@ -533,58 +527,25 @@ function renderDeepDiveStage(m_d, stageCount) {
         ctx.font = `${fontSize}px ${font}`;
         ctx.fillStyle = 'white';
         ctx.textAlign = 'center';
-        var y = 280
-        if (primaryObj == 'Mining Expedition') y -= 5
-        ctx.fillText(text, 69, y);
+        var y = 280;
+        if (primaryObj == 'Mining Expedition') y -= 5;
+        ctx.fillText(text, 63, y);
     }
     ctx.save();
-    resizeCanvas(div, ctx, canvas, 0.35, 0.35)
-    div.appendChild(canvas)
+    resizeCanvas(div, canvas, 0.35, 0.35);
+    div.appendChild(canvas);
     return div;
 }
 
 async function getBiomes() {
     var dictionary = await getTodaysMissionData();
-    dictionary = getCurrentData(dictionary)['Biomes']
+    dictionary = getCurrentData(dictionary)
     // var currentBiomes = await renderBiomes(dictionary);
     // var dictionary_ = await getUpcomingMissionData();
     // var upcomingBiomes = await renderBiomes(dictionary_);
 
     return [dictionary];
 }
-// async function renderBiomes(dictionary) {
-//     let renderedBiomes = {};
-
-//     for (var season in dictionary) {
-//         var Biomes = dictionary[season]['Biomes']
-//         renderedBiomes[season] = {}
-//         renderedBiomes[season]['Biomes'] = {}
-
-//         for (let biome in Biomes) {
-//             let biomeMissions = Biomes[biome];
-//             let biome1 = [];
-
-//             let six = biomeMissions.length > 5;
-
-//             for (let i = 0; i < biomeMissions.length; i++) {
-//                 let mission = biomeMissions[i];
-//                 let mission1 = {};
-
-//                 mission1['CodeName'] = mission['CodeName'];
-//                 mission1['id'] = mission['id'];
-
-//                 let mission_icon_canvas_div = renderMission(mission);
-//                 mission1['rendered_mission'] = mission_icon_canvas_div;
-
-//                 biome1.push(mission1);
-//             }
-
-//             renderedBiomes[season]['Biomes'][biome] = biome1;
-//         };
-//     };
-
-//     return renderedBiomes;
-// }
 
 function renderBiomes(dictionary) {
     let renderedBiomes = {};
@@ -739,21 +700,21 @@ function resizeImage(img, desiredWidth, desiredHeight) {
 }
 
 function renderDeepDiveBiomeCodename(biome, codename) {
-    const img = biomesDDImages[biome];
-    const canvas = document.createElement('canvas');
-    canvas.classList.add('dd-biome')
-    canvas.width = img.width;
-    canvas.height = img.height;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(img, 0, 0);
-
     const texts = ['CODENAME: ', codename];
-
-    const textColor = 'white';
-    const shadowColor = '#000000';
     const fontSize = 45;
-    
-    addShadowedTextToImage(canvas, texts, fontSize);
+    const canvas = document.createElement('canvas');
+    canvas.classList.add('dd-biome');
+    const ctx = canvas.getContext('2d');
+    for (let biomeName in biomesDD) {
+        if (biomeName == biome) {
+            const img = biomesDDImages[biomeName];
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+            addShadowedTextToImage(canvas, texts, fontSize);
+            break
+        }
+    }
     return canvas;
 }
 
@@ -772,7 +733,7 @@ function addShadowedTextToImage(canvas, texts, fontSize) {
         tempCtx.shadowColor = shadowColor;
         tempCtx.shadowBlur = 7;
         tempCtx.lineWidth = 5;
-        tempCtx.strokeStyle = 'black'
+        tempCtx.strokeStyle = 'black';
         tempCtx.strokeText(text, x, y);
         tempCtx.shadowBlur = 0
     }
@@ -803,10 +764,10 @@ function addShadowedTextToImage(canvas, texts, fontSize) {
 
     const codenameX = combinedX + descriptorWidth;
 
-    shadowText(codename, codenameX, y+15, 'black', fontSize, mainFontName)
-    drawText(codename, codenameX, y+15, 'white', fontSize, mainFontName)
+    shadowText(codename, codenameX, y+15, 'black', fontSize, mainFontName);
+    drawText(codename, codenameX, y+15, 'white', fontSize, mainFontName);
 
-    canvas.getContext('2d').drawImage(tempCanvas, 0, 0)
+    canvas.getContext('2d').drawImage(tempCanvas, 0, 0);
 }
 
 var biomes;

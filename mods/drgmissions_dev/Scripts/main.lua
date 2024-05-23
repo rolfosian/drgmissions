@@ -1,5 +1,4 @@
 local json = require("./mods/BulkMissionsScraper/Scripts/dkjson")
-
 function IsLoaded()
     local GeneratedMissions = FindAllOf('GeneratedMission')
     if GeneratedMissions then
@@ -45,13 +44,6 @@ function PressStartAndWaitForLoad()
 end
 
 function TestSeasonSeeds()
-    if IsLoaded() then
-        goto isloaded
-    else
-        PressStartAndWaitForLoad()
-    end
-    ::isloaded::
-
     local utils = require('./mods/BulkMissionsScraper/Scripts/bulkmissions_funcs')
     local SeasonsAndFuncs = {
         s0 = utils.S4Off,
@@ -78,8 +70,10 @@ function TestSeasonSeeds()
                 for s, seed in pairs(SeasonSeeds) do
                     if seed == GlobalSeed then
                         print(s)
+                        print(season)
                     end
                 end
+                break
             else
                 break
             end
@@ -87,15 +81,131 @@ function TestSeasonSeeds()
         SeasonSeeds[season] = GlobalSeed
     end
 end
+function TestTwoWeeks()
+    local currytime = nil
+    -- Get current UTC Time
+    local firstdate = os.date("!*t")
+    local current_time = os.time(firstdate)
+    --Set target date
+    local target_date = current_time + 1209600
+    -- Calculate the difference in seconds between the current UTC time and the target date
+    local diff_seconds = os.difftime(target_date, current_time)
+    -- Calculate total amount of 30 minute increments between current time and the target date
+    local total_increments = math.floor(diff_seconds / 1800)
+    total_increments = total_increments + 1
 
-function Main()
-    if IsLoaded() then
-        goto isloaded
-    else
-        PressStartAndWaitForLoad()
+    local utils = require('./mods/BulkMissionsScraper/Scripts/bulkmissions_funcs')
+    local SeasonsAndFuncs = {
+        s0 = utils.S4Off,
+        s4 = utils.S4On
+    }
+
+    -- Initialize Table
+    local god = {}
+    local count = 0
+    local missionscount = 0
+    local timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
+    local GlobalSeed = nil
+    local PreviousGlobalSeed = nil
+    local FSDGameInstance = FindFirstOf('FSDGameInstance')
+    -- Loop for the increments
+    for i = 1, total_increments do
+        while true do
+            GlobalSeed = FSDGameInstance:GetGlobalMissionSeed()
+            if GlobalSeed == PreviousGlobalSeed then
+                print('SEEN') -- has never seen as far as i can tell, prob ditch the stall when GetGlobalMissionSeed is trusted enough
+                break
+            else
+                break
+            end
+        end
+
+        local master = {}
+        local SeasonSeeds = {}
+        for season, season_switch in pairs(SeasonsAndFuncs) do
+            missionscount = 0
+            season_switch()
+
+            while true do
+                GlobalSeed = FSDGameInstance:GetGlobalMissionSeed()
+                if utils.IsInTable(SeasonSeeds, GlobalSeed) then
+                    print('SEED DUPLICATES FOUND: ')
+                    for s, seed in pairs(SeasonSeeds) do
+                        if seed == GlobalSeed then
+                            print(season)
+                            print(s)
+                        end
+                    break
+                    end
+                else
+                    break
+                end
+            end
+            SeasonSeeds[season] = GlobalSeed
+
+            master[season] = {}
+            master[season]['Biomes'] = utils.BiomesTable()
+
+            -- Get GeneratedMission UObjects
+            local b = nil
+            local missions = utils.GetMissions()
+            if missions then
+                timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
+                master[season]['timestamp'] = timestamp
+                for index, mission in pairs(missions) do
+                    b = utils.GetBiome(mission)
+                    missionscount = utils.UnpackStandardMission(mission, master, b, missionscount, season)
+                end
+                PreviousGlobalSeed = GlobalSeed
+            end
+            print('\nNo. of missions in '..season..': '..tostring(missionscount))
+            for biome, ms  in pairs(master[season]['Biomes']) do
+                if utils.IsTableEmpty(ms) then
+                    master[season]['Biomes'][biome] = nil
+                end
+            end
+        end
+
+        god[timestamp] = master
+
+        --Get 'current' time
+        currytime = os.date("%Y-%m-%d %H:%M:%S")
+        local year, month, day, hour, minute, second = currytime:match("(%d+)-(%d+)-(%d+) (%d+):(%d+):(%d+)")
+        minute = tonumber(minute)
+
+        -- Round down to the nearest half-hour
+        if minute >= 30 then
+            minute = 30
+        else
+            minute = 0
+        end
+
+        -- Set the second to 1
+        second = 1
+        currytime = string.format("%04d-%02d-%02d %02d:%02d:%02d", year, month, day, hour, minute, second)
+
+        -- Increment currytime forward by 30 minutes
+        local newtime = utils.IncrementDatetime(currytime)
+        newtime = utils.Split(newtime, ' ')
+
+        -- Remove ReverseDateFormat function and just use newtime[1] if your system date format is YY-MM-DD
+        local command = 'date '..utils.ReverseDateFormat(newtime[1])..' & time '..newtime[2]
+
+        -- Set time forward 30 minutes
+        print(command..'\n')
+        count = count + 1
+        print(tostring(count)..'\n')
+        os.execute(command)
     end
-    ::isloaded::
 
+    god = json.encode(god)
+    local file = io.open('drgmissionsdev.json', 'w')
+    if file then
+        file:write(god)
+        file:close()
+    end
+end
+function TestCurrentTimeOnly()
     local utils = require('./mods/BulkMissionsScraper/Scripts/bulkmissions_funcs')
     local SeasonsAndFuncs = {
         s0 = utils.S4Off,
@@ -119,6 +229,8 @@ function Main()
             GlobalSeed = FSDGameInstance:GetGlobalMissionSeed()
             if utils.IsInTable(SeasonSeeds, GlobalSeed) then
                 print('SEEN')
+                print(season)
+                print(GlobalSeed)
             else
                 break
             end
@@ -163,5 +275,13 @@ function Main()
 --     end
 end
 
-Main()
--- utils.Exit()
+if IsLoaded() then
+    goto isloaded
+else
+    PressStartAndWaitForLoad()
+end
+::isloaded::
+
+TestSeasonSeeds()
+-- TestCurrentTimeOnly()
+-- TestTwoWeeks()

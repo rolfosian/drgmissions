@@ -18,13 +18,10 @@ cwd = getcwd()
 
 try:
     if __name__ == '__main__':
+        filename = 'drgmissionsgod.json'
         if path.isfile(cwd+'/drgmissionsdev.json'):
             if yes_or_no('Run on dev json? Y/N: '):
                 filename = 'drgmissionsdev.json'
-            else:
-                filename = 'drgmissionsgod.json'
-        else:
-            filename = 'drgmissionsgod.json'
              
         if path.isfile(cwd+'/FSD-Win64-Shipping.exe'):
             if yes_or_no('Run JSON patcher? Y/N: '):
@@ -48,12 +45,12 @@ try:
         
         invalid_keys = []
         find_duplicate_seasons(DRG, invalid_keys)
-        check_missions_length_complexity(DRG, invalid_keys)
         find_missing_timestamps(DRG, invalid_keys)
         find_duplicates(DRG, invalid_keys)  
         check_sum_of_missions(DRG, invalid_keys)
         check_missions_keys(DRG, invalid_keys)
-        
+        check_missions_length_complexity(DRG)
+
         if invalid_keys:
             print('Invalid kv pairs found, writing to log...')
             with open('invalid_timestamps_log.txt', 'w') as f:

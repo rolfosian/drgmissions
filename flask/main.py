@@ -23,10 +23,10 @@ import json
 from flask import Flask, request, send_file, jsonify
 import threading
 from io import BytesIO
-from os import getcwd
+import os
 from shutil import copy as shutil_copy
 # import queue
-cwd = getcwd()
+cwd = os.getcwd()
 go_flag = threading.Event()
 go_flag.set()
 
@@ -325,6 +325,9 @@ def upload():
         elif filename.endswith('.json') or  filename.endswith('.py'):
             file_.save(f'{cwd}/{filename}')
             if filename.startswith('DD'):
+                for f in os.listdir(f"{cwd}/static/json"):
+                    if f.startswith('DD'):
+                        os.remove(f"{cwd}/static/json{f}")
                 shutil_copy(f'{cwd}/{filename}', f'{cwd}/static/json/{filename}')
             
         elif filename.endswith('icon.png'):
