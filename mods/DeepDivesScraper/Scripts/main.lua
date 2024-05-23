@@ -359,10 +359,15 @@ function UnpackDeepDiveMission(mission, master, t)
             end
         end
     end
-    -- if mission1['Length'] == 'Indefinite' or mission1['Complexity'] == 'Indefinite' then
-    --     print(missionfullname)
-    --     print(TableToString(mission1, "  "))
-    -- end
+
+    if mission1['Length'] == 'Indefinite' or mission1['Complexity'] == 'Indefinite' then
+        mission1['debug'] = {
+        dna = mission:GetPropertyValue("MissionDNA"):GetFullName(),
+        ComplexityLimit = ComplexityLimit,
+        DurationLimit = DurationLimit
+        }
+    end
+    
     table.insert(master['Deep Dives'][t]['Stages'], mission1)
 end
 function GetMissions()

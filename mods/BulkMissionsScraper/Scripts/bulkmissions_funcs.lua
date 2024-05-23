@@ -421,9 +421,13 @@ function UnpackStandardMission(mission, master, b, missionscount, season)
         mission1 = FinalizeComplexityAndLength(mission1, MissionDNA, length, complexity)
     end
 
-    -- if mission1['Length'] == 'Indefinite' or mission1['Complexity'] == 'Indefinite' then
-    --     print(missionfullname)
-    -- end
+    if mission1['Length'] == 'Indefinite' or mission1['Complexity'] == 'Indefinite' then
+        mission1['debug'] = {
+        dna = mission:GetPropertyValue("MissionDNA"):GetFullName(),
+        ComplexityLimit = ComplexityLimit,
+        DurationLimit = DurationLimit
+        }
+    end
     
     table.insert(master[season]['Biomes'][b], mission1)
     return missionscount
