@@ -1,8 +1,10 @@
 def post_worker_init(worker):
     from main import start_threads, join_threads, go_flag, set_signal_handlers
     from signal import SIGINT, SIGTERM
+    from functools import wraps
     
     def custom_changed(func):
+        @wraps(func)
         def wrapper(*args, **kwargs):
             join_threads(go_flag)
             return func(*args, **kwargs)
@@ -17,6 +19,7 @@ reload = True
 reload_extra_files = ['drgmissionsgod.json', 'drgdailydeals.json']
 threads = 8
 bind = '127.0.0.1:5000'
+
 keyfile = None
 certfile = None
 cert_reqs = 0
