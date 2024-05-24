@@ -1611,6 +1611,20 @@ function setupIdleVideoPause(videoElementId, idleTimeThreshold) {
         }
     });
 
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            if (!isPausedByIdle && videoElement.style.display != 'none') {
+                videoElement.pause();
+                isPausedByBlur = true;
+            }
+        } else {
+            if (isPausedByBlur && videoElement.style.display != 'none') {
+                videoElement.play();
+                isPausedByBlur = false;
+            }
+        }
+    });
+
     resetIdleTimer();
 }
 

@@ -88,7 +88,7 @@ def yes_or_no(prompt):
 
 def confirm_user_input(prompt):
     while True:
-        user_input = input(f'{prompt}: ')
+        user_input = input(f'{prompt}:')
         if yes_or_no(f'Confirm {user_input}? Y/N:'):
             break
         else:
@@ -282,23 +282,6 @@ WantedBy=multi-user.target
 """)
         f.close()
 
-
-def generate_ssl_cert_and_key(domain_name, file_path):
-    subprocess.run(["apt", "install", "-y", "openssl"], capture_output=True)
-    
-    key_path = f"{file_path}/{domain_name}.key"
-    cert_path = f"{file_path}/{domain_name}.crt"
-
-    subprocess.run(["openssl", "genrsa", "-out", key_path, "2048"], check=True)
-    subprocess.run(["openssl", "req", "-new", "-key", key_path, "-out", f"{file_path}/{domain_name}.csr",
-                    "-subj", f"/CN={domain_name}"], check=True)
-    subprocess.run(["openssl", "x509", "-req", "-days", "365", "-in", f"{file_path}/{domain_name}.csr", "-signkey",
-                    key_path, "-out", cert_path],check=True)
-    # subprocess.run(["cat", cert_path, cert_path, ">>", f"{file_path}/{domain_name}-fullchain.crt"])
-
-    print(f"SSL certificate and private key generated successfully for {domain_name}. Cert is valid for 365 days.")
-    return cert_path, key_path
-
 def get_cert_or_key_path_from_nginx_conf(nginx_conf_file_path, key_or_cert):
     with open(f'{nginx_conf_file_path}', 'r') as f:
         conf = f.readlines()
@@ -405,8 +388,8 @@ def set_certbot_deploy_hook(script, domain_name, proj_cwd, cwd):
         cfg_ = f.readlines()
         for line in cfg_:
             if line.startswith(f'[renewalparams]'):
-                line = f'{line}\ndeploy-hook = \'python3 {proj_cwd}/flask/certbot_deploy_hook.py\'\n'
-            cfg += f'{line}'
+                line = f'{line}\ndeploy-hook = \'python3 {proj_cwd}/flask/certbot_deploy_hook.py\''
+            cfg += f'{line}\n'
         f.close()
     
     with open(f'/etc/letsencrypt/renewal/{domain_name}.conf', 'w') as f:
@@ -471,18 +454,18 @@ def set_nginx_reverse_proxy(domain_name, service_name, service_bind, max_body_si
     subprocess.run(['nginx', '-t'])
     subprocess.run(['systemctl', 'reload', 'nginx'])
     
-    if yes_or_no('Use SSL? Y/N (You should definitely press N, this needs much more testing. Set up SSL manually for now after setup if you want to use it):'):
-        use_https = True
-        enforce_https = yes_or_no('Enforce SSL for all connections? Y/N:')
-        
-        if not ''.join(domain_name.split('.')).isdigit():
+    if not ''.join(domain_name.split('.')).isdigit():
+        if yes_or_no('Use SSL? Y/N (You should definitely press N, this needs much more testing. Set up SSL manually for now after setup if you want to use it):'):
+            use_https = True
+            enforce_https = yes_or_no('Enforce SSL for all connections? Y/N:')
+            
             if yes_or_no('Run certbot for site? (Requires an actual domain name that you own) Y/N:'):
                 use_certbot = True
                 while True:
                     try:
                         subprocess.run(['apt', 'install', '-y', 'certbot', 'python3-certbot-nginx'], check=True)
                         
-                        if yes_or_no('Run certbot with --register-unsafely-without-email option? Y/N: '):
+                        if yes_or_no('Run certbot with --register-unsafely-without-email option? Y/N:'):
                             subprocess.run(['certbot', '--register-unsafely-without-email'], check=True)
                         subprocess.run(['certbot', '--nginx', domain_name], check=True)
                         
@@ -490,9 +473,12 @@ def set_nginx_reverse_proxy(domain_name, service_name, service_bind, max_body_si
                         ssl_key_fname = ssl_key_path.split('/')[-1]
                         ssl_cert_path = get_cert_or_key_path_from_nginx_conf(nginx_conf_file_path, 'ssl_certificate_key')
                         ssl_cert_fname = ssl_cert_path.split('/')[-1]
+                        
+                        new_ssl_key_path = f'{cwd}/{ssl_key_fname}'
+                        new_ssl_cert_path = f'{cwd}/{ssl_cert_fname}'
 
-                        shutil.copy(ssl_key_path, f'{cwd}/{ssl_key_fname}')
-                        shutil.copy(ssl_cert_path, f'{cwd}/{ssl_cert_fname}')
+                        shutil.copy(ssl_key_path, new_ssl_key_path)
+                        shutil.copy(ssl_cert_path, new_ssl_cert_path)
                         
                         deploy_hook_script = create_certbot_deploy_hook_script(proj_cwd, service_name, service_bind, max_body_size, enforce_https, nginx_conf_file_path, uid, gid)
                         set_certbot_deploy_hook(deploy_hook_script, domain_name, proj_cwd, cwd)
@@ -512,11 +498,12 @@ def set_nginx_reverse_proxy(domain_name, service_name, service_bind, max_body_si
                     ssl_cert_path = confirm_user_input('Enter ssl cert absolute path').strip()
                     try:
                         ssl_key_fname = ssl_key_path.split('/')[-1]
-                        shutil.copy(ssl_key_path, f'{cwd}/{ssl_key_fname}')
+                        new_ssl_key_path = f'{cwd}/{ssl_key_fname}'
+                        shutil.copy(ssl_key_path, new_ssl_key_path)
                         
                         ssl_cert_fname = ssl_cert_path.split('/')[-1]
-                        shutil.copy(ssl_cert_path, f'{cwd}/{ssl_cert_fname}')
-
+                        new_ssl_cert_path = f'{cwd}/{ssl_cert_fname}'
+                        shutil.copy(ssl_cert_path, new_ssl_cert_path)
                         break
                     
                     except Exception as e:
@@ -525,24 +512,7 @@ def set_nginx_reverse_proxy(domain_name, service_name, service_bind, max_body_si
                             continue
                         use_https = False
                         print(f'If you would like to enable HTTPS entirely manually, copy your cert and key to {proj_cwd}/flask after setup is completed, then edit the gunicorn.conf.py certfile and keyfile vars to their filenames respectively and set cert_reqs from 0 to 2 if enforcing for all connections, or set it to 1 for optional, and don\'t forget to edit the /etc/nginx/sites-available file accordingly also')
-                        break           
-        else:
-            #local address cert this doesnt work at all btw dont bother
-            while True:
-                try:
-                    ssl_cert_path, ssl_key_path = generate_ssl_cert_and_key(domain_name, cwd)
-                    ssl_cert_fname = ssl_cert_path.split('/')[-1]
-                    ssl_key_fname = ssl_key_path.split('/')[-1]
-                    new_ssl_cert_path = f'{proj_cwd}/flask/{ssl_cert_fname}'
-                    new_ssl_key_path = f'{proj_cwd}/flask/{ssl_key_fname}'
-                    break
-                except Exception as e:
-                    print('Error:', e)
-                    if yes_or_no('Retry? Y/N: '):
-                        continue
-                    use_https = False
-                    print(f'If you would like to enable HTTPS entirely manually, copy your cert and key to {proj_cwd}/flask after setup is completed, then edit the gunicorn.conf.py certfile and keyfile vars to their filenames respectively and set cert_reqs from 0 to 2 if enforcing for all connections, or set it to 1 for optional, and don\'t forget to edit the /etc/nginx/sites-available file accordingly also')
-                    break
+                        break
 
     if use_https:
         set_gconf(service_bind, enforce_https=enforce_https, ssl_reqs=(ssl_key_fname, ssl_cert_fname))
@@ -554,14 +524,14 @@ def set_nginx_reverse_proxy(domain_name, service_name, service_bind, max_body_si
             
     return use_https
 
-def set_cfg(domain_name, service_bind, auth_token, max_body_size, use_https=False, cert_and_key=None):
+def set_cfg(domain_name, service_bind, auth_token, max_body_size, use_https=False, is_reverse_proxy=False):
     cfg = json.dumps({
     "domain_name" : domain_name,
     "max_body_size" : max_body_size,
     "service_bind" : service_bind,
     "auth_token" : auth_token,
     "use_https" : use_https,
-    "local_ssl" : cert_and_key
+    'is_reverse_proxy' : is_reverse_proxy
     }, indent=1)
     
     with open('cfg.json', 'w') as f:
@@ -694,7 +664,9 @@ def main():
     domain_name = ""
     max_body_size = 200000000
     use_https = False
+    is_reverse_proxy = False
     if yes_or_no('Set up nginx reverse proxy? Y/N:'):
+        is_reverse_proxy = True
         while True:
             domain_name = confirm_user_input('Enter domain name for site eg example.com, or enter your machine\'s LAN address (be sure that the LAN address is configured to be static)')
             if ''.join(domain_name.split('.')).isdigit():
@@ -711,21 +683,21 @@ def main():
         
         while True:
             try:
-                max_body_size = int(confirm_user_input('Enter max_body_size byte integer value for uploads (leave blank for default 200M, minimum 1M)'))
+                max_body_size = int(confirm_user_input('Enter client_max_body_size byte integer value for uploads (leave blank for default 200M, minimum 1M)'))
                 if max_body_size < 1000000:
                     print('Please enter a max size equal to or greater than 1,000,000')
                     continue
-                if yes_or_no(f'max_body_size set to {max_body_size}. Proceed? Y/N:'):
+                if yes_or_no(f'client_max_body_size set to {max_body_size}. Proceed? Y/N:'):
                     break
             except:
-                if yes_or_no(f'max_body_size set to {max_body_size}. Proceed? Y/N:'):
+                if yes_or_no(f'client_max_body_size set to {max_body_size}. Proceed? Y/N:'):
                     break
                 
         use_https = set_nginx_reverse_proxy(domain_name, service_name, service_bind, max_body_size, uid, gid, proj_cwd, cwd)
     
     print('Generating auth token...')
     auth_token = generate_random_string()
-    set_cfg(domain_name, service_bind, auth_token, max_body_size, use_https=use_https)
+    set_cfg(domain_name, service_bind, auth_token, max_body_size, use_https=use_https, is_reverse_proxy=is_reverse_proxy)
     
     print('Copying files...')
     copy_directory(cwd, proj_cwd, ignore_list=['requirements.txt', 'setup.py', 'test.py', 'split_timestamps.py', 'test.js', 'imgest.js', '\..*'])

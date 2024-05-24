@@ -1,13 +1,14 @@
-from PIL import Image, ImageDraw, ImageFont, ImageFilter
 from hashlib import md5
 from time import sleep
 from io import BytesIO
 import os
-from datetime import datetime, timedelta
 import shutil
 import glob
 import json
 import gc
+from PIL import Image, ImageDraw, ImageFont, ImageFilter
+from datetime import datetime, timedelta
+from functools import wraps
 # import subprocess
 #from concurrent.futures import ThreadPoolExecutor
 #from concurrent.futures import ProcessPoolExecutor
@@ -1176,7 +1177,7 @@ def group_by_day_and_split_all(DRG):
             AllTheDeals = json.load(f)
         
             for timestamp, deal in AllTheDeals.items():
-                deal[timestamp] = timestamp
+                deal['timestamp'] = timestamp
                 try:
                     DRG[timestamp.split('T')[0]]['dailyDeal'] = deal
                 except:
@@ -1489,6 +1490,7 @@ def SERVER_READY(index_event):
     return
 
 def timestamped_print(func):
+    @wraps(func)
     def wrapper(*args, **kwargs):
         include_timestamp = kwargs.pop('include_timestamp', True)
         args = [str(arg) for arg in args]
@@ -1501,6 +1503,23 @@ def timestamped_print(func):
         return func(*args, **kwargs)
     return wrapper
 print = timestamped_print(print)
+
+def timestamped_write(func):
+    @wraps(func)
+    def wrapper(data):
+        if type(data) == str:
+            timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+            data = f'{timestamp}: {data}'
+        return func(data)
+    return wrapper
+def timestamped_open_wrapper(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        f = func(*args, **kwargs)
+        f.write = timestamped_write(f.write) 
+        return f
+    return wrapper
+open_with_timestamped_write = timestamped_open_wrapper(open)
 
 def cfg_():
     with open('cfg.json', 'r') as f:

@@ -1,4 +1,6 @@
 from datetime import datetime, timedelta
+from functools import wraps
+from ctypes import WinDLL
 from copy import deepcopy
 import subprocess
 import time
@@ -8,7 +10,6 @@ import requests
 import winreg
 import json
 import re
-from ctypes import WinDLL
 import threading
 
 def cfg_():
@@ -58,6 +59,7 @@ def delete_file(filename):
             continue
 
 def timestamped_print(func):
+    @wraps
     def wrapper(*args, **kwargs):
         include_timestamp = kwargs.pop('include_timestamp', True)
         args = [str(arg) for arg in args]
@@ -370,15 +372,15 @@ def upload_file(cfg, file_path, max_body_size):
     domain_name = cfg['domain_name']
     bearer_token = cfg['auth_token']
     max_body_size = cfg['max_body_size']
+    is_reverse_proxy = cfg['is_reverse_proxy']
     
-    if domain_name.startswith('127'):
-        domain_name = cfg['service_bind']
-    elif domain_name[0].isdigit():
-        domain_name = domain_name+cfg['service_bind'].split(':')[1]
-
-    protocol = 'https' if cfg['use_https'] else 'http'
-    
-    url = f'{protocol}://{domain_name}/upload' if domain_name != "" else f"{protocol}://{cfg['service_bind']}/upload"
+    protocol = 'http'
+    if cfg['use_https']:
+        protocol = 'https'
+    if is_reverse_proxy:
+        url = f'{protocol}://{domain_name}/upload'
+    else:
+        f"{protocol}://{cfg['service_bind']}/upload"
     
     headers = {
         'Authorization': 'Bearer ' + bearer_token

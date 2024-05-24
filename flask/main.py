@@ -15,6 +15,7 @@ from drgmissionslib import (
     SERVER_READY,
     merge_parts,
     print,
+    open_with_timestamped_write,
     cfg,
     class_xp_levels,
     Dwarf
@@ -327,7 +328,7 @@ def upload():
             if filename.startswith('DD'):
                 for f in os.listdir(f"{cwd}/static/json"):
                     if f.startswith('DD'):
-                        os.remove(f"{cwd}/static/json{f}")
+                        os.remove(f"{cwd}/static/json/{f}")
                 shutil_copy(f'{cwd}/{filename}', f'{cwd}/static/json/{filename}')
             
         elif filename.endswith('icon.png'):
@@ -338,7 +339,9 @@ def upload():
             
         response_data = {'message': 'Success'}
         return jsonify(response_data)
-    except:
+    except Exception as e:
+        with open_with_timestamped_write('error.log', 'a') as f:
+            f.write(f'{e}\n')
         return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
 
 @app.route('/test')
