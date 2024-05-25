@@ -40,11 +40,12 @@ def wrapped_print(func):
         
         width = shutil.get_terminal_size().columns
         text = ' '.join(str(arg) for arg in args)
+        
         if text_wrap:
             text = textwrap.fill(text, width=width)
         if include_color:
-            wrapped_text = wrap_with_color(text)
-        return func(wrapped_text, **kwargs)
+            text = wrap_with_color(text)
+        return func(text, **kwargs)
     return wrapper
 print = wrapped_print(print)
 
@@ -537,8 +538,8 @@ def set_cfg(domain_name, service_bind, auth_token, max_body_size, use_https=Fals
     with open('cfg.json', 'w') as f:
         f.write(cfg)
         f.close()
-    print("\x1b[4;33m!!!!COPY THIS TO YOUR scraper_cfg.json IN THE DEEP ROCK GALACTIC\BINARIES\WIN64 FOLDER!!!!\x1b[0m\n", text_wrap=False, include_color=False)
-    print(cfg)
+    print("\x1b[4;33m!!!!COPY THIS TO YOUR scraper_cfg.json IN THE DEEP ROCK GALACTIC\BINARIES\WIN64 FOLDER!!!!\x1b[0m\n", include_color=False)
+    print(cfg, text_wrap=False)
     print('\n--------------------------------------------------------------------------------')
     return cfg
 
@@ -630,7 +631,7 @@ def main():
     while True:
         try:
             validate_proj_cwd(proj_cwd, cwd)
-            print(f'Project root set to {proj_cwd}.')
+            print(f'Project root set to \x1b[0;92m{proj_cwd}')
             break
         except Exception as e:
             print(f'Error: {e}')
@@ -648,7 +649,7 @@ def main():
                 continue
 
     while True:
-        service_bind = confirm_user_input('Enter service bind (eg 127.0.0.1:5000)')
+        service_bind = confirm_user_input('Enter service bind (eg 127.0.0.1:5000)').replace('localhost', '127.0.0.1')
         try:
             validate_service_bind(service_bind)
             break
