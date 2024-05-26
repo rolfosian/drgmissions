@@ -90,7 +90,7 @@ def yes_or_no(prompt):
 def confirm_user_input(prompt):
     while True:
         user_input = input(f'{prompt}:')
-        if yes_or_no(f'Confirm {user_input}? Y/N:'):
+        if yes_or_no(f'Confirm \x1b[4;33m{user_input}\x1b[0m? \033[1;37mY/N:'):
             break
         else:
             continue
@@ -340,7 +340,7 @@ def get_cert_or_key_path_from_nginx_conf(nginx_conf_file_path, key_or_cert):
         for line in conf:
             stripped_line = line.strip()
             if stripped_line.startswith(key_or_cert):
-                return  ''.join(stripped_line.split()).replace(key_or_cert, '') 
+                return  ''.join(stripped_line.split()).replace(key_or_cert, '')
 
 nginx_conf_file_path = '{nginx_conf_file_path}'
 
@@ -516,7 +516,7 @@ def set_nginx_reverse_proxy(domain_name, service_name, service_bind, max_body_si
                         break
 
     if use_https:
-        set_gconf(service_bind, enforce_https=enforce_https, ssl_reqs=(ssl_key_fname, ssl_cert_fname))
+        set_gconf(service_bind, proj_cwd=proj_cwd, enforce_https=enforce_https, ssl_reqs=(ssl_key_fname, ssl_cert_fname))
 
         site_conf = add_ssl_server_block_to_nginx_conf(site_conf, domain_name, max_body_size, service_bind, new_ssl_cert_path, new_ssl_key_path, enforce_https=enforce_https)
         with open(nginx_conf_file_path, 'w') as f:

@@ -1,3 +1,5 @@
+from certifi import where
+
 def post_worker_init(worker):
     from main import start_threads, join_threads, go_flag, set_signal_handlers
     from signal import SIGINT, SIGTERM
@@ -20,6 +22,7 @@ reload_extra_files = ['drgmissionsgod.json', 'drgdailydeals.json']
 threads = 8
 bind = '127.0.0.1:5000'
 
+ca_certs = where()
 keyfile = None
 certfile = None
 cert_reqs = 0
