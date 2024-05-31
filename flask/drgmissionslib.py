@@ -5,7 +5,6 @@ import os
 import shutil
 import glob
 import json
-import gc
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 from datetime import datetime, timedelta
 from functools import wraps
@@ -843,6 +842,7 @@ def render_deepdives(DeepDives):
                 has_id_0 = True
         for stage in deepdive['Stages']:
             if has_id_999 and has_id_0:
+        # if sum([stage['id'] for stage in deepdive['Stages']]) == 1002:
                 if stage['id'] == 999:
                     stage['id'] = -1
                     
@@ -1207,7 +1207,6 @@ def rotate_jsons_days(DRG, num_days, go_flag):
         start_date = sorted_timestamps[0][0]
         end_date = sorted_timestamps[-1][0]
         
-        
         complete_dates = [start_date + timedelta(days=i) for i in range((end_date - start_date).days + 1)]
         complete_data = {date.strftime('%Y-%m-%d'): timestamps.get(date, 0) for date in complete_dates}
         
@@ -1382,7 +1381,6 @@ def rotate_timestamps(tstamp_Queue, next_tstamp_Queue, go_flag):
 # this runs like shit for drgmissionsgod.json but i still use it for drgdailydeals.json because there arent that many keys in it
 def rotate_timestamp_from_dict(dictionary, tstamp_Queue, next_, go_flag):
     applicable_timestamp = select_timestamp_from_dict(dictionary, next_=next_)
-    gc.collect()
     tstamp_Queue.append(applicable_timestamp)
     timestamp = tstamp_Queue[0]
     
@@ -1475,11 +1473,17 @@ def wait_rotation(rendering_events, index_event, go_flag):
             index_event.clear()
         sleep(0.2)
         
-#def GARBAGE(go_flag):
-    #while go_flag.is_set():
-        #sleep(43200)
-        #gc.collect()
-#GARBAGE_thread = threading.Thread(target=GARBAGE)
+def GARBAGE(dictionary, go_flag):
+    total_sleep_time = 43200
+    while go_flag.is_set():
+        elapsed_time = 0
+        while elapsed_time < total_sleep_time:
+            if not go_flag.is_set():
+                return
+            sleep(0.2)
+            elapsed_time += 0.2
+        select_timestamp_from_dict(dictionary, False)
+
 
 def SERVER_READY(index_event):
     index_event.wait()

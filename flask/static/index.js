@@ -10,13 +10,15 @@ function isLocalStorageAvailable(){
 }
 const isLocalStorageAvailable_ = isLocalStorageAvailable()
 function getDomainURL(){
-    var currentDomain = window.location.protocol + "//" + window.location.hostname;
-    if (window.location.port !== "") {
-        currentDomain += ":" + window.location.port;
-    }
-    return currentDomain
+    // var currentDomain = window.location.protocol + "//" + window.location.hostname;
+    // if (window.location.port !== "") {
+    //     currentDomain += ":" + window.location.port;
+    // }
+    let base = document.querySelector('base').href
+    return base.slice(0, base.length-1);
 }
-const domainURL = getDomainURL()
+
+domainURL = getDomainURL();
 
 // caching parameters
 var totalImages = 0;
@@ -43,7 +45,7 @@ var deepDivesBanners = {
     'edd' : `${domainURL}/static/edd.webp`
 };
 totalImages += Object.keys(deepDivesBanners).length;
-deepDivesBannersImages = {};
+var deepDivesBannersImages = {};
 deepDivesBannersImages.name = 'deepDivesBanners';
 
 function setBiomeAndDeepDivesBanners() {
@@ -275,8 +277,8 @@ async function preloadImages(imageObj, imageCache) {
         document.querySelector('.loading').textContent = `Loading icons ${progress.toFixed(2)}%`;
     }
 
-    delete imageCache.name;
-    imageObj = undefined;
+    // delete imageCache.name;
+    // imageObj = undefined;
 }
 async function loadImgsFromLocalStorageObj(imageObj, imageCache) {
     for (let key in imageObj) {
@@ -291,8 +293,8 @@ async function loadImgsFromLocalStorageObj(imageObj, imageCache) {
         document.querySelector('.loading').textContent = `${progress.toFixed(2)}%`;
     }
 
-    delete imageCache.name;
-    imageObj = undefined;
+    // delete imageCache.name;
+    // imageObj = undefined;
 }
 
 async function loadImgsFromLocalStorageAll() {
@@ -343,7 +345,7 @@ async function preloadFonts(){
     localStorage.setItem('fonts', JSON.stringify(base64LocalStoragesFonts));
 
     base64LocalStoragesFonts = undefined;
-    fontNamesAndUrls = undefined;
+    // fontNamesAndUrls = undefined;
 }
 
 async function preloadImagesAll() {
@@ -1025,13 +1027,23 @@ async function refreshDeepDives() {
     deepDiveData = await getDeepDiveData();
     if (deepDiveData) {
         arrayDeepDives(deepDiveData);
+        unAvailableDeepDiveDataRetries = 0
     } else {
         await handleUnavailableDeepDiveData();
     } 
 }
-function formatNumber(number) {
-    return number.toString().padStart(2, "0");
+function formatTime(seconds) {
+    seconds %= 3600;
+    const minutes = Math.floor(seconds / 60);
+    seconds %= 60;
+
+    function formatNumber(num) {
+        return num.toString().padStart(2, '0');
+    }
+
+    return `${formatNumber(minutes)}:${formatNumber(seconds)}`;
 }
+var unAvailableDeepDiveDataRetries = 0;
 async function handleUnavailableDeepDiveData() {
     let deepDiveNormalDiv = document.getElementById('Deep-Dive-Normal');
     while(deepDiveNormalDiv.hasChildNodes()) {
@@ -1063,15 +1075,16 @@ async function handleUnavailableDeepDiveData() {
     eliteCountdownSpanElement.className = 'scanners';
     deepDiveEliteDiv.appendChild(eliteCountdownSpanElement);
 
-    let timeLeft = 30;
+    let timeLeft = 30 * (2 ** unAvailableDeepDiveDataRetries);
     let clockString;
     while (timeLeft > 0) {
-        clockString = `00:${formatNumber(timeLeft)} until retry`;
+        clockString = `${formatTime(timeLeft)} until retry, or refresh the page`;
         normalCountdownSpanElement.textContent = clockString;
         eliteCountdownSpanElement.textContent = clockString;
         timeLeft--;
         await sleep(1000);
     }
+    unAvailableDeepDiveDataRetries += 1
 }
 
 function arrayDailyDeal(dailyDeal) {
@@ -2075,11 +2088,12 @@ async function verifyStorages(date) {
     for (let key in localStorages) {
         let v;
         // try {
+
             // if (key == 'img') {
             //     setStorages(key, null)
             //     continue
             // }
-    
+            
             // if (key == 'fonts') {
             //     setStorages(key, null)
             //     continue
@@ -2094,10 +2108,16 @@ async function verifyStorages(date) {
             //     setStorages(key, null)
             //     continue
             // }
+
+
             if (isLocalStorageAvailable_) {
                 v = localStorage.getItem(key);
             }
             if (v) {
+                if (v == 'null') {
+                    setStorages(key, null);
+                    continue
+                }
                 if (localStoragesHashes.hasOwnProperty(key)) {
                     if (simpleHash(v) === localStoragesHashes[key]) {
                         localStorages[key] = JSON.parse(v);
@@ -2126,8 +2146,10 @@ async function verifyStorages(date) {
     
         // console.log(key, localStorages[key]);
     }
-
-    if (!localStorages['homepageScript']) {
+    if (clearStorages) {
+        return
+    }
+    if (!localStorages['homepageScript'] || localStorages['homepageScript'] == 'null') {
         setStorages('homepageScript', await preloadHomepageScript());
     }
     // console.log(localStorages['homepageScript'])
@@ -2170,75 +2192,118 @@ currentButtonLineBreak.id = 'currentButtonLineBreak'
 
 var initialized = false;
 
+function resetGlobalVars() {
+    base64LocalStoragesImg = {};
+    base64LocalStoragesFonts = {};
+
+    localStorages = { 
+        'isBackgroundHidden' : false,
+        'areButtonsHidden' : false,
+        'seasonSelected' : 's0',
+        'currentDaysJson' : null,
+        'img' : null,
+        'fonts' : null,
+        'homepageScript' : null,
+    };
+
+    cacheActive = false;
+    isRefreshing = false;
+    tempBiomes;
+    tempCurrentDaysJson;
+    
+    biomes = undefined;
+    dailyDeal = undefined;
+    tempDailyDeal = undefined;
+    
+    deepDiveData = undefined;
+
+    initialized = false;
+}
+
 document.addEventListener('DOMContentLoaded', async function() {
-    // try {
-        await waitRotation();
-
+    let initTries = 0
+    while (true) {
         let date = new Date();
-        await verifyStorages(date);
+        try {
+            await waitRotation();
+            await verifyStorages(date);
 
-        if (localStorages['isBackgroundHidden']) {
-            toggleBackground();
-        } else {
-            document.getElementById('background-video').play();
+            if (localStorages['isBackgroundHidden']) {
+                toggleBackground();
+            } else {
+                document.getElementById('background-video').play();
+            }
+            if (localStorages['areButtonsHidden']) {
+                toggleButtons();
+            }
+            if (localStorages['seasonSelected'] === 's4') {
+                document.getElementById('season').checked = true;
+            }
+            
+            // let seasonBoxValues = {
+            //     's0' : 'Unseasoned',
+            //     's1': 'Rival Incursion',
+            //     's2': 'Rival Escalation', 
+            //     's3': 'Plaguefall', 
+            //     's4': 'Critical Corruption', 
+            //     's5': 'Drilling Deeper'
+            // };
+            // let seasonBox = document.getElementById('season')
+            // for (let season in seasonBoxValues) {
+            //     let option = document.createElement('option');
+            //     option.value = season;
+            //     option.textContent = seasonBoxValues[season];
+            //     seasonBox.appendChild(option);
+            // }
+            // seasonBox.value = seasonBoxValues[localStorages['seasonSelected']]
+
+            if (!localStorages['fonts']) {
+                await preloadFonts();
+            } else {
+                await loadFontsFromLocalStorageObj();
+            }
+            if (!localStorages['img']) {
+                await preloadImagesAll();
+            } else {
+                await loadImgsFromLocalStorageAll();
+            }
+            var breakfast = await initialize(date);
+            biomes = breakfast[0];
+            dailyDeal = breakfast[1];
+            breakfast = undefined;
+
+        } catch (error) {
+            // likely localStorages hashing is broken
+            console.log(error);
+            localStorage.clear();
+            resetGlobalVars();
+
+            initTries += 1;
+            if (initTries > 2) {
+                let loadingElement = document.getElementById('loading');
+                document.querySelector('.overlay').style.display = 'none';
+                document.getElementById('background-video').style.display = 'none';
+                document.getElementById('background-video').pause();
+                loadingElement.style.top = '50%';
+                loadingElement.style.fontSize = '35px';
+                loadingElement.style.width = 'auto';
+                loadingElement.innerHTML = `An error occurred. Please try clearing your cache and restarting the browser. If this message persists, consider opening an issue on the <a href="https://github.com/rolfosian/drgmissions/">Github</a> and include the stack trace:<br><br><em>${error.stack}</em>`;
+                break
+            }
+            continue
         }
-        if (localStorages['areButtonsHidden']) {
-            toggleButtons();
-        }
-        if (localStorages['seasonSelected'] === 's4') {
-            document.getElementById('season').checked = true;
-        }
+            document.getElementById('missionsCountdown').textContent = getMissionsRemainderTimeOnInit(date)
+            var homepageScript = document.createElement('script');
+            homepageScript.textContent = localStorages['homepageScript']
+            document.head.appendChild(homepageScript);
+            await onLoad();
+            break
+            // await homepageScript.onload();
+            
 
-        // let seasonBoxValues = {
-        //     's0' : 'No Season',
-        //     's1': 'Season 1',
-        //     's2': 'Season 2', 
-        //     's3': 'Season 3', 
-        //     's4': 'Season 4', 
-        //     's5': 'Season 5'
-        // };
-        // let seasonBox = document.getElementById('season')
-        // for (let season in seasonBoxValues) {
-        //     let option = document.createElement('option');
-        //     option.value = season;
-        //     option.textContent = seasonBoxValues[season];
-        //     seasonBox.appendChild(option);
-        // }
-        // seasonBox.value = seasonBoxValues[localStorages['seasonSelected']]
-
-        if (!localStorages['fonts']) {
-            await preloadFonts();
-        } else {
-            await loadFontsFromLocalStorageObj();
-        }
-        if (!localStorages['img']) {
-            await preloadImagesAll();
-        } else {
-            await loadImgsFromLocalStorageAll();
-        }
-        var breakfast = await initialize(date);
-        biomes = breakfast[0];
-        dailyDeal = breakfast[1];
-        breakfast = undefined;
-
-        document.getElementById('missionsCountdown').textContent = getMissionsRemainderTimeOnInit(date)
-
-        var homepageScript = document.createElement('script');
-        homepageScript.textContent = localStorages['homepageScript']
-        document.head.appendChild(homepageScript);
-        await onLoad();
-
-        // await homepageScript.onload();
-        
-
-        // homepageScript.src = "/static/homepage.js"
-        // homepageScript.onload = async function () {
-        //    await onLoad(); // bottom of homepage.js
-        // };
-
-    // } catch (error) {
-        // alert(error);
-        // location.reload();
-    // }
-
+            // homepageScript.src = "/static/homepage.js"
+            // homepageScript.onload = async function () {
+            //    await onLoad(); // bottom of homepage.js
+            // };
+    }
 });

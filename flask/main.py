@@ -1,4 +1,8 @@
-from signal import signal, SIGINT, SIGTERM
+from signal import signal, getsignal, SIGINT, SIGTERM
+from functools import wraps
+from flask import Flask, request, send_file, jsonify
+from io import BytesIO
+from shutil import copy as shutil_copy
 from drgmissionslib import (
     select_timestamp_from_dict,
     render_xp_calc_index, 
@@ -12,6 +16,7 @@ from drgmissionslib import (
     group_by_day_and_split_all,
     wait_rotation,
     flatten_seasons,
+    GARBAGE,
     SERVER_READY,
     merge_parts,
     print,
@@ -21,11 +26,8 @@ from drgmissionslib import (
     Dwarf
     )
 import json
-from flask import Flask, request, send_file, jsonify
 import threading
-from io import BytesIO
 import os
-from shutil import copy as shutil_copy
 # import queue
 cwd = os.getcwd()
 go_flag = threading.Event()
@@ -52,6 +54,9 @@ with open('drgmissionsgod.json', 'r') as f:
     print('Loading bulkmissions json...')
     DRG = json.load(f)
     f.close()
+    # Remove past timestamps from memory
+    select_timestamp_from_dict(DRG, False)
+    
     # merge season branches to one
     print('Merging seasons...')
     DRG = flatten_seasons(DRG)
@@ -59,11 +64,6 @@ with open('drgmissionsgod.json', 'r') as f:
     # split into individual json files for static site
     print('Adding daily deals, grouping timestamps by day and spltting for static site...')
     group_by_day_and_split_all(DRG)
-    
-    # Remove past timestamps from memory
-    select_timestamp_from_dict(DRG, False)
-
-
 with open('drgdailydeals.json', 'r') as f:
     AllTheDeals = f.read()
     f.close()
@@ -71,22 +71,24 @@ AllTheDeals = AllTheDeals.replace(':01Z', ':00Z')
 AllTheDeals = json.loads(AllTheDeals)
 AllTheDeals = order_dictionary_by_date(AllTheDeals)
 
+threads = []
+
 # Current and upcoming timestamps rotator
 # tstamp = queue.Queue()
 tstamp = []
 # next_tstamp = queue.Queue()
 next_tstamp = []
-tstampthread = threading.Thread(target=rotate_timestamps, args=(tstamp, next_tstamp, go_flag))
+threads.append(threading.Thread(target=rotate_timestamps, args=(tstamp, next_tstamp, go_flag)))
 
 # Daily Deal timestamp rotator
 # dailydeal_tstamp = queue.Queue()
 dailydeal_tstamp = []
-dailydeal_tstampthread = threading.Thread(target=rotate_timestamp_from_dict, args=(AllTheDeals, dailydeal_tstamp, False, go_flag))
+threads.append(threading.Thread(target=rotate_timestamp_from_dict, args=(AllTheDeals, dailydeal_tstamp, False, go_flag)))
 
 # Daily Deal rotator
 # dailydeal = queue.Queue()
 dailydeal = []
-dailydealthread = threading.Thread(target=rotate_dailydeal, args=(AllTheDeals, dailydeal_tstamp, dailydeal, go_flag))
+threads.append(threading.Thread(target=rotate_dailydeal, args=(AllTheDeals, dailydeal_tstamp, dailydeal, go_flag)))
 
 # Mission icons rotators
 # biome_rotator_threads, rendering_events, biomes_lists = create_mission_icons_rotators(DRG, tstamp, next_tstamp)
@@ -96,12 +98,12 @@ rendering_events = {'e' : threading.Event()}
 # nextbiomes = queue.Queue()
 currybiomes = []
 nextbiomes = []
-biomesthread = threading.Thread(target=rotate_biomes_FLAT, args=(DRG, tstamp, next_tstamp, nextbiomes, currybiomes, rendering_events, go_flag))
+threads.append(threading.Thread(target=rotate_biomes_FLAT, args=(DRG, tstamp, next_tstamp, nextbiomes, currybiomes, rendering_events, go_flag)))
 
 # Deep Dives rotator
 # DDs = queue.Queue()
 DDs = []
-ddsthread = threading.Thread(target=rotate_DDs, args=(DDs, go_flag))    
+threads.append(threading.Thread(target=rotate_DDs, args=(DDs, go_flag)))
 
 # Obsolete but kept the index event and rotation stuff just cause im not going to fix what isnt broken and i cant be bothered rewriting more stuff
 # Homepage HTML rotator, md5 hashes once to enable 304 on every 30 minute rollover and the home route doesn't need to render it again for every request and can just send copies
@@ -111,51 +113,51 @@ ddsthread = threading.Thread(target=rotate_DDs, args=(DDs, go_flag))
 index_event = threading.Event()
 # index_Queue = queue.Queue()
 index_Queue = []
-index_thread = threading.Thread(target=rotate_index, args=(rendering_events, tstamp, next_tstamp, index_event, index_Queue, go_flag))
+threads.append(threading.Thread(target=rotate_index, args=(rendering_events, tstamp, next_tstamp, index_event, index_Queue, go_flag)))
 
 # Obsolete but kept the index event and rotation stuff just cause im not going to fix what isnt broken and i cant be bothered rewriting more stuff
 # Listener that clears the rendering event 1.5 seconds before the 30 minute mission rollover interval so the homepage won't load for clients until the rotators are done rendering the mission icons
-wait_rotationthread = threading.Thread(target=wait_rotation, args=(rendering_events, index_event, go_flag))
+threads.append(threading.Thread(target=wait_rotation, args=(rendering_events, index_event, go_flag)))
 
-SERVER_READY_thread = threading.Thread(target=SERVER_READY, args=(index_event,))
+threads.append(threading.Thread(target=GARBAGE, args=(DRG, go_flag)))
+threads.append(threading.Thread(target=SERVER_READY, args=(index_event,)))
 
 def start_threads():
-    tstampthread.start()
-    
+    for thread in threads:
+        thread.start()
     # for thread in biome_rotator_threads:
     #     thread.start()
-    biomesthread.start()
-    ddsthread.start()
-    wait_rotationthread.start()
-    dailydeal_tstampthread.start()
-    dailydealthread.start()
-    index_thread.start()
-    SERVER_READY_thread.start()
     
 def join_threads(go_flag):
     go_flag.clear()
-    
-    wait_rotationthread.join()
-    tstampthread.join()
-    biomesthread.join()
-    ddsthread.join()
-    dailydeal_tstampthread.join()
-    dailydealthread.join()
-    index_thread.join()
-    SERVER_READY_thread.join()
-    
+    for thread in threads:
+        thread.join()
     # for thread in biome_rotator_threads:
     #     thread.join()
     
-
-def signal_handler_exit(sig, frame, go_flag):
-    print(f"Received signal {sig}. Exiting...")
-    join_threads(go_flag)
-    exit(0)
+# def signal_handler_exit(sig, frame, go_flag):
+    # join_threads(go_flag)
+    # exit(0)
 
 def set_signal_handlers(SIGINT, SIGTERM, go_flag):
-    signal(SIGINT, lambda signum, frame: signal_handler_exit(signum, frame, go_flag))
-    signal(SIGTERM, lambda signum, frame: signal_handler_exit(signum, frame, go_flag))
+    def handler_wrapper(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            print('Joining threads...')
+            join_threads(go_flag)
+            return func(*args, **kwargs)
+        return wrapper
+
+    sigint_handler = getsignal(SIGINT)
+    sigterm_handler = getsignal(SIGTERM)
+    
+    wrapped_sigint_handler = handler_wrapper(sigint_handler)
+    wrapped_sigterm_handler = handler_wrapper(sigterm_handler)
+    
+    signal(SIGINT, wrapped_sigint_handler)
+    signal(SIGTERM, wrapped_sigterm_handler)
+    # signal(SIGINT, lambda signum, frame: signal_handler_exit(signum, frame, go_flag))
+    # signal(SIGTERM, lambda signum, frame: signal_handler_exit(signum, frame, go_flag))
 
 if __name__ == '__main__':
     # reloader override for flask debug server so it doesnt lock up on reload
@@ -180,7 +182,7 @@ app = Flask(__name__, static_folder='./static')
 def home():
     # index_event.wait()
     # return send_file(BytesIO(index_Queue[0]['index']), mimetype='text/html', etag=index_Queue[0]['etag'])
-    return send_file(f'{cwd}/static/index.html', mimetype='text/html')
+    return send_file(f'{cwd}/index.html', mimetype='text/html')
 
 # Sends current mission icons, arg format f"?img={mission['CodeName'].replace(' ', '-')}{mission['season']}" - see rotate_biomes_FLAT in drgmissionslib.py
 # eg http://127.0.0.1:5000/png?img=Spiked-Shelters0 (mission['CodeName'] is 'Spiked Shelter' and the season is s0)
@@ -348,10 +350,11 @@ def upload():
 def test():
     return send_file(f"{cwd}/static/test.html", mimetype='text/html')
 
-if __name__ == '__main__':        
+if __name__ == '__main__':
     print('Starting threads...')
     start_threads()
     print('Setting signal handlers...')
     set_signal_handlers(SIGINT, SIGTERM, go_flag)
+    print(getsignal(SIGTERM))
     print('Starting server...')
     app.run(threaded=True, host='0.0.0.0', debug=True, port=5000, use_reloader=True)

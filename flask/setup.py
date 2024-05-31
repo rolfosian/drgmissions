@@ -431,6 +431,7 @@ def add_ssl_server_block_to_nginx_conf(conf_str, domain_name, max_body_size, ser
     location / {{
         proxy_pass https://{service_bind};
         include proxy_params;
+        proxy_set_header X-Forwarded-Proto https;
     }}
     
 }}

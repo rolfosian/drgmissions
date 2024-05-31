@@ -315,20 +315,21 @@ def check_missions_keys(dictionary, invalid_keys):
 
 def check_missions_length_complexity(dictionary):
     missions_keys = []
-    log = open('indefinite_lengths_complexities_log.txt', 'w')
     for timestamp, seasons_dict in dictionary.items():
         for master in seasons_dict.values():
             for biome in master['Biomes']:
                 for mission in master['Biomes'][biome]:
                     if mission['Complexity'] == 'Indefinite' or mission['Length'] == 'Indefinite':
-                        missions_keys.append(f'{timestamp}: {mission["CodeName"]}')
+                        missions_keys.append((f'{timestamp}: {mission["CodeName"]}', f'{timestamp}:\n   {json.dumps(mission, indent=2)}\n'))
 
     if missions_keys:
+        log = open('indefinite_lengths_complexities_log.txt', 'w')
         log.write('Indefinite complexity or length for mission(s) in:\n\n')
         print('Indefinite complexity or length for mission(s) in:')
-        for timestamp_codename in missions_keys:
-            log.write(f'Timestamp and CodeName: {timestamp_codename}\n')
-            print(f'Timestamp and CodeName: {timestamp_codename}')
+        for timestamp_codename, timestamp_mission_json in missions_keys:
+            log.write(f'{timestamp_mission_json}\n')
+            print(f'{timestamp_codename}')
+        log.close()
     else:
         print('No indefinite complexities or lengths found.')
 
