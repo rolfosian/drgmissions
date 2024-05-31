@@ -277,8 +277,8 @@ async function preloadImages(imageObj, imageCache) {
         document.querySelector('.loading').textContent = `Loading icons ${progress.toFixed(2)}%`;
     }
 
-    // delete imageCache.name;
-    // imageObj = undefined;
+    delete imageCache.name;
+    imageObj = undefined;
 }
 async function loadImgsFromLocalStorageObj(imageObj, imageCache) {
     for (let key in imageObj) {
@@ -293,8 +293,8 @@ async function loadImgsFromLocalStorageObj(imageObj, imageCache) {
         document.querySelector('.loading').textContent = `${progress.toFixed(2)}%`;
     }
 
-    // delete imageCache.name;
-    // imageObj = undefined;
+    delete imageCache.name;
+    imageObj = undefined;
 }
 
 async function loadImgsFromLocalStorageAll() {
@@ -345,7 +345,7 @@ async function preloadFonts(){
     localStorage.setItem('fonts', JSON.stringify(base64LocalStoragesFonts));
 
     base64LocalStoragesFonts = undefined;
-    // fontNamesAndUrls = undefined;
+    fontNamesAndUrls = undefined;
 }
 
 async function preloadImagesAll() {
@@ -2146,9 +2146,6 @@ async function verifyStorages(date) {
     
         // console.log(key, localStorages[key]);
     }
-    if (clearStorages) {
-        return
-    }
     if (!localStorages['homepageScript'] || localStorages['homepageScript'] == 'null') {
         setStorages('homepageScript', await preloadHomepageScript());
     }
@@ -2193,6 +2190,30 @@ currentButtonLineBreak.id = 'currentButtonLineBreak'
 var initialized = false;
 
 function resetGlobalVars() {
+    biomeBannersImages = {};
+    biomeBannersImages.name = 'biomeBanners';
+    deepDivesBannersImages = {};
+    deepDivesBannersImages.name = 'deepDivesBanners';
+    primaryObjsImages = {};
+    primaryObjsImages.name = 'primaryObjsImages';
+    primaryObjResourcesImages = {};
+    primaryObjResourcesImages.name = 'primaryObjResourcesImages';
+    secondaryObjsImages = {};
+    secondaryObjsImages.name = 'secondaryObjsImages';
+    complexitiesImages = {};
+    complexitiesImages.name = 'complexitiesImages';
+    lengthsImages = {};
+    lengthsImages.name = 'lengthsImages';
+    mutatorsImages = {};
+    mutatorsImages.name = 'mutatorsImages';
+    warningsImages = {};
+    warningsImages.name = 'warningsImages';
+    secondaryObjsDDImages = {};
+    secondaryObjsDDImages.name = 'secondaryObjsDDImages';
+    biomesDDImages = {};
+    biomesDDImages.name = 'biomesDDImages';
+    dailyDealResourcesImages = {};
+    dailyDealResourcesImages.name = 'dailyDealResourcesImages';
     base64LocalStoragesImg = {};
     base64LocalStoragesFonts = {};
 
@@ -2208,8 +2229,8 @@ function resetGlobalVars() {
 
     cacheActive = false;
     isRefreshing = false;
-    tempBiomes;
-    tempCurrentDaysJson;
+    tempBiomes = undefined;
+    tempCurrentDaysJson = undefined;
     
     biomes = undefined;
     dailyDeal = undefined;

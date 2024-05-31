@@ -2,13 +2,15 @@ from certifi import where
 
 def post_worker_init(worker):
     from main import start_threads, join_threads, go_flag, set_signal_handlers
-    from signal import SIGINT, SIGTERM
+    from signal import signal, SIGINT, SIGTERM, SIG_DFL
     from functools import wraps
     
     def custom_changed(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
             join_threads(go_flag)
+            signal(SIGINT, SIG_DFL)
+            signal(SIGTERM, SIG_DFL)
             return func(*args, **kwargs)
         return wrapper
     worker.reloader._callback = custom_changed(worker.reloader._callback)

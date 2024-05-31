@@ -1,4 +1,4 @@
-from signal import signal, getsignal, SIGINT, SIGTERM
+from signal import signal, getsignal, SIGINT, SIGTERM, SIG_DFL
 from functools import wraps
 from flask import Flask, request, send_file, jsonify
 from io import BytesIO
@@ -32,7 +32,6 @@ import os
 cwd = os.getcwd()
 go_flag = threading.Event()
 go_flag.set()
-
 
 # obsolete, may need for debugging later
 # def create_mission_icons_rotators(DRG, tstamp, next_tstamp):
@@ -74,34 +73,27 @@ AllTheDeals = order_dictionary_by_date(AllTheDeals)
 threads = []
 
 # Current and upcoming timestamps rotator
-# tstamp = queue.Queue()
 tstamp = []
-# next_tstamp = queue.Queue()
 next_tstamp = []
 threads.append(threading.Thread(target=rotate_timestamps, args=(tstamp, next_tstamp, go_flag)))
 
 # Daily Deal timestamp rotator
-# dailydeal_tstamp = queue.Queue()
 dailydeal_tstamp = []
 threads.append(threading.Thread(target=rotate_timestamp_from_dict, args=(AllTheDeals, dailydeal_tstamp, False, go_flag)))
 
 # Daily Deal rotator
-# dailydeal = queue.Queue()
 dailydeal = []
 threads.append(threading.Thread(target=rotate_dailydeal, args=(AllTheDeals, dailydeal_tstamp, dailydeal, go_flag)))
 
-# Mission icons rotators
+# Mission icons rotators - obsolete
 # biome_rotator_threads, rendering_events, biomes_lists = create_mission_icons_rotators(DRG, tstamp, next_tstamp)
 
 rendering_events = {'e' : threading.Event()}
-# currybiomes = queue.Queue()
-# nextbiomes = queue.Queue()
 currybiomes = []
 nextbiomes = []
 threads.append(threading.Thread(target=rotate_biomes_FLAT, args=(DRG, tstamp, next_tstamp, nextbiomes, currybiomes, rendering_events, go_flag)))
 
 # Deep Dives rotator
-# DDs = queue.Queue()
 DDs = []
 threads.append(threading.Thread(target=rotate_DDs, args=(DDs, go_flag)))
 
@@ -111,7 +103,6 @@ threads.append(threading.Thread(target=rotate_DDs, args=(DDs, go_flag)))
 
 # old index is obsolete but i keep the rotator running witb bare event logic just in case
 index_event = threading.Event()
-# index_Queue = queue.Queue()
 index_Queue = []
 threads.append(threading.Thread(target=rotate_index, args=(rendering_events, tstamp, next_tstamp, index_event, index_Queue, go_flag)))
 
@@ -134,16 +125,12 @@ def join_threads(go_flag):
         thread.join()
     # for thread in biome_rotator_threads:
     #     thread.join()
-    
-# def signal_handler_exit(sig, frame, go_flag):
-    # join_threads(go_flag)
-    # exit(0)
 
 def set_signal_handlers(SIGINT, SIGTERM, go_flag):
     def handler_wrapper(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            print('Joining threads...')
+            # print('Joining threads...')
             join_threads(go_flag)
             return func(*args, **kwargs)
         return wrapper
@@ -156,8 +143,6 @@ def set_signal_handlers(SIGINT, SIGTERM, go_flag):
     
     signal(SIGINT, wrapped_sigint_handler)
     signal(SIGTERM, wrapped_sigterm_handler)
-    # signal(SIGINT, lambda signum, frame: signal_handler_exit(signum, frame, go_flag))
-    # signal(SIGTERM, lambda signum, frame: signal_handler_exit(signum, frame, go_flag))
 
 if __name__ == '__main__':
     # reloader override for flask debug server so it doesnt lock up on reload
@@ -166,16 +151,14 @@ if __name__ == '__main__':
         def trigger_reload(self, filename: str) -> None:
             join_threads(go_flag)
             return super().trigger_reload(filename)
+        def restart_with_reloader(self) -> int:
+            signal(SIGINT, SIG_DFL)
+            signal(SIGTERM, SIG_DFL)
+            return super().restart_with_reloader()
         
     reloader_loops['auto'] = ReloaderLoop_
 
 app = Flask(__name__, static_folder='./static')
-
-# if __name__ == '__main__':
-#     from time import sleep
-#     @app.before_request
-#     def add_latency():
-#         sleep(0.25)
 
 #Homepage
 @app.route('/')
@@ -355,6 +338,5 @@ if __name__ == '__main__':
     start_threads()
     print('Setting signal handlers...')
     set_signal_handlers(SIGINT, SIGTERM, go_flag)
-    print(getsignal(SIGTERM))
     print('Starting server...')
     app.run(threaded=True, host='0.0.0.0', debug=True, port=5000, use_reloader=True)
