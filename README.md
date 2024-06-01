@@ -39,7 +39,7 @@
 
 ## **TODO**
 - **Public Enemy Number One**: Check and Update Deep Dive scraper weekly to accomodate currently unknown configurations (havent seen any unknowns in months), **contingencies for if Steam misbehaves**
-- ~~[Scripts for registry entries for automatic login and](https://github.com/rolfosian/drgmissions/blob/main/vm_fresh_setup.bat)~~ cron entry for starting vm weekly for [DeepDives_Run.py](https://github.com/rolfosian/drgmissions/blob/main/DeepDives_Run.py)
+- ~~[Scripts for registry entries for automatic login and](https://github.com/rolfosian/drgmissions/blob/main/vm_fresh_setup.bat) [cron entry for starting vm weekly](https://github.com/rolfosian/drgmissions/blob/main/vm_Run.sh) for [DeepDives_Run.py](https://github.com/rolfosian/drgmissions/blob/main/DeepDives_Run.py)~~
 - Fix canvas mission icon jaggies in js
 - Move static site to github pages, set up github actions for deployment of metadata and edit `.*_Run` scripts accordingly
 - ~~Figure out a solution to reduce required delay between iterations for accurate data to be collected by the 30 minute incrementer~~

@@ -19,6 +19,7 @@ tzutil /s "UTC"
 :: Change date format to DD-MM-YYYY
 reg add "HKCU\Control Panel\International" /v sShortDate /t REG_SZ /d "d/MM/yyyy" /f >nul
 reg add "HKCU\Control Panel\International" /v sTimeFormat /t REG_SZ /d "h:mm:ss tt" /f >nul
+w32tm /resync
 
 echo System timezone has been changed to UTC and date format to DD-MM-YYYY.
 echo -----------------------------------------------
@@ -178,6 +179,10 @@ for /f "tokens=*" %%i in ('reg query HKU') do (
     )
 )
 echo Compatibility setting applied for steam.exe to run as administrator.
+
+set "drgbinarydirpath=!STEAM_PATH!\steamapps\common\Deep Rock Galactic\FSD\Binaries\Win64\"
+powershell.exe -NoProfile -Command "$folderPath = '%drgbinarydirpath%'; $shell = New-Object -ComObject shell.application; $folder = $shell.Namespace($folderPath); $folder.Self.InvokeVerb('pintohome')"
+echo DRG Binaries path added to Quick Access.
 
 ::Set the registry keys to run the DRG processes as administrator
 reg add "HKCU\SOFTWARE\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers" /v "!STEAM_PATH!\steamapps\common\Deep Rock Galactic\FSD.exe" /t REG_SZ /d "~ RUNASADMIN" /f >nul
