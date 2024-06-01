@@ -13,7 +13,7 @@ import re
 import threading
 
 def cfg_():
-    with open('scraper_cfg.json', 'r') as f:
+    with open(os.getcwd()+'/scraper_cfg.json', 'r') as f:
         cfg = json.load(f)
     return cfg
 cfg = cfg_()
@@ -59,7 +59,7 @@ def delete_file(filename):
             continue
 
 def timestamped_print(func):
-    @wraps
+    @wraps(func)
     def wrapper(*args, **kwargs):
         include_timestamp = kwargs.pop('include_timestamp', True)
         args = [str(arg) for arg in args]
@@ -369,7 +369,7 @@ def split_file(file_path, max_size):
     
     return file_parts
 
-def upload_file(cfg, file_path, max_body_size):
+def upload_file(cfg, file_path):
     domain_name = cfg['domain_name']
     bearer_token = cfg['auth_token']
     max_body_size = cfg['max_body_size']

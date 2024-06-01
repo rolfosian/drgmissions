@@ -51,7 +51,7 @@ def main():
         
         for filename in os.listdir():
             if filename.startswith('DD_') and filename.endswith('.json'):
-                new_filename = get_previous_thursday_date()+'T11-00-00Z.json'
+                new_filename = 'DD_'+get_previous_thursday_date()+'T11-00-00Z.json'
                 while True:
                     try:
                         os.rename(filename, new_filename)

@@ -94,7 +94,7 @@ if errorlevel 1 (
     curl -o %DESKTOP%\!PYTHON_INSTALLER! !PYTHON_URL!
 
     echo Installing Python...
-    start /wait "" "%DESKTOP%\!PYTHON_INSTALLER!" /quiet InstallAllUsers=1 PrependPath=1    
+    start /wait "" "%DESKTOP%\!PYTHON_INSTALLER!" /quiet InstallAllUsers=1 PrependPath=1 Include_launcher=0
     echo:
     echo Python installation complete.
     del "%DESKTOP%\!PYTHON_INSTALLER!"
@@ -195,15 +195,10 @@ mklink "%TARGET%" "%SOURCE%" >nul
 ::Set Run_DeepDives.bat to run on startup
 (
     echo @echo off
-    echo: 
     echo set PYTHON_PATH="%pythonPath%"
-    echo: 
     echo set SCRIPT_PATH="%STEAM_PATH%\steamapps\common\Deep Rock Galactic\FSD\Binaries\Win64\DeepDives_Run.py"
-    echo: 
-    echo cd /d %%~dp0
-    echo: 
+    echo cd "%STEAM_PATH%\steamapps\common\Deep Rock Galactic\FSD\Binaries\Win64\"
     echo %%PYTHON_PATH%% %%SCRIPT_PATH%%
-    echo: 
     echo exit
 ) > "%DESKTOP%\Run_DeepDives.bat"
 set SOURCE="%DESKTOP%\Run_DeepDives.bat"
