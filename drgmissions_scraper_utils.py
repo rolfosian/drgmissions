@@ -678,3 +678,61 @@ def validate_drgmissions(DRG, patched):
     
     print('No invalid timestamps found.')
     return DRG, patched
+
+def flatten_seasons(DRG):
+    def compare_dicts(dict1, dict2, ignore_keys):
+        dict1_filtered = {k: v for k, v in dict1.items() if k not in ignore_keys}
+        dict2_filtered = {k: v for k, v in dict2.items() if k not in ignore_keys}
+
+        return dict1_filtered == dict2_filtered
+    combined = {}
+    seasons = list(list(DRG.items())[1][1].keys())
+    timestamps = list(DRG.keys())
+    
+    for timestamp in timestamps:
+        combined[timestamp] = {}
+        combined[timestamp]['timestamp'] = timestamp
+        combined[timestamp]['Biomes'] = {}
+        for biome in DRG[timestamp]['s0']['Biomes'].keys():
+            combined[timestamp]['Biomes'][biome+'codenames'] = []
+        
+        for biome, missions in DRG[timestamp]['s0']['Biomes'].items():
+            for mission in missions:
+                mission['season'] = 's0'
+                combined[timestamp]['Biomes'][biome+'codenames'].append(mission['CodeName'])
+                
+            combined[timestamp]['Biomes'][biome] = [mission for mission in missions]
+        del DRG[timestamp]['s0']
+    seasons.remove('s0')
+    
+    duplicates = []
+    for timestamp in timestamps:
+        for season in seasons:
+            for biome, missions in DRG[timestamp][season]['Biomes'].items():
+                for index, mission in enumerate(missions):
+                    mission['season'] = season
+                    if mission['CodeName'] in combined[timestamp]['Biomes'][biome+'codenames']:
+                        duplicates.append([timestamp, biome, mission])
+                    else:
+                        try:
+                            combined[timestamp]['Biomes'][biome].insert(index, mission)
+                        except:
+                            combined[timestamp]['Biomes'][biome].append(mission)
+    
+    for timestamp, biome, dup_mission in duplicates:
+        for season in seasons:
+            for mission in combined[timestamp]['Biomes'][biome]:
+                if dup_mission['CodeName'] != mission['CodeName']:
+                    continue
+                if compare_dicts(mission, dup_mission, ['season', 'id', 'season_modified']):
+                    continue
+                if 'season_modified' not in mission:
+                    mission['season_modified'] = {}
+                mission['season_modified'][season] = dup_mission
+
+    for timestamp in timestamps:
+        for k in list(combined[timestamp]['Biomes'].keys()):
+            if k.endswith('codenames'):
+                del combined[timestamp]['Biomes'][k]
+
+    return combined

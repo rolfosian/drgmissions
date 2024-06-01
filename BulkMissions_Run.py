@@ -16,6 +16,7 @@ from drgmissions_scraper_utils import(
     kill_process_by_name_starts_with,
     user_input_set_target_date,
     validate_drgmissions,
+    flatten_seasons,
     maximize_window,
     delete_file,
     print,
@@ -171,9 +172,10 @@ def main():
     #Validate JSON
     patched = False
     DRG, patched = validate_drgmissions(DRG, patched)
-    if patched:
-        with open('drgmissionsgod.json', 'w') as f:
-            json.dump(DRG, f)
+    
+    DRG = flatten_seasons(DRG)
+    with open('drgmissionsgod.json', 'w') as f:
+        json.dump(DRG, f)
     
     if yes_or_no('Upload JSON? Y/N: '):
         upload_file(cfg, 'drgmissionsgod.json')

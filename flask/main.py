@@ -56,9 +56,14 @@ with open('drgmissionsgod.json', 'r') as f:
     # Remove past timestamps from memory
     select_timestamp_from_dict(DRG, False)
     
-    # merge season branches to one
-    print('Merging seasons...')
-    DRG = flatten_seasons(DRG)
+    for timestamp in DRG:
+        if 's0' in DRG[timestamp]:
+            # merge season branches to one
+            print('Merging seasons...')
+            DRG = flatten_seasons(DRG)
+            break
+        else:
+            break
     
     # split into individual json files for static site
     print('Adding daily deals, grouping timestamps by day and spltting for static site...')
