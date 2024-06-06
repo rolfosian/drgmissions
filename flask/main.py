@@ -1,5 +1,5 @@
-from multiprocessing import Manager
-from signal import getsignal
+from multiprocessing import Manager, Event
+from signal import getsignal, signal, SIGINT, SIGTERM, SIG_DFL
 from functools import wraps
 from flask import Flask, request, send_file, jsonify
 from io import BytesIO
@@ -77,7 +77,7 @@ threads.append(threading.Thread(target=rotate_dailydeal, args=(AllTheDeals, dail
 # Mission icons rotators - obsolete
 # biome_rotator_threads, rendering_events, biomes_lists = create_mission_icons_rotators(DRG, tstamp, next_tstamp)
 
-rendering_events = {'e' : threading.Event()}
+rendering_events = {'e' : Event()}
 currybiomes = M.list()
 nextbiomes = M.list()
 threads.append(threading.Thread(target=rotate_biomes_FLAT, args=(DRG, tstamp, next_tstamp, nextbiomes, currybiomes, rendering_events, go_flag)))
