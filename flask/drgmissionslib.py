@@ -5,14 +5,11 @@ from PIL import Image, ImageDraw, ImageFont, ImageFilter
 from datetime import datetime, timedelta
 from functools import wraps
 from multiprocessing.pool import Pool
-from multiprocessing import Event, Manager
-from signal import getsignal, signal, SIGINT, SIGTERM, SIG_DFL
-import psutil
+from signal import signal, SIGINT, SIGTERM, SIG_DFL
 import os
 import shutil
 import glob
 import json
-import threading
 
 #----------------------------------------------
 # MISSION ICONS AND DAILY DEAL PIL FUNCTIONS
@@ -723,6 +720,35 @@ def render_dd_stage(m_d):
 #PRE-HASH PIL OBJECT ARRAYING
 
 #single threaded
+
+def render_deepdives(DeepDives):
+    rendered_deepdives = {}
+    for t, deepdive in DeepDives.items():
+        rendered_deepdives[t] = {}
+        rendered_deepdives[t]['Biome'] = DeepDives[t]['Biome']
+        rendered_deepdives[t]['Stages'] = []
+        rendered_deepdives[t]['CodeName'] = DeepDives[t]['CodeName']
+
+        has_id_999 = False
+        has_id_0 = False
+        for stage in deepdive['Stages']:
+            if stage['id'] == 999:
+                has_id_999 = True
+            if stage['id'] == 0:
+                has_id_0 = True
+        for stage in deepdive['Stages']:
+            if has_id_999 and has_id_0:
+        # if sum([stage['id'] for stage in deepdive['Stages']]) == 1002:
+                if stage['id'] == 999:
+                    stage['id'] = -1
+
+        sorted_stages = sorted(deepdive['Stages'], key=lambda x: x['id'], reverse=True)
+        for stage in sorted_stages:
+            stage_png = render_dd_stage(stage)
+            rendered_deepdives[t]['Stages'].append(stage_png)
+
+    return rendered_deepdives
+
 def render_biomes(Biomes):
     rendered_biomes = {}
     for biome, missions in Biomes.items():
@@ -793,34 +819,6 @@ def render_biomes_FLAT(Biomes, render_pool):
     for biome, mission in processed_missions:
         rendered_biomes[biome].append(mission)
     return rendered_biomes
-
-def render_deepdives(DeepDives):
-    rendered_deepdives = {}
-    for t, deepdive in DeepDives.items():
-        rendered_deepdives[t] = {}
-        rendered_deepdives[t]['Biome'] = DeepDives[t]['Biome']
-        rendered_deepdives[t]['Stages'] = []
-        rendered_deepdives[t]['CodeName'] = DeepDives[t]['CodeName']
-
-        has_id_999 = False
-        has_id_0 = False
-        for stage in deepdive['Stages']:
-            if stage['id'] == 999:
-                has_id_999 = True
-            if stage['id'] == 0:
-                has_id_0 = True
-        for stage in deepdive['Stages']:
-            if has_id_999 and has_id_0:
-        # if sum([stage['id'] for stage in deepdive['Stages']]) == 1002:
-                if stage['id'] == 999:
-                    stage['id'] = -1
-
-        sorted_stages = sorted(deepdive['Stages'], key=lambda x: x['id'], reverse=True)
-        for stage in sorted_stages:
-            stage_png = render_dd_stage(stage)
-            rendered_deepdives[t]['Stages'].append(stage_png)
-
-    return rendered_deepdives
 
 #----------------------------------------------------------------
 #ICON SAVE, HASH, AND ARRAY ROTATORS
@@ -949,12 +947,11 @@ def rotate_biomes(DRG, season, tstamp_Queue, next_tstamp_Queue, biomes_lists, re
             rendering_event.set()
             del NextBiomes
         sleep(0.25)
-
+def init_worker():
+    signal(SIGINT, SIG_DFL)
+    signal(SIGTERM, SIG_DFL)
+    
 def rotate_biomes_FLAT(DRG, tstamp_Queue, next_tstamp_Queue, nextbiomes_Queue, biomes_Queue, rendering_events, go_flag):
-    def init_worker():
-        signal(SIGINT, SIG_DFL)
-        signal(SIGTERM, SIG_DFL)
-
     def array_biomes(Biomes, timestamp):
         Biomes1 = {}
         for biome in Biomes.keys():

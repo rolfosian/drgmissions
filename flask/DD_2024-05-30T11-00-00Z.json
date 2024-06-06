@@ -1,0 +1,70 @@
+{
+    "Deep Dives": {
+      "Deep Dive Elite": {
+        "Biome": "Azure Weald",
+        "CodeName": "HEAVY BETRAYAL",
+        "Stages": [
+          {
+            "Complexity": "1",
+            "Length": "1",
+            "PrimaryObjective": "Egg Hunt",
+            "SecondaryObjective": "Repair Minimules",
+            "id": 179
+          },
+          {
+            "Complexity": "3",
+            "Length": "2",
+            "MissionWarnings": [
+              "Shield Disruption"
+            ],
+            "PrimaryObjective": "On-Site Refining",
+            "SecondaryObjective": "Eliminate Dreadnought",
+            "id": 178
+          },
+          {
+            "Complexity": "1",
+            "Length": "1",
+            "MissionWarnings": [
+              "Parasites"
+            ],
+            "PrimaryObjective": "Mining Expedition",
+            "SecondaryObjective": "Eliminate Dreadnought",
+            "id": 177
+          }
+        ]
+      },
+      "Deep Dive Normal": {
+        "Biome": "Dense Biozone",
+        "CodeName": "STINKING CRYPT",
+        "Stages": [
+          {
+            "Complexity": "3",
+            "Length": "2",
+            "PrimaryObjective": "Point Extraction",
+            "SecondaryObjective": "Eliminate Dreadnought",
+            "id": 183
+          },
+          {
+            "Complexity": "1",
+            "Length": "1",
+            "MissionWarnings": [
+              "Low Oxygen"
+            ],
+            "PrimaryObjective": "Egg Hunt",
+            "SecondaryObjective": "Mine Morkite",
+            "id": 182
+          },
+          {
+            "Complexity": "3",
+            "Length": "2",
+            "MissionWarnings": [
+              "Regenerative Bugs"
+            ],
+            "PrimaryObjective": "On-Site Refining",
+            "SecondaryObjective": "Get Alien Eggs",
+            "id": 181
+          }
+        ]
+      }
+    }
+  }

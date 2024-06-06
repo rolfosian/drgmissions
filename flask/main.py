@@ -31,6 +31,12 @@ import json
 import threading
 cwd = os.getcwd()
 
+# if __name__ == '__main__': # YOU HAVE TO PUT EVERYTHING BELOW THIS LINE IN THIS BLOCK IF YOU WANT TO RUN main.py DIRECTLY ON WANGBLOWS ELSE IT HAS A SHITFIT (it isnt an issue on linux)
+M = Manager()
+threads = []
+go_flag = threading.Event()
+go_flag.set()
+
 with open('drgmissionsdev.json', 'r') as f:
     print('Loading bulkmissions json...')
     DRG = json.load(f)
@@ -54,11 +60,6 @@ with open('drgdailydeals.json', 'r') as f:
 AllTheDeals = AllTheDeals.replace(':01Z', ':00Z')
 AllTheDeals = json.loads(AllTheDeals)
 AllTheDeals = order_dictionary_by_date(AllTheDeals)
-
-M = Manager()
-threads = []
-go_flag = threading.Event()
-go_flag.set()
 
 # Current and upcoming timestamps rotator
 tstamp = []
