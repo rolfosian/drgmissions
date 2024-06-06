@@ -69,12 +69,12 @@ function TestTwoWeeks()
     local god = {}
     local count = 0
     local missionscount = 0
-    local timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
     local RandomSeed = nil
     local PreviousRandomSeed = nil
     local FSDGameInstance = FindFirstOf('FSDGameInstance')
     -- Loop for the increments
     for i = 1, total_increments do
+        local timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
         while true do
             FSDGameInstance:UpdateGlobelMissionSeed() -- No, this is not a typo (but maybe it was on gsg's end).
             RandomSeed = FSDGameInstance:GetGlobalMissionSeedNew().RandomSeed
@@ -96,7 +96,6 @@ function TestTwoWeeks()
             local b = nil
             local missions = utils.GetMissions(SeasonValue, RandomSeed)
             if missions then
-                timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
                 master[SeasonKey]['timestamp'] = timestamp
                 for index, mission in pairs(missions) do
                     b = utils.GetBiome(mission)

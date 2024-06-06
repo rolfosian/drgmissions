@@ -27,23 +27,23 @@ def post_worker_init(worker):
     from main import go_flag, set_signal_handlers, rendering_events
     from functools import wraps
     from signal import SIGINT, SIGTERM
-    import os
-    from time import sleep
+    # import os
+    # from time import sleep
 
-    def custom_changed(func, self):
-        @wraps(func)
-        def wrapper(fname):
-            for event in rendering_events:
-                rendering_events[event].wait()
-            self.log.info("Worker reloading: %s modified", fname)
-            self.alive = False
-            os.write(self.PIPE[1], b"1")
-            self.cfg.worker_int(self)
-            sleep(0.1)
-            exit(0)
-        return wrapper
+    # def custom_changed(func, self):
+    #     @wraps(func)
+    #     def wrapper(fname):
+    #         for event in rendering_events:
+    #             rendering_events[event].wait()
+    #         self.log.info("Worker reloading: %s modified", fname)
+    #         self.alive = False
+    #         os.write(self.PIPE[1], b"1")
+    #         self.cfg.worker_int(self)
+    #         sleep(0.1)
+    #         exit(0)
+    #     return wrapper
 
-    worker.reloader._callback = custom_changed(worker.reloader._callback, worker)
+    # worker.reloader._callback = custom_changed(worker.reloader._callback, worker)
     set_signal_handlers(SIGINT, SIGTERM, go_flag)
 
 worker_class = 'gthread'
