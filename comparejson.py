@@ -184,7 +184,11 @@ def check_duplicate_seasons():
         seen[k] = {}
         for season, d in v.items():
             del d['timestamp']
-            seen[k][season] = json.dumps(d)
+            for biome in d['Biomes'].keys():
+                for i, m in enumerate(d['Biomes'][biome]):
+                    del d['Biomes'][biome][i]['id']
+            seen[k][season] = json.dumps(d, indent=1)
+
     
     for i, (k, v) in enumerate(seen.items()):
         print(k)
@@ -198,7 +202,7 @@ def check_duplicate_seasons():
                         continue
                     seent.append([season, season_])
                     print( season, '==', season_)
-        if i == 20:
+        if i == 1:
             break
         
 

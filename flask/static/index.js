@@ -178,6 +178,7 @@ var warnings = {
     'Rival Presence': `${domainURL}/static/img/Warning_rival_presence_icon.webp`,
     'Duck and Cover': `${domainURL}/static/img/Warning_duck_and_cover_icon.webp`,
     'Ebonite Outbreak' : `${domainURL}/static/img/Warning_ebonite_outbreak_icon.webp`,
+    'Tougher Enemies' : `${domainURL}/static/img/Warning_tougher_enemies_icon.webp`
 };
 totalImages += Object.keys(warnings).length;
 var warningsImages = {};
@@ -2167,7 +2168,7 @@ var localStorages = {
     'homepageScript' : null,
 };
 var localStoragesHashes = {
-    'img' : 1012099637,
+    'img' : 281543800,
     'fonts' : 906557479,
     'homepageScript' : 1068821741,
 };
@@ -2297,7 +2298,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             // likely localStorages hashing is broken
             console.log(error);
             localStorage.clear();
-            // resetGlobalVars();
+            resetGlobalVars();
 
             initTries += 1;
             if (initTries > 2) {

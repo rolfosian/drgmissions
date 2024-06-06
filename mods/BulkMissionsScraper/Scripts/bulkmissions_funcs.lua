@@ -201,7 +201,8 @@ Warnings = {
     ['MissionWarning /Game/GameElements/Missions/Warnings/ExploderInfestation/WRN_ExploderInfestation.WRN_ExploderInfestation'] = 'Exploder Infestation',
     ['MissionWarning /Game/GameElements/Missions/Warnings/CaveLeechDen/WRN_CaveLeechDen.WRN_CaveLeechDen'] = 'Cave Leech Cluster',
     ['MissionWarning /Game/GameElements/Missions/Warnings/BulletHell/WRN_BulletHell.WRN_BulletHell'] = 'Duck and Cover',
-    ['MissionWarning /Game/GameElements/Missions/Warnings/RockInfestation/WRN_RockInfestation.WRN_RockInfestation'] = 'Ebonite Outbreak'
+    ['MissionWarning /Game/GameElements/Missions/Warnings/RockInfestation/WRN_RockInfestation.WRN_RockInfestation'] = 'Ebonite Outbreak',
+    ['MissionWarning /Game/GameElements/Missions/Warnings/TougherEnemies/WRN_TougherEnemies.WRN_TougherEnemies'] = 'Tougher Enemies'
 }
 function GetMissionWarning(fullname)
     return Warnings[fullname]

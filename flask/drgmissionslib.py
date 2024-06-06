@@ -290,7 +290,8 @@ standard_mission_images = {
         'Lithophage Outbreak': Image.open('./static/img/Warning_lithophage_outbreak_icon.png'),
         'Rival Presence': Image.open('./static/img/Warning_rival_presence_icon.png'),
         'Duck and Cover': Image.open('./static/img/Warning_duck_and_cover_icon.png'),
-        'Ebonite Outbreak' : Image.open('./static/img/Warning_ebonite_outbreak_icon.png')
+        'Ebonite Outbreak' : Image.open('./static/img/Warning_ebonite_outbreak_icon.png'),
+        'Ebonite Outbreak' : Image.open('./static/img/Warning_tougher_enemies_icon.png'),
             }
     }
 for k in standard_mission_images.keys():

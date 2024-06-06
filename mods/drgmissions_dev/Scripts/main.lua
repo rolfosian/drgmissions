@@ -217,5 +217,5 @@ else
 end
 ::isloaded::
 
-TestCurrentTimeOnly()
+-- TestCurrentTimeOnly()
 -- TestTwoWeeks()

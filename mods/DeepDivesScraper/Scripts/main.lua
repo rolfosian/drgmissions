@@ -97,7 +97,8 @@ function UnpackDeepDiveMission(mission, master, t)
         {pattern = 'Ghost', result = 'Haunted Cave'},
         {pattern = 'InfestedEnemies', result = 'Parasites'},
         {pattern = 'BulletHell', result = "Duck and Cover"},
-        {pattern = 'RockInfestation', result = 'Ebonite Outbreak'}
+        {pattern = 'RockInfestation', result = 'Ebonite Outbreak'},
+        {pattern = 'TougherEnemies', result = 'Tougher Enemies'}
     }
     local MissionWarnings = mission:GetPropertyValue("MissionWarnings")
     local num_MissionWarnings = MissionWarnings:GetArrayNum()
