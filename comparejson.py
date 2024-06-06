@@ -153,10 +153,53 @@ def comparedeals():
 
     print(comparedeals.__name__, dailydealsnew == dailydealsold)
 
-comparedeals()
+# comparedeals()
 
-# with open('drgmissionsgod.json', 'r') as f:
-#     drg = json.load(f)
+from drgmissions_scraper_utils import flatten_seasons, reconstruct_dictionary, order_dictionary_by_date_FIRST_KEY_ROUNDING
+def check_flatten():
+    with open('drgmissionsdev.json', 'r') as f:
+        DRG = json.load(f)
+        DRG = order_dictionary_by_date_FIRST_KEY_ROUNDING(DRG)
+        DRG = reconstruct_dictionary(DRG)
+        
+    DRG = flatten_seasons(DRG)
+    for v in DRG.values():
+        for biome, missions in v['Biomes'].items():
+            for mission in missions:
+                print(json.dumps(mission, indent=2))
+                print('')
+        break
 
-# timestamp = list(drg.keys())[-1]
-# print(timestamp)
+# check_flatten()
+
+def check_duplicate_seasons():
+    with open('drgmissionsdev.json', 'r') as f:
+        DRG = order_dictionary_by_date_FIRST_KEY_ROUNDING(json.load(f))
+        DRG = re.sub(r':\d{2}Z', ':00Z', json.dumps(DRG))
+        DRG = json.loads(DRG)
+        DRG = reconstruct_dictionary(DRG)
+        
+    seen = {}
+    for k, v in DRG.items():
+        seen[k] = {}
+        for season, d in v.items():
+            del d['timestamp']
+            seen[k][season] = json.dumps(d)
+    
+    for i, (k, v) in enumerate(seen.items()):
+        print(k)
+        seent = []
+        for season, d in v.items():
+            for season_, d_ in v.items():
+                if season_ == season:
+                    continue
+                if d == d_:
+                    if [season, season_] in seent or [season_, season] in seent:
+                        continue
+                    seent.append([season, season_])
+                    print( season, '==', season_)
+        if i == 20:
+            break
+        
+
+check_duplicate_seasons()

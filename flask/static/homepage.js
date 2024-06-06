@@ -6,7 +6,7 @@ async function deepDiveCountDown() {
     let targetHour = 11;
     let targetTime = new Date();
     let countdownTimer;
-    
+
     function startCountdown() {
         targetTime.setUTCHours(targetHour, 0, 0, 0);
         if (targetTime.getUTCDay() === targetDay && Date.now() > targetTime.getTime()) {
@@ -110,7 +110,7 @@ function topMissionsCountdown() {
     document.addEventListener('upcomingBiomeCache', async function(event) {
         tempCacheUpcomingBiomes(event.isMidnightUpcoming, event.date)
     });
-    
+
     document.addEventListener('refreshBiomes', async function(event) {
         while (!tempBiomes) {
             await sleep(1);
@@ -152,7 +152,7 @@ function topDailyDealCountdown() {
             let formattedTime = padZero(hours) + ":" + padZero(minutes) + ":" + padZero(seconds);
             document.getElementById("dailyDealCountdown").innerHTML = formattedTime;
         }
-    
+
     function padZero(number) {
         return number.toString().padStart(2, "0");
     }
@@ -198,35 +198,29 @@ async function onLoad() {
     document.getElementById("current").classList.toggle("collapsed");
     toggleCollapse();
     document.getElementById("upcoming").style.visibility = 'visible';
-    initialized = true
+    initialized = true;
 
-    setupIdleVideoPause('background-video', 10000)
-    topDailyDealCountdown()
-    topMissionsCountdown()
+    setupIdleVideoPause('background-video', 10000);
+    topDailyDealCountdown();
+    topMissionsCountdown();
 
-    // let season = document.getElementById('season');
-    // season.setAttribute('onchange', 'changeSeason(biomes, this.value)');
-    // season.disabled = false;
-    season.setAttribute('onchange', "toggleSeason4(biomes, this.checked)");
+    let season = document.getElementById('season');
+    season.setAttribute('onchange', 'changeSeason(biomes, this.value)');
     season.disabled = false;
-    seasonClick = document.getElementById('seasonClick')
-    seasonClick.setAttribute('onclick', "document.getElementById('season').click()");
-    seasonClick.disabled = false;
 
     document.querySelectorAll('.biome-container').forEach((element)=> {
         element.style.opacity = "1";
     });
 
-    let dailyDealButton = document.getElementById('dailyDealButton')
+    let dailyDealButton = document.getElementById('dailyDealButton');
     dailyDealButton.setAttribute('onclick', "slideToggle('dailyDealMaster', 'dailyDealButton', ['Click here to see Daily Deal', 'Hide Daily Deal'])");
-    slideToggle('dailyDealMaster', 'dailyDealButton', ['Click here to see Daily Deal', 'Hide Daily Deal'])
-    dailyDealButton.disabled = false
+    slideToggle('dailyDealMaster', 'dailyDealButton', ['Click here to see Daily Deal', 'Hide Daily Deal']);
+    dailyDealButton.disabled = false;
 
     let buttonsButton = document.getElementById('buttonsButton');
     buttonsButton.setAttribute('onclick', 'toggleButtons()');
     buttonsButton.disabled = false;
 
-    
     currentButton = document.getElementById('currentButton');
     currentButton.setAttribute('onclick', 'toggleCollapse()');
     currentButton.disabled = false;
@@ -235,7 +229,7 @@ async function onLoad() {
     backgroundButton.setAttribute('onclick', 'toggleBackground()');
     backgroundButton.disabled = false;
 
-    deepDiveData = await getDeepDiveData()
+    deepDiveData = await getDeepDiveData();
     if (deepDiveData) {
         arrayDeepDives(deepDiveData);
         document.querySelectorAll('.dd-missions').forEach((element)=> {

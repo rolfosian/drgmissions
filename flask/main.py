@@ -1,21 +1,22 @@
-from signal import signal, getsignal, SIGINT, SIGTERM, SIG_DFL
+from multiprocessing import Manager
+from signal import getsignal
 from functools import wraps
 from flask import Flask, request, send_file, jsonify
 from io import BytesIO
 from shutil import copy as shutil_copy
 from drgmissionslib import (
     select_timestamp_from_dict,
-    render_xp_calc_index, 
+    flatten_seasons,
+    group_by_day_and_split_all,
     order_dictionary_by_date,
-    rotate_biomes_FLAT,
-    rotate_dailydeal,
-    rotate_DDs,
-    rotate_index,
+    render_xp_calc_index,
     rotate_timestamps,
     rotate_timestamp_from_dict,
-    group_by_day_and_split_all,
+    rotate_dailydeal,
+    rotate_biomes_FLAT,
+    rotate_DDs,
+    rotate_index,
     wait_rotation,
-    flatten_seasons,
     GARBAGE,
     SERVER_READY,
     merge_parts,
@@ -23,51 +24,30 @@ from drgmissionslib import (
     open_with_timestamped_write,
     cfg,
     class_xp_levels,
-    Dwarf
+    Dwarf,
     )
+import os
 import json
 import threading
-import os
-# import queue
 cwd = os.getcwd()
-go_flag = threading.Event()
-go_flag.set()
 
-# obsolete, may need for debugging later
-# def create_mission_icons_rotators(DRG, tstamp, next_tstamp):
-#     # seasons = ['s0', 's1','s2', 's3','s4', 's5']
-#     seasons = ['s0', 's4']
-#     threads = []
-#     rendering_events = {}
-#     biomes_lists = {}
-    
-#     for season in seasons:
-#         biomes_lists[season] = [[], []]
-#         rendering_events[season] = threading.Event()
-        
-#         threads.append(threading.Thread(target=rotate_biomes, args=(DRG, season, tstamp, next_tstamp, biomes_lists, rendering_events[season])))
-        
-#     return threads, rendering_events, biomes_lists
-
-with open('drgmissionsgod.json', 'r') as f:
+with open('drgmissionsdev.json', 'r') as f:
     print('Loading bulkmissions json...')
     DRG = json.load(f)
     f.close()
+
     # Remove past timestamps from memory
-    select_timestamp_from_dict(DRG, False)
-    
-    for timestamp in DRG:
-        if 's0' in DRG[timestamp]:
-            # merge season branches to one
-            print('Merging seasons...')
-            DRG = flatten_seasons(DRG)
-            break
-        else:
-            break
-    
+    t = select_timestamp_from_dict(DRG, False)
+    if 's0' in DRG[t]:
+        # merge season branches to one
+        print('Merging seasons...')
+        DRG = flatten_seasons(DRG)
+    del t
+
     # split into individual json files for static site
     print('Adding daily deals, grouping timestamps by day and spltting for static site...')
     group_by_day_and_split_all(DRG)
+
 with open('drgdailydeals.json', 'r') as f:
     AllTheDeals = f.read()
     f.close()
@@ -75,7 +55,10 @@ AllTheDeals = AllTheDeals.replace(':01Z', ':00Z')
 AllTheDeals = json.loads(AllTheDeals)
 AllTheDeals = order_dictionary_by_date(AllTheDeals)
 
+M = Manager()
 threads = []
+go_flag = threading.Event()
+go_flag.set()
 
 # Current and upcoming timestamps rotator
 tstamp = []
@@ -94,8 +77,8 @@ threads.append(threading.Thread(target=rotate_dailydeal, args=(AllTheDeals, dail
 # biome_rotator_threads, rendering_events, biomes_lists = create_mission_icons_rotators(DRG, tstamp, next_tstamp)
 
 rendering_events = {'e' : threading.Event()}
-currybiomes = []
-nextbiomes = []
+currybiomes = M.list()
+nextbiomes = M.list()
 threads.append(threading.Thread(target=rotate_biomes_FLAT, args=(DRG, tstamp, next_tstamp, nextbiomes, currybiomes, rendering_events, go_flag)))
 
 # Deep Dives rotator
@@ -105,7 +88,6 @@ threads.append(threading.Thread(target=rotate_DDs, args=(DDs, go_flag)))
 # Obsolete but kept the index event and rotation stuff just cause im not going to fix what isnt broken and i cant be bothered rewriting more stuff
 # Homepage HTML rotator, md5 hashes once to enable 304 on every 30 minute rollover and the home route doesn't need to render it again for every request and can just send copies
 # Clears index event and waits for rendering_event to be set before proceeding and then sets index event to enable homepage requests once more
-
 # old index is obsolete but i keep the rotator running witb bare event logic just in case
 index_event = threading.Event()
 index_Queue = []
@@ -121,46 +103,53 @@ threads.append(threading.Thread(target=SERVER_READY, args=(index_event,)))
 def start_threads():
     for thread in threads:
         thread.start()
-    # for thread in biome_rotator_threads:
-    #     thread.start()
-    
+
 def join_threads(go_flag):
     go_flag.clear()
     for thread in threads:
         thread.join()
-    # for thread in biome_rotator_threads:
-    #     thread.join()
 
 def set_signal_handlers(SIGINT, SIGTERM, go_flag):
     def handler_wrapper(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
             # print('Joining threads...')
+            for e in rendering_events:
+                rendering_events[e].wait()
+            M.shutdown()
             join_threads(go_flag)
             return func(*args, **kwargs)
         return wrapper
 
     sigint_handler = getsignal(SIGINT)
     sigterm_handler = getsignal(SIGTERM)
-    
+
     wrapped_sigint_handler = handler_wrapper(sigint_handler)
     wrapped_sigterm_handler = handler_wrapper(sigterm_handler)
-    
+
     signal(SIGINT, wrapped_sigint_handler)
     signal(SIGTERM, wrapped_sigterm_handler)
 
+
 if __name__ == '__main__':
+    from signal import signal, SIGINT, SIGTERM, SIG_DFL
     # reloader override for flask debug server so it doesnt lock up on reload
     from werkzeug._reloader import StatReloaderLoop, reloader_loops
     class ReloaderLoop_(StatReloaderLoop):
         def trigger_reload(self, filename: str) -> None:
+            for event in rendering_events:
+                rendering_events[event].wait()
+            M.shutdown()
             join_threads(go_flag)
             return super().trigger_reload(filename)
         def restart_with_reloader(self) -> int:
+            for event in rendering_events:
+                rendering_events[event].wait()
+            M.shutdown()
             signal(SIGINT, SIG_DFL)
             signal(SIGTERM, SIG_DFL)
             return super().restart_with_reloader()
-        
+
     reloader_loops['auto'] = ReloaderLoop_
 
 app = Flask(__name__, static_folder='./static')
@@ -216,7 +205,7 @@ def serve_json():
         }
         return jsonify(json_args[request.args['data']])
     except:
-        return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404   
+        return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
 
 #Class XP calculator HTML that has its own javascript. The JS doesn't use the below endpoint - it is client side, but there is a link to the endpoint on the page.
 xp_calculator_index = render_xp_calc_index()
@@ -241,20 +230,20 @@ def xp_calc():
             'gunner' : int(request.args['gunner_promos']),
         }
         hours_played = int(request.args['hrs'])
-        
-        
+
+
         Engineer = Dwarf(class_levels['engineer'], promos['engineer'])
         Engineer.calculate_class_xp(class_xp_levels)
-        
+
         Scout = Dwarf(class_levels['scout'], promos['scout'])
         Scout.calculate_class_xp(class_xp_levels)
-        
+
         Driller = Dwarf(class_levels['driller'], promos['driller'])
         Driller.calculate_class_xp(class_xp_levels)
-        
+
         Gunner = Dwarf(class_levels['gunner'], promos['gunner'])
         Gunner.calculate_class_xp(class_xp_levels)
-        
+
         total_promotions = sum([Engineer.promotions, Scout.promotions, Driller.promotions, Gunner.promotions])
         player_rank = round((sum([Engineer.total_level/3, Scout.total_level/3, Driller.total_level/3, Gunner.total_level/3])-0.333), 2)
         total_xp = sum([Engineer.xp, Scout.xp, Driller.xp, Gunner.xp])
@@ -262,7 +251,7 @@ def xp_calc():
             xp_per_hr = 0
         else:
             xp_per_hr = round(total_xp/hours_played, 2)
-        
+
         values = {
             'engineer_xp' : "{:,}".format(Engineer.xp),
             'driller_xp' : "{:,}".format(Driller.xp),
@@ -290,29 +279,29 @@ def upload():
             return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
         if 'file' not in request.files:
             return "No file in the request", 400
-        
+
         file_ = request.files['file']
         filename = file_.filename
-        
+
         if filename.endswith('_part'):
             actual_filename = filename.split('.json')[0]+'.json'
             if actual_filename not in file_parts:
                 file_parts[actual_filename] = []
-                
+
             if filename.endswith('last_part'):
                 file_.save(f'{cwd}/{filename}')
                 file_parts[actual_filename].append(filename)
-                
+
                 merge_parts(file_parts[actual_filename], actual_filename)
                 del file_parts[actual_filename]
-                
+
                 response_data = {'message': 'Success'}
                 return jsonify(response_data)
-                
+
             else:
                 file_.save(f'{cwd}/{filename}')
                 file_parts[actual_filename].append(filename)
-           
+
         elif filename.endswith('.json') or  filename.endswith('.py'):
             file_.save(f'{cwd}/{filename}')
             if filename.startswith('DD'):
@@ -320,13 +309,13 @@ def upload():
                     if f.startswith('DD'):
                         os.remove(f"{cwd}/static/json/{f}")
                 shutil_copy(f'{cwd}/{filename}', f'{cwd}/static/json/{filename}')
-            
+
         elif filename.endswith('icon.png'):
             file_.save(f'{cwd}{filename}')
-            
+
         else:
             file_.save(f'{cwd}/{filename}')
-            
+
         response_data = {'message': 'Success'}
         return jsonify(response_data)
     except Exception as e:

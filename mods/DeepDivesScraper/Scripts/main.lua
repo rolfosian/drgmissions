@@ -51,7 +51,7 @@ function UnpackDeepDiveMission(mission, master, t)
         {pattern = "1st_Salvage", result = "Salvage Operation"},
         {pattern = "1st_Facility", result = "Industrial Sabotage"},
         {pattern = "Gather_AlienEggs", result = "Egg Hunt"},
-        -- {pattern = "DeepScan", result = "Deep Scan"}
+        {pattern = "DeepScan", result = "Deep Scan"}
     }
     for _, obj in ipairs(primary_objectives) do
         if string.find(PrimaryObjective, obj.pattern) then
@@ -96,8 +96,8 @@ function UnpackDeepDiveMission(mission, master, t)
         {pattern = 'RivalIncursion', result = 'Rival Presence'},
         {pattern = 'Ghost', result = 'Haunted Cave'},
         {pattern = 'InfestedEnemies', result = 'Parasites'},
-        -- {pattern = 'DuckAndCover', result = "Duck and Cover"},
-        -- {pattern = 'EboniteOutbreak', result = 'Ebonite Outbreak'}
+        {pattern = 'BulletHell', result = "Duck and Cover"},
+        {pattern = 'RockInfestation', result = 'Ebonite Outbreak'}
     }
     local MissionWarnings = mission:GetPropertyValue("MissionWarnings")
     local num_MissionWarnings = MissionWarnings:GetArrayNum()
@@ -151,8 +151,8 @@ function UnpackDeepDiveMission(mission, master, t)
                 {pattern = 'OxygenRich', result = 'Rich Atmosphere'},
                 {pattern = 'ExterminationContract', result = 'Golden Bugs'},
                 {pattern = 'ExplosiveEnemies', result = 'Volatile Guts'},
-                -- {pattern = 'BloodSugar', result = 'Blood Sugar'},
-                -- {pattern = 'SecretSecondary', result = 'Secret Secondary'}
+                {pattern = 'BloodSugar', result = 'Blood Sugar'},
+                {pattern = 'SecretSecondary', result = 'Secret Secondary'}
             }
             for _, obj in ipairs(mutators) do
                 if string.find(MissionMutator, obj.pattern) then
@@ -218,6 +218,10 @@ function UnpackDeepDiveMission(mission, master, t)
         {pattern = 'DNA_2_03_C', result = {complexity = '1', length = '2'}},
         {pattern = 'DNA_2_04_C', result = {complexity = '2', length = '3'}},
         {pattern = 'DNA_2_05_C', result = {complexity = '3', length = '3'}},
+
+        -- Deep Scan
+        {pattern = 'DNA_Web_Small_C', result = {complexity = '2', length = '1'}},
+        {pattern = 'DNA_Web_Medium_C', result = {complexity = '3', length = '2'}}
     }
     if complexity == 'Indefinite' and length == 'Indefinite' then
         for _, dna in pairs(MissionDNAs) do
@@ -367,7 +371,7 @@ function UnpackDeepDiveMission(mission, master, t)
         DurationLimit = DurationLimit
         }
     end
-    
+
     table.insert(master['Deep Dives'][t]['Stages'], mission1)
 end
 function GetMissions()
@@ -446,7 +450,7 @@ function PressStartAndWaitForLoad()
     end
     -- Execute the function that 'press any key' invokes
     for index, startmenu in pairs(startmenus) do
-        startmenu:PressStart()
+        startmenu:OpenGameLevel()
     end
 
     local waiting_for_load = true

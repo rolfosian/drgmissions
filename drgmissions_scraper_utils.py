@@ -713,22 +713,25 @@ def flatten_seasons(DRG):
                     mission['season'] = season
                     if mission['CodeName'] in combined[timestamp]['Biomes'][biome+'codenames']:
                         duplicates.append([timestamp, biome, mission])
-                    else:
-                        try:
-                            combined[timestamp]['Biomes'][biome].insert(index, mission)
-                        except:
-                            combined[timestamp]['Biomes'][biome].append(mission)
+                        continue
+                    try:
+                        combined[timestamp]['Biomes'][biome].insert(index, mission)
+                        combined[timestamp]['Biomes'][biome+'codenames'].append(mission['CodeName'])
+                    except:
+                        combined[timestamp]['Biomes'][biome].append(mission)
+                        combined[timestamp]['Biomes'][biome+'codenames'].append(mission['CodeName'])
     
     for timestamp, biome, dup_mission in duplicates:
-        for season in seasons:
-            for mission in combined[timestamp]['Biomes'][biome]:
-                if dup_mission['CodeName'] != mission['CodeName']:
-                    continue
-                if compare_dicts(mission, dup_mission, ['season', 'id', 'season_modified']):
-                    continue
-                if 'season_modified' not in mission:
-                    mission['season_modified'] = {}
-                mission['season_modified'][season] = dup_mission
+        for mission in combined[timestamp]['Biomes'][biome]:
+
+            if dup_mission['CodeName'] != mission['CodeName']:
+                continue
+            if compare_dicts(mission, dup_mission, ['season', 'id', 'season_modified']):
+                continue
+            if 'season_modified' not in mission:
+                mission['season_modified'] = {}
+                    
+            mission['season_modified'][dup_mission['season']] = dup_mission
 
     for timestamp in timestamps:
         for k in list(combined[timestamp]['Biomes'].keys()):

@@ -39,13 +39,13 @@
 
 ## **TODO**
 - **Public Enemy Number One**: Check and Update Deep Dive scraper weekly to accomodate currently unknown configurations (havent seen any unknowns in months), **contingencies for if Steam misbehaves**
-- ~~[Scripts for registry entries for automatic login and](https://github.com/rolfosian/drgmissions/blob/main/vm_fresh_setup.bat) [cron entry for starting vm weekly](https://github.com/rolfosian/drgmissions/blob/main/vm_Run.sh) for [DeepDives_Run.py](https://github.com/rolfosian/drgmissions/blob/main/DeepDives_Run.py)~~
+- ~~[Scripts for registry entries for automatic login](https://github.com/rolfosian/drgmissions/blob/main/vm_fresh_setup.bat) and [cron entry for starting vm weekly](https://github.com/rolfosian/drgmissions/blob/main/vm_Run.sh) for [DeepDives_Run.py](https://github.com/rolfosian/drgmissions/blob/main/DeepDives_Run.py)~~
 - Fix canvas mission icon jaggies in js
 - Move static site to github pages, set up github actions for deployment of metadata and edit `.*_Run` scripts accordingly
 - ~~Figure out a solution to reduce required delay between iterations for accurate data to be collected by the 30 minute incrementer~~
 - Figure out how to manipulate wine(?) system clock with hook on linux
 - ~~Clean up and convert Complexity/Length finalization to table lookup seriously look at it its so disgusting DO SOMETHING~~
-- ~~Parallelize png rendering and arraying functions and change png route args to codenames instead of indexing once possible~~ Moved png rendering and arraying to thread pools, but the gains are miniscule because of thread management overhead, the GIL, and I/O bound image rendering. It also requires a hard restart of the interpreter so `gunicorn --reload` isn't feasible. Needs processing pools to see gains that are bigger than fractions of a millisecond, but the vps is only 1 vcore so I'm not going to bother debugging the circular multiprocessing import at this stage.
+- ~~Parallelize png rendering and arraying functions and change png route args to codenames instead of indexing once possible~~ 
 
 -------------------------------------------------------------------------------------------
 ***This is a third-party project and it is not affiliated, endorsed, or sponsored by Ghost Ship Games. The use of Deep Rock Galactic's in-game assets in this project is solely for illustrative purposes and does not imply any ownership or association with the game or its developers. All copyrights and trademarks belong to their respective owners. For official information about Deep Rock Galactic, please visit the official Ghost Ship Games website.***

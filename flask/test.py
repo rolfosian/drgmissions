@@ -1,6 +1,7 @@
 import threading
+from functools import wraps
 from flask import Flask
-from signal import SIGINT, SIGTERM, signal
+from signal import SIGINT, SIGTERM, SIG_DFL, getsignal, signal
 from time import sleep
 
 go_flag = threading.Event()
@@ -23,21 +24,34 @@ def join_threads(go_flag):
     for thread in threads:
         thread.join()
 
-def signal_handler_exit(sig, frame, go_flag):
-    print(f"Received signal {sig}. Exiting...")
-    join_threads(go_flag)
-    exit(0)
-    
 def set_signal_handlers(SIGINT, SIGTERM, go_flag):
-    signal(SIGINT, lambda signum, frame: signal_handler_exit(signum, frame, go_flag))
-    signal(SIGTERM, lambda signum, frame: signal_handler_exit(signum, frame, go_flag))
+    def handler_wrapper(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            # print('Joining threads...')
+            join_threads(go_flag)
+            return func(*args, **kwargs)
+        return wrapper
+
+    sigint_handler = getsignal(SIGINT)
+    sigterm_handler = getsignal(SIGTERM)
+    
+    wrapped_sigint_handler = handler_wrapper(sigint_handler)
+    wrapped_sigterm_handler = handler_wrapper(sigterm_handler)
+    
+    signal(SIGINT, wrapped_sigint_handler)
+    signal(SIGTERM, wrapped_sigterm_handler)
 
 from werkzeug._reloader import StatReloaderLoop, reloader_loops
-class DummyReloaderLoop(StatReloaderLoop):        
+class DummyReloaderLoop(StatReloaderLoop):
     def trigger_reload(self, filename: str) -> None:
         join_threads(go_flag)
         return super().trigger_reload(filename)
-
+    def restart_with_reloader(self) -> int:
+        signal(SIGINT, SIG_DFL)
+        signal(SIGTERM, SIG_DFL)
+        return super().restart_with_reloader()
+        
 reloader_loops['auto'] = DummyReloaderLoop
 
 app = Flask(__name__)

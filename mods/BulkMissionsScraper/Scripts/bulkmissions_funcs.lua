@@ -105,6 +105,9 @@ function Split(str, separator)
     end
     return result
 end
+function Endswith(str, ending)
+    return ending == "" or str:sub(-#ending) == ending
+end
 function Strip(s)
     return (s:gsub("^%s*(.-)%s*$", "%1"))
 end
@@ -114,66 +117,31 @@ end
 function TableIndexExists(table, index)
     return table[index] ~= nil
 end
-function GetSeasonSubsystem()
-    local subsystems = FindAllOf('SeasonsSubsystem')
-    if subsystems then
-        for i, subsystem in pairs(subsystems) do
-            local fullname = string.format("%s",subsystem:GetFullName())
-            if fullname == 'SeasonsSubsystem /Script/FSD.Default__SeasonsSubsystem' then
-                goto continue
-            else
-                return subsystem
-            end
-            ::continue::
-        end
+MissionGenerationManager = FindFirstOf('MissionGenerationManager')
+MapKeys = {
+    [0] = 0,
+    [1] = 1,
+    [2] = 1,
+    [3] = 3,
+    [4] = 3,
+    [5] = 5
+}
+function GetSeedTable(Season, RandomSeed)
+    local NewSeed = {
+        RandomSeed = RandomSeed,
+        Season = Season,
+        MapKey = MapKeys[Season]
+    }
+    return NewSeed
+end
+function GetMissions_(Season, RandomSeed)
+    local Missions = {}
+    local Missions_ = MissionGenerationManager:GetMissions(GetSeedTable(Season, RandomSeed))
+    for _, m in pairs(Missions_) do
+        table.insert(Missions, m:get())
     end
+    return Missions
 end
-SeasonSubsystem = GetSeasonSubsystem()
-
-function GetMissionGenerationManager()
-    local MissionGenerationManagers = FindAllOf('MissionGenerationManager')
-    if MissionGenerationManagers then
-        for index, manager in pairs(MissionGenerationManagers) do
-            local fullname = string.format("%s",manager:GetFullName())
-            if fullname == 'MissionGenerationManager /Script/FSD.Default__MissionGenerationManager' then
-                goto continue
-            else
-                return manager
-            end
-            ::continue::
-        end
-    end
-end
-MissionGenerationManager = GetMissionGenerationManager()
-
-function S4Off()
-    SeasonSubsystem:SetHasOptedOutOfSeasonContent(true)
-end
-function S4On()
-    SeasonSubsystem:SetHasOptedOutOfSeasonContent(false)
-end
-function GetMissions()
-    local remotemissions = nil
-    local missions = {}
-    -- local MissionGenerationManagers = FindAllOf('MissionGenerationManager')
-    -- if MissionGenerationManagers then
-    --     for index, manager in pairs(MissionGenerationManagers) do
-    --         local fullname = string.format("%s",manager:GetFullName())
-    --         if fullname == 'MissionGenerationManager /Script/FSD.Default__MissionGenerationManager' then goto continue end
-            remotemissions = MissionGenerationManager:GetAvailableMissions()
-            if remotemissions then
-                for _, remotemission in pairs(remotemissions) do
-                    local mission = remotemission:get()
-                    table.insert(missions, mission)
-                end
-            end
-            -- break
-            -- ::continue::
-        -- end
-    -- end
-    return missions
-end
-
 PrimaryObjectives = {
  ['BlueprintGeneratedClass /Game/GameElements/Objectives/OBJ_1st_PointExtraction.OBJ_1st_PointExtraction_C'] = 'Point Extraction',
  ['BlueprintGeneratedClass /Game/GameElements/Objectives/Elimination/OBJ_Eliminate_Eggs.OBJ_Eliminate_Eggs_C'] = 'Elimination',
@@ -183,7 +151,7 @@ PrimaryObjectives = {
  ['BlueprintGeneratedClass /Game/GameElements/Objectives/Salvage/OBJ_1st_Salvage.OBJ_1st_Salvage_C'] = 'Salvage Operation',
  ['BlueprintGeneratedClass /Game/GameElements/Objectives/Facility/OBJ_1st_Facility.OBJ_1st_Facility_C'] = 'Industrial Sabotage',
  ['BlueprintGeneratedClass /Game/GameElements/Objectives/OBJ_1st_Gather_AlienEggs.OBJ_1st_Gather_AlienEggs_C'] = 'Egg Hunt',
---  ['BlueprintGeneratedClass /Game/GameElements/Objectives/'] = 'Deep Scan'
+ ['BlueprintGeneratedClass /Game/GameElements/Objectives/DeepScan/OBJ_1st_DeepScan.OBJ_1st_DeepScan_C'] = 'Deep Scan'
 }
 function GetPrimaryObj(fullname)
     return PrimaryObjectives[fullname]
@@ -196,7 +164,9 @@ SecondaryObjectives = {
     ['BlueprintGeneratedClass /Game/GameElements/Objectives/OBJ_2nd_Find_Fossil.OBJ_2nd_Find_Fossil_C'] = 'Fossils',
     ['BlueprintGeneratedClass /Game/GameElements/Objectives/OBJ_2nd_Find_Ebonut.OBJ_2nd_Find_Ebonut_C'] = 'Ebonuts',
     ['BlueprintGeneratedClass /Game/GameElements/Objectives/OBJ_2nd_Find_BooloCap.OBJ_2nd_Find_BooloCap_C'] = 'Boolo Caps',
-    ['BlueprintGeneratedClass /Game/GameElements/Objectives/OBJ_2nd_Find_ApocaBloom.OBJ_2nd_Find_ApocaBloom_C'] = 'ApocaBlooms'
+    ['BlueprintGeneratedClass /Game/GameElements/Objectives/OBJ_2nd_Find_ApocaBloom.OBJ_2nd_Find_ApocaBloom_C'] = 'ApocaBlooms',
+    ['BlueprintGeneratedClass /Game/GameElements/Objectives/OBJ_2nd_DestroyBhaBarnacles.OBJ_2nd_DestroyBhaBarnacles_C'] = 'Exterminate Bha Barnacles',
+    ['BlueprintGeneratedClass /Game/GameElements/Objectives/OBJ_2nd_DestroyEggs.OBJ_2nd_DestroyEggs_C'] = 'Exterminate Glyphid Eggs'
 }
 function GetSecondaryObj(fullname)
     return SecondaryObjectives[fullname]
@@ -210,8 +180,8 @@ MissionMutators = {
     ['MissionMutator /Game/GameElements/Missions/Mutators/LowGravity/MMUT_LowGravity.MMUT_LowGravity'] = 'Low Gravity',
     ['MissionMutator /Game/GameElements/Missions/Mutators/GoldRush/MMUT_GoldRush.MMUT_GoldRush'] = 'Gold Rush',
     ['MissionMutator /Game/GameElements/Missions/Mutators/EliminationContract/MMUT_ExterminationContract.MMUT_ExterminationContract'] = 'Golden Bugs',
-    -- ['MissionMutator /Game/GameElements/Missions/Mutators/BloodSugar/MMUT_BloodSugar.MMUT_BloodSugar'] = 'Blood Sugar',
-    -- ['MissionMutator /Game/GameElements/Missions/Mutators/SecretSecondary/MMUT_SecretSecondary.MMUT_SecretSecondary'] = 'Secret Secondary'
+    ['MissionMutator /Game/GameElements/Missions/Mutators/BloodSugar/MMUT_BloodSugar.MMUT_BloodSugar'] = 'Blood Sugar',
+    ['MissionMutator /Game/GameElements/Missions/Mutators/SecretSecondary/MMUT_SecretSecondary.MMUT_SecretSecondary'] = 'Secret Secondary'
 }
 function GetMissionMutator(fullname)
     return MissionMutators[fullname]
@@ -230,8 +200,8 @@ Warnings = {
     ['MissionWarning /Game/GameElements/Missions/Warnings/Ghost/WRN_Ghost.WRN_Ghost'] = 'Haunted Cave',
     ['MissionWarning /Game/GameElements/Missions/Warnings/ExploderInfestation/WRN_ExploderInfestation.WRN_ExploderInfestation'] = 'Exploder Infestation',
     ['MissionWarning /Game/GameElements/Missions/Warnings/CaveLeechDen/WRN_CaveLeechDen.WRN_CaveLeechDen'] = 'Cave Leech Cluster',
-    -- ['MissionWarning /Game/GameElements/Missions/Warnings/DuckAndCover/WRN_DuckAndCover.WRN_DuckAndCover'] = 'Duck and Cover',
-    -- ['MissionWarning /Game/GameElements/Missions/Warnings/EboniteOutbreak/WRN_EboniteOutbreak.WRN_EboniteOutbreak'] = 'Ebonite Outbreak'
+    ['MissionWarning /Game/GameElements/Missions/Warnings/DuckAndCover/WRN_DuckAndCover.WRN_BulletHell'] = 'Duck and Cover',
+    ['MissionWarning /Game/GameElements/Missions/Warnings/EboniteOutbreak/WRN_EboniteOutbreak.WRN_RockInfestation'] = 'Ebonite Outbreak'
 }
 function GetMissionWarning(fullname)
     return Warnings[fullname]
@@ -273,6 +243,10 @@ MissionDNAs = {
     ['BlueprintGeneratedClass /Game/GameElements/Missions/DNA_2_03.DNA_2_03_C'] = {complexity = '1', length = '2'},
     ['BlueprintGeneratedClass /Game/GameElements/Missions/DNA_2_04.DNA_2_04_C'] = {complexity = '2', length = '3'},
     ['BlueprintGeneratedClass /Game/GameElements/Missions/DNA_2_05.DNA_2_05_C'] = {complexity = '3', length = '3'},
+
+    --Deep Scan
+    ['BlueprintGeneratedClass /Game/GameElements/Missions/DNA_Web_Medium.DNA_Web_Medium_C'] = {complexity = '3', length='2'},
+    ['BlueprintGeneratedClass /Game/GameElements/Missions/DNA_Web_Small.DNA_Web_Small_C'] = {complexity = '2', length='1'}
 }
 MissionDNAs_obscure = {
     ['Egg Hunt'] = {
@@ -494,13 +468,11 @@ return {
     TableToString = TableToString,
     Split = Split,
     HasKey = HasKey,
-    S4Off = S4Off,
-    S4On = S4On,
     UnpackStandardMission = UnpackStandardMission,
     BiomesTable = BiomesTable,
     GetBiome = GetBiome,
     Exit = Exit,
-    GetMissions = GetMissions,
+    GetMissions = GetMissions_,
     CreatePollFile = CreatePollFile,
     Strip = Strip
 }
