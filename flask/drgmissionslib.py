@@ -291,7 +291,7 @@ standard_mission_images = {
         'Rival Presence': Image.open('./static/img/Warning_rival_presence_icon.png'),
         'Duck and Cover': Image.open('./static/img/Warning_duck_and_cover_icon.png'),
         'Ebonite Outbreak' : Image.open('./static/img/Warning_ebonite_outbreak_icon.png'),
-        'Ebonite Outbreak' : Image.open('./static/img/Warning_tougher_enemies_icon.png'),
+        'Tougher Enemies' : Image.open('./static/img/Warning_tougher_enemies_icon.png'),
             }
     }
 for k in standard_mission_images.keys():
@@ -541,7 +541,9 @@ def render_dd_secondary_obj_resource(secondary_obj):
         'Eliminate Dreadnought': './static/img/Kill_Dreadnought_Objective_icon.png',
         'Mine Morkite': './static/img/Morkite_icon.png',
         'Get Alien Eggs': './static/img/Alien_egg_icon.png',
-        'Black Box': './static/img/Blackbox_icon.png'
+        'Black Box': './static/img/Blackbox_icon.png',
+        'Build Liquid Morkite Pipeline' : './static/img/Icons_Resources_Detailed_Outline_LiquidMorkiteTankerPod.png',
+        'Perform Deep Scans' : './static/img/Icons_Resources_Detailed_Outline_ResonanceScannerPod.png'
             }
     values = {
         'Repair Minimules': '2',
@@ -549,6 +551,8 @@ def render_dd_secondary_obj_resource(secondary_obj):
         'Mine Morkite': '150',
         'Get Alien Eggs':'2',
         'Black Box':'1',
+        'Build Liquid Morkite Pipeline' : '1',
+        'Perform Deep Scans' : '2'
     }
 
     BACKGROUND = Image.new("RGBA", (256, 256), (0,0,0,0))
@@ -561,14 +565,16 @@ def render_dd_secondary_obj_resource(secondary_obj):
     HEXAGON.close()
 
     RESOURCE = Image.open(secondary_objs[secondary_obj])
-    if secondary_obj == 'Mine Morkite' or secondary_obj == 'Get Alien Eggs':
+    if secondary_obj == 'Mine Morkite':
         RESOURCE = scale_image(RESOURCE, 0.2)
     elif secondary_obj == 'Black Box':
         RESOURCE = scale_image(RESOURCE, 0.3)
+    elif secondary_obj == 'Get Alien Eggs':
+        RESOURCE = scale_image(RESOURCE, 0.24)
     else:
         RESOURCE = scale_image(RESOURCE, 0.14)
     x, y = calc_center(RESOURCE, BACKGROUND)
-    if secondary_obj == 'Mine Morkite':
+    if secondary_obj == 'Mine Morkite' or secondary_obj == 'Black Box' or secondary_obj == 'Perform Deep Scans':
         BACKGROUND.paste(RESOURCE, (x, y-20), mask=RESOURCE)
     else:
         BACKGROUND.paste(RESOURCE, (x, y-13), mask=RESOURCE)
@@ -634,6 +640,7 @@ def render_dd_stage(m_d):
         'Rival Presence': './static/img/Warning_rival_presence_icon.png',
         'Duck and Cover': './static/img/Warning_duck_and_cover_icon.png',
         'Ebonite Outbreak' : './static/img/Warning_ebonite_outbreak_icon.png',
+        'Tougher Enemies' : './static/img/Warning_tougher_enemies_icon.png'
             }
 
     BACKGROUND = Image.new("RGBA", (350, 300), (0,0,0,0))
@@ -1057,7 +1064,7 @@ def rotate_DDs(DDs, go_flag):
             dds = dds['Deep Dives']
             try:
                 dds = render_deepdives(dds)
-            except Exception:
+            except:
                 current_json = None
                 sleep(0.5)
                 continue
@@ -1824,6 +1831,10 @@ def render_index():
 </div>
 </body></html>'''
     return html
+
+def render_index():
+    return '''<!doctype html>
+</html>'''
 
 #CLASS XP CALCULATOR
 # obsolete, refer to xp_calculator.html

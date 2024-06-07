@@ -2,63 +2,68 @@
     "Deep Dives": {
       "Deep Dive Elite": {
         "Biome": "Azure Weald",
-        "CodeName": "HEAVY BETRAYAL",
+        "CodeName": "TEST DEEP DIVE",
         "Stages": [
           {
-            "Complexity": "1",
+            "Complexity": "2",
             "Length": "1",
-            "PrimaryObjective": "Egg Hunt",
-            "SecondaryObjective": "Repair Minimules",
+            "MissionMutator" : "Secret Secondary",
+            "PrimaryObjective": "Deep Scan",
+            "SecondaryObjective": "Build Liquid Morkite Pipeline",
             "id": 179
           },
           {
             "Complexity": "3",
-            "Length": "2",
+            "Length": "3",
+            "MissionMutator" : "Blood Sugar",
             "MissionWarnings": [
               "Shield Disruption"
             ],
-            "PrimaryObjective": "On-Site Refining",
-            "SecondaryObjective": "Eliminate Dreadnought",
+            "PrimaryObjective": "Elimination",
+            "SecondaryObjective": "Perform Deep Scans",
             "id": 178
           },
           {
             "Complexity": "1",
             "Length": "1",
             "MissionWarnings": [
-              "Parasites"
+              "Tougher Enemies"
             ],
             "PrimaryObjective": "Mining Expedition",
-            "SecondaryObjective": "Eliminate Dreadnought",
+            "SecondaryObjective": "Build Liquid Morkite Pipeline",
             "id": 177
           }
         ]
       },
       "Deep Dive Normal": {
-        "Biome": "Dense Biozone",
-        "CodeName": "STINKING CRYPT",
+        "Biome": "Radioactive Exclusion Zone",
+        "CodeName": "TEST DEEP DIVE",
         "Stages": [
           {
             "Complexity": "3",
             "Length": "2",
+            "MissionWarnings" : [
+              "Tougher Enemies"
+            ],
             "PrimaryObjective": "Point Extraction",
-            "SecondaryObjective": "Eliminate Dreadnought",
+            "SecondaryObjective": "Perform Deep Scans",
             "id": 183
           },
           {
-            "Complexity": "1",
-            "Length": "1",
+            "Complexity": "3",
+            "Length": "2",
             "MissionWarnings": [
-              "Low Oxygen"
+              "Duck and Cover"
             ],
-            "PrimaryObjective": "Egg Hunt",
-            "SecondaryObjective": "Mine Morkite",
+            "PrimaryObjective": "Deep Scan",
+            "SecondaryObjective": "Black Box",
             "id": 182
           },
           {
             "Complexity": "3",
             "Length": "2",
             "MissionWarnings": [
-              "Regenerative Bugs"
+              "Ebonite Outbreak"
             ],
             "PrimaryObjective": "On-Site Refining",
             "SecondaryObjective": "Get Alien Eggs",

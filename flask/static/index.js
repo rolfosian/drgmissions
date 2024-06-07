@@ -189,7 +189,9 @@ var secondaryObjsDD = {
     "Eliminate Dreadnought": `${domainURL}/static/img/Kill_Dreadnought_Objective_icon_DDsecondaryobj.webp`,
     "Mine Morkite": `${domainURL}/static/img/Morkite_icon_DDsecondaryobj.webp`,
     "Get Alien Eggs": `${domainURL}/static/img/Alien_egg_icon_DDsecondaryobj.webp`,
-    "Black Box": `${domainURL}/static/img/Blackbox_icon_DDsecondaryobj.webp`
+    "Black Box": `${domainURL}/static/img/Blackbox_icon_DDsecondaryobj.webp`,
+    "Perform Deep Scans": `${domainURL}/static/img/Icons_Resources_Detailed_Outline_LiquidMorkiteTankerPod_DDsecondaryobj.webp`,
+    "Build Liquid Morkite Pipeline" : `${domainURL}/static/img/Icons_Resources_Detailed_Outline_ResonanceScannerPod_DDsecondaryobj.webp`
 };
 totalImages += Object.keys(secondaryObjsDD).length;
 var secondaryObjsDDImages = {};
@@ -943,11 +945,28 @@ async function getBiomesMidnight() {
 }
 
 function changeSeason(Biomes, season) {
-    arrayBiomes(Biomes, season);
-    if (document.getElementById('currentButton').textContent == 'Click here to see current missions') {
-        document.getElementById('currentButton').click();
+    if (localStorages['seasonSelected'] == season) {
+        return
     }
+    arrayBiomes(Biomes, season);
+    // if (document.getElementById('currentButton').textContent == 'Click here to see current missions') {
+    //     document.getElementById('currentButton').click();
+    // }
     setStorages('seasonSelected', season);
+}
+
+function unCheckCheckboxes(checkBoxes, checkBox) {
+    for (let i = 0; i < checkBoxes.length; i++) {
+        if (checkBoxes[i] !== checkBox) {
+            checkBoxes[i].checked = false;
+        }
+    }
+}
+function seasonSelect(checkBox) {
+    checkBox.checked = true;
+    let checkBoxes = document.querySelectorAll('input[type=checkbox]');
+    unCheckCheckboxes(checkBoxes, checkBox);
+    changeSeason(biomes, checkBox.value)
 }
 
 function hasMidnightJustBeen(datestring) {
@@ -997,7 +1016,7 @@ async function refreshBiomes(isMidnightUpcoming_) {
     if (hasMidnightJustBeen(expectedCurrentTimestamp)) {
         rolloverCurrentDaysJsonLink(expectedCurrentTimestamp);
     }
-    arrayBiomes(biomes, document.getElementById("season").value);
+    arrayBiomes(biomes, localStorages['seasonSelected']);
     if (document.getElementById('currentButton').textContent == 'Click here to see current missions') {
         document.getElementById('currentButton').click();
     }
@@ -1448,7 +1467,8 @@ async function arrayDeepDives(deepDiveData) {
             stageDiv = renderDeepDiveStage(stage, stageCount);
             deepDiveEliteDiv.appendChild(stageDiv);
         };
-    } catch {
+    } catch (error) {
+        console.log(error)
         // deepDiveData is undefined
     }
 }
@@ -2012,9 +2032,9 @@ async function initialize(date) {
     </div>
 
     <div class="jsonc">
+    </div>
     <div class="jsonlinks"><span style="color: white;font-size: 30px;font-family: BebasNeue, sans-serif;"> <a id="currentDaysJsonLink" class="jsonlink" href="${currentDateTimeHREF}">TODAY'S DATA</a> | <a id="tomorrowDaysJsonLink" class="jsonlink" href="${nextDateTimeHREF}">TOMORROW'S DATA</a> | <a class="jsonlink" href="${ddDatetimeHREF}">CURRENT DEEP DIVE DATA</a> | <a class="jsonlink" href="/static/xp_calculator.html">CLASS XP CALCULATOR</a> | <a class="jsonlink" href="https://github.com/rolfosian/drgmissions/">GITHUB</a></span> </div>
     <span class="credits">Send credits (eth): 0xb9c8591A80A3158f7cFFf96EC3c7eA9adB7818E7</span>
-    </div>
     <p class='gsgdisclaimer'><i>This website is a third-party platform and is not affiliated, endorsed, or sponsored by Ghost Ship Games. The use of Deep Rock Galactic's in-game assets on this website is solely for illustrative purposes and does not imply any ownership or association with the game or its developers. All copyrights and trademarks belong to their respective owners. For official information about Deep Rock Galactic, please visit the official Ghost Ship Games website.</i></p></div>
     `;
 
@@ -2168,11 +2188,12 @@ var localStorages = {
     'homepageScript' : null,
 };
 var localStoragesHashes = {
-    'img' : 281543800,
+    'img' : 929913375,
     'fonts' : 906557479,
-    'homepageScript' : 1068821741,
+    'homepageScript' : 2145285990,
 };
 
+var isSeasonUpdating = false;
 var cacheActive = false;
 var isRefreshing = false;
 var tempBiomes;
@@ -2259,24 +2280,50 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
 
             let seasonBoxValues = {
-                's0' : 'Unseasoned/Drilling Deeper',
-                's1' : 'Rival Incursion/Escalation',
+                's0' : '<span style="color:#69d6fe;">Unseasoned</span>/<span style="color:#2bc796;">Drilling Deeper</span>',
+                's1' : '<span style="color:#dc6a2a;">Rival</span> <span style="color:#efc8c9;">Incursion</span>/<span style="color:#bdb4dd;">Escalation</span>',
             //     's1': 'Rival Incursion',
             //     's2': 'Rival Escalation',
-                's3' : 'Plaguefall/Critical Corruption',
+                's3' : '<span style="color:#fdb925;">Plaguefall</span>/<span style="color:#eb402b;">Critical Corruption</span>',
             //     's3': 'Plaguefall',
             //     's4': 'Critical Corruption',
             //     's5': 'Drilling Deeper'
             };
-            let seasonBox = document.getElementById('season')
+            // let seasonBox = document.getElementById('season');
+            // for (let season in seasonBoxValues) {
+            //     let option = document.createElement('option');
+            //     option.value = season;
+            //     option.textContent = seasonBoxValues[season];
+            //     seasonBox.appendChild(option);
+            // }
+            // seasonBox.value = seasonBoxValues[localStorages['seasonSelected']];
+            // seasonBox.selectedIndex = Object.keys(seasonBoxValues).indexOf(localStorages['seasonSelected']);
+
+            // i dont like radio buttons they are too dainty
+            let seasonSelectDiv = document.getElementById('seasonSelect');
             for (let season in seasonBoxValues) {
-                let option = document.createElement('option');
-                option.value = season;
-                option.textContent = seasonBoxValues[season];
-                seasonBox.appendChild(option);
+                let div = document.createElement('div')
+                div.classList.add('seasonCheckBoxButtonWrapper')
+                let click = document.createElement('button')
+                click.innerHTML = seasonBoxValues[season]
+                click.id = season+'Button'
+                click.classList.add("seasonBox")
+
+                let check = document.createElement('input')
+                if (season == localStorages['seasonSelected']) {
+                    check.checked = true
+                }
+                click.classList.add("seasonCheck")
+                check.type = "checkbox"
+                check.id = season+'Check'
+                click.setAttribute('onclick', `document.getElementById('${check.id}').click()`)
+                check.setAttribute('onclick', 'seasonSelect(this)')
+                check.value = season
+
+                div.appendChild(click)
+                div.appendChild(check)
+                seasonSelectDiv.appendChild(div)
             }
-            seasonBox.value = seasonBoxValues[localStorages['seasonSelected']];
-            seasonBox.selectedIndex = Object.keys(seasonBoxValues).indexOf(localStorages['seasonSelected']);
 
             if (!localStorages['fonts']) {
                 await preloadFonts();

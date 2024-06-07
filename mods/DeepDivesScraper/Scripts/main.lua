@@ -71,6 +71,8 @@ function UnpackDeepDiveMission(mission, master, t)
         {pattern = "DD_Morkite", result = "Mine Morkite"},
         {pattern = "AlienEggs", result = "Get Alien Eggs"},
         {pattern = "DD_Defense", result = "Black Box"},
+        {pattern = 'MorkiteWell', result = 'Build Liquid Morkite Pipeline'},
+        {pattern = 'DeepScan'}, result = 'Perform Deep Scans'
     }
     for _, obj in ipairs(secondary_objectives) do
         if string.find(SecondaryObjective, obj.pattern) then
@@ -236,6 +238,19 @@ function UnpackDeepDiveMission(mission, master, t)
     if PrimaryObjective == "On-Site Refining" and mission1['Complexity'] == 'Indefinite' then
         mission1['Complexity'] = '2'
         mission1['Length'] = '2'
+    end
+
+    if PrimaryObjective == 'Deep Scan' and mission1['Complexity'] == 'Indefinite' and mission1['Length'] ~= 'nil' then
+        local MissionDNAs_Deep_Scan = {
+            {pattern = 'DNA_Web_Small_C', result = {complexity = '2'}},
+            {pattern = 'DNA_Web_Medium_C', result = {complexity = '3'}}
+        }
+        for _, dna in pairs(MissionDNAs_Deep_Scan) do
+            if string.find(MissionDNA, dna.pattern) then
+                mission1['Complexity'] = dna.result.complexity
+                -- mission1['Length'] = dna.result.length
+            end
+        end
     end
 
     -- Industrial Sabotage DNA

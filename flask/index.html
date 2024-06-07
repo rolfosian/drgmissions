@@ -23,9 +23,9 @@ document.head.prepend(base);
 
 <p id="loading" class="loading">Loading</p>
 
-<div id="topCountdownContainer">
-    <button id="buttonsButton" disabled>x</button>
-    <button id="backgroundButton" disabled>Hide background</button>
+<div id="topCountdownContainer", class="collapsed">
+    <button id="buttonsButton">x</button>
+    <button id="backgroundButton">Hide background</button>
     <div id="buttonDiv">
 
         <div id=dailyDealMaster>
@@ -36,14 +36,16 @@ document.head.prepend(base);
             <div id="DailyDeal" class="daily_deal_container"> 
             </div>
         </div>
-        <button id="dailyDealButton" disabled>Click here to see Daily Deal</button>
+        <button id="dailyDealButton">Click here to see Daily Deal</button>
         <br>
         <div id="missionsCountdownMaster">NEW MISSIONS IN<br>
             <span id="missionsCountdown"></span>
         </div>
-        <select id="season" name="season" class="seasonBox" disabled></select>
+        <div id="seasonSelect" class="seasonselect">
         </div>
-        <button id="currentButton" disabled>Click here to see upcoming missions</button>
+        <!-- <select id="season" name="season" class="seasonBox" disabled></select> -->
+        </div>
+        <button id="currentButton">Click here to see upcoming missions</button>
 
     </div>
 </div>
