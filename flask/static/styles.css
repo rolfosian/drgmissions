@@ -18,19 +18,17 @@ input[type="checkbox"]::before {
     left: 0;
     width: 20px;
     height: 20px;
-    /* border: 2px solid #303030; */
-    background-color: #0000; /* Background color of checkbox */
+    background-color: #0000;
 }
 
-/* Style the tick */
 input[type="checkbox"]:checked::after {
-    content:  "\2611"; /* Tick symbol */
+    content:  "\2611"; 
     display: block;
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    color: #fff; /* Color of tick */
+    color: #fff;
     font-size: 16px;
 }
 
@@ -329,7 +327,7 @@ font-family: sans-serif;
 position: relative;
 left: 50%;
 text-align: center;
-min-width: 180px;
+min-width: 190px;
 transform: translateX(-50%);
 background-color: #303030;
 color: white;

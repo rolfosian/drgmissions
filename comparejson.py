@@ -3,7 +3,9 @@ from drgmissions_scraper_utils import (
     reconstruct_dictionary,
     sort_dictionary,
     order_dictionary_by_date_FIRST_KEY_ROUNDING,
-    find_duplicates
+    find_duplicates,
+    flatten_seasons,
+    compare_dicts
 )
 from datetime import datetime
 import re
@@ -155,7 +157,6 @@ def comparedeals():
 
 # comparedeals()
 
-from drgmissions_scraper_utils import flatten_seasons, reconstruct_dictionary, order_dictionary_by_date_FIRST_KEY_ROUNDING
 def check_flatten():
     with open('drgmissionsdev.json', 'r') as f:
         DRG = json.load(f)
@@ -202,8 +203,67 @@ def check_duplicate_seasons():
                         continue
                     seent.append([season, season_])
                     print( season, '==', season_)
-        if i == 1:
+        if i == 10:
             break
-        
 
-check_duplicate_seasons()
+# check_duplicate_seasons()
+
+def check_duplicate_missions():
+    with open('drgmissionsdev.json', 'r') as f:
+        DRG = order_dictionary_by_date_FIRST_KEY_ROUNDING(json.load(f))
+        DRG = re.sub(r':\d{2}Z', ':00Z', json.dumps(DRG))
+        DRG = json.loads(DRG)
+        DRG = reconstruct_dictionary(DRG)
+    
+    seasons = ['s0', 's1', 's3']
+    
+    for timestamp in DRG.keys():
+        for season in seasons:
+            for biome, missions in DRG[timestamp][season]['Biomes'].items():
+                seen = []
+                for mission in missions:
+                    seen.append(mission)
+                for mission_ in seen:
+                    if compare_dicts(mission_, mission, ignore_keys=['CodeName', 'id']):
+                        if mission['CodeName'] == mission_['CodeName']:
+                            continue
+                        print(mission, '|', biome, '|', 'Season:', season)
+                        print(mission_, '|', biome, '|', 'Season:', season)
+                        print('--------')
+
+# check_duplicate_missions()
+from copy import deepcopy
+def check_new_flatten():
+    with open('drgmissionsdev.json', 'r') as f:
+        DRG = order_dictionary_by_date_FIRST_KEY_ROUNDING(json.load(f))
+        DRG = re.sub(r':\d{2}Z', ':00Z', json.dumps(DRG))
+        DRG = json.loads(DRG)
+        DRG = reconstruct_dictionary(DRG)
+        
+        for timestamp in list(DRG.keys()):
+            for season in list(DRG[timestamp].keys()):
+                if season == 's2' or season == 's4' or season == 's5':
+                    del DRG[timestamp][season]
+                    
+        DRG_ = flatten_seasons(deepcopy(DRG))
+
+    
+    # for timestamp in DRG:
+
+    timestamp = '2024-06-22T01:00:00Z'
+    # print(timestamp)
+    for biome in DRG_[timestamp]['Biomes']:
+        print(biome)
+        print(len(DRG_[timestamp]['Biomes'][biome]))
+        print('-------------')
+        for mission in DRG_[timestamp]['Biomes'][biome]:
+            print(json.dumps(mission, indent=2))
+    # import sys
+    # season = sys.argv[1]
+    # for biome in DRG[timestamp][season]['Biomes']:
+    #     print(biome)
+    #     print('-------------')
+    #     for mission in DRG[timestamp][season]['Biomes'][biome]:
+    #         print(json.dumps(mission, indent=2))
+                
+check_new_flatten()

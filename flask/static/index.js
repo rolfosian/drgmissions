@@ -801,6 +801,7 @@ function renderBiomes_(dictionary) {
 
                 mission1['CodeName'] = mission['CodeName'];
                 mission1['id'] = mission['id'];
+                mission1['season'] = mission['season']
 
                 let mission_icon_canvas_div = renderMission(mission);
                 mission1['rendered_mission'] = mission_icon_canvas_div;
@@ -828,17 +829,8 @@ function renderBiomesFlat(dictionary) {
             let mission = biomeMissions[i];
             let mission1 = {};
 
-            if (mission.hasOwnProperty('season_modified')) {
-                mission1['season_modified'] = {};
-                for (let season in mission['season_modified']) {
-                    let modifiedMission = mission['season_modified'][season];
-                    mission1['season_modified'][season] = {};
-                    mission1['season_modified'][season]['CodeName'] = modifiedMission['CodeName'];
-                    mission1['season_modified'][season]['id'] = modifiedMission['id'];
-                    mission1['season_modified'][season]['season'] = modifiedMission['season'];
-                    let mission_icon_canvas_div = renderMission(modifiedMission);
-                    mission1['season_modified'][season]['rendered_mission'] = mission_icon_canvas_div;
-                }
+            if (mission.hasOwnProperty('excluded_from')) {
+                mission1['excluded_from'] = mission['excluded_from']
             }
 
             mission1['CodeName'] = mission['CodeName'];
@@ -906,6 +898,7 @@ async function tempCacheUpcomingBiomes(isMidnightUpcoming_, date) {
 }
 
 function getBiomesOnInit() {
+    console.log('currentDaysJson', localStorages['currentDaysJson'])
     let dictionary = getCurrentMissionData(localStorages['currentDaysJson'][1]);
     // console.log(localStorages['currentDaysJson'][1])
     let currentBiomes = renderBiomes(dictionary);
@@ -955,19 +948,7 @@ function changeSeason(Biomes, season) {
     setStorages('seasonSelected', season);
 }
 
-function unCheckCheckboxes(checkBoxes, checkBox) {
-    for (let i = 0; i < checkBoxes.length; i++) {
-        if (checkBoxes[i] !== checkBox) {
-            checkBoxes[i].checked = false;
-        }
-    }
-}
-function seasonSelect(checkBox) {
-    checkBox.checked = true;
-    let checkBoxes = document.querySelectorAll('input[type=checkbox]');
-    unCheckCheckboxes(checkBoxes, checkBox);
-    changeSeason(biomes, checkBox.value)
-}
+
 
 function hasMidnightJustBeen(datestring) {
     return datestring.slice(11, 19) === '00:00:00';
@@ -1033,7 +1014,7 @@ async function refreshDeepDives() {
     deepDiveData = await getDeepDiveData();
     if (deepDiveData) {
         arrayDeepDives(deepDiveData);
-        unAvailableDeepDiveDataRetries = 0
+        unAvailableDeepDiveDataRetries = 0;
     } else {
         await handleUnavailableDeepDiveData();
     }
@@ -1186,13 +1167,12 @@ function arrayBiomesFlat(Biomes, season) {
             for (let i = 0; i < biomeMissions.length; i++) {
                 let mission = biomeMissions[i];
 
-                if (isS0 && mission['season'] != season) {
-                    continue
+                if (mission.hasOwnProperty('excluded_from')) {
+                    if (inList(mission['excluded_from'], season)) {
+                        continue
+                    }
                 }
-                if (mission.hasOwnProperty('season_modified') && !isS0) {
-                    mission = mission['season_modified'][season];
-                }
-                if (!isS0 && mission['season'] != season && mission['season'] != 's0'){
+                if (mission['season'] != season) {
                     continue
                 }
 
@@ -1210,13 +1190,12 @@ function arrayBiomesFlat(Biomes, season) {
             for (let i = 0; i < biomeMissions.length; i++) {
                 let mission = biomeMissions[i];
 
-                if (isS0 && mission['season'] != season) {
-                    continue
+                if (mission.hasOwnProperty('excluded_from')) {
+                    if (inList(mission['excluded_from'], season)) {
+                        continue
+                    }
                 }
-                if (mission.hasOwnProperty('season_modified') && !isS0) {
-                    mission = mission['season_modified'][season];
-                }
-                if (!isS0 && mission['season'] != season && mission['season'] != 's0'){
+                if (mission['season'] != season) {
                     continue
                 }
 
@@ -2032,9 +2011,9 @@ async function initialize(date) {
     </div>
 
     <div class="jsonc">
-    </div>
     <div class="jsonlinks"><span style="color: white;font-size: 30px;font-family: BebasNeue, sans-serif;"> <a id="currentDaysJsonLink" class="jsonlink" href="${currentDateTimeHREF}">TODAY'S DATA</a> | <a id="tomorrowDaysJsonLink" class="jsonlink" href="${nextDateTimeHREF}">TOMORROW'S DATA</a> | <a class="jsonlink" href="${ddDatetimeHREF}">CURRENT DEEP DIVE DATA</a> | <a class="jsonlink" href="/static/xp_calculator.html">CLASS XP CALCULATOR</a> | <a class="jsonlink" href="https://github.com/rolfosian/drgmissions/">GITHUB</a></span> </div>
     <span class="credits">Send credits (eth): 0xb9c8591A80A3158f7cFFf96EC3c7eA9adB7818E7</span>
+    </div>
     <p class='gsgdisclaimer'><i>This website is a third-party platform and is not affiliated, endorsed, or sponsored by Ghost Ship Games. The use of Deep Rock Galactic's in-game assets on this website is solely for illustrative purposes and does not imply any ownership or association with the game or its developers. All copyrights and trademarks belong to their respective owners. For official information about Deep Rock Galactic, please visit the official Ghost Ship Games website.</i></p></div>
     `;
 
@@ -2166,6 +2145,7 @@ async function verifyStorages(date) {
         setStorages('homepageScript', s);
     }
     // console.log(localStorages['homepageScript'])
+    // console.log('currentDaysJson', localStorages['currentDaysJson'])
 }
 
 function setStorages(key, value, storages=localStorages) {
@@ -2261,6 +2241,19 @@ function resetGlobalVars() {
 
     initialized = false;
 }
+function unCheckCheckboxes(checkBoxes, checkBox) {
+    for (let i = 0; i < checkBoxes.length; i++) {
+        if (checkBoxes[i] !== checkBox) {
+            checkBoxes[i].checked = false;
+        }
+    }
+}
+function seasonSelect(checkBox) {
+    checkBox.checked = true;
+    let checkBoxes = document.querySelectorAll('input[type=checkbox]');
+    unCheckCheckboxes(checkBoxes, checkBox);
+    changeSeason(biomes, checkBox.value)
+}
 
 document.addEventListener('DOMContentLoaded', async function() {
     let initTries = 0
@@ -2281,7 +2274,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
             let seasonBoxValues = {
                 's0' : '<span style="color:#69d6fe;">Unseasoned</span>/<span style="color:#2bc796;">Drilling Deeper</span>',
-                's1' : '<span style="color:#dc6a2a;">Rival</span> <span style="color:#efc8c9;">Incursion</span>/<span style="color:#bdb4dd;">Escalation</span>',
+                's1' : '<span style="color:#dc6a2a;">Rival</span> <span style="color:#efc8c9;">Incursion</span>/<span style="color:#8ad6fc;">Escalation</span>',
             //     's1': 'Rival Incursion',
             //     's2': 'Rival Escalation',
                 's3' : '<span style="color:#fdb925;">Plaguefall</span>/<span style="color:#eb402b;">Critical Corruption</span>',
@@ -2337,6 +2330,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
 
             var breakfast = await initialize(date);
+            console.log(breakfast)
             biomes = breakfast[0];
             dailyDeal = breakfast[1];
             breakfast = undefined;

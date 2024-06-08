@@ -37,7 +37,7 @@ threads = []
 go_flag = threading.Event()
 go_flag.set()
 
-with open('drgmissionsdev.json', 'r') as f:
+with open('drgmissionsdev_fixed.json', 'r') as f:
     print('Loading bulkmissions json...')
     DRG = json.load(f)
     f.close()
