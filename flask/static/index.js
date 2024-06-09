@@ -815,6 +815,7 @@ function renderBiomes_(dictionary) {
 
     return renderedBiomes;
 }
+
 function renderBiomesFlat(dictionary) {
     let renderedBiomes = {};
     var Biomes = dictionary['Biomes'];
@@ -898,7 +899,7 @@ async function tempCacheUpcomingBiomes(isMidnightUpcoming_, date) {
 }
 
 function getBiomesOnInit() {
-    console.log('currentDaysJson', localStorages['currentDaysJson'])
+    // console.log('currentDaysJson', localStorages['currentDaysJson'])
     let dictionary = getCurrentMissionData(localStorages['currentDaysJson'][1]);
     // console.log(localStorages['currentDaysJson'][1])
     let currentBiomes = renderBiomes(dictionary);
@@ -1167,14 +1168,12 @@ function arrayBiomesFlat(Biomes, season) {
             for (let i = 0; i < biomeMissions.length; i++) {
                 let mission = biomeMissions[i];
 
-                if (mission.hasOwnProperty('excluded_from')) {
-                    if (inList(mission['excluded_from'], season)) {
-                        continue
-                    }
-                }
-                if (mission['season'] != season) {
+                if (mission.hasOwnProperty('excluded_from') && inList(mission['excluded_from'], season)) {
                     continue
                 }
+                // if (mission['season'] != season) {
+                //     continue
+                // }
 
                 biomeDiv.appendChild(mission['rendered_mission']);
             }
@@ -1190,14 +1189,12 @@ function arrayBiomesFlat(Biomes, season) {
             for (let i = 0; i < biomeMissions.length; i++) {
                 let mission = biomeMissions[i];
 
-                if (mission.hasOwnProperty('excluded_from')) {
-                    if (inList(mission['excluded_from'], season)) {
-                        continue
-                    }
-                }
-                if (mission['season'] != season) {
+                if (mission.hasOwnProperty('excluded_from') && inList(mission['excluded_from'], season)) {
                     continue
                 }
+                // if (mission['season'] != season) {
+                //     continue
+                // }
 
                 nextBiomeDiv.appendChild(mission['rendered_mission']);
             }
@@ -2121,7 +2118,8 @@ async function verifyStorages(date) {
 
                 } else if (key === 'currentDaysJson') {
                     let data = JSON.parse(v);
-                    if (data[0] != date.toISOString().slice(0, 10)) {
+                    let ver = 'v4';
+                    if (data[0] != date.toISOString().slice(0, 10) || data[1]['ver'] != ver) {
                         setStorages(key, null);
                     } else {
                         localStorages[key] = data;
@@ -2241,18 +2239,22 @@ function resetGlobalVars() {
 
     initialized = false;
 }
-function unCheckCheckboxes(checkBoxes, checkBox) {
+function unCheckCheckboxes(checkBoxes, checkBox, season) {
     for (let i = 0; i < checkBoxes.length; i++) {
         if (checkBoxes[i] !== checkBox) {
             checkBoxes[i].checked = false;
+            checkBoxes[i].disabled = false;
+            document.getElementById(checkBoxes[i].value+'Button').disabled = false;
+        } else {
+            document.getElementById(season+'Button').disabled = true;
+            checkBox.disabled = true;
         }
     }
 }
 function seasonSelect(checkBox) {
-    checkBox.checked = true;
     let checkBoxes = document.querySelectorAll('input[type=checkbox]');
-    unCheckCheckboxes(checkBoxes, checkBox);
-    changeSeason(biomes, checkBox.value)
+    unCheckCheckboxes(checkBoxes, checkBox, checkBox.value);
+    changeSeason(biomes, checkBox.value);
 }
 
 document.addEventListener('DOMContentLoaded', async function() {
@@ -2292,7 +2294,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             // seasonBox.value = seasonBoxValues[localStorages['seasonSelected']];
             // seasonBox.selectedIndex = Object.keys(seasonBoxValues).indexOf(localStorages['seasonSelected']);
 
-            // i dont like radio buttons they are too dainty
+            // above was too many clicks
             let seasonSelectDiv = document.getElementById('seasonSelect');
             for (let season in seasonBoxValues) {
                 let div = document.createElement('div')
@@ -2303,15 +2305,16 @@ document.addEventListener('DOMContentLoaded', async function() {
                 click.classList.add("seasonBox")
 
                 let check = document.createElement('input')
-                if (season == localStorages['seasonSelected']) {
-                    check.checked = true
-                }
                 click.classList.add("seasonCheck")
                 check.type = "checkbox"
                 check.id = season+'Check'
                 click.setAttribute('onclick', `document.getElementById('${check.id}').click()`)
                 check.setAttribute('onclick', 'seasonSelect(this)')
                 check.value = season
+                if (season == localStorages['seasonSelected']) {
+                    check.checked = true
+                    click.disabled = true
+                }
 
                 div.appendChild(click)
                 div.appendChild(check)

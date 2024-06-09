@@ -6,7 +6,7 @@ from io import BytesIO
 from shutil import copy as shutil_copy
 from drgmissionslib import (
     select_timestamp_from_dict,
-    flatten_seasons,
+    flatten_seasons_v4,
     group_by_day_and_split_all,
     order_dictionary_by_date,
     render_xp_calc_index,
@@ -47,7 +47,7 @@ with open('drgmissionsdev_fixed.json', 'r') as f:
     if 's0' in DRG[t]:
         # merge season branches to one
         print('Merging seasons...')
-        DRG = flatten_seasons(DRG)
+        DRG = flatten_seasons_v4(DRG)
     del t
 
     # split into individual json files for static site
@@ -162,8 +162,8 @@ def home():
     # return send_file(BytesIO(index_Queue[0]['index']), mimetype='text/html', etag=index_Queue[0]['etag'])
     return send_file(f'{cwd}/index.html', mimetype='text/html')
 
-# Sends current mission icons, arg format f"?img={mission['CodeName'].replace(' ', '-')}{mission['season']}" - see rotate_biomes_FLAT in drgmissionslib.py
-# eg http://127.0.0.1:5000/png?img=Spiked-Shelters0 (mission['CodeName'] is 'Spiked Shelter' and the season is s0)
+# Sends current mission icons, arg format f"?img={mission['CodeName'].replace(' ', '-')}{mission['id']}" - see rotate_biomes_FLAT in drgmissionslib.py
+# eg http://127.0.0.1:5000/png?img=Spiked-Shelter42069 (mission['CodeName'] is 'Spiked Shelter' and mission['id'] is 42069)
 @app.route('/png')
 def serve_img():
     try:
@@ -174,8 +174,8 @@ def serve_img():
         print(e)
         return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
 
-# Sends upcoming mission icons, arg format f"?img={Biome.replace(' ', '-')}{mission['CodeName'].replace(' ', '-')}{mission['season']}" - see rotate_biomes_FLAT in drgmissionslib.py
-# eg http://127.0.0.1:5000/upcoming_png?img=Spiked-Shelters0 (mission['CodeName'] is 'Spiked Shelter' and the season is s0)
+# Sends upcoming mission icons, arg format f"?img={Biome.replace(' ', '-')}{mission['CodeName'].replace(' ', '-')}{mission['id']}" - see rotate_biomes_FLAT in drgmissionslib.py
+# eg http://127.0.0.1:5000/upcoming_png?img=Spiked-Shelter42069 (mission['CodeName'] is 'Spiked Shelter' and mission['id'] is 42069)
 @app.route('/upcoming_png')
 def serve_next_img():
     try:
@@ -334,4 +334,4 @@ if __name__ == '__main__':
     print('Setting signal handlers...')
     set_signal_handlers(SIGINT, SIGTERM, go_flag)
     print('Starting server...')
-    app.run(threaded=True, host='0.0.0.0', debug=True, port=5000, use_reloader=True)
+    app.run(threaded=True, host='0.0.0.0', debug=True, port=5000, use_reloader=False)

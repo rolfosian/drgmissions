@@ -778,7 +778,9 @@ def render_biomes_FLAT(Biomes):
             mission1 = {}
 
             mission1['CodeName'] = mission['CodeName']
-            mission1['season'] = mission['season']
+            if 'excluded_from' in mission:
+                mission1['excluded_from'] = mission['excluded_from']
+            # mission1['season'] = mission['season']
             mission1['id'] = mission['id']
             mission1['rendered_mission'] = render_mission(mission)
             biome1.append(mission1)
@@ -787,22 +789,24 @@ def render_biomes_FLAT(Biomes):
     return rendered_biomes
 
 # Multiprocessed
-def process_mission(mission):
+def process_mission(biome_mission):
+    biome, mission = biome_mission
     mission1 = {}
 
     mission1['CodeName'] = mission['CodeName']
-    mission1['season'] = mission['season']
+    if 'excluded_from' in mission:
+        mission1['excluded_from'] = mission['excluded_from']
+    # mission1['season'] = mission['season']
     mission1['id'] = mission['id']
     mission1['rendered_mission'] = render_mission(mission)
     
-    return mission['biome'], mission1
+    return biome, mission1
 
 def render_biomes_FLAT(Biomes, render_pool):
     all_missions = []
     for biome, missions in Biomes.items():
         for mission in missions:
-            mission['biome'] = biome
-            all_missions.append(mission)
+            all_missions.append([biome, mission])
 
     processed_missions = render_pool.map(process_mission, all_missions)
 
@@ -898,6 +902,7 @@ def rotate_biomes(DRG, season, tstamp_Queue, next_tstamp_Queue, biomes_lists, re
             for mission in Biomes[biome]:
                 mission0 = {}
                 mission0['CodeName'] = mission['CodeName']
+                mission0['id'] = mission['id']
                 mission_icon = BytesIO()
                 mission['rendered_mission'].save(mission_icon, format='PNG')
                 mission['rendered_mission'].close()
@@ -949,42 +954,19 @@ def rotate_biomes_FLAT(DRG, tstamp_Queue, next_tstamp_Queue, nextbiomes_Queue, b
             biome1 = biome.replace(' ', '-')
             Biomes1[biome1] = {}
             for mission in Biomes[biome]:
-                if 'season_modified' in mission:
-                    for season in mission['season_modified']:
-                        modified_mission = mission['season_modified'][season]
-                        mission1 = {}
-                        mission1['CodeName'] = mission['CodeName']
-                        modified_mission_icon = BytesIO()
-                        modified_mission['rendered_mission'].save(modified_mission_icon, format='PNG')
-                        modified_mission['rendered_mission'].close()
-                        modified_mission_icon.seek(0)
-                        etag = md5(modified_mission_icon.getvalue()).hexdigest()
-                        mission1['etag'] = etag
-                        mission1['rendered_mission'] = modified_mission_icon
-                        Biomes1[modified_mission['CodeName'].replace(' ', '-')+season] = mission1
+                mission0 = {}
+                mission0['CodeName'] = mission['CodeName']
+                
+                mission_icon = BytesIO()
+                mission['rendered_mission'].save(mission_icon, format='PNG')
+                mission['rendered_mission'].close()
+                mission_icon.seek(0)
+                
+                etag = md5(mission_icon.getvalue()).hexdigest()
+                mission0['etag'] = etag
+                mission0['rendered_mission'] = mission_icon
 
-                    mission0 = {}
-                    mission0['CodeName'] = mission['CodeName']
-                    mission_icon = BytesIO()
-                    mission['rendered_mission'].save(mission_icon, format='PNG')
-                    mission['rendered_mission'].close()
-                    mission_icon.seek(0)
-                    etag = md5(mission_icon.getvalue()).hexdigest()
-                    mission0['etag'] = etag
-                    mission0['rendered_mission'] = mission_icon
-                    Biomes1[mission['CodeName'].replace(' ', '-')+mission['season']] = mission0
-
-                else:
-                    mission0 = {}
-                    mission0['CodeName'] = mission['CodeName']
-                    mission_icon = BytesIO()
-                    mission['rendered_mission'].save(mission_icon, format='PNG')
-                    mission['rendered_mission'].close()
-                    mission_icon.seek(0)
-                    etag = md5(mission_icon.getvalue()).hexdigest()
-                    mission0['etag'] = etag
-                    mission0['rendered_mission'] = mission_icon
-                    Biomes1[mission['CodeName'].replace(' ', '-')+mission['season']] = mission0
+                Biomes1[mission['CodeName'].replace(' ', '-')+str(mission['id'])] = mission0
 
         return timestamp, Biomes1
 
@@ -1167,6 +1149,7 @@ def group_by_day_and_split_all(DRG):
 
     to_split = group_json_by_days(DRG)
     to_split = add_daily_deals_to_grouped_json(to_split)
+    to_split['ver'] = 'v4'
     split_json_bulkmissions_raw(to_split)
 
 
@@ -1379,7 +1362,20 @@ def compare_dicts(dict1, dict2, ignore_keys):
     dict2_filtered = {k: v for k, v in dict2.items() if k not in ignore_keys}
     return dict1_filtered == dict2_filtered
 
-def flatten_seasons(DRG):
+def get_all_unique_code_names(dicts_list):
+    filtered_list = [d for d in dicts_list if d["season"] != "s0"]
+    
+    codename_count = {}
+    for d in filtered_list:
+        codename = d["CodeName"]
+        if codename:
+            codename_count[codename] = codename_count.get(codename, 0) + 1
+    
+    unique_codenames = [codename for codename, count in codename_count.items() if count == 1]
+    
+    return unique_codenames
+
+def flatten_seasons_v4(DRG):
     combined = {}
     seasons = list(list(DRG.items())[1][1].keys())
     timestamps = list(DRG.keys())
@@ -1390,7 +1386,8 @@ def flatten_seasons(DRG):
             for biome in DRG[timestamp][season]['Biomes']:
                 for mission in DRG[timestamp][season]['Biomes'][biome]:
                     del mission['id']
-    
+                    
+    duplicates = []
     for timestamp in timestamps:
         combined[timestamp] = {}
         combined[timestamp]['timestamp'] = timestamp
@@ -1398,9 +1395,17 @@ def flatten_seasons(DRG):
         
         for biome, missions in DRG[timestamp]['s0']['Biomes'].items():
             for index, mission in enumerate(missions):
+                mission['index'] = index
                 
                 for season in seasons_to_check:
-                    if mission not in DRG[timestamp][season]['Biomes'][biome]:
+                    cont = False
+                    for m in DRG[timestamp][season]['Biomes'][biome]:
+                        if compare_dicts(m, mission, ignore_keys=['CodeName', 'index']):
+                            cont = True
+                    if mission in DRG[timestamp][season]['Biomes'][biome]:
+                        cont = True
+                        
+                    if cont:
                         if 'excluded_from' not in mission:
                             mission['excluded_from'] = []
                         mission['excluded_from'].append(season)
@@ -1409,15 +1414,15 @@ def flatten_seasons(DRG):
                 
             combined[timestamp]['Biomes'][biome] = [mission for mission in missions]
 
-    for timestamp in timestamps:
         for season in seasons_to_check:
             for biome, missions in DRG[timestamp][season]['Biomes'].items():
                 for index, mission in enumerate(missions):
                     mission['season'] = season
+                    mission['index'] = index
                     
                     cont = False
                     for m in combined[timestamp]['Biomes'][biome]:
-                        if compare_dicts(m, mission, ignore_keys=['season', 'CodeName']):
+                        if compare_dicts(m, mission, ignore_keys=['season', 'CodeName', 'index']):
                             if mission['season'] == 's0':
                                 cont = 's0'
                     if cont:
@@ -1428,7 +1433,7 @@ def flatten_seasons(DRG):
                         cont = True
                         if season_ != season:
                             for m in DRG[timestamp][season_]['Biomes'][biome]:
-                                if compare_dicts(m, mission, ignore_keys=['season', 'excluded_from', 'CodeName']):
+                                if compare_dicts(m, mission, ignore_keys=['season', 'excluded_from', 'CodeName', 'index']):
                                     cont = False
                             if not cont:
                                 if 'excluded_from' not in mission:
@@ -1439,14 +1444,132 @@ def flatten_seasons(DRG):
                         combined[timestamp]['Biomes'][biome].insert(index, mission)
                     except:
                         combined[timestamp]['Biomes'][biome].append(mission)
-    id = 0
+                        
+        for biome in combined[timestamp]['Biomes']:
+            for mission in combined[timestamp]['Biomes'][biome]:
+                if mission['season'] == 's0':
+                    for m in combined[timestamp]['Biomes'][biome]:
+                        if m == mission:
+                            continue
+                        if not compare_dicts(m, mission, ignore_keys=['CodeName', 'season', 'excluded_from', 'index']):
+                            if m['season'] == mission['season']:
+                                continue
+                            if 'excluded_from' not in mission:
+                                mission['excluded_from'] = []
+                            mission['excluded_from'].append(m['season'])
+
+        for season in seasons:
+            if season != 's0':
+                for biome in combined[timestamp]['Biomes']:
+                    
+                    unique_codenames = get_all_unique_code_names(combined[timestamp]['Biomes'][biome])
+                    for i, mission in enumerate(combined[timestamp]['Biomes'][biome]):
+                        if mission['season'] == season:
+                            cont = False
+                            if unique_codenames:
+                                for codename in unique_codenames:
+                                    if mission['CodeName'] == codename:
+                                        if 'excluded_from' not in mission:
+                                            mission['excluded_from'] = []
+                                        for s in seasons:
+                                            mission['excluded_from'].append(s) if s != season else None
+                                        cont = True
+                            if cont:
+                                continue
+                            
+                            duplicates_ = []
+                            for m in combined[timestamp]['Biomes'][biome]:
+                                if m == mission:
+                                    continue
+                                if m['season'] == 's0':
+                                    continue
+                                
+                                if compare_dicts(m, mission, ignore_keys=['season', 'excluded_from', 'MissionMutator', 'index']):
+                                    duplicates_.append([timestamp, biome, m])
+                                    break
+                                else:
+                                    if 'excluded_from' not in mission:
+                                        mission['excluded_from'] = []
+                                    if 'excluded_from' in m:
+                                        for s in m['excluded_from']:
+                                            if s == mission['season']:
+                                                mission['excluded_from'].append(m['season'])
+                                                break
+                                    for m_ in combined[timestamp]['Biomes'][biome]:
+                                        if compare_dicts(m_, mission, ignore_keys=['season', 'excluded_from', 'MissionMutator', 'MissionWarnings', 'CodeName', 'index']) and m_['season'] != mission['season']:
+                                            mission['excluded_from'].append(m_['season'])
+                                            
+                                    
+                            if duplicates_:
+                                duplicates.append(duplicates_)
+    seen = {}
+    if duplicates:
+        for dupes in duplicates:
+            for timestamp, biome, mission in dupes:
+                for i, m in enumerate(combined[timestamp]['Biomes'][biome]):
+                    if compare_dicts(m, mission, ignore_keys=['season', 'excluded_from', 'MissionMutator', 'index']):
+                        if timestamp+mission['CodeName'] in seen:
+                            
+                            if 'excluded_from' in combined[timestamp]['Biomes'][biome][i]:
+                                
+                                combined[timestamp]['Biomes'][biome][i]['excluded_from'] = list(set(combined[timestamp]['Biomes'][biome][i]['excluded_from']))
+                                combined[timestamp]['Biomes'][biome][i]['excluded_from'].remove(seen[timestamp+mission['CodeName']])
+                                
+                                not_in_season_zero = True
+                                for m_ in combined[timestamp]['Biomes'][biome]:
+                                    if m_['season'] == 's0':
+                                        if compare_dicts(combined[timestamp]['Biomes'][biome][i], m_, ignore_keys=['season', 'excluded_from', 'MissionMutator', 'MissionWarnings', 'index']):
+                                            not_in_season_zero = False
+                                            
+                                if not_in_season_zero:
+                                    combined[timestamp]['Biomes'][biome][i]['excluded_from'].append('s0')
+                                    
+                                    if combined[timestamp]['Biomes'][biome][i]['season'] in combined[timestamp]['Biomes'][biome][i]['excluded_from']:
+                                        combined[timestamp]['Biomes'][biome][i]['excluded_from'].remove(combined[timestamp]['Biomes'][biome][i]['season'])
+                                break
+                        else:
+                            seen[timestamp+mission['CodeName']] = mission['season']
+                            del combined[timestamp]['Biomes'][biome][i]
+                            break
+
+    duplicates = []
     for timestamp in timestamps:
         for season in seasons:
             for biome in combined[timestamp]['Biomes']:
                 for mission in combined[timestamp]['Biomes'][biome]:
-                    id += 1
-                    mission['id'] = id
                     
+                    duplicates_ = []
+                    for m in combined[timestamp]['Biomes'][biome]:
+                        if compare_dicts(mission, m, ignore_keys=['season', 'excluded_from', 'id', 'index']):
+                            duplicates_.append([timestamp, biome, mission])
+                    if len(duplicates_) > 1:
+                        duplicates.append(duplicates_)
+                    
+                    if 'excluded_from' in mission:
+                        if mission['season'] in mission['excluded_from']:
+                            mission['excluded_from'].remove(mission['season'])
+    if duplicates:
+        for dupes in duplicates:
+            for timestamp, biome, mission in dupes:
+                if mission['season'] != 's0':
+                    for i, m in enumerate(combined[timestamp]['Biomes'][biome]):
+                        if m['CodeName'] == mission['CodeName'] and m['season'] != 's0':
+                            del combined[timestamp]['Biomes'][biome][i]
+                else:
+                    mission['excluded_from'] = []
+    id = 0
+    for timestamp in timestamps:
+        for biome in combined[timestamp]['Biomes']:
+            combined[timestamp]['Biomes'][biome] = sorted(combined[timestamp]['Biomes'][biome], key=lambda x: x['index'])
+            for i, mission in enumerate(combined[timestamp]['Biomes'][biome]):
+                id += 1
+                mission['id'] = id
+                del mission['index']
+                del mission['season']
+                if 'excluded_from' in mission:
+                    combined[timestamp]['Biomes'][biome][i]['excluded_from'] = list(set(mission['excluded_from']))
+                            
+    
     return combined
 
 def wait_rotation(rendering_events, index_event, go_flag):
