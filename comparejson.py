@@ -4,7 +4,7 @@ from drgmissions_scraper_utils import (
     sort_dictionary,
     order_dictionary_by_date_FIRST_KEY_ROUNDING,
     find_duplicates,
-    flatten_seasons_v4,
+    # flatten_seasons_v4,
     compare_dicts,
     round_time_down,
 )
@@ -232,45 +232,87 @@ def check_duplicate_missions():
                         print(mission_, '|', biome, '|', 'Season:', season)
                         print('--------')
 
-# check_duplicate_missions()
-from copy import deepcopy
-def check_new_flatten():
+def flatten_seasons_v5():
+    combined = {}
+    
     with open('drgmissionsdev.json', 'r') as f:
         DRG = order_dictionary_by_date_FIRST_KEY_ROUNDING(json.load(f))
         DRG = re.sub(r':\d{2}Z', ':00Z', json.dumps(DRG))
         DRG = json.loads(DRG)
         DRG = reconstruct_dictionary(DRG)
-        
-        for timestamp in list(DRG.keys()):
-            for season in list(DRG[timestamp].keys()):
-                if season == 's2' or season == 's4' or season == 's5':
-                    del DRG[timestamp][season]
+    
+    timestamps = list(DRG.keys())
+    seasons = ['s0', 's1', 's3']
+    
+    for timestamp in timestamps:
+        del DRG[timestamp]['s2']
+        del DRG[timestamp]['s4']
+        del DRG[timestamp]['s5']
+        for season in seasons:
+            for biome, missions in DRG[timestamp][season]['Biomes'].items():
+                for mission in missions:
+                    del mission['id']
+    
+    
+    for timestamp in timestamps:
+        combined[timestamp] = {}
+        combined[timestamp]['timestamp'] = timestamp
+        combined[timestamp]['Biomes'] = {}
+        for i, season in enumerate(seasons):
+            for biome, missions in DRG[timestamp][season]['Biomes'].items():
+                if i == 0:
+                    combined[timestamp]['Biomes'][biome] = []
 
-    # for timestamp in DRG:
-    timestamp = round_time_down(datetime.utcnow().isoformat()+'Z')
-    # timestamp = '2024-06-22T01:00:00Z'
+                for j, mission in enumerate(missions):
+                    mission['index'] = j
+                    mission['season'] = season
+                    
+                    seen = False
+                    for season_ in seasons:
+                        if season != season_:
+                            for m in DRG[timestamp][season_]['Biomes'][biome]:
+                                if compare_dicts(mission, m, ignore_keys=['index', 'season', 'included_in']):
+                                    seen = True
+                                    if 'included_in' not in mission:
+                                        mission['included_in'] = []
+                                    mission['included_in'].append(season_)
+                                    mission['included_in'].append(season)
+                    
+                    if not seen:
+                        mission['included_in'] = [season]
+                        
+                    mission['included_in'] = sorted(list(set(mission['included_in'])), key=lambda x: (str.isdigit(x), x.lower()))
+
+                combined[timestamp]['Biomes'][biome] += [mission for mission in missions]
     
-    try:
-        import sys
-        season = sys.argv[1]
-        # for season in DRG[timestamp]:
-        for biome in DRG[timestamp][season]['Biomes']:
-            print(timestamp, biome, season, len(DRG[timestamp][season]['Biomes'][biome]))
-            print('-------------')
-            for mission in DRG[timestamp][season]['Biomes'][biome]:
-                print(json.dumps(mission, indent=2))
-    except:
-        DRG_ = flatten_seasons_v4(deepcopy(DRG))
-        for biome in DRG_[timestamp]['Biomes']:
-            # break
-            print(timestamp, biome, 'Combined', len(DRG_[timestamp]['Biomes'][biome]))
-            print('-------------')
-            for mission in DRG_[timestamp]['Biomes'][biome]:
-                print(json.dumps(mission, indent=2))
-        pass
-    
-    
-# check_new_flatten()
+    id = 0
+    for timestamp in timestamps:
+        for biome, missions in combined[timestamp]['Biomes'].items():
+
+            filtered_missions = []
+            for i, mission in enumerate(missions):
+                keep = True
+                
+                for j, m in enumerate(missions):
+                    if i < j+1:
+                        continue
+                    if compare_dicts(m, mission, ignore_keys=['id', 'season', 'index']):
+                        keep = False
+                        break
+                if keep:
+                    filtered_missions.append(mission)
+            
+            combined[timestamp]['Biomes'][biome] = sorted(filtered_missions, key=lambda x: x['index'])
+            
+            for mission in combined[timestamp]['Biomes'][biome]:
+                del mission['index']
+                del mission['season']
+                id += 1
+                mission['id'] = id
+                if 'included_in' not in mission:
+                    print(mission)
+    return combined
+flatten_seasons_v5()
 
 def check_biome_obj_configs():
     with open('drgmissionsdev.json', 'r') as f:
@@ -314,4 +356,4 @@ def check_biome_obj_configs():
                                     print(mission, f'\n{str(m)}')
                                     print('---')
 
-check_biome_obj_configs()
+# check_biome_obj_configs()

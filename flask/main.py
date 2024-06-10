@@ -6,7 +6,7 @@ from io import BytesIO
 from shutil import copy as shutil_copy
 from drgmissionslib import (
     select_timestamp_from_dict,
-    flatten_seasons_v4,
+    flatten_seasons_v5,
     group_by_day_and_split_all,
     order_dictionary_by_date,
     render_xp_calc_index,
@@ -47,7 +47,7 @@ with open('drgmissionsdev_fixed.json', 'r') as f:
     if 's0' in DRG[t]:
         # merge season branches to one
         print('Merging seasons...')
-        DRG = flatten_seasons_v4(DRG)
+        DRG = flatten_seasons_v5(DRG)
     del t
 
     # split into individual json files for static site
@@ -78,9 +78,11 @@ threads.append(threading.Thread(target=rotate_dailydeal, args=(AllTheDeals, dail
 # biome_rotator_threads, rendering_events, biomes_lists = create_mission_icons_rotators(DRG, tstamp, next_tstamp)
 
 rendering_events = {'e' : Event()}
-currybiomes = M.list()
-nextbiomes = M.list()
-threads.append(threading.Thread(target=rotate_biomes_FLAT, args=(DRG, tstamp, next_tstamp, nextbiomes, currybiomes, rendering_events, go_flag)))
+currybiomes_Queue = M.list()
+currybiomes = []
+nextbiomes_Queue = M.list()
+nextbiomes = []
+threads.append(threading.Thread(target=rotate_biomes_FLAT, args=(DRG, tstamp, next_tstamp, nextbiomes_Queue, nextbiomes, currybiomes_Queue, currybiomes, rendering_events, go_flag)))
 
 # Deep Dives rotator
 DDs = []
@@ -334,4 +336,4 @@ if __name__ == '__main__':
     print('Setting signal handlers...')
     set_signal_handlers(SIGINT, SIGTERM, go_flag)
     print('Starting server...')
-    app.run(threaded=True, host='0.0.0.0', debug=True, port=5000, use_reloader=False)
+    app.run(threaded=True, host='0.0.0.0', debug=True, port=5000, use_reloader=True)

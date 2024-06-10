@@ -830,10 +830,7 @@ function renderBiomesFlat(dictionary) {
             let mission = biomeMissions[i];
             let mission1 = {};
 
-            if (mission.hasOwnProperty('excluded_from')) {
-                mission1['excluded_from'] = mission['excluded_from']
-            }
-
+            mission1['included_in'] = mission['included_in'];
             mission1['CodeName'] = mission['CodeName'];
             mission1['id'] = mission['id'];
             mission1['season'] = mission['season'];
@@ -1143,7 +1140,6 @@ function arrayBiomesFlat(Biomes, season) {
     let currentBiomes = Biomes[0]['Biomes'];
     let nextBiomes = Biomes[1]['Biomes'];
     let biomeMissions;
-    let isS0 = season === 's0';
 
     let biomes_ = ['Crystalline Caverns', 'Glacial Strata', 'Radioactive Exclusion Zone', 'Fungus Bogs', 'Dense Biozone', 'Salt Pits', 'Sandblasted Corridors', 'Magma Core', 'Azure Weald', 'Hollow Bough'];
     for (let i_ = 0; i_ < biomes_.length; i_++) {
@@ -1168,14 +1164,9 @@ function arrayBiomesFlat(Biomes, season) {
             for (let i = 0; i < biomeMissions.length; i++) {
                 let mission = biomeMissions[i];
 
-                if (mission.hasOwnProperty('excluded_from') && inList(mission['excluded_from'], season)) {
-                    continue
+                if (inList(mission['included_in'], season)) {
+                    biomeDiv.appendChild(mission['rendered_mission']);
                 }
-                // if (mission['season'] != season) {
-                //     continue
-                // }
-
-                biomeDiv.appendChild(mission['rendered_mission']);
             }
         }
 
@@ -1189,14 +1180,9 @@ function arrayBiomesFlat(Biomes, season) {
             for (let i = 0; i < biomeMissions.length; i++) {
                 let mission = biomeMissions[i];
 
-                if (mission.hasOwnProperty('excluded_from') && inList(mission['excluded_from'], season)) {
-                    continue
+                if (inList(mission['included_in'], season)) {
+                    nextBiomeDiv.appendChild(mission['rendered_mission']);
                 }
-                // if (mission['season'] != season) {
-                //     continue
-                // }
-
-                nextBiomeDiv.appendChild(mission['rendered_mission']);
             }
         }
     };
@@ -2118,8 +2104,8 @@ async function verifyStorages(date) {
 
                 } else if (key === 'currentDaysJson') {
                     let data = JSON.parse(v);
-                    let ver = 'v4';
-                    if (data[0] != date.toISOString().slice(0, 10) || data[1]['ver'] != ver) {
+                    let ver = 'v5';
+                    if (data[0] != date.toISOString().slice(0, 10) || !data[1].hasOwnProperty('ver') || data[1]['ver'] != ver) {
                         setStorages(key, null);
                     } else {
                         localStorages[key] = data;
@@ -2166,7 +2152,7 @@ var localStorages = {
     'homepageScript' : null,
 };
 var localStoragesHashes = {
-    'img' : 929913375,
+    'img' : -434413179,
     'fonts' : 906557479,
     'homepageScript' : 2145285990,
 };
@@ -2275,11 +2261,11 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
 
             let seasonBoxValues = {
-                's0' : '<span style="color:#69d6fe;">Unseasoned</span>/<span style="color:#2bc796;">Drilling Deeper</span>',
-                's1' : '<span style="color:#dc6a2a;">Rival</span> <span style="color:#efc8c9;">Incursion</span>/<span style="color:#8ad6fc;">Escalation</span>',
+                's0' : '<span style="color:#69d6fe;">Unseasoned</span> | <span style="color:#2bc796;">Drilling Deeper</span>',
+                's1' : '<span style="color:#dc6a2a;">Rival</span> <span style="color:#efc8c9;">Incursion</span> | <span style="color:#dc6a2a;">Rival</span> <span style="color:#8ad6fc;">Escalation</span>',
             //     's1': 'Rival Incursion',
             //     's2': 'Rival Escalation',
-                's3' : '<span style="color:#fdb925;">Plaguefall</span>/<span style="color:#eb402b;">Critical Corruption</span>',
+                's3' : '<span style="color:#fdb925;">Plaguefall</span> | <span style="color:#eb402b;">Critical Corruption</span>',
             //     's3': 'Plaguefall',
             //     's4': 'Critical Corruption',
             //     's5': 'Drilling Deeper'

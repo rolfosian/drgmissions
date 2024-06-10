@@ -16,7 +16,7 @@ from drgmissions_scraper_utils import(
     kill_process_by_name_starts_with,
     user_input_set_target_date,
     validate_drgmissions,
-    flatten_seasons,
+    flatten_seasons_v5,
     maximize_window,
     delete_file,
     print,
@@ -173,7 +173,7 @@ def main():
     patched = False
     DRG, patched = validate_drgmissions(DRG, patched)
     
-    DRG = flatten_seasons(DRG)
+    DRG = flatten_seasons_v5(DRG)
     with open('drgmissionsgod.json', 'w') as f:
         json.dump(DRG, f)
     
