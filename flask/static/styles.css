@@ -1,37 +1,32 @@
-/* input[type="checkbox"] {
-transform: scale();
-} */
 input[type="checkbox"] {
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    width: 20px;
-    height: 20px;
-    position: relative;
-    cursor: pointer;
+appearance: none;
+-webkit-appearance: none;
+-moz-appearance: none;
+width: 20px;
+height: 20px;
+position: relative;
+cursor: pointer;
 }
 input[type="checkbox"]::before {
-    content: "";
-    display: block;
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 20px;
-    height: 20px;
-    background-color: #0000;
+content: "";
+display: block;
+position: absolute;
+top: 0;
+left: 0;
+width: 20px;
+height: 20px;
+background-color: #0000;
 }
-
 input[type="checkbox"]:checked::after {
-    content:  "\2611"; 
-    display: block;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: #fff;
-    font-size: 16px;
+content:  "\2611"; 
+display: block;
+position: absolute;
+top: 50%;
+left: 50%;
+transform: translate(-50%, -50%);
+color: #fff;
+font-size: 16px;
 }
-
 body::-webkit-scrollbar {
 display: none;
 }
@@ -226,6 +221,7 @@ font-family: "CarbonBold-W00-Regular";
 }
 #topCountdownContainer {
 position: fixed;
+max-width: 195px;
 top: 0;
 left: 50%;
 transform: translateX(-50%);

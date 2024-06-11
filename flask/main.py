@@ -16,6 +16,7 @@ from drgmissionslib import (
     rotate_biomes_FLAT,
     rotate_DDs,
     rotate_index,
+    get_mission_icon_suffix_for_rpng_endpoint,
     wait_rotation,
     GARBAGE,
     SERVER_READY,
@@ -31,7 +32,9 @@ import json
 import threading
 cwd = os.getcwd()
 
-# if __name__ == '__main__': # YOU HAVE TO PUT EVERYTHING BELOW THIS LINE IN THIS BLOCK IF YOU WANT TO RUN main.py DIRECTLY ON WANGBLOWS ELSE IT HAS A SHITFIT (it isnt an issue on linux)
+# You have to put everything below this line under this statement if you want to run main.py directly on wangblows or else it has a shitfit (it isnt an issue on linux) 
+# Also it will absolutely blow a gasket on mission rollover so have a script ready to kill python processes if you really want to run this debug mode on windows. im not going ot bother debugging it honestly
+# if __name__ == '__main__':
 M = Manager()
 threads = []
 go_flag = threading.Event()
@@ -39,7 +42,8 @@ go_flag.set()
 
 with open('drgmissionsdev_fixed.json', 'r') as f:
     print('Loading bulkmissions json...')
-    DRG = json.load(f)
+    DRG = f.read().replace('Exterminate ', '')
+    DRG = json.loads(DRG)
     f.close()
 
     # Remove past timestamps from memory
@@ -62,30 +66,25 @@ AllTheDeals = json.loads(AllTheDeals)
 AllTheDeals = order_dictionary_by_date(AllTheDeals)
 
 # Current and upcoming timestamps rotator
-tstamp = []
-next_tstamp = []
+tstamp = M.list()
+next_tstamp = M.list()
 threads.append(threading.Thread(target=rotate_timestamps, args=(tstamp, next_tstamp, go_flag)))
 
 # Daily Deal timestamp rotator
-dailydeal_tstamp = []
+dailydeal_tstamp = M.list()
 threads.append(threading.Thread(target=rotate_timestamp_from_dict, args=(AllTheDeals, dailydeal_tstamp, False, go_flag)))
 
 # Daily Deal rotator
-dailydeal = []
+dailydeal = M.list()
 threads.append(threading.Thread(target=rotate_dailydeal, args=(AllTheDeals, dailydeal_tstamp, dailydeal, go_flag)))
 
-# Mission icons rotators - obsolete
-# biome_rotator_threads, rendering_events, biomes_lists = create_mission_icons_rotators(DRG, tstamp, next_tstamp)
-
-rendering_events = {'e' : Event()}
-currybiomes_Queue = M.list()
-currybiomes = []
-nextbiomes_Queue = M.list()
-nextbiomes = []
-threads.append(threading.Thread(target=rotate_biomes_FLAT, args=(DRG, tstamp, next_tstamp, nextbiomes_Queue, nextbiomes, currybiomes_Queue, currybiomes, rendering_events, go_flag)))
+rendering_event = Event()
+currybiomes = M.list()
+nextbiomes = M.list()
+threads.append(threading.Thread(target=rotate_biomes_FLAT, args=(DRG, tstamp, next_tstamp, nextbiomes, currybiomes, rendering_event, go_flag)))
 
 # Deep Dives rotator
-DDs = []
+DDs = M.list()
 threads.append(threading.Thread(target=rotate_DDs, args=(DDs, go_flag)))
 
 # Obsolete but kept the index event and rotation stuff just cause im not going to fix what isnt broken and i cant be bothered rewriting more stuff
@@ -93,12 +92,12 @@ threads.append(threading.Thread(target=rotate_DDs, args=(DDs, go_flag)))
 # Clears index event and waits for rendering_event to be set before proceeding and then sets index event to enable homepage requests once more
 # old index is obsolete but i keep the rotator running witb bare event logic just in case
 index_event = threading.Event()
-index_Queue = []
-threads.append(threading.Thread(target=rotate_index, args=(rendering_events, tstamp, next_tstamp, index_event, index_Queue, go_flag)))
+index_Queue = M.list()
+threads.append(threading.Thread(target=rotate_index, args=(rendering_event, tstamp, next_tstamp, index_event, index_Queue, go_flag)))
 
 # Obsolete but kept the index event and rotation stuff just cause im not going to fix what isnt broken and i cant be bothered rewriting more stuff
 # Listener that clears the rendering event 1.5 seconds before the 30 minute mission rollover interval so the homepage won't load for clients until the rotators are done rendering the mission icons
-threads.append(threading.Thread(target=wait_rotation, args=(rendering_events, index_event, go_flag)))
+threads.append(threading.Thread(target=wait_rotation, args=(rendering_event, index_event, go_flag)))
 
 threads.append(threading.Thread(target=GARBAGE, args=(DRG, go_flag)))
 threads.append(threading.Thread(target=SERVER_READY, args=(index_event,)))
@@ -117,8 +116,7 @@ def set_signal_handlers(SIGINT, SIGTERM, go_flag):
         @wraps(func)
         def wrapper(*args, **kwargs):
             # print('Joining threads...')
-            for e in rendering_events:
-                rendering_events[e].wait()
+            rendering_event.wait()
             M.shutdown()
             join_threads(go_flag)
             return func(*args, **kwargs)
@@ -140,14 +138,12 @@ if __name__ == '__main__':
     from werkzeug._reloader import StatReloaderLoop, reloader_loops
     class ReloaderLoop_(StatReloaderLoop):
         def trigger_reload(self, filename: str) -> None:
-            for event in rendering_events:
-                rendering_events[event].wait()
+            rendering_event.wait()
             M.shutdown()
             join_threads(go_flag)
             return super().trigger_reload(filename)
         def restart_with_reloader(self) -> int:
-            for event in rendering_events:
-                rendering_events[event].wait()
+            rendering_event.wait()
             M.shutdown()
             signal(SIGINT, SIG_DFL)
             signal(SIGTERM, SIG_DFL)
@@ -169,11 +165,17 @@ def home():
 @app.route('/png')
 def serve_img():
     try:
-        # mission = biomes_lists[s][0][0][request.args['img']]
         mission = currybiomes[0][request.args['img']]
         return send_file(BytesIO(mission['rendered_mission'].getvalue()), mimetype='image/png', etag=mission['etag'])
-    except Exception as e:
-        print(e)
+    except:
+        return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
+
+@app.route('/rpng')
+def serve_random_img():
+    try:
+        mission = currybiomes[0][get_mission_icon_suffix_for_rpng_endpoint(DRG[tstamp[0]])]
+        return send_file(BytesIO(mission['rendered_mission'].getvalue()), mimetype='image/png', etag=mission['etag'])
+    except:
         return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
 
 # Sends upcoming mission icons, arg format f"?img={Biome.replace(' ', '-')}{mission['CodeName'].replace(' ', '-')}{mission['id']}" - see rotate_biomes_FLAT in drgmissionslib.py
@@ -181,7 +183,6 @@ def serve_img():
 @app.route('/upcoming_png')
 def serve_next_img():
     try:
-        # mission = biomes_lists[s][1][0][request.args['img']]
         mission = nextbiomes[0][request.args['img']]
         return send_file(BytesIO(mission['rendered_mission'].getvalue()), mimetype='image/png', etag=mission['etag'])
     except:
@@ -336,4 +337,4 @@ if __name__ == '__main__':
     print('Setting signal handlers...')
     set_signal_handlers(SIGINT, SIGTERM, go_flag)
     print('Starting server...')
-    app.run(threaded=True, host='0.0.0.0', debug=True, port=5000, use_reloader=True)
+    app.run(threaded=True, host='0.0.0.0', debug=True, port=5000, use_reloader=False)

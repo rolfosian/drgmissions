@@ -1,7 +1,7 @@
 from certifi import where
 
 def when_ready(server):
-    from main import join_threads, go_flag, set_signal_handlers, rendering_events, start_threads, M
+    from main import join_threads, go_flag, set_signal_handlers, rendering_event, start_threads, M
     import atexit
     from functools import wraps
     from signal import SIGINT, SIGTERM
@@ -11,8 +11,7 @@ def when_ready(server):
     def custom_changed_(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            for event in rendering_events:
-                rendering_events[event].wait()
+            rendering_event.wait()
             join_threads(go_flag)
             M.shutdown()
             atexit.register(_exit_function)
@@ -24,8 +23,8 @@ def when_ready(server):
     set_signal_handlers(SIGINT, SIGTERM, go_flag)
 
 def post_worker_init(worker):
-    from main import go_flag, set_signal_handlers, rendering_events
-    from functools import wraps
+    from main import go_flag, set_signal_handlers#, rendering_event
+    # from functools import wraps
     from signal import SIGINT, SIGTERM
     # import os
     # from time import sleep
@@ -33,8 +32,7 @@ def post_worker_init(worker):
     # def custom_changed(func, self):
     #     @wraps(func)
     #     def wrapper(fname):
-    #         for event in rendering_events:
-    #             rendering_events[event].wait()
+    #         rendering_event.wait()
     #         self.log.info("Worker reloading: %s modified", fname)
     #         self.alive = False
     #         os.write(self.PIPE[1], b"1")

@@ -752,7 +752,7 @@ def flatten_seasons_v5(DRG):
                     
                     if not seen:
                         mission['included_in'] = [season]
-                        
+
                     mission['included_in'] = sorted(list(set(mission['included_in'])), key=lambda x: (str.isdigit(x), x.lower()))
 
                 combined[timestamp]['Biomes'][biome] += [mission for mission in missions]

@@ -615,7 +615,7 @@ function getCurrentMissionData() {
     const datetime = roundTimeDown(getCurrentDateTimeUTC());
     return localStorages['currentDaysJson'][1][datetime];
 }
-function getUpcomingMissionData() {
+function getUpcomingMissionData(icon=false) {
     const datetime = roundTimeUp(getCurrentDateTimeUTC());
     return localStorages['currentDaysJson'][1][datetime];
 }
@@ -883,13 +883,23 @@ async function tempCacheUpcomingBiomes(isMidnightUpcoming_, date) {
     // console.log(date.toISOString())
 }
 
+function getMissionIconSuffixForEndpoint(dictionary) {
+    let biomes = Object.values(dictionary['Biomes']).flat();
+    biomes.sort(() => Math.random() - 0.5);
+
+    for (let i = 0; i < biomes.length; i++) {
+        let mission = biomes[i];
+        let missionIconSuffix = mission['CodeName'].replace(' ', '-') + mission['id'].toString();
+        return [missionIconSuffix, mission['CodeName']];
+    }
+}
 function getBiomesOnInit() {
-    // console.log('currentDaysJson', localStorages['currentDaysJson'])
-    let dictionary = getCurrentMissionData(localStorages['currentDaysJson'][1]);
-    // console.log(localStorages['currentDaysJson'][1])
+    let dictionary = getCurrentMissionData();
     let currentBiomes = renderBiomes(dictionary);
-    let dictionary_ = getUpcomingMissionData(localStorages['currentDaysJson'][1]);
+
+    let dictionary_ = getUpcomingMissionData();
     let upcomingBiomes = renderBiomes(dictionary_);
+
     return [currentBiomes, upcomingBiomes];
 }
 
@@ -943,8 +953,8 @@ function rolloverCurrentDaysJsonLink (currentDaysTimestamp) {
     let currentDaysJsonLink = document.getElementById('currentDaysJsonLink');
     currentDaysJsonLink.href = `${domainURL}/static/json/bulkmissions/${currentDaysTimestamp.slice(0, 10)}.json`;
 
-    let tomorrowDaysJsonLink = document.getElementById('tomorrowDaysJsonLink');
-    tomorrowDaysJsonLink.href = `${domainURL}/static/json/bulkmissions/${getNextDateMidnightUTC(currentDaysTimestamp).slice(0, 10)}.json`;
+    // let tomorrowDaysJsonLink = document.getElementById('tomorrowDaysJsonLink');
+    // tomorrowDaysJsonLink.href = `${domainURL}/static/json/bulkmissions/${getNextDateMidnightUTC(currentDaysTimestamp).slice(0, 10)}.json`;
 }
 async function refreshBiomes(isMidnightUpcoming_) {
     let refreshDate = new Date();
@@ -984,6 +994,8 @@ async function refreshBiomes(isMidnightUpcoming_) {
         rolloverCurrentDaysJsonLink(expectedCurrentTimestamp);
     }
     arrayBiomes(biomes, localStorages['seasonSelected']);
+    document.getElementById('currentMissionIconHref').href = `/png?img=${getMissionIconSuffixForEndpoint(biomes[0])[0]}`
+    document.getElementById('nextMissionIconHref').href = `/upcoming_png?img=${getMissionIconSuffixForEndpoint(biomes[1])[0]}`
     if (document.getElementById('currentButton').textContent == 'Click here to see current missions') {
         document.getElementById('currentButton').click();
     }
@@ -1071,60 +1083,8 @@ function arrayDailyDeal(dailyDeal) {
     dailyDealDiv.appendChild(dailyDealCanvas);
 }
 
-function arrayBiomes_(Biomes, season) { // deprecated, may need for debugging come season 5
-    var currentBiomes = Biomes[0][season]['Biomes'];
-    var nextBiomes = Biomes[1][season]['Biomes'];
-
-    let biomes_ = ['Crystalline Caverns', 'Glacial Strata', 'Radioactive Exclusion Zone', 'Fungus Bogs', 'Dense Biozone', 'Salt Pits', 'Sandblasted Corridors', 'Magma Core', 'Azure Weald', 'Hollow Bough'];
-    for (var i_ = 0; i_ < biomes_.length; i_++) {
-        var biome = biomes_[i_];
-
-        var biomeDiv = document.getElementById(biome);
-        while(biomeDiv.hasChildNodes()) {
-            biomeDiv.removeChild(biomeDiv.lastChild);
-        };
-        if (!(biome in currentBiomes)) {
-            var spanElement = document.createElement("span");
-            spanElement.className = "scanners";
-            spanElement.textContent = "// SCANNERS OUT OF RANGE \\\\";
-            biomeDiv.appendChild(spanElement)
-        } else {
-            var biomeMissions = currentBiomes[biome];
-            for (var i = 0; i < biomeMissions.length; i++) {
-                var mission = biomeMissions[i];
-                biomeDiv.appendChild(mission['rendered_mission']);
-            };
-        };
-
-        biomeDiv = document.getElementById(`next${biome}`);
-        while(biomeDiv.hasChildNodes()) {
-            biomeDiv.removeChild(biomeDiv.lastChild);
-        };
-        if (!(biome in nextBiomes)) {
-            var spanElement = document.createElement("span");
-            spanElement.className = "scanners";
-            spanElement.textContent = "// SCANNERS OUT OF RANGE \\\\";
-            biomeDiv.appendChild(spanElement)
-        } else {
-            var biomeMissions = nextBiomes[biome];
-            for (var i = 0; i < biomeMissions.length; i++) {
-                var mission = biomeMissions[i];
-                biomeDiv.appendChild(mission['rendered_mission']);
-            };
-        };
-    };
-    equalizeGridItems();
-}
-
 // array as a verb
-function arrayBiomes(Biomes, season) { // may need for debugging
-    // if (Biomes[0].hasOwnProperty('s0')) {
-    //     arrayBiomes_(Biomes, season);
-    // } else {
-        arrayBiomesFlat(Biomes, season);
-    // }
-}
-function arrayBiomesFlat(Biomes, season) {
+function arrayBiomes(Biomes, season) {
     let currentBiomes = Biomes[0]['Biomes'];
     let nextBiomes = Biomes[1]['Biomes'];
     let biomeMissions;
@@ -1793,12 +1753,22 @@ async function initialize(date) {
     let currentDatetime = date.toISOString().slice(0, 10);
     let currentDateTimeHREF = `${domainURL}/static/json/bulkmissions/${currentDatetime}.json`;
 
-    let nextDatetime = getNextDateMidnightUTC(date).slice(0, 10);
-    let nextDateTimeHREF = `${domainURL}/static/json/bulkmissions/${nextDatetime}.json`;
+    let currentMissionIconSuffix = getMissionIconSuffixForEndpoint(biomes_[0])[0]
+    let nextMissionIconSuffix = getMissionIconSuffixForEndpoint(biomes_[1])[0]
+
+    let lucky1 = getMissionIconSuffixForEndpoint(biomes_[0]);
+    let lucky2 = getMissionIconSuffixForEndpoint(biomes_[0]);
+    let lucky3 = getMissionIconSuffixForEndpoint(biomes_[0]);
+    let lucky4 = getMissionIconSuffixForEndpoint(biomes_[0]);
+
+    // let nextDatetime = getNextDateMidnightUTC(date).slice(0, 10);
+    // let nextDateTimeHREF = `${domainURL}/static/json/bulkmissions/${nextDatetime}.json`;
 
     let ddDatetime = getPreviousThursdayTimestamp();
     ddDatetime = replaceCharactersAtIndices(ddDatetime, [[13, '-'], [16,'-']]);
     let ddDatetimeHREF = `${domainURL}/static/json/DD_${ddDatetime}.json`;
+
+
 
     let html = `
     <div id="current">
@@ -1982,10 +1952,13 @@ async function initialize(date) {
     </div>
 
     <div class="jsonc">
-    <div class="jsonlinks"><span style="color: white;font-size: 30px;font-family: BebasNeue, sans-serif;"> <a id="currentDaysJsonLink" class="jsonlink" href="${currentDateTimeHREF}">TODAY'S DATA</a> | <a id="tomorrowDaysJsonLink" class="jsonlink" href="${nextDateTimeHREF}">TOMORROW'S DATA</a> | <a class="jsonlink" href="${ddDatetimeHREF}">CURRENT DEEP DIVE DATA</a> | <a class="jsonlink" href="/static/xp_calculator.html">CLASS XP CALCULATOR</a> | <a class="jsonlink" href="https://github.com/rolfosian/drgmissions/">GITHUB</a></span> </div>
-    <span class="credits">Send credits (eth): 0xb9c8591A80A3158f7cFFf96EC3c7eA9adB7818E7</span>
+    <div class="jsonlinks"><span style="color: white;font-size: 30px;font-family: BebasNeue;"><a id="currentDaysJsonLink" class="jsonlink" href="${currentDateTimeHREF}">TODAY'S DATA</a> | <a class="jsonlink" href="/json?data=current">CURRENT MISSION DATA</a> | <a class="jsonlink" href="/json?data=next">UPCOMING MISSION DATA</a> | <a class="jsonlink" href="${ddDatetimeHREF}">CURRENT DEEP DIVE DATA</a> | <a class="jsonlink" href="/static/xp_calculator.html">CLASS XP CALCULATOR</a> | <a id="currentMissionIconHref" class="jsonlink" href="/png?img=${currentMissionIconSuffix}">CURRENT MISSION ICON ENDPOINT</a> | <a id="nextMissionIconHref" class="jsonlink" href="/upcoming_png?img=${nextMissionIconSuffix}">UPCOMING MISSION ICON ENDPOINT</a> | <a class="jsonlink" href="https://github.com/rolfosian/drgmissions/">GITHUB</a></span></div>
     </div>
+    <span style="color: white;font-size: 30px;font-family: CarbonThin-W00-Regular;"><em><span style="font-size: 15px;">*url arg for icons is mission-codename-with-hyphen-instead-of-whitespace + id</span></em></span>
     <p class='gsgdisclaimer'><i>This website is a third-party platform and is not affiliated, endorsed, or sponsored by Ghost Ship Games. The use of Deep Rock Galactic's in-game assets on this website is solely for illustrative purposes and does not imply any ownership or association with the game or its developers. All copyrights and trademarks belong to their respective owners. For official information about Deep Rock Galactic, please visit the official Ghost Ship Games website.</i></p></div>
+    <br><span style="color: white;font-size: 20px;font-family: BebasNeue;">Lucky Missions</span><br>
+    <img title="${lucky1[1]}" src="/png?img=${lucky1[0]}"></img><img title="${lucky2[1]}" src="/png?img=${lucky2[0]}"></img><img title="${lucky3[1]}" src="/png?img=${lucky3[0]}"></img><img title="${lucky4[1]}" src="/png?img=${lucky4[0]}"></img><br>
+    <span class="credits">Send credits (eth): 0xb9c8591A80A3158f7cFFf96EC3c7eA9adB7818E7</span>
     `;
 
     let mainContent = document.getElementById('mainContent');
@@ -2092,7 +2065,7 @@ async function verifyStorages(date) {
 
                 } else if (key === 'currentDaysJson') {
                     let data = JSON.parse(v);
-                    let ver = 'v5';
+                    let ver = 2;
                     if (data[0] != date.toISOString().slice(0, 10) || !data[1].hasOwnProperty('ver') || data[1]['ver'] != ver) {
                         setStorages(key, null);
                     } else {

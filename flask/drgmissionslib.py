@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from functools import wraps
 from multiprocessing.pool import Pool
 from signal import signal, SIGINT, SIGTERM, SIG_DFL
+from random import choice
 import os
 import shutil
 import glob
@@ -943,7 +944,7 @@ def init_worker():
     signal(SIGINT, SIG_DFL)
     signal(SIGTERM, SIG_DFL)
     
-def rotate_biomes_FLAT(DRG, tstamp_Queue, next_tstamp_Queue, nextbiomes_Queue, biomes_Queue, rendering_events, go_flag):
+def rotate_biomes_FLAT(DRG, tstamp_Queue, next_tstamp_Queue, nextbiomes_Queue, biomes_Queue, rendering_event, go_flag):
     def array_biomes(Biomes, timestamp):
         Biomes1 = {}
         for biome in Biomes.keys():
@@ -979,10 +980,9 @@ def rotate_biomes_FLAT(DRG, tstamp_Queue, next_tstamp_Queue, nextbiomes_Queue, b
         nextbiomes_Queue.append(NextBiomes)
         biomes_Queue.append(Biomes)
         # render_pool.close()
-        
+    
  
-    for event in rendering_events:
-        rendering_events[event].set()
+    rendering_event.set()
     del Biomes
     del NextBiomes
     del _
@@ -1001,8 +1001,7 @@ def rotate_biomes_FLAT(DRG, tstamp_Queue, next_tstamp_Queue, nextbiomes_Queue, b
                 nextbiomes_Queue.pop(0)
                 # render_pool.close()
 
-            for event in rendering_events:
-                rendering_events[event].set()
+            rendering_event.set()
             del NextBiomes
 
         sleep(0.25)
@@ -1142,7 +1141,7 @@ def group_by_day_and_split_all(DRG):
         os.mkdir('./static/json/bulkmissions')
 
         for timestamp, dictionary in DRG.items():
-            dictionary['ver'] = 'v5'
+            dictionary['ver'] = 2
             fname = timestamp.replace(':','-')
             with open(f'./static/json/bulkmissions/{fname}.json', 'w') as f:
                 json.dump(dictionary, f)
@@ -1355,6 +1354,11 @@ def round_time_down(datetime_string):
         new_datetime = datetime_string[:14] + '00:00Z'
     return new_datetime
 
+def get_mission_icon_suffix_for_rpng_endpoint(dictionary):
+    mission = choice(dictionary['Biomes'][choice(list(dictionary['Biomes'].keys()))])
+    mission_icon_suffix = mission['CodeName'].replace(' ', '-') + str(mission['id'])
+    return mission_icon_suffix
+
 # combines seasons to one key while removing duplicates, see render_biomes_FLAT in this file and renderBiomesFlat/arrayBiomes in index.js for postprocessing
 def compare_dicts(dict1, dict2, ignore_keys):
     dict1_filtered = {k: v for k, v in dict1.items() if k not in ignore_keys}
@@ -1434,7 +1438,7 @@ def flatten_seasons_v5(DRG):
                 
     return combined
 
-def wait_rotation(rendering_events, index_event, go_flag):
+def wait_rotation(rendering_event, index_event, go_flag):
     target_minutes_59 = [29, 59]
     while go_flag.is_set():
         current_time = datetime.now().time()
@@ -1442,8 +1446,7 @@ def wait_rotation(rendering_events, index_event, go_flag):
         current_second = current_time.second + current_time.microsecond / 1e6
 
         if current_second > 58.50 and current_minute in target_minutes_59:
-            for s in rendering_events:
-                rendering_events[s].clear()
+            rendering_event.wait()
             index_event.clear()
         sleep(0.2)
 
@@ -1519,9 +1522,8 @@ def merge_parts(part_files, output_file):
 #HTML STRING RENDERERS
 
 #HOMEPAGE
-def rotate_index(rendering_events, current_timestamp_Queue, next_timestamp_Queue, index_event, index_Queue, go_flag):
-    for e in rendering_events:
-        rendering_events[e].wait()
+def rotate_index(rendering_event, current_timestamp_Queue, next_timestamp_Queue, index_event, index_Queue, go_flag):
+    rendering_event.wait()
     current_timestamp = current_timestamp_Queue[0]
     # index = {}
     # index_ = render_index().encode()
@@ -1533,8 +1535,7 @@ def rotate_index(rendering_events, current_timestamp_Queue, next_timestamp_Queue
     while go_flag.is_set():
         applicable_timestamp = current_timestamp_Queue[0]
         if applicable_timestamp != current_timestamp:
-            for e in rendering_events:
-                rendering_events[e].wait()
+            rendering_event.wait()
             # index = {}
             # index_ = render_index().encode()
             # index['index'] = index_
