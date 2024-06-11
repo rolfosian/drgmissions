@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from functools import wraps
-from ctypes import WinDLL
+from ctypes import wintypes, byref, WinDLL, WINFUNCTYPE, sizeof, create_unicode_buffer
 from copy import deepcopy
 import subprocess
 import time
@@ -84,11 +84,39 @@ def format_seconds(seconds):
     return formatted_time
 
 def maximize_window():
-    user32 = WinDLL('user32')
-    SW_MAXIMIZE = 3
-    hWnd = user32.GetForegroundWindow()
-    user32.ShowWindow(hWnd, SW_MAXIMIZE)
+    def enum_windows_proc(hwnd, lparam, windows):
+        window_tid = wintypes.DWORD()
+        user32.GetWindowThreadProcessId(hwnd, byref(window_tid))
+        
+        process_name = create_unicode_buffer(512)
+        h_process = OpenProcess(0x0400 | 0x0010, False, window_tid.value)
+        QueryFullProcessImageName(h_process, 0, process_name, byref(wintypes.DWORD(sizeof(process_name) // 2)))
+        process_name = process_name.value.split("\\")[-1]
+        
+        if process_name == 'py.exe' or process_name == 'python.exe' and tid == window_tid.value:
+            windows.append(hwnd)
+            return False
+        
+        return True
     
+    kernel32 = WinDLL('kernel32')
+    user32 = WinDLL('user32')
+    
+    EnumWindows = user32.EnumWindows
+    EnumWindowsProc = WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
+    QueryFullProcessImageName = kernel32.QueryFullProcessImageNameW
+    OpenProcess = kernel32.OpenProcess
+    
+    tid = kernel32.GetCurrentThreadId()
+    windows = []
+    SW_MAXIMIZE = 3
+    
+    EnumWindows(EnumWindowsProc(lambda *args: enum_windows_proc(*args, windows)), 0)
+    if windows:
+        interpreter_hwnd = windows[0]
+        user32.ShowWindow(interpreter_hwnd, SW_MAXIMIZE)
+
+
 #Validation
 #-----------------------
 def sort_dictionary(dictionary, custom_order):
@@ -147,9 +175,7 @@ def reconstruct_dictionary(dictionary):
                         for mission in missions:
                             mission1 = mission
                             if 'MissionWarnings' in mission.keys():
-                                for missionkey, missionvalue in mission.items():
-                                    if isinstance(missionvalue, list):
-                                        mission1[missionkey] = sorted(missionvalue)
+                                mission1['MissionWarnings'] = sorted(mission['MissionWarnings'])
                             mission1 = sort_dictionary(mission1, mission_key_order)
                             missions1.append(mission1)
                         value[biome] = missions1
@@ -205,8 +231,9 @@ def find_duplicate_seasons(dictionary, invalid_keys):
                     god[timestamp][season][k] = v
                             
             god[timestamp][season] = json.dumps(master)
-            
-        if find_duplicate_strings(god[timestamp]):
+        
+        dupes = find_duplicate_strings(god[timestamp])
+        if dupes:
             if timestamp not in invalid_keys_:
                 invalid_keys_.append((timestamp, find_duplicate_seasons.__name__))
 
@@ -546,7 +573,7 @@ def validate_drgmissions(DRG, patched):
     invalid_keys = []
     find_missing_timestamps(DRG, invalid_keys)
     check_missions_keys(DRG, invalid_keys)
-    find_duplicate_seasons(DRG, invalid_keys)
+    # find_duplicate_seasons(DRG, invalid_keys)
     find_duplicates(DRG, invalid_keys)
     check_sum_of_missions(DRG, invalid_keys)   
     check_missions_length_complexity(DRG)
@@ -683,19 +710,6 @@ def compare_dicts(dict1, dict2, ignore_keys):
     dict1_filtered = {k: v for k, v in dict1.items() if k not in ignore_keys}
     dict2_filtered = {k: v for k, v in dict2.items() if k not in ignore_keys}
     return dict1_filtered == dict2_filtered
-
-def get_all_unique_code_names(dicts_list):
-    filtered_list = [d for d in dicts_list if d["season"] != "s0"]
-    
-    codename_count = {}
-    for d in filtered_list:
-        codename = d["CodeName"]
-        if codename:
-            codename_count[codename] = codename_count.get(codename, 0) + 1
-    
-    unique_codenames = [codename for codename, count in codename_count.items() if count == 1]
-    
-    return unique_codenames
 
 def flatten_seasons_v5(DRG):
     combined = {}

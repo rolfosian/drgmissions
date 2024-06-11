@@ -250,8 +250,8 @@ standard_mission_images = {
         'Fester Fleas': Image.open('./static/img/Fester_Fleas_icon.png'),
         'Gunk Seeds': Image.open('./static/img/Gunk_Seeds_icon.png'),
         'Hollomite': Image.open('./static/img/Hollomite_icon.png'),
-        'Exterminate Bha Barnacles' : Image.open('./static/img/Exterminate_Bha_Barnacles_icon.png'),
-        'Exterminate Glyphid Eggs' : Image.open('./static/img/Exterminate_Glyphid_Eggs_icon.png')
+        'Bha Barnacles' : Image.open('./static/img/Bha_Barnacles_icon.png'),
+        'Glyphid Eggs' : Image.open('./static/img/Glyphid_Eggs_icon.png')
             },
     'complexities' : {
         '1': Image.open('./static/img/Icons_complexity_1.png'),
@@ -943,7 +943,7 @@ def init_worker():
     signal(SIGINT, SIG_DFL)
     signal(SIGTERM, SIG_DFL)
     
-def rotate_biomes_FLAT(DRG, tstamp_Queue, next_tstamp_Queue, nextbiomes_Queue, nextbiomes, biomes_Queue, currybiomes, rendering_events, go_flag):
+def rotate_biomes_FLAT(DRG, tstamp_Queue, next_tstamp_Queue, nextbiomes_Queue, biomes_Queue, rendering_events, go_flag):
     def array_biomes(Biomes, timestamp):
         Biomes1 = {}
         for biome in Biomes.keys():
@@ -973,14 +973,14 @@ def rotate_biomes_FLAT(DRG, tstamp_Queue, next_tstamp_Queue, nextbiomes_Queue, n
     with Pool(processes=os.cpu_count(), initializer=init_worker) as render_pool:
         Biomes = render_biomes_FLAT(DRG[tstamp_Queue[0]]['Biomes'], render_pool)
         _, Biomes = array_biomes(Biomes, tstamp_Queue[0])
-        biomes_Queue.append(Biomes)
         NextBiomes = render_biomes_FLAT(DRG[next_tstamp_Queue[0]]['Biomes'], render_pool)
         timestamp_next, NextBiomes = array_biomes(NextBiomes, next_tstamp_Queue[0])
+        
         nextbiomes_Queue.append(NextBiomes)
+        biomes_Queue.append(Biomes)
         # render_pool.close()
-    currybiomes.append(biomes_Queue.pop(0))
-    nextbiomes.append(nextbiomes_Queue[0])
-    
+        
+ 
     for event in rendering_events:
         rendering_events[event].set()
     del Biomes
@@ -994,14 +994,12 @@ def rotate_biomes_FLAT(DRG, tstamp_Queue, next_tstamp_Queue, nextbiomes_Queue, n
             with Pool(processes=os.cpu_count(), initializer=init_worker) as render_pool:
                 NextBiomes = render_biomes_FLAT(DRG[applicable_timestamp]['Biomes'], render_pool)
                 timestamp_next, NextBiomes = array_biomes(NextBiomes, applicable_timestamp)
-
+                
+                biomes_Queue.append(nextbiomes_Queue[0])
+                biomes_Queue.pop(0)
                 nextbiomes_Queue.append(NextBiomes)
                 nextbiomes_Queue.pop(0)
                 # render_pool.close()
-            currybiomes.append(nextbiomes[0])
-            currybiomes.pop(0)
-            nextbiomes.append(nextbiomes_Queue[0])
-            nextbiomes.pop(0)
 
             for event in rendering_events:
                 rendering_events[event].set()

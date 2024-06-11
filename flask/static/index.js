@@ -21,7 +21,7 @@ function getDomainURL(){
 domainURL = getDomainURL();
 
 // caching parameters
-var totalImages = 0;
+var totalImages = 98;
 var loadedImages = 0;
 
 var biomeBanners = {
@@ -36,7 +36,6 @@ var biomeBanners = {
     'Azure Weald': `${domainURL}/static/DeepDive_MissionBar_AzureWeald.webp`,
     'Hollow Bough': `${domainURL}/static/DeepDive_MissionBar_HollowBough.webp`
 }
-totalImages += Object.keys(biomeBanners).length;
 var biomeBannersImages = {};
 biomeBannersImages.name = 'biomeBanners';
 
@@ -44,7 +43,6 @@ var deepDivesBanners = {
     'dd' : `${domainURL}/static/dd.webp`,
     'edd' : `${domainURL}/static/edd.webp`
 };
-totalImages += Object.keys(deepDivesBanners).length;
 var deepDivesBannersImages = {};
 deepDivesBannersImages.name = 'deepDivesBanners';
 
@@ -92,7 +90,6 @@ var primaryObjs = {
     'Industrial Sabotage': `${domainURL}/static/img/Sabotage_icon.webp`,
     'Deep Scan' : `${domainURL}/static/img/Deep_scan_icon.webp`,
 };
-totalImages += Object.keys(primaryObjs).length;
 var primaryObjsImages = {};
 primaryObjsImages.name = 'primaryObjsImages';
 
@@ -108,7 +105,6 @@ var primaryObjResources = {
     'Industrial Sabotage': `${domainURL}/static/img/Icon_Facility_DataRack.webp`,
     'Deep Scan' : `${domainURL}/static/img/Icons_Resources_Detailed_Outline_ResonanceScannerPod.webp`
 };
-totalImages += Object.keys(primaryObjResources).length;
 var primaryObjResourcesImages = {};
 primaryObjResourcesImages.name = 'primaryObjResourcesImages';
 
@@ -121,10 +117,9 @@ var secondaryObjs = {
     'Fester Fleas': `${domainURL}/static/img/Fester_Fleas_icon.webp`,
     'Gunk Seeds': `${domainURL}/static/img/Gunk_Seeds_icon.webp`,
     'Hollomite': `${domainURL}/static/img/Hollomite_icon.webp`,
-    'Exterminate Bha Barnacles' : `${domainURL}/static/img/Exterminate_Bha_Barnacles_icon.webp`,
-    'Exterminate Glyphid Eggs' : `${domainURL}/static/img/Exterminate_Glyphid_Eggs_icon.webp`,
+    'Bha Barnacles' : `${domainURL}/static/img/Bha_Barnacles_icon.webp`,
+    'Glyphid Eggs' : `${domainURL}/static/img/Glyphid_Eggs_icon.webp`,
 };
-totalImages += Object.keys(secondaryObjs).length;
 var secondaryObjsImages = {};
 secondaryObjsImages.name = 'secondaryObjsImages';
 
@@ -133,7 +128,6 @@ var complexities = {
     '2': `${domainURL}/static/img/Icons_complexity_2.webp`,
     '3': `${domainURL}/static/img/Icons_complexity_3.webp`
 };
-totalImages += Object.keys(complexities).length;
 var complexitiesImages = {};
 complexitiesImages.name = 'complexitiesImages';
 
@@ -142,7 +136,6 @@ var lengths = {
     '2': `${domainURL}/static/img/Icons_length_2.webp`,
     '3': `${domainURL}/static/img/Icons_length_3.webp`
 };
-totalImages += Object.keys(lengths).length;
 var lengthsImages = {};
 lengthsImages.name = 'lengthsImages';
 
@@ -158,7 +151,6 @@ var mutators = {
     'Blood Sugar' : `${domainURL}/static/img/Mutator_blood_sugar_icon.webp`,
     'Secret Secondary' : `${domainURL}/static/img/Mutator_secret_secondary_icon.webp`
 };
-totalImages += Object.keys(mutators).length;
 var mutatorsImages = {};
 mutatorsImages.name = 'mutatorsImages';
 
@@ -180,7 +172,6 @@ var warnings = {
     'Ebonite Outbreak' : `${domainURL}/static/img/Warning_ebonite_outbreak_icon.webp`,
     'Tougher Enemies' : `${domainURL}/static/img/Warning_tougher_enemies_icon.webp`
 };
-totalImages += Object.keys(warnings).length;
 var warningsImages = {};
 warningsImages.name = 'warningsImages';
 
@@ -193,7 +184,6 @@ var secondaryObjsDD = {
     "Perform Deep Scans": `${domainURL}/static/img/Icons_Resources_Detailed_Outline_LiquidMorkiteTankerPod_DDsecondaryobj.webp`,
     "Build Liquid Morkite Pipeline" : `${domainURL}/static/img/Icons_Resources_Detailed_Outline_ResonanceScannerPod_DDsecondaryobj.webp`
 };
-totalImages += Object.keys(secondaryObjsDD).length;
 var secondaryObjsDDImages = {};
 secondaryObjsDDImages.name = 'secondaryObjsDDImages';
 
@@ -209,7 +199,6 @@ var biomesDD = {
     'Azure Weald': `${domainURL}/static/img/DeepDive_MissionBar_AzureWeald.webp`,
     'Hollow Bough': `${domainURL}/static/img/DeepDive_MissionBar_HollowBough.webp`
 };
-totalImages += Object.keys(biomesDD).length;
 var biomesDDImages = {};
 biomesDDImages.name = 'biomesDDImages';
 
@@ -223,7 +212,6 @@ var dailyDealResources = {
     'Credits': `${domainURL}/static/img/Credit.webp`,
     'Bubble': `${domainURL}/static/img/Icon_TradeTerminal_SaleBubble.webp`
 };
-totalImages += Object.keys(dailyDealResources).length;
 var dailyDealResourcesImages = {};
 dailyDealResourcesImages.name = 'dailyDealResourcesImages';
 
@@ -2098,7 +2086,7 @@ async function verifyStorages(date) {
                     if (simpleHash(v) === localStoragesHashes[key]) {
                         localStorages[key] = JSON.parse(v);
                     } else {
-                        console.log(`Old hash of ${key}:`, simpleHash(v));
+                        console.log(`Hash of ${key}:`, simpleHash(v), 'Is supposed to be', localStoragesHashes[key]);
                         setStorages(key, null);
                     }
 
@@ -2152,7 +2140,7 @@ var localStorages = {
     'homepageScript' : null,
 };
 var localStoragesHashes = {
-    'img' : -434413179,
+    'img' : -1052216436,
     'fonts' : 906557479,
     'homepageScript' : 2145285990,
 };
@@ -2201,6 +2189,7 @@ function resetGlobalVars() {
     dailyDealResourcesImages.name = 'dailyDealResourcesImages';
     base64LocalStoragesImg = {};
     base64LocalStoragesFonts = {};
+    loadedImages = 0;
 
     localStorages = {
         'isBackgroundHidden' : false,
@@ -2323,6 +2312,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             biomes = breakfast[0];
             dailyDeal = breakfast[1];
             breakfast = undefined;
+            console.log(localStorages['currentDaysJson'])
 
         } catch (error) {
             // likely localStorages hashing is broken

@@ -165,8 +165,8 @@ SecondaryObjectives = {
     ['BlueprintGeneratedClass /Game/GameElements/Objectives/OBJ_2nd_Find_Ebonut.OBJ_2nd_Find_Ebonut_C'] = 'Ebonuts',
     ['BlueprintGeneratedClass /Game/GameElements/Objectives/OBJ_2nd_Find_BooloCap.OBJ_2nd_Find_BooloCap_C'] = 'Boolo Caps',
     ['BlueprintGeneratedClass /Game/GameElements/Objectives/OBJ_2nd_Find_ApocaBloom.OBJ_2nd_Find_ApocaBloom_C'] = 'ApocaBlooms',
-    ['BlueprintGeneratedClass /Game/GameElements/Objectives/OBJ_2nd_DestroyBhaBarnacles.OBJ_2nd_DestroyBhaBarnacles_C'] = 'Exterminate Bha Barnacles',
-    ['BlueprintGeneratedClass /Game/GameElements/Objectives/OBJ_2nd_DestroyEggs.OBJ_2nd_DestroyEggs_C'] = 'Exterminate Glyphid Eggs'
+    ['BlueprintGeneratedClass /Game/GameElements/Objectives/OBJ_2nd_DestroyBhaBarnacles.OBJ_2nd_DestroyBhaBarnacles_C'] = 'Bha Barnacles',
+    ['BlueprintGeneratedClass /Game/GameElements/Objectives/OBJ_2nd_DestroyEggs.OBJ_2nd_DestroyEggs_C'] = 'Glyphid Eggs'
 }
 function GetSecondaryObj(fullname)
     return SecondaryObjectives[fullname]

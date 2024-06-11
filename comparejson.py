@@ -158,22 +158,6 @@ def comparedeals():
 
 # comparedeals()
 
-def check_flatten():
-    with open('drgmissionsdev.json', 'r') as f:
-        DRG = json.load(f)
-        DRG = order_dictionary_by_date_FIRST_KEY_ROUNDING(DRG)
-        DRG = reconstruct_dictionary(DRG)
-        
-    DRG = flatten_seasons_v4(DRG)
-    for v in DRG.values():
-        for biome, missions in v['Biomes'].items():
-            for mission in missions:
-                print(json.dumps(mission, indent=2))
-                print('')
-        break
-
-# check_flatten()
-
 def check_duplicate_seasons():
     with open('drgmissionsdev.json', 'r') as f:
         DRG = order_dictionary_by_date_FIRST_KEY_ROUNDING(json.load(f))

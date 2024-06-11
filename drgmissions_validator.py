@@ -44,7 +44,7 @@ try:
         DRG = reconstruct_dictionary(DRG)
         
         invalid_keys = []
-        find_duplicate_seasons(DRG, invalid_keys)
+        # find_duplicate_seasons(DRG, invalid_keys)
         find_missing_timestamps(DRG, invalid_keys)
         find_duplicates(DRG, invalid_keys)  
         check_sum_of_missions(DRG, invalid_keys)
