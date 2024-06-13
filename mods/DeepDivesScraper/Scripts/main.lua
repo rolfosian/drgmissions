@@ -1,4 +1,4 @@
-local json = require("./mods/BulkMissionsScraper/Scripts/dkjson")
+local json = require("./mods/shared/dkjson")
 function Split(str, separator)
     local result = {}
     local pattern = string.format("([^%s]+)", separator)

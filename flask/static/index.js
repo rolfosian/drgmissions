@@ -1753,13 +1753,15 @@ async function initialize(date) {
     let currentDatetime = date.toISOString().slice(0, 10);
     let currentDateTimeHREF = `${domainURL}/static/json/bulkmissions/${currentDatetime}.json`;
 
-    let currentMissionIconSuffix = getMissionIconSuffixForEndpoint(biomes_[0])[0]
-    let nextMissionIconSuffix = getMissionIconSuffixForEndpoint(biomes_[1])[0]
+    let currentMissionIcon = getMissionIconSuffixForEndpoint(biomes_[0]);
+    let currentMissionIconSuffix = currentMissionIcon[0];
+    let currentMissionIconSuffixTitle = currentMissionIcon[1];
+    
+    let nextMissionIcon = getMissionIconSuffixForEndpoint(biomes_[1]);
+    let nextMissionIconSuffix = nextMissionIcon[0];
+    let nextMissionIconSuffixTitle = nextMissionIcon[1];
 
-    let lucky1 = getMissionIconSuffixForEndpoint(biomes_[0]);
-    let lucky2 = getMissionIconSuffixForEndpoint(biomes_[0]);
-    let lucky3 = getMissionIconSuffixForEndpoint(biomes_[0]);
-    let lucky4 = getMissionIconSuffixForEndpoint(biomes_[0]);
+
 
     // let nextDatetime = getNextDateMidnightUTC(date).slice(0, 10);
     // let nextDateTimeHREF = `${domainURL}/static/json/bulkmissions/${nextDatetime}.json`;
@@ -1952,12 +1954,10 @@ async function initialize(date) {
     </div>
 
     <div class="jsonc">
-    <div class="jsonlinks"><span style="color: white;font-size: 30px;font-family: BebasNeue;"><a id="currentDaysJsonLink" class="jsonlink" href="${currentDateTimeHREF}">TODAY'S DATA</a> | <a class="jsonlink" href="/json?data=current">CURRENT MISSION DATA</a> | <a class="jsonlink" href="/json?data=next">UPCOMING MISSION DATA</a> | <a class="jsonlink" href="${ddDatetimeHREF}">CURRENT DEEP DIVE DATA</a> | <a class="jsonlink" href="/static/xp_calculator.html">CLASS XP CALCULATOR</a> | <a id="currentMissionIconHref" class="jsonlink" href="/png?img=${currentMissionIconSuffix}">CURRENT MISSION ICON ENDPOINT</a> | <a id="nextMissionIconHref" class="jsonlink" href="/upcoming_png?img=${nextMissionIconSuffix}">UPCOMING MISSION ICON ENDPOINT</a> | <a class="jsonlink" href="https://github.com/rolfosian/drgmissions/">GITHUB</a></span></div>
+    <div class="jsonlinks"><span style="color: white;font-size: 30px;font-family: BebasNeue;"><a id="currentDaysJsonLink" class="jsonlink" href="${currentDateTimeHREF}">TODAY'S DATA</a> | <a class="jsonlink" href="/json?data=current">CURRENT MISSION DATA</a> | <a class="jsonlink" href="/json?data=next">UPCOMING MISSION DATA</a> | <a class="jsonlink" href="${ddDatetimeHREF}">CURRENT DEEP DIVE DATA</a> | <a class="jsonlink" href="/static/xp_calculator.html">CLASS XP CALCULATOR</a> | <a title="${currentMissionIconSuffixTitle}" id="currentMissionIconHref" class="jsonlink" href="/png?img=${currentMissionIconSuffix}">CURRENT MISSION ICON ENDPOINT</a> | <a title="${nextMissionIconSuffixTitle}" id="nextMissionIconHref" class="jsonlink" href="/upcoming_png?img=${nextMissionIconSuffix}">UPCOMING MISSION ICON ENDPOINT</a> | <a class="jsonlink" href="https://github.com/rolfosian/drgmissions/">GITHUB</a></span></div>
     </div>
     <span style="color: white;font-size: 30px;font-family: CarbonThin-W00-Regular;"><em><span style="font-size: 15px;">*url arg for icons is mission-codename-with-hyphen-instead-of-whitespace + id</span></em></span>
     <p class='gsgdisclaimer'><i>This website is a third-party platform and is not affiliated, endorsed, or sponsored by Ghost Ship Games. The use of Deep Rock Galactic's in-game assets on this website is solely for illustrative purposes and does not imply any ownership or association with the game or its developers. All copyrights and trademarks belong to their respective owners. For official information about Deep Rock Galactic, please visit the official Ghost Ship Games website.</i></p></div>
-    <br><span style="color: white;font-size: 20px;font-family: BebasNeue;">Lucky Missions</span><br>
-    <img title="${lucky1[1]}" src="/png?img=${lucky1[0]}"></img><img title="${lucky2[1]}" src="/png?img=${lucky2[0]}"></img><img title="${lucky3[1]}" src="/png?img=${lucky3[0]}"></img><img title="${lucky4[1]}" src="/png?img=${lucky4[0]}"></img><br>
     <span class="credits">Send credits (eth): 0xb9c8591A80A3158f7cFFf96EC3c7eA9adB7818E7</span>
     `;
 

@@ -1,4 +1,4 @@
-local json = require("./mods/BulkMissionsScraper/Scripts/dkjson")
+local json = require("./mods/shared/dkjson")
 
 function Main()
     local startmenus = nil
@@ -30,7 +30,7 @@ function Main()
             end
         end
     end
-    local utils = require('./mods/BulkMissionsScraper/Scripts/bulkmissions_funcs')
+    local utils = require('./mods/shared/shared_drgmissions_lua_funcs')
     
     local invalid_keys = io.open("invalid_keys.txt", "r")
     local timestamps = {}

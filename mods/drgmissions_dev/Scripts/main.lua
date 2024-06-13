@@ -1,4 +1,4 @@
-local json = require("./mods/drgmissions_dev/Scripts/dkjson")
+local json = require("./mods/shared/dkjson")
 function IsLoaded()
     local GeneratedMissions = FindAllOf('GeneratedMission')
     if GeneratedMissions then
@@ -55,7 +55,8 @@ function TestTwoWeeks()
     local total_increments = math.floor(diff_seconds / 1800)
     total_increments = total_increments + 1
 
-    local utils = require('./mods/drgmissions_dev/Scripts/bulkmissions_funcs')
+    local utils = require('./mods/shared/shared_drgmissions_lua_funcs')
+    -- local pollClient = utils.ConnectPollClient(12345)
     local SeasonsValues = {
         ['s0'] = 0,
         ['s1'] = 1,

@@ -1,4 +1,4 @@
-local json = require("./mods/BulkMissionsScraper/Scripts/dkjson")
+local json = require("./mods/shared/dkjson")
 
 function PressStartAndWaitForLoad()
     local startmenus = nil
@@ -48,7 +48,7 @@ function Main()
     local total_increments = math.floor(diff_seconds / 1800)
     total_increments = total_increments + 1
 
-    local utils = require('./mods/BulkMissionsScraper/Scripts/bulkmissions_funcs')
+    local utils = require('./mods/shared/shared_drgmissions_lua_funcs')
     local SeasonsValues = {
         ['s0'] = 0,
         ['s1'] = 1,

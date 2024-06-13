@@ -53,8 +53,8 @@ def render_daily_deal_bubble(changepercent, dealtype):
         'Sell':'Profit!',
         }
 
-    BUBBLE = Image.open('./static/img/Icon_TradeTerminal_SaleBubble.png')
-    BUBBLE = scale_image(BUBBLE, 0.8)
+    bubble = Image.open('./static/img/Icon_TradeTerminal_SaleBubble.png')
+    bubble = scale_image(bubble, 0.8)
 
     font_path = './static/img/Bungee-Regular.ttf'
     font_size = 75
@@ -63,79 +63,97 @@ def render_daily_deal_bubble(changepercent, dealtype):
     if len(text) == 2:
         digit1 = list(text)[0]
         digit2 = f'{list(text)[1]}%'
-        DIGIT1 = ImageDraw.Draw(BUBBLE)
-        digit1_x, digit1_y = calc_text_center(BUBBLE.width, BUBBLE.height, digit1, font, font_size)
-        DIGIT1.text((digit1_x-60, digit1_y-15), digit1, font=font, fill=(0, 0, 0))
-        DIGIT2 = ImageDraw.Draw(BUBBLE)
-        DIGIT2.text((digit1_x-5, digit1_y-15), digit2, font=font, fill=(0, 0, 0))
-        del DIGIT1
-        del DIGIT2
-        SAVINGS_PROFIT = ImageDraw.Draw(BUBBLE)
+        
+        digit1 = ImageDraw.Draw(bubble)
+        digit1_x, digit1_y = calc_text_center(bubble.width, bubble.height, digit1, font, font_size)
+        digit1.text((digit1_x-60, digit1_y-15), digit1, font=font, fill=(0, 0, 0))
+        
+        digit2 = ImageDraw.Draw(bubble)
+        digit2.text((digit1_x-5, digit1_y-15), digit2, font=font, fill=(0, 0, 0))
+        
+        del digit1
+        del digit2
+        
+        savings_profit = ImageDraw.Draw(bubble)
         font_size = 30
         font = ImageFont.truetype(font_path, font_size)
-        savings_x, savings_y = calc_text_center(BUBBLE.width, BUBBLE.height, save_profit[dealtype], font, font_size)
-        SAVINGS_PROFIT.text((savings_x, savings_y+38), save_profit[dealtype], font=font, fill=(0, 0, 0))
+        savings_x, savings_y = calc_text_center(bubble.width, bubble.height, save_profit[dealtype], font, font_size)
+        savings_profit.text((savings_x, savings_y+38), save_profit[dealtype], font=font, fill=(0, 0, 0))
+        
     else:
         text = f'{text}%'
-        CHANGEPERCENT = ImageDraw.Draw(BUBBLE)
-        text_x, text_y = calc_text_center(BUBBLE.width, BUBBLE.height, text, font, font_size)
-        CHANGEPERCENT.text((text_x, text_y-15), text, font=font, fill=(0, 0, 0))
-        del CHANGEPERCENT
-        SAVINGS_PROFIT = ImageDraw.Draw(BUBBLE)
+        changepercent = ImageDraw.Draw(bubble)
+        text_x, text_y = calc_text_center(bubble.width, bubble.height, text, font, font_size)
+        changepercent.text((text_x, text_y-15), text, font=font, fill=(0, 0, 0))
+        del changepercent
+        
+        savings_profit = ImageDraw.Draw(bubble)
         font_size = 30
         font = ImageFont.truetype(font_path, font_size)
-        savings_x, savings_y = calc_text_center(BUBBLE.width, BUBBLE.height, save_profit[dealtype], font, font_size)
-        SAVINGS_PROFIT.text((savings_x, savings_y+38), save_profit[dealtype], font=font, fill=(0, 0, 0))
-    del SAVINGS_PROFIT
-    return BUBBLE
+        savings_x, savings_y = calc_text_center(bubble.width, bubble.height, save_profit[dealtype], font, font_size)
+        savings_profit.text((savings_x, savings_y+38), save_profit[dealtype], font=font, fill=(0, 0, 0))
+        
+    del savings_profit
+    
+    return bubble
 
 def render_daily_deal_resource_and_amount(resources, resource, resourceamount):
-    RESOURCE = Image.open(resources[resource])
-    RESOURCE = scale_image(RESOURCE, 0.3)
+    
+    resource = Image.open(resources[resource])
+    resource = scale_image(resource, 0.3)
+    
     text = str(resourceamount)
     font_path = './static/img/Bungee-Regular.ttf'
     font_size = 75
     font = ImageFont.truetype(font_path, font_size)
     text_width = len(text) * font_size
     text_height = len(text) * font_size
-    image_width = text_width + (2 * RESOURCE.width)
+    
+    image_width = text_width + (2 * resource.width)
     image_height = text_height
-    BACKGROUND = Image.new("RGBA", (image_width, image_height), (0, 0, 0, 0))
-    x, y = calc_center(RESOURCE, BACKGROUND)
-    BACKGROUND.paste(RESOURCE, (25,y))
-    BACKGROUND.paste(RESOURCE.transpose(Image.FLIP_LEFT_RIGHT), ((image_width - RESOURCE.width)-25, y))
-    RESOURCE.close()
-    DRAW = ImageDraw.Draw(BACKGROUND)
-    text_x, text_y = calc_text_center(BACKGROUND.width, BACKGROUND.height, text, font, font_size)
-    DRAW.text((text_x, text_y), text, font=font, fill=(255,255,255))
-    del DRAW
-    return BACKGROUND
+    
+    background = Image.new("RGBA", (image_width, image_height), (0, 0, 0, 0))
+    x, y = calc_center(resource, background)
+    background.paste(resource, (25,y))
+    background.paste(resource.transpose(Image.FLIP_LEFT_RIGHT), ((image_width - resource.width)-25, y))
+    resource.close()
+    
+    draw = ImageDraw.Draw(background)
+    text_x, text_y = calc_text_center(background.width, background.height, text, font, font_size)
+    draw.text((text_x, text_y), text, font=font, fill=(255,255,255))
+    del draw
+    
+    return background
 
 def render_daily_deal_credits(credits):
-    CREDITS = Image.open('./static/img/Credit.png')
-    CREDITS = scale_image(CREDITS, 0.4)
+    credits_ = Image.open('./static/img/Credit.png')
+    credits_ = scale_image(credits_, 0.4)
+    
     text = str(credits)
     font_path = './static/img/Bungee-Regular.ttf'
     font_size = 75
     font = ImageFont.truetype(font_path, font_size)
     text_width = len(text) * font_size
     text_height = len(text) * font_size
-    image_width = text_width + (2 * CREDITS.width)
+    image_width = text_width + (2 * credits_.width)
     image_height = text_height
-    BACKGROUND = Image.new("RGBA", (image_width, image_height), (0, 0, 0, 0))
-    x, y = calc_center(CREDITS, BACKGROUND)
+    background = Image.new("RGBA", (image_width, image_height), (0, 0, 0, 0))
+    x, y = calc_center(credits_, background)
+    
     if len(text) < 5:
-        BACKGROUND.paste(CREDITS, (35,y+10))
-        BACKGROUND.paste(CREDITS, ((image_width - CREDITS.width)-35, y+10))
+        background.paste(credits_, (35,y+10))
+        background.paste(credits_, ((image_width - credits_.width)-35, y+10))
     else:
-        BACKGROUND.paste(CREDITS, (55,y+10))
-        BACKGROUND.paste(CREDITS, ((image_width - CREDITS.width)-55, y+10))
-    CREDITS.close()
-    DRAW = ImageDraw.Draw(BACKGROUND)
-    text_x, text_y = calc_text_center(BACKGROUND.width, BACKGROUND.height, text, font, font_size)
-    DRAW.text((text_x, text_y), text, font=font, fill=(255,255,255))
-    del DRAW
-    return BACKGROUND
+        background.paste(credits_, (55,y+10))
+        background.paste(credits_, ((image_width - credits_.width)-55, y+10))
+    credits_.close()
+    
+    draw = ImageDraw.Draw(background)
+    text_x, text_y = calc_text_center(background.width, background.height, text, font, font_size)
+    draw.text((text_x, text_y), text, font=font, fill=(255,255,255))
+    del draw
+    
+    return background
 
 def render_dailydeal(deal_dict):
     font_path = './static/img/CarbonBold-W00-Regular.ttf'
@@ -156,62 +174,62 @@ def render_dailydeal(deal_dict):
         'Sell': 'Get',
         }
 
-    BACKGROUND = Image.new("RGBA", (400, 635), (0, 44, 81, 255))
-    BACKGROUND_HEAD = Image.new("RGBA", (400, 120), (57, 148, 136, 255))
-    x, y = calc_center(BACKGROUND_HEAD, BACKGROUND)
-    BACKGROUND.paste(BACKGROUND_HEAD, (x, y-257), mask = BACKGROUND_HEAD)
-    BACKGROUND_HEAD.close()
+    background = Image.new("RGBA", (400, 635), (0, 44, 81, 255))
+    background_head = Image.new("RGBA", (400, 120), (57, 148, 136, 255))
+    x, y = calc_center(background_head, background)
+    background.paste(background_head, (x, y-257), mask = background_head)
+    background_head.close()
 
     text = "TODAY'S OFFER:"
-    BACKGROUND_TITLE = ImageDraw.Draw(BACKGROUND)
-    text_x, text_y = calc_text_center(BACKGROUND.width, BACKGROUND.height, text, font, font_size)
-    BACKGROUND_TITLE.text((text_x, text_y-295), text, font=font, fill=(0, 0, 0))
-    del BACKGROUND_TITLE
+    background_title = ImageDraw.Draw(background)
+    text_x, text_y = calc_text_center(background.width, background.height, text, font, font_size)
+    background_title.text((text_x, text_y-295), text, font=font, fill=(0, 0, 0))
+    del background_title
 
     font_path = './static/img/Bungee-Regular.ttf'
     font_size = 60
     font = ImageFont.truetype(font_path, font_size)
 
     text = deal_dict['Resource']
-    RESOURCE_TEXT = ImageDraw.Draw(BACKGROUND)
-    text_x, text_y = calc_text_center(BACKGROUND.width, BACKGROUND.height, text, font, font_size)
-    RESOURCE_TEXT.text((text_x, text_y-250), text, font=font, fill=(0, 0, 0))
-    del RESOURCE_TEXT
+    resource_TEXT = ImageDraw.Draw(background)
+    text_x, text_y = calc_text_center(background.width, background.height, text, font, font_size)
+    resource_TEXT.text((text_x, text_y-250), text, font=font, fill=(0, 0, 0))
+    del resource_TEXT
 
-    RESOURCEAMOUNT_AND_RESOURCE = render_daily_deal_resource_and_amount(resources, deal_dict['Resource'], deal_dict['ResourceAmount'])
-    x, y = calc_center(RESOURCEAMOUNT_AND_RESOURCE, BACKGROUND)
-    BACKGROUND.paste(RESOURCEAMOUNT_AND_RESOURCE, (x, y-130), mask=RESOURCEAMOUNT_AND_RESOURCE)
-    RESOURCEAMOUNT_AND_RESOURCE.close()
+    resourceamount_and_resource = render_daily_deal_resource_and_amount(resources, deal_dict['Resource'], deal_dict['ResourceAmount'])
+    x, y = calc_center(resourceamount_and_resource, background)
+    background.paste(resourceamount_and_resource, (x, y-130), mask=resourceamount_and_resource)
+    resourceamount_and_resource.close()
 
     font_size = 35
     font = ImageFont.truetype(font_path, font_size)
     text = deal_dict['DealType']
-    DEALTYPE = ImageDraw.Draw(BACKGROUND)
-    text_x, text_y = calc_text_center(BACKGROUND.width, BACKGROUND.height, text, font, font_size)
-    DEALTYPE.text((text_x, text_y-170), text, font=font, fill=(255, 255, 255))
+    dealtype = ImageDraw.Draw(background)
+    text_x, text_y = calc_text_center(background.width, background.height, text, font, font_size)
+    dealtype.text((text_x, text_y-170), text, font=font, fill=(255, 255, 255))
 
     text = buy_or_get[deal_dict['DealType']]
-    DEALTYPE = ImageDraw.Draw(BACKGROUND)
-    text_x, text_y = calc_text_center(BACKGROUND.width, BACKGROUND.height, text, font, font_size)
-    DEALTYPE.text((text_x, text_y-33), text, font=font, fill=(255, 255, 255))
-    del DEALTYPE
+    dealtype = ImageDraw.Draw(background)
+    text_x, text_y = calc_text_center(background.width, background.height, text, font, font_size)
+    dealtype.text((text_x, text_y-33), text, font=font, fill=(255, 255, 255))
+    del dealtype
 
     credits = deal_dict['Credits']
-    CREDITS = render_daily_deal_credits(credits)
-    x, y = calc_center(CREDITS, BACKGROUND)
-    BACKGROUND.paste(CREDITS, (x, y+10), mask=CREDITS)
-    CREDITS.close()
+    credits_ = render_daily_deal_credits(credits)
+    x, y = calc_center(credits_, background)
+    background.paste(credits_, (x, y+10), mask=credits_)
+    credits_.close()
 
-    BUBBLE = render_daily_deal_bubble(deal_dict['ChangePercent'], deal_dict['DealType'])
-    BUBBLE = BUBBLE.rotate(-20, expand=True)
-    x, y = calc_center(BUBBLE, BACKGROUND)
-    BACKGROUND.paste(BUBBLE, (x-60, y+200), mask=BUBBLE)
-    BUBBLE.close()
+    bubble = render_daily_deal_bubble(deal_dict['ChangePercent'], deal_dict['DealType'])
+    bubble = bubble.rotate(-20, expand=True)
+    x, y = calc_center(bubble, background)
+    background.paste(bubble, (x-60, y+200), mask=bubble)
+    bubble.close()
 
-    BACKGROUND = scale_image(BACKGROUND, 0.5)
-    # BACKGROUND.save('TEST.png', format='PNG')
+    background = scale_image(background, 0.5)
+    # background.save('TEST.png', format='PNG')
     # subprocess.run(['gwenview', 'TEST.png'])
-    return BACKGROUND
+    return background
 
 standard_mission_primary_resources_images = {
     'Mining Expedition': Image.open('./static/img/Morkite_icon.png'),
@@ -329,122 +347,122 @@ def render_mission_obj_resource(primary_obj, complexity, length):
         ('Deep Scan', '2', '1') : '3',
     }
 
-    BACKGROUND = Image.new("RGBA", (256, 256), (0,0,0,0))
-    HEXAGON = standard_mission_primary_resources_images['Hexagon'].copy()
-    HEXAGON = scale_image(HEXAGON, 0.4)
-    #x, y = calc_center(HEXAGON, BACKGROUND)
-    #print(f'HEXAGON X: {str(x)}')
-    #print(f'HEXAGON Y: {str(y)}')
-    BACKGROUND.paste(HEXAGON, (69, 59), mask=HEXAGON)
-    HEXAGON.close()
+    background = Image.new("RGBA", (256, 256), (0,0,0,0))
+    hexagon = standard_mission_primary_resources_images['Hexagon'].copy()
+    hexagon = scale_image(hexagon, 0.4)
+    #x, y = calc_center(hexagon, background)
+    #print(f'hexagon X: {str(x)}')
+    #print(f'hexagon Y: {str(y)}')
+    background.paste(hexagon, (69, 59), mask=hexagon)
+    hexagon.close()
 
-    RESOURCE = standard_mission_primary_resources_images[primary_obj].copy()
+    resource = standard_mission_primary_resources_images[primary_obj].copy()
     if primary_obj == 'Mining Expedition':
-        RESOURCE = scale_image(RESOURCE, 0.2)
+        resource = scale_image(resource, 0.2)
     elif primary_obj == 'Egg Hunt':
-        RESOURCE = scale_image(RESOURCE, 0.25)
+        resource = scale_image(resource, 0.25)
     else:
-        RESOURCE = scale_image(RESOURCE, 0.14)
-    x, y = calc_center(RESOURCE, BACKGROUND)
+        resource = scale_image(resource, 0.14)
+    x, y = calc_center(resource, background)
     if primary_obj == 'Mining Expedition':
-        BACKGROUND.paste(RESOURCE, (x, y-20), mask=RESOURCE)
+        background.paste(resource, (x, y-20), mask=resource)
     else:
-        BACKGROUND.paste(RESOURCE, (x, y-13), mask=RESOURCE)
-    RESOURCE.close()
+        background.paste(resource, (x, y-13), mask=resource)
+    resource.close()
 
     text = values.get((primary_obj, complexity, length), values.get((primary_obj, length), values.get((primary_obj, 'default'), 'Unknown')))
-    DRAW = ImageDraw.Draw(BACKGROUND)
-    text_x, text_y = calc_text_center(BACKGROUND.width, BACKGROUND.height, text, font, font_size)
+    draw = ImageDraw.Draw(background)
+    text_x, text_y = calc_text_center(background.width, background.height, text, font, font_size)
     if primary_obj == 'Mining Expedition':
-        DRAW.text((text_x, text_y+15), text, font=font, fill=text_color)
+        draw.text((text_x, text_y+15), text, font=font, fill=text_color)
     else:
-        DRAW.text((text_x, text_y+25), text, font=font, fill=text_color)
-    del DRAW
-    return BACKGROUND
+        draw.text((text_x, text_y+25), text, font=font, fill=text_color)
+    del draw
+    return background
 
 def render_mission(m_d):
-    BACKGROUND = Image.new("RGBA", (350, 300), (0,0,0,0))
+    background = Image.new("RGBA", (350, 300), (0,0,0,0))
 
-    PRIMARY = standard_mission_images['primary_objs'][m_d['PrimaryObjective']].copy()
-    PRIMARY = scale_image(PRIMARY, 0.4)
-    #x, y = calc_center(PRIMARY, BACKGROUND)
-    #print(f'PRIMARY X: {str(x)}')
-    #print(f'PRIMARY Y: {str(y)}')
-    BACKGROUND.paste(PRIMARY, (83, 58), mask=PRIMARY)
-    PRIMARY.close()
+    primary = standard_mission_images['primary_objs'][m_d['PrimaryObjective']].copy()
+    primary = scale_image(primary, 0.4)
+    #x, y = calc_center(primary, background)
+    #print(f'primary X: {str(x)}')
+    #print(f'primary Y: {str(y)}')
+    background.paste(primary, (83, 58), mask=primary)
+    primary.close()
 
-    SECONDARY = standard_mission_images['secondary_objs'][m_d['SecondaryObjective']].copy()
-    SECONDARY = scale_image(SECONDARY, 0.6)
-    #x, y = calc_center(SECONDARY, BACKGROUND)
-    #print(f'SECONDARY X: {str(x-110)}')
-    #print(f'SECONDARY Y: {str(y-95)}')
-    BACKGROUND.paste(SECONDARY, (-11, -21), mask=SECONDARY)
-    SECONDARY.close()
+    secondary = standard_mission_images['secondary_objs'][m_d['SecondaryObjective']].copy()
+    secondary = scale_image(secondary, 0.6)
+    #x, y = calc_center(secondary, background)
+    #print(f'secondary X: {str(x-110)}')
+    #print(f'secondary Y: {str(y-95)}')
+    background.paste(secondary, (-11, -21), mask=secondary)
+    secondary.close()
 
     if 'MissionWarnings' in m_d:
         MissionWarnings = []
         for warning in m_d['MissionWarnings']:
             MissionWarnings.append(warning)
-        MISSIONWARNING1 = standard_mission_images['warnings'][MissionWarnings[0]].copy()
-        MISSIONWARNING1 = scale_image(MISSIONWARNING1, 0.38)
-        #x, y = calc_center(MISSIONWARNING1, BACKGROUND)
+        missionwarning1 = standard_mission_images['warnings'][MissionWarnings[0]].copy()
+        missionwarning1 = scale_image(missionwarning1, 0.38)
+        #x, y = calc_center(missionwarning1, background)
         #print(f'LONEWARNING X: {str(x+100)}')
         #print(f'LONEWARNING Y: {str(y-15)}')
         if len(MissionWarnings) == 1:
-            BACKGROUND.paste(MISSIONWARNING1, (227, 87), mask=MISSIONWARNING1)
-            MISSIONWARNING1.close()
+            background.paste(missionwarning1, (227, 87), mask=missionwarning1)
+            missionwarning1.close()
         elif len(MissionWarnings) == 2:
             #print(f'WARNING 1 X: {str(x+100)}')
             #print(f'WARNING 1 Y: {str(y-60)}')
-            BACKGROUND.paste(MISSIONWARNING1, (227, 42), mask=MISSIONWARNING1)
-            MISSIONWARNING1.close()
+            background.paste(missionwarning1, (227, 42), mask=missionwarning1)
+            missionwarning1.close()
 
-            MISSIONWARNING2 = standard_mission_images['warnings'][MissionWarnings[1]].copy()
-            MISSIONWARNING2 = scale_image(MISSIONWARNING2, 0.38)
-            #x, y = calc_center(MISSIONWARNING2, BACKGROUND)
+            missionwarning2 = standard_mission_images['warnings'][MissionWarnings[1]].copy()
+            missionwarning2 = scale_image(missionwarning2, 0.38)
+            #x, y = calc_center(missionwarning2, background)
             #print(f'WARNING 2 X: {str(x+100)}')
             #print(f'WARNING 2 Y: {str(y+40)}')
-            BACKGROUND.paste(MISSIONWARNING2, (227, 142), mask=MISSIONWARNING2)
-            MISSIONWARNING2.close()
+            background.paste(missionwarning2, (227, 142), mask=missionwarning2)
+            missionwarning2.close()
 
     if 'MissionMutator' in m_d:
-        MISSIONMUTATOR = standard_mission_images['mutators'][m_d['MissionMutator']].copy()
-        MISSIONMUTATOR = scale_image(MISSIONMUTATOR, 0.38)
-        #x, y = calc_center(MISSIONMUTATOR, BACKGROUND)
+        missionmutator = standard_mission_images['mutators'][m_d['MissionMutator']].copy()
+        missionmutator = scale_image(missionmutator, 0.38)
+        #x, y = calc_center(MISSIONMUTATOR, background)
         #print(f'MUTATOR X: {str(x-100)}')
         #print(f'MUTATOR Y: {str(y-10)}')
-        BACKGROUND.paste(MISSIONMUTATOR, (27, 92), mask=MISSIONMUTATOR)
-        MISSIONMUTATOR.close()
+        background.paste(missionmutator, (27, 92), mask=missionmutator)
+        missionmutator.close()
 
-    COMPLEXITY = standard_mission_images['complexities'][m_d['Complexity']].copy()
-    COMPLEXITY = scale_image(COMPLEXITY, 0.45)
-    #x, y = calc_center(COMPLEXITY, BACKGROUND)
-    #print(f'COMPLEXITY X: {str(x)}')
-    #print(f'COMPLEXITY Y: {str(y-120)}')
-    BACKGROUND.paste(COMPLEXITY, (107, 2), mask=COMPLEXITY)
-    COMPLEXITY.close()
+    complexity = standard_mission_images['complexities'][m_d['Complexity']].copy()
+    complexity = scale_image(complexity, 0.45)
+    #x, y = calc_center(complexity, background)
+    #print(f'complexity X: {str(x)}')
+    #print(f'complexity Y: {str(y-120)}')
+    background.paste(complexity, (107, 2), mask=complexity)
+    complexity.close()
 
-    LENGTH = standard_mission_images['lengths'][m_d['Length']].copy()
-    LENGTH = scale_image(LENGTH, 0.45)
-    #x, y = calc_center(LENGTH, BACKGROUND)
-    #print(f'LENGTH X: {str(x)}')
-    #print(f'LENGTH Y: {str(y+120)}')
-    BACKGROUND.paste(LENGTH, (107, 242), mask=LENGTH)
-    LENGTH.close()
+    length = standard_mission_images['lengths'][m_d['Length']].copy()
+    length = scale_image(length, 0.45)
+    #x, y = calc_center(length, background)
+    #print(f'length X: {str(x)}')
+    #print(f'length Y: {str(y+120)}')
+    background.paste(length, (107, 242), mask=length)
+    length.close()
 
-    PRIMARY_OBJ_RESOURCE = render_mission_obj_resource(m_d['PrimaryObjective'], m_d['Complexity'], m_d['Length'])
-    PRIMARY_OBJ_RESOURCE = scale_image(PRIMARY_OBJ_RESOURCE, 0.8)
-    #x, y = calc_center(PRIMARY_OBJ_RESOURCE, BACKGROUND)
-    #print(f'OBJ_RESOURCE X: {str(x-110)}')
-    #print(f'OBJ_RESOURCE Y: {str(y+95)}')
-    BACKGROUND.paste(PRIMARY_OBJ_RESOURCE, (-37, 143), mask=PRIMARY_OBJ_RESOURCE)
-    PRIMARY_OBJ_RESOURCE.close()
+    primary_obj_resource = render_mission_obj_resource(m_d['PrimaryObjective'], m_d['Complexity'], m_d['Length'])
+    primary_obj_resource = scale_image(primary_obj_resource, 0.8)
+    #x, y = calc_center(primary_obj_resource, background)
+    #print(f'obj_resource X: {str(x-110)}')
+    #print(f'obj_resource Y: {str(y+95)}')
+    background.paste(primary_obj_resource, (-37, 143), mask=primary_obj_resource)
+    primary_obj_resource.close()
 
-    BACKGROUND = scale_image(BACKGROUND, 0.46)
-    #BACKGROUND.save('TEST.png', format='PNG')
+    background = scale_image(background, 0.46)
+    #background.save('TEST.png', format='PNG')
     #subprocess.run(['gwenview', 'TEST.png'])
-    #mission = {'rendered_mission': BACKGROUND, 'CodeName': m_d['CodeName'], 'id': m_d['id']}
-    return BACKGROUND
+    #mission = {'rendered_mission': background, 'CodeName': m_d['CodeName'], 'id': m_d['id']}
+    return background
 
 def add_shadowed_text_to_image(bg, text, text_color, shadow_color, font_path, font_size):
     x = bg.width // 2
@@ -524,13 +542,13 @@ def render_dd_biome_codename(codename, biome):
         'Hollow Bough': './static/img/DeepDive_MissionBar_HollowBough.png'
     }
 
-    BACKGROUND = Image.open(biomes[biome])
-    # BACKGROUND = add_shadowed_text_to_image(BACKGROUND, codename, 'white', '#000000', font_path, font_size)
+    background = Image.open(biomes[biome])
+    # background = add_shadowed_text_to_image(background, codename, 'white', '#000000', font_path, font_size)
     text_and_fonts = [('CODENAME: ', "./static/img/RiftSoft-Regular.ttf"), (f'{codename}', './static/img/BebasNeue-Regular.ttf')]
-    BACKGROUND = add_shadowed_text_to_image_SPLITFONTS(BACKGROUND, text_and_fonts, 'white', '#000000', font_size=45)
-    #BACKGROUND.save('TEST.png', format='PNG')
+    background = add_shadowed_text_to_image_SPLITFONTS(background, text_and_fonts, 'white', '#000000', font_size=45)
+    #background.save('TEST.png', format='PNG')
     #subprocess.run(['gwenview', 'TEST.png'])
-    return BACKGROUND
+    return background
 
 def render_dd_secondary_obj_resource(secondary_obj):
     font_path = './static/img/CarbonBold-W00-Regular.ttf'
@@ -556,40 +574,40 @@ def render_dd_secondary_obj_resource(secondary_obj):
         'Perform Deep Scans' : '2'
     }
 
-    BACKGROUND = Image.new("RGBA", (256, 256), (0,0,0,0))
-    HEXAGON = Image.open('./static/img/hexagon.png')
-    HEXAGON = scale_image(HEXAGON, 0.4)
-    #x, y = calc_center(HEXAGON, BACKGROUND)
-    #print(f'HEXAGON X: {str(x)}')
-    #print(f'HEXAGON Y: {str(y)}')
-    BACKGROUND.paste(HEXAGON, (69, 59), mask=HEXAGON)
-    HEXAGON.close()
+    background = Image.new("RGBA", (256, 256), (0,0,0,0))
+    hexagon = Image.open('./static/img/hexagon.png')
+    hexagon = scale_image(hexagon, 0.4)
+    #x, y = calc_center(hexagon, background)
+    #print(f'hexagon X: {str(x)}')
+    #print(f'hexagon Y: {str(y)}')
+    background.paste(hexagon, (69, 59), mask=hexagon)
+    hexagon.close()
 
-    RESOURCE = Image.open(secondary_objs[secondary_obj])
+    resource = Image.open(secondary_objs[secondary_obj])
     if secondary_obj == 'Mine Morkite':
-        RESOURCE = scale_image(RESOURCE, 0.2)
+        resource = scale_image(resource, 0.2)
     elif secondary_obj == 'Black Box':
-        RESOURCE = scale_image(RESOURCE, 0.3)
+        resource = scale_image(resource, 0.3)
     elif secondary_obj == 'Get Alien Eggs':
-        RESOURCE = scale_image(RESOURCE, 0.24)
+        resource = scale_image(resource, 0.24)
     else:
-        RESOURCE = scale_image(RESOURCE, 0.14)
-    x, y = calc_center(RESOURCE, BACKGROUND)
+        resource = scale_image(resource, 0.14)
+    x, y = calc_center(resource, background)
     if secondary_obj == 'Mine Morkite' or secondary_obj == 'Black Box' or secondary_obj == 'Perform Deep Scans':
-        BACKGROUND.paste(RESOURCE, (x, y-20), mask=RESOURCE)
+        background.paste(resource, (x, y-20), mask=resource)
     else:
-        BACKGROUND.paste(RESOURCE, (x, y-13), mask=RESOURCE)
-    RESOURCE.close()
+        background.paste(resource, (x, y-13), mask=resource)
+    resource.close()
 
     text = values.get(secondary_obj)
-    DRAW = ImageDraw.Draw(BACKGROUND)
-    text_x, text_y = calc_text_center(BACKGROUND.width, BACKGROUND.height, text, font, font_size)
+    draw = ImageDraw.Draw(background)
+    text_x, text_y = calc_text_center(background.width, background.height, text, font, font_size)
     if secondary_obj == 'Mine Morkite':
-        DRAW.text((text_x, text_y+15), text, font=font, fill=text_color)
+        draw.text((text_x, text_y+15), text, font=font, fill=text_color)
     else:
-        DRAW.text((text_x, text_y+25), text, font=font, fill=text_color)
-    del DRAW
-    return BACKGROUND
+        draw.text((text_x, text_y+25), text, font=font, fill=text_color)
+    del draw
+    return background
 
 def render_dd_stage(m_d):
     primary_objs = {
@@ -644,85 +662,85 @@ def render_dd_stage(m_d):
         'Tougher Enemies' : './static/img/Warning_tougher_enemies_icon.png'
             }
 
-    BACKGROUND = Image.new("RGBA", (350, 300), (0,0,0,0))
+    background = Image.new("RGBA", (350, 300), (0,0,0,0))
 
-    PRIMARY = Image.open(primary_objs[m_d['PrimaryObjective']])
-    PRIMARY = scale_image(PRIMARY, 0.4)
-    #x, y = calc_center(PRIMARY, BACKGROUND)
-    #print(f'PRIMARY X: {str(x)}')
-    #print(f'PRIMARY Y: {str(y)}')
-    BACKGROUND.paste(PRIMARY, (83, 58), mask=PRIMARY)
-    PRIMARY.close()
+    primary = Image.open(primary_objs[m_d['PrimaryObjective']])
+    primary = scale_image(primary, 0.4)
+    #x, y = calc_center(primary, background)
+    #print(f'primary X: {str(x)}')
+    #print(f'primary Y: {str(y)}')
+    background.paste(primary, (83, 58), mask=primary)
+    primary.close()
 
-    SECONDARY = render_dd_secondary_obj_resource(m_d['SecondaryObjective'])
-    SECONDARY = scale_image(SECONDARY, 0.6)
-    #x, y = calc_center(SECONDARY, BACKGROUND)
-    #print(f'SECONDARY X: {str(x-110)}')
-    #print(f'SECONDARY Y: {str(y-95)}')
-    BACKGROUND.paste(SECONDARY, (-11, -21), mask=SECONDARY)
-    SECONDARY.close()
+    secondary = render_dd_secondary_obj_resource(m_d['SecondaryObjective'])
+    secondary = scale_image(secondary, 0.6)
+    #x, y = calc_center(secondary, background)
+    #print(f'secondary X: {str(x-110)}')
+    #print(f'secondary Y: {str(y-95)}')
+    background.paste(secondary, (-11, -21), mask=secondary)
+    secondary.close()
 
     if 'MissionWarnings' in m_d:
         MissionWarnings = []
         for warning in m_d['MissionWarnings']:
             MissionWarnings.append(warning)
-        MISSIONWARNING1 = Image.open(warnings[MissionWarnings[0]])
-        MISSIONWARNING1 = scale_image(MISSIONWARNING1, 0.38)
-        #x, y = calc_center(MISSIONWARNING1, BACKGROUND)
+        missionwarning1 = Image.open(warnings[MissionWarnings[0]])
+        missionwarning1 = scale_image(missionwarning1, 0.38)
+        #x, y = calc_center(missionwarning1, background)
         #print(f'LONEWARNING X: {str(x+100)}')
         #print(f'LONEWARNING Y: {str(y-15)}')
         if len(MissionWarnings) == 1:
-            BACKGROUND.paste(MISSIONWARNING1, (227, 87), mask=MISSIONWARNING1)
-            MISSIONWARNING1.close()
+            background.paste(missionwarning1, (227, 87), mask=missionwarning1)
+            missionwarning1.close()
         elif len(MissionWarnings) == 2:
             #print(f'WARNING 1 X: {str(x+100)}')
             #print(f'WARNING 1 Y: {str(y-60)}')
-            BACKGROUND.paste(MISSIONWARNING1, (227, 42), mask=MISSIONWARNING1)
-            MISSIONWARNING1.close()
+            background.paste(missionwarning1, (227, 42), mask=missionwarning1)
+            missionwarning1.close()
 
-            MISSIONWARNING2 = Image.open(warnings[MissionWarnings[1]])
-            MISSIONWARNING2 = scale_image(MISSIONWARNING2, 0.38)
-            #x, y = calc_center(MISSIONWARNING2, BACKGROUND)
+            missionwarning2 = Image.open(warnings[MissionWarnings[1]])
+            missionwarning2 = scale_image(missionwarning2, 0.38)
+            #x, y = calc_center(missionwarning2, background)
             #print(f'WARNING 2 X: {str(x+100)}')
             #print(f'WARNING 2 Y: {str(y+40)}')
-            BACKGROUND.paste(MISSIONWARNING2, (227, 142), mask=MISSIONWARNING2)
-            MISSIONWARNING2.close()
+            background.paste(missionwarning2, (227, 142), mask=missionwarning2)
+            missionwarning2.close()
 
     if 'MissionMutator' in m_d:
-        MISSIONMUTATOR = Image.open(mutators[m_d['MissionMutator']])
-        MISSIONMUTATOR = scale_image(MISSIONMUTATOR, 0.38)
-        #x, y = calc_center(MISSIONMUTATOR, BACKGROUND)
+        missionmutator = Image.open(mutators[m_d['MissionMutator']])
+        missionmutator = scale_image(missionmutator, 0.38)
+        #x, y = calc_center(MISSIONMUTATOR, background)
         #print(f'MUTATOR X: {str(x-100)}')
         #print(f'MUTATOR Y: {str(y-10)}')
-        BACKGROUND.paste(MISSIONMUTATOR, (27, 92), mask=MISSIONMUTATOR)
-        MISSIONMUTATOR.close()
+        background.paste(missionmutator, (27, 92), mask=missionmutator)
+        missionmutator.close()
 
-    COMPLEXITY = Image.open(complexities[m_d['Complexity']])
-    COMPLEXITY = scale_image(COMPLEXITY, 0.45)
-    #x, y = calc_center(COMPLEXITY, BACKGROUND)
-    #print(f'COMPLEXITY X: {str(x)}')
-    #print(f'COMPLEXITY Y: {str(y-120)}')
-    BACKGROUND.paste(COMPLEXITY, (107, 2), mask=COMPLEXITY)
-    COMPLEXITY.close()
+    complexity = Image.open(complexities[m_d['Complexity']])
+    complexity = scale_image(complexity, 0.45)
+    #x, y = calc_center(complexity, background)
+    #print(f'complexity X: {str(x)}')
+    #print(f'complexity Y: {str(y-120)}')
+    background.paste(complexity, (107, 2), mask=complexity)
+    complexity.close()
 
-    LENGTH = Image.open(lengths[m_d['Length']])
-    LENGTH = scale_image(LENGTH, 0.45)
-    #x, y = calc_center(LENGTH, BACKGROUND)
-    #print(f'LENGTH X: {str(x)}')
-    #print(f'LENGTH Y: {str(y+120)}')
-    BACKGROUND.paste(LENGTH, (107, 242), mask=LENGTH)
-    LENGTH.close()
+    length = Image.open(lengths[m_d['Length']])
+    length = scale_image(length, 0.45)
+    #x, y = calc_center(length, background)
+    #print(f'length X: {str(x)}')
+    #print(f'length Y: {str(y+120)}')
+    background.paste(length, (107, 242), mask=length)
+    length.close()
 
-    PRIMARY_OBJ_RESOURCE = render_mission_obj_resource(m_d['PrimaryObjective'], m_d['Complexity'], m_d['Length'])
-    PRIMARY_OBJ_RESOURCE = scale_image(PRIMARY_OBJ_RESOURCE, 0.8)
-    #x, y = calc_center(PRIMARY_OBJ_RESOURCE, BACKGROUND)
-    #print(f'OBJ_RESOURCE X: {str(x-110)}')
-    #print(f'OBJ_RESOURCE Y: {str(y+95)}')
-    BACKGROUND.paste(PRIMARY_OBJ_RESOURCE, (-37, 143), mask=PRIMARY_OBJ_RESOURCE)
-    BACKGROUND = scale_image(BACKGROUND, 0.46)
-    PRIMARY_OBJ_RESOURCE.close()
+    primary_obj_resource = render_mission_obj_resource(m_d['PrimaryObjective'], m_d['Complexity'], m_d['Length'])
+    primary_obj_resource = scale_image(primary_obj_resource, 0.8)
+    #x, y = calc_center(primary_obj_resource, background)
+    #print(f'obj_resource X: {str(x-110)}')
+    #print(f'obj_resource Y: {str(y+95)}')
+    background.paste(primary_obj_resource, (-37, 143), mask=primary_obj_resource)
+    background = scale_image(background, 0.46)
+    primary_obj_resource.close()
 
-    return BACKGROUND
+    return background
 
 #-------------------------------------------------------------------------------------------------------------------------------
 
