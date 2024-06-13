@@ -1,0 +1,55 @@
+{
+    "Deep Dives":{
+      "Deep Dive Elite":{
+        "CodeName":"CRYING COMEBACK",
+        "Stages":[{
+            "Complexity":"3",
+            "Length":"2",
+            "PrimaryObjective":"Deep Scan",
+            "id":408,
+            "SecondaryObjective":"Mine Morkite",
+            "MissionMutator":"Low Gravity",
+            "MissionWarnings":["Mactera Plague"]
+          },{
+            "Complexity":"1",
+            "PrimaryObjective":"Mining Expedition",
+            "id":407,
+            "SecondaryObjective":"Perform Deep Scans",
+            "Length":"1",
+            "MissionWarnings":["Swarmageddon"]
+          },{
+            "Complexity":"2",
+            "PrimaryObjective":"Egg Hunt",
+            "id":406,
+            "SecondaryObjective":"Mine Morkite",
+            "Length":"2"
+          }],
+        "Biome":"Salt Pits"
+      },
+      "Deep Dive Normal":{
+        "CodeName":"EVERLASTING HEAD",
+        "Stages":[{
+            "Complexity":"2",
+            "PrimaryObjective":"Elimination",
+            "id":412,
+            "SecondaryObjective":"Perform Deep Scans",
+            "Length":"2",
+            "MissionWarnings":["Swarmageddon"]
+          },{
+            "Complexity":"2",
+            "PrimaryObjective":"Deep Scan",
+            "id":411,
+            "SecondaryObjective":"Mine Morkite",
+            "Length":"1",
+            "MissionWarnings":["Rival Presence"]
+          },{
+            "Complexity":"2",
+            "PrimaryObjective":"Mining Expedition",
+            "id":410,
+            "SecondaryObjective":"Perform Deep Scans",
+            "Length":"2"
+          }],
+        "Biome":"Magma Core"
+      }
+    }
+  }

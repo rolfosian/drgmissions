@@ -72,7 +72,7 @@ function UnpackDeepDiveMission(mission, master, t)
         {pattern = "AlienEggs", result = "Get Alien Eggs"},
         {pattern = "DD_Defense", result = "Black Box"},
         {pattern = 'MorkiteWell', result = 'Build Liquid Morkite Pipeline'},
-        {pattern = 'DeepScan'}, result = 'Perform Deep Scans'
+        {pattern = 'DeepScan', result = 'Perform Deep Scans'}
     }
     for _, obj in ipairs(secondary_objectives) do
         if string.find(SecondaryObjective, obj.pattern) then
