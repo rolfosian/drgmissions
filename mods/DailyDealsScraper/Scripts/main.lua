@@ -1,4 +1,4 @@
-local json = require("./mods/BulkMissionsScraper/Scripts/dkjson")
+local json = require("./mods/shared/dkjson")
 function PressStartAndWaitForLoad()
   local startmenus = nil
   while true do
@@ -9,7 +9,7 @@ function PressStartAndWaitForLoad()
   end
   -- Execute the function that 'press any key' invokes
   for index, startmenu in pairs(startmenus) do
-      startmenu:PressStart()
+      startmenu:OpenGameLevel()
   end
 
   local waiting_for_load = true
@@ -33,7 +33,7 @@ end
 function Main()
     PressStartAndWaitForLoad()
     
-    local utils = require('./mods/BulkMissionsScraper/Scripts/bulkmissions_funcs')
+    local utils = require('./mods/shared/shared_drgmissions_lua_funcs')
     local total_days = 365
     local DailyDealSettings = FindFirstOf('DailyDealSettings')
     local DailyDeals = {}

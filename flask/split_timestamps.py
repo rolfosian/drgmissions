@@ -94,16 +94,17 @@ def flatten_seasons_new(DRG):
                             combined[timestamp]['Biomes'][biome].append(mission)
     
     for timestamp, biome, dup_mission in duplicates:
-        for season in seasons:
-            for mission in combined[timestamp]['Biomes'][biome]:
-                if dup_mission['CodeName'] != mission['CodeName']:
-                    continue
-                if compare_dicts(mission, dup_mission, ['season', 'id', 'season_modified']):
-                    continue
-                if 'season_modified' not in mission:
-                    mission['season_modified'] = {}
-                mission['season_modified'][season] = dup_mission
-                missions_count -= 1
+        for mission in combined[timestamp]['Biomes'][biome]:
+            
+            if dup_mission['CodeName'] != mission['CodeName']:
+                continue
+            if compare_dicts(mission, dup_mission, ['season', 'id', 'season_modified']):
+                continue
+            if 'season_modified' not in mission:
+                mission['season_modified'] = {}
+                
+            mission['season_modified'][dup_mission['season']] = dup_mission
+            missions_count -= 1
                 
     # seasons.insert(0, 's0')
     # amount_of_timestamps = len(timestamps)

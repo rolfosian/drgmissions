@@ -1,4 +1,4 @@
-local json = require("./mods/BulkMissionsScraper/Scripts/dkjson")
+local json = require("./mods/shared/dkjson")
 
 function Main()
     local startmenus = nil
@@ -11,7 +11,7 @@ function Main()
     end
     -- Execute the function that 'press any key' invokes
     for index, startmenu in pairs(startmenus) do
-        startmenu:PressStart()
+        startmenu:OpenGameLevel()
     end
     local waiting_for_load = true
     -- Wait for Space Rig to load
@@ -30,9 +30,8 @@ function Main()
             end
         end
     end
-
-    local biomes_ = {'Crystalline Caverns', 'Glacial Strata', 'Radioactive Exclusion Zone', 'Fungus Bogs', 'Dense Biozone', 'Salt Pits', 'Sandblasted Corridors', 'Magma Core', 'Azure Weald', 'Hollow Bough'}
-    local utils = require('./mods/BulkMissionsScraper/Scripts/bulkmissions_funcs')
+    local utils = require('./mods/shared/shared_drgmissions_lua_funcs')
+    
     local invalid_keys = io.open("invalid_keys.txt", "r")
     local timestamps = {}
     if invalid_keys then
@@ -45,16 +44,20 @@ function Main()
         invalid_keys:close()
     end
 
-    local SeasonsAndFuncs = {
-        s0 = utils.S4Off,
-        s4 = utils.S4On
+    local SeasonsValues = {
+        ['s0'] = 0,
+        ['s1'] = 1,
+        ['s2'] = 2,
+        ['s3'] = 3,
+        ['s4'] = 4,
+        ['s5'] = 5
     }
 
     -- Initialize Table
     local god = {}
     local FSDGameInstance = FindFirstOf('FSDGameInstance')
-    local GlobalSeed = FSDGameInstance:GetGlobalMissionSeed()
-    local PreviousGlobalSeed = GlobalSeed
+    local RandomSeed = nil
+    local PreviousRandomSeed = nil
     local missionscount = 0
     utils.CreatePollFile('firstpoll.txt')
     for _, timestamp in pairs(timestamps) do
@@ -66,52 +69,40 @@ function Main()
         os.execute(command)
 
         while true do
-            GlobalSeed = FSDGameInstance:GetGlobalMissionSeed()
-            if GlobalSeed == PreviousGlobalSeed then
-                print('SEEN') -- has never seen as far as i can tell, prob ditch the stall when GetGlobalMissionSeed trusted enough
+            FSDGameInstance:UpdateGlobelMissionSeed() -- No, this is not a typo (but maybe it was on gsg's end).
+            RandomSeed = FSDGameInstance:GetGlobalMissionSeedNew().RandomSeed
+            if RandomSeed == PreviousRandomSeed then
+                print('SEEN') -- has never seen as far as i can tell, prob ditch the stall when i trust this enough
             else
                 break
             end
         end
+
         -- Initialize Table
         local master = {}
-        local SeasonSeeds = {}
-        for season, season_switch in pairs(SeasonsAndFuncs) do
-            season_switch()
+        for SeasonKey, SeasonValue in pairs(SeasonsValues) do
+            missionscount = 0
 
-            -- FSDGameInstance:UpdateGlobelMissionSeed() -- No, this is not a typo (but maybe it was on gsg's end)
-            while true do
-                GlobalSeed = FSDGameInstance:GetGlobalMissionSeed()
-                if utils.IsInTable(SeasonSeeds, GlobalSeed) then
-                    print('SEEN') -- has never seen as far as i can tell, prob ditch the stall GetGlobalMissionSeed trusted enough
-                else
-                    break
-                end
-            end
-            SeasonSeeds[season] = GlobalSeed
-
-            master[season] = {}
-            master[season]['Biomes'] = utils.BiomesTable()
+            master[SeasonKey] = {}
+            master[SeasonKey]['Biomes'] = utils.BiomesTable()
 
             -- Get GeneratedMission UObjects
             local b = nil
-            local missions = utils.GetMissions()
+            local missions = utils.GetMissions(SeasonValue, RandomSeed)
             if missions then
-                timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
-                master[season]['timestamp'] = timestamp
+                master[SeasonKey]['timestamp'] = timestamp
                 for index, mission in pairs(missions) do
                     b = utils.GetBiome(mission)
-                    missionscount = utils.UnpackStandardMission(mission, master, b, missionscount, season)
+                    missionscount = utils.UnpackStandardMission(mission, master, b, missionscount, SeasonKey)
                 end
-            PreviousGlobalSeed = GlobalSeed
             end
-
-            for biome, ms  in pairs(master[season]['Biomes']) do
+            for biome, ms  in pairs(master[SeasonKey]['Biomes']) do
                 if utils.IsTableEmpty(ms) then
-                    master[season]['Biomes'][biome] = nil
+                    master[SeasonKey]['Biomes'][biome] = nil
                 end
             end
         end
+        PreviousRandomSeed = tonumber(tostring(RandomSeed))
         god[timestamp] = master
 
         utils.CreatePollFile('poll.txt')

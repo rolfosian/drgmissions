@@ -1,17 +1,16 @@
 from hashlib import md5
-from time import sleep
+from time import sleep, time
 from io import BytesIO
+from PIL import Image, ImageDraw, ImageFont, ImageFilter
+from datetime import datetime, timedelta
+from functools import wraps
+from multiprocessing.pool import Pool
+from signal import signal, SIGINT, SIGTERM, SIG_DFL
+from random import choice
 import os
 import shutil
 import glob
 import json
-from PIL import Image, ImageDraw, ImageFont, ImageFilter
-from datetime import datetime, timedelta
-from functools import wraps
-# import subprocess
-#from concurrent.futures import ThreadPoolExecutor
-#from concurrent.futures import ProcessPoolExecutor
-#from os import cpu_count
 
 #----------------------------------------------
 # MISSION ICONS AND DAILY DEAL PIL FUNCTIONS
@@ -37,7 +36,7 @@ def calc_center(image, background):
 def calc_text_center(image_width, image_height, text, font, font_size):
     temp_image = Image.new("RGB", (image_width, image_height))
     temp_draw = ImageDraw.Draw(temp_image)
-    
+
     text_bbox = temp_draw.textbbox((0, 0), text, font=font)
     text_width = text_bbox[2] - text_bbox[0]
     text_height = text_bbox[3] - text_bbox[1]
@@ -50,13 +49,13 @@ def calc_text_center(image_width, image_height, text, font, font_size):
 
 def render_daily_deal_bubble(changepercent, dealtype):
     save_profit = {
-        'Buy':'Savings!', 
+        'Buy':'Savings!',
         'Sell':'Profit!',
         }
-    
-    BUBBLE = Image.open('./static/img/Icon_TradeTerminal_SaleBubble.png')
-    BUBBLE = scale_image(BUBBLE, 0.8)
-    
+
+    bubble = Image.open('./static/img/Icon_TradeTerminal_SaleBubble.png')
+    bubble = scale_image(bubble, 0.8)
+
     font_path = './static/img/Bungee-Regular.ttf'
     font_size = 75
     font = ImageFont.truetype(font_path, font_size)
@@ -64,82 +63,100 @@ def render_daily_deal_bubble(changepercent, dealtype):
     if len(text) == 2:
         digit1 = list(text)[0]
         digit2 = f'{list(text)[1]}%'
-        DIGIT1 = ImageDraw.Draw(BUBBLE)
-        digit1_x, digit1_y = calc_text_center(BUBBLE.width, BUBBLE.height, digit1, font, font_size)
-        DIGIT1.text((digit1_x-60, digit1_y-15), digit1, font=font, fill=(0, 0, 0))
-        DIGIT2 = ImageDraw.Draw(BUBBLE)
-        DIGIT2.text((digit1_x-5, digit1_y-15), digit2, font=font, fill=(0, 0, 0))
-        del DIGIT1
-        del DIGIT2
-        SAVINGS_PROFIT = ImageDraw.Draw(BUBBLE)
+        
+        digit1 = ImageDraw.Draw(bubble)
+        digit1_x, digit1_y = calc_text_center(bubble.width, bubble.height, digit1, font, font_size)
+        digit1.text((digit1_x-60, digit1_y-15), digit1, font=font, fill=(0, 0, 0))
+        
+        digit2 = ImageDraw.Draw(bubble)
+        digit2.text((digit1_x-5, digit1_y-15), digit2, font=font, fill=(0, 0, 0))
+        
+        del digit1
+        del digit2
+        
+        savings_profit = ImageDraw.Draw(bubble)
         font_size = 30
         font = ImageFont.truetype(font_path, font_size)
-        savings_x, savings_y = calc_text_center(BUBBLE.width, BUBBLE.height, save_profit[dealtype], font, font_size)
-        SAVINGS_PROFIT.text((savings_x, savings_y+38), save_profit[dealtype], font=font, fill=(0, 0, 0))
+        savings_x, savings_y = calc_text_center(bubble.width, bubble.height, save_profit[dealtype], font, font_size)
+        savings_profit.text((savings_x, savings_y+38), save_profit[dealtype], font=font, fill=(0, 0, 0))
+        
     else:
         text = f'{text}%'
-        CHANGEPERCENT = ImageDraw.Draw(BUBBLE)
-        text_x, text_y = calc_text_center(BUBBLE.width, BUBBLE.height, text, font, font_size)
-        CHANGEPERCENT.text((text_x, text_y-15), text, font=font, fill=(0, 0, 0))
-        del CHANGEPERCENT
-        SAVINGS_PROFIT = ImageDraw.Draw(BUBBLE)
+        changepercent = ImageDraw.Draw(bubble)
+        text_x, text_y = calc_text_center(bubble.width, bubble.height, text, font, font_size)
+        changepercent.text((text_x, text_y-15), text, font=font, fill=(0, 0, 0))
+        del changepercent
+        
+        savings_profit = ImageDraw.Draw(bubble)
         font_size = 30
         font = ImageFont.truetype(font_path, font_size)
-        savings_x, savings_y = calc_text_center(BUBBLE.width, BUBBLE.height, save_profit[dealtype], font, font_size)
-        SAVINGS_PROFIT.text((savings_x, savings_y+38), save_profit[dealtype], font=font, fill=(0, 0, 0))
-    del SAVINGS_PROFIT
-    return BUBBLE
+        savings_x, savings_y = calc_text_center(bubble.width, bubble.height, save_profit[dealtype], font, font_size)
+        savings_profit.text((savings_x, savings_y+38), save_profit[dealtype], font=font, fill=(0, 0, 0))
+        
+    del savings_profit
+    
+    return bubble
 
 def render_daily_deal_resource_and_amount(resources, resource, resourceamount):
-    RESOURCE = Image.open(resources[resource])
-    RESOURCE = scale_image(RESOURCE, 0.3)
+    
+    resource = Image.open(resources[resource])
+    resource = scale_image(resource, 0.3)
+    
     text = str(resourceamount)
     font_path = './static/img/Bungee-Regular.ttf'
     font_size = 75
     font = ImageFont.truetype(font_path, font_size)
     text_width = len(text) * font_size
     text_height = len(text) * font_size
-    image_width = text_width + (2 * RESOURCE.width)
+    
+    image_width = text_width + (2 * resource.width)
     image_height = text_height
-    BACKGROUND = Image.new("RGBA", (image_width, image_height), (0, 0, 0, 0))
-    x, y = calc_center(RESOURCE, BACKGROUND)
-    BACKGROUND.paste(RESOURCE, (25,y))
-    BACKGROUND.paste(RESOURCE.transpose(Image.FLIP_LEFT_RIGHT), ((image_width - RESOURCE.width)-25, y))
-    RESOURCE.close()
-    DRAW = ImageDraw.Draw(BACKGROUND)
-    text_x, text_y = calc_text_center(BACKGROUND.width, BACKGROUND.height, text, font, font_size)
-    DRAW.text((text_x, text_y), text, font=font, fill=(255,255,255))
-    del DRAW
-    return BACKGROUND
+    
+    background = Image.new("RGBA", (image_width, image_height), (0, 0, 0, 0))
+    x, y = calc_center(resource, background)
+    background.paste(resource, (25,y))
+    background.paste(resource.transpose(Image.FLIP_LEFT_RIGHT), ((image_width - resource.width)-25, y))
+    resource.close()
+    
+    draw = ImageDraw.Draw(background)
+    text_x, text_y = calc_text_center(background.width, background.height, text, font, font_size)
+    draw.text((text_x, text_y), text, font=font, fill=(255,255,255))
+    del draw
+    
+    return background
 
 def render_daily_deal_credits(credits):
-    CREDITS = Image.open('./static/img/Credit.png')
-    CREDITS = scale_image(CREDITS, 0.4)
+    credits_ = Image.open('./static/img/Credit.png')
+    credits_ = scale_image(credits_, 0.4)
+    
     text = str(credits)
     font_path = './static/img/Bungee-Regular.ttf'
     font_size = 75
     font = ImageFont.truetype(font_path, font_size)
     text_width = len(text) * font_size
     text_height = len(text) * font_size
-    image_width = text_width + (2 * CREDITS.width)
+    image_width = text_width + (2 * credits_.width)
     image_height = text_height
-    BACKGROUND = Image.new("RGBA", (image_width, image_height), (0, 0, 0, 0))
-    x, y = calc_center(CREDITS, BACKGROUND)
+    background = Image.new("RGBA", (image_width, image_height), (0, 0, 0, 0))
+    x, y = calc_center(credits_, background)
+    
     if len(text) < 5:
-        BACKGROUND.paste(CREDITS, (35,y+10))
-        BACKGROUND.paste(CREDITS, ((image_width - CREDITS.width)-35, y+10))
+        background.paste(credits_, (35,y+10))
+        background.paste(credits_, ((image_width - credits_.width)-35, y+10))
     else:
-        BACKGROUND.paste(CREDITS, (55,y+10))
-        BACKGROUND.paste(CREDITS, ((image_width - CREDITS.width)-55, y+10))
-    CREDITS.close()
-    DRAW = ImageDraw.Draw(BACKGROUND)
-    text_x, text_y = calc_text_center(BACKGROUND.width, BACKGROUND.height, text, font, font_size)
-    DRAW.text((text_x, text_y), text, font=font, fill=(255,255,255))
-    del DRAW
-    return BACKGROUND
+        background.paste(credits_, (55,y+10))
+        background.paste(credits_, ((image_width - credits_.width)-55, y+10))
+    credits_.close()
+    
+    draw = ImageDraw.Draw(background)
+    text_x, text_y = calc_text_center(background.width, background.height, text, font, font_size)
+    draw.text((text_x, text_y), text, font=font, fill=(255,255,255))
+    del draw
+    
+    return background
 
 def render_dailydeal(deal_dict):
-    font_path = './static/img/HammerBro101MovieBold-Regular.ttf'
+    font_path = './static/img/CarbonBold-W00-Regular.ttf'
     font_size = 45
     font = ImageFont.truetype(font_path, font_size)
     resources = {
@@ -149,87 +166,164 @@ def render_dailydeal(deal_dict):
         'Jadiz': './static/img/Jadiz_icon.png',
         'Magnite': './static/img/Magnite_icon.png',
         'Umanite': './static/img/Umanite_icon.png',
-        
+
         'Credits': './static/img/Credit.png',
             }
     buy_or_get = {
         'Buy' : 'Pay',
         'Sell': 'Get',
         }
-    
-    BACKGROUND = Image.new("RGBA", (400, 635), (0, 44, 81, 255))
-    BACKGROUND_HEAD = Image.new("RGBA", (400, 120), (57, 148, 136, 255))
-    x, y = calc_center(BACKGROUND_HEAD, BACKGROUND)
-    BACKGROUND.paste(BACKGROUND_HEAD, (x, y-257), mask = BACKGROUND_HEAD)
-    BACKGROUND_HEAD.close()
-    
+
+    background = Image.new("RGBA", (400, 635), (0, 44, 81, 255))
+    background_head = Image.new("RGBA", (400, 120), (57, 148, 136, 255))
+    x, y = calc_center(background_head, background)
+    background.paste(background_head, (x, y-257), mask = background_head)
+    background_head.close()
+
     text = "TODAY'S OFFER:"
-    BACKGROUND_TITLE = ImageDraw.Draw(BACKGROUND)
-    text_x, text_y = calc_text_center(BACKGROUND.width, BACKGROUND.height, text, font, font_size)
-    BACKGROUND_TITLE.text((text_x, text_y-295), text, font=font, fill=(0, 0, 0))
-    del BACKGROUND_TITLE
+    background_title = ImageDraw.Draw(background)
+    text_x, text_y = calc_text_center(background.width, background.height, text, font, font_size)
+    background_title.text((text_x, text_y-295), text, font=font, fill=(0, 0, 0))
+    del background_title
 
     font_path = './static/img/Bungee-Regular.ttf'
     font_size = 60
     font = ImageFont.truetype(font_path, font_size)
-    
+
     text = deal_dict['Resource']
-    RESOURCE_TEXT = ImageDraw.Draw(BACKGROUND)
-    text_x, text_y = calc_text_center(BACKGROUND.width, BACKGROUND.height, text, font, font_size)
-    RESOURCE_TEXT.text((text_x, text_y-250), text, font=font, fill=(0, 0, 0))
-    del RESOURCE_TEXT
-    
-    RESOURCEAMOUNT_AND_RESOURCE = render_daily_deal_resource_and_amount(resources, deal_dict['Resource'], deal_dict['ResourceAmount'])
-    x, y = calc_center(RESOURCEAMOUNT_AND_RESOURCE, BACKGROUND)
-    BACKGROUND.paste(RESOURCEAMOUNT_AND_RESOURCE, (x, y-130), mask=RESOURCEAMOUNT_AND_RESOURCE)
-    RESOURCEAMOUNT_AND_RESOURCE.close()
-    
+    resource_TEXT = ImageDraw.Draw(background)
+    text_x, text_y = calc_text_center(background.width, background.height, text, font, font_size)
+    resource_TEXT.text((text_x, text_y-250), text, font=font, fill=(0, 0, 0))
+    del resource_TEXT
+
+    resourceamount_and_resource = render_daily_deal_resource_and_amount(resources, deal_dict['Resource'], deal_dict['ResourceAmount'])
+    x, y = calc_center(resourceamount_and_resource, background)
+    background.paste(resourceamount_and_resource, (x, y-130), mask=resourceamount_and_resource)
+    resourceamount_and_resource.close()
+
     font_size = 35
     font = ImageFont.truetype(font_path, font_size)
     text = deal_dict['DealType']
-    DEALTYPE = ImageDraw.Draw(BACKGROUND)
-    text_x, text_y = calc_text_center(BACKGROUND.width, BACKGROUND.height, text, font, font_size)
-    DEALTYPE.text((text_x, text_y-170), text, font=font, fill=(255, 255, 255))
-    
+    dealtype = ImageDraw.Draw(background)
+    text_x, text_y = calc_text_center(background.width, background.height, text, font, font_size)
+    dealtype.text((text_x, text_y-170), text, font=font, fill=(255, 255, 255))
+
     text = buy_or_get[deal_dict['DealType']]
-    DEALTYPE = ImageDraw.Draw(BACKGROUND)
-    text_x, text_y = calc_text_center(BACKGROUND.width, BACKGROUND.height, text, font, font_size)
-    DEALTYPE.text((text_x, text_y-33), text, font=font, fill=(255, 255, 255))
-    del DEALTYPE
-    
+    dealtype = ImageDraw.Draw(background)
+    text_x, text_y = calc_text_center(background.width, background.height, text, font, font_size)
+    dealtype.text((text_x, text_y-33), text, font=font, fill=(255, 255, 255))
+    del dealtype
+
     credits = deal_dict['Credits']
-    CREDITS = render_daily_deal_credits(credits)
-    x, y = calc_center(CREDITS, BACKGROUND)
-    BACKGROUND.paste(CREDITS, (x, y+10), mask=CREDITS)
-    CREDITS.close()
-    
-    BUBBLE = render_daily_deal_bubble(deal_dict['ChangePercent'], deal_dict['DealType'])
-    BUBBLE = BUBBLE.rotate(-20, expand=True)
-    x, y = calc_center(BUBBLE, BACKGROUND)
-    BACKGROUND.paste(BUBBLE, (x-60, y+200), mask=BUBBLE)
-    BUBBLE.close()
-    
-    BACKGROUND = scale_image(BACKGROUND, 0.5)
-    # BACKGROUND.save('TEST.png', format='PNG')
+    credits_ = render_daily_deal_credits(credits)
+    x, y = calc_center(credits_, background)
+    background.paste(credits_, (x, y+10), mask=credits_)
+    credits_.close()
+
+    bubble = render_daily_deal_bubble(deal_dict['ChangePercent'], deal_dict['DealType'])
+    bubble = bubble.rotate(-20, expand=True)
+    x, y = calc_center(bubble, background)
+    background.paste(bubble, (x-60, y+200), mask=bubble)
+    bubble.close()
+
+    background = scale_image(background, 0.5)
+    # background.save('TEST.png', format='PNG')
     # subprocess.run(['gwenview', 'TEST.png'])
-    return BACKGROUND
+    return background
+
+standard_mission_primary_resources_images = {
+    'Mining Expedition': Image.open('./static/img/Morkite_icon.png'),
+    'Egg Hunt': Image.open('./static/img/Alien_egg_icon.png'),
+    'On-Site Refining': Image.open('./static/img/Icon_PumpingJack_Core_Simplified_Workfile.png'),
+    'Salvage Operation': Image.open('./static/img/Icon_Salvage_Mules_Objective.png'),
+    'Escort Duty': Image.open('./static/img/Icon_FuelCannister_Simplified.png'),
+    'Point Extraction': Image.open('./static/img/Icons_Resources_Outline_Aquarq.png'),
+    'Elimination': Image.open('./static/img/Kill_Dreadnought_Objective_icon.png'),
+    'Industrial Sabotage': Image.open('./static/img/Icon_Facility_DataRack.png'),
+    'Deep Scan' : Image.open('./static/img/Icons_Resources_Detailed_Outline_ResonanceScannerPod.png'),
+    'Hexagon' : Image.open('./static/img/hexagon.png')
+    }
+for k in standard_mission_primary_resources_images:
+    copy_ = standard_mission_primary_resources_images[k].copy()
+    standard_mission_primary_resources_images[k].close()
+    standard_mission_primary_resources_images[k] = copy_
+
+standard_mission_images = {
+    'primary_objs' : {
+        'Mining Expedition': Image.open('./static/img/Mining_expedition_icon.png'),
+        'Egg Hunt': Image.open('./static/img/Egg_collection_icon.png'),
+        'On-Site Refining': Image.open('./static/img/Refining_icon.png'),
+        'Salvage Operation': Image.open('./static/img/Salvage_icon.png'),
+        'Escort Duty': Image.open('./static/img/Escort_icon.png'),
+        'Point Extraction': Image.open('./static/img/Point_extraction_icon.png'),
+        'Elimination': Image.open('./static/img/Elimination_icon.png'),
+        'Industrial Sabotage': Image.open('./static/img/Sabotage_icon.png'),
+        'Deep Scan' : Image.open('./static/img/Deep_scan_icon.png')
+            },
+    'secondary_objs' : {
+        'ApocaBlooms': Image.open('./static/img/ApocaBlooms_icon.png'),
+        'Fossils': Image.open('./static/img/Fossils_icon.png'),
+        'Boolo Caps': Image.open('./static/img/Boolo_Caps_icon.png'),
+        'Dystrum': Image.open('./static/img/Dystrum_icon.png'),
+        'Ebonuts': Image.open('./static/img/Ebonuts_icon.png'),
+        'Fester Fleas': Image.open('./static/img/Fester_Fleas_icon.png'),
+        'Gunk Seeds': Image.open('./static/img/Gunk_Seeds_icon.png'),
+        'Hollomite': Image.open('./static/img/Hollomite_icon.png'),
+        'Bha Barnacles' : Image.open('./static/img/Bha_Barnacles_icon.png'),
+        'Glyphid Eggs' : Image.open('./static/img/Glyphid_Eggs_icon.png')
+            },
+    'complexities' : {
+        '1': Image.open('./static/img/Icons_complexity_1.png'),
+        '2': Image.open('./static/img/Icons_complexity_2.png'),
+        '3': Image.open('./static/img/Icons_complexity_3.png')
+            },
+    'lengths' : {
+        '1': Image.open('./static/img/Icons_length_1.png'),
+        '2': Image.open('./static/img/Icons_length_2.png'),
+        '3': Image.open('./static/img/Icons_length_3.png')
+            },
+    'mutators' : {
+        'Critical Weakness': Image.open('./static/img/Mutator_critical_weakness_icon.png'),
+        'Gold Rush': Image.open('./static/img/Mutator_gold_rush_icon.png'),
+        'Double XP': Image.open('./static/img/Mutator_triple_xp_icon.png'),
+        'Golden Bugs': Image.open('./static/img/Mutator_golden_bugs_icon.png'),
+        'Low Gravity': Image.open('./static/img/Mutator_no_fall_damage_icon.png'),
+        'Mineral Mania': Image.open('./static/img/Mutator_mineral_mania_icon.png'),
+        'Rich Atmosphere': Image.open('./static/img/Mutator_rich_atmosphere_icon.png'),
+        'Volatile Guts': Image.open('./static/img/Mutator_volatile_guts_icon.png'),
+        'Blood Sugar' : Image.open('./static/img/Mutator_blood_sugar_icon.png'),
+        'Secret Secondary' : Image.open('./static/img/Mutator_secret_secondary_icon.png')
+            },
+    'warnings' : {
+        'Cave Leech Cluster': Image.open('./static/img/Warning_cave_leech_cluster_icon.png'),
+        'Exploder Infestation': Image.open('./static/img/Warning_exploder_infestation_icon.png'),
+        'Haunted Cave': Image.open('./static/img/Warning_haunted_cave_icon.png'),
+        'Lethal Enemies': Image.open('./static/img/Warning_lethal_enemies_icon.png'),
+        'Low Oxygen': Image.open('./static/img/Warning_low_oxygen_icon.png'),
+        'Mactera Plague': Image.open('./static/img/Warning_mactera_plague_icon.png'),
+        'Parasites': Image.open('./static/img/Warning_parasites_icon.png'),
+        'Regenerative Bugs': Image.open('./static/img/Warning_regenerative_bugs_icon.png'),
+        'Shield Disruption': Image.open('./static/img/Warning_shield_disruption_icon.png'),
+        'Elite Threat': Image.open('./static/img/Warning_elite_threat_icon.png'),
+        'Swarmageddon': Image.open('./static/img/Warning_swarmageddon_icon.png'),
+        'Lithophage Outbreak': Image.open('./static/img/Warning_lithophage_outbreak_icon.png'),
+        'Rival Presence': Image.open('./static/img/Warning_rival_presence_icon.png'),
+        'Duck and Cover': Image.open('./static/img/Warning_duck_and_cover_icon.png'),
+        'Ebonite Outbreak' : Image.open('./static/img/Warning_ebonite_outbreak_icon.png'),
+        'Tougher Enemies' : Image.open('./static/img/Warning_tougher_enemies_icon.png'),
+            }
+    }
+for k in standard_mission_images.keys():
+    for k_ in standard_mission_images[k].keys():
+        copy_ = standard_mission_images[k][k_].copy()
+        standard_mission_images[k][k_].close()
+        standard_mission_images[k][k_] = copy_
 
 def render_mission_obj_resource(primary_obj, complexity, length):
-    font_path = './static/img/HammerBro101MovieBold-Regular.ttf'
+    font_path = './static/img/CarbonBold-W00-Regular.ttf'
     font_size = 45
     font = ImageFont.truetype(font_path, font_size)
     text_color = (255, 255, 255)
-    primary_objs = {
-        'Mining Expedition': './static/img/Morkite_icon.png',
-        'Egg Hunt': './static/img/Alien_egg_icon.png',
-        'On-Site Refining': './static/img/Icon_PumpingJack_Core_Simplified_Workfile.png',
-        'Salvage Operation': './static/img/Icon_Salvage_Mules_Objective.png',
-        'Escort Duty': './static/img/Icon_FuelCannister_Simplified.png',
-        'Point Extraction': './static/img/Icons_Resources_Outline_Aquarq.png',
-        'Elimination': './static/img/Kill_Dreadnought_Objective_icon.png',
-        'Industrial Sabotage': './static/img/Icon_Facility_DataRack.png',
-        'Deep Scan' : './static/img/42069.png'
-            }
     values = {
         ('Mining Expedition', '1', '1'): '200',
         ('Mining Expedition', '1', '2'): '225',
@@ -249,189 +343,126 @@ def render_mission_obj_resource(primary_obj, complexity, length):
         ('Elimination', 'default'): '3',
         ('Salvage Operation', '2'): '2',
         ('Salvage Operation', 'default'): '3',
-        ('Deep Scan', '2') : ''
+        ('Deep Scan', '3', '2') : '5',
+        ('Deep Scan', '2', '1') : '3',
     }
-    
-    BACKGROUND = Image.new("RGBA", (256, 256), (0,0,0,0))
-    HEXAGON = Image.open('./static/img/hexagon.png')
-    HEXAGON = scale_image(HEXAGON, 0.4)
-    #x, y = calc_center(HEXAGON, BACKGROUND)
-    #print(f'HEXAGON X: {str(x)}')
-    #print(f'HEXAGON Y: {str(y)}')
-    BACKGROUND.paste(HEXAGON, (69, 59), mask=HEXAGON)
-    HEXAGON.close()
-    
-    RESOURCE = Image.open(primary_objs[primary_obj])
+
+    background = Image.new("RGBA", (256, 256), (0,0,0,0))
+    hexagon = standard_mission_primary_resources_images['Hexagon'].copy()
+    hexagon = scale_image(hexagon, 0.4)
+    #x, y = calc_center(hexagon, background)
+    #print(f'hexagon X: {str(x)}')
+    #print(f'hexagon Y: {str(y)}')
+    background.paste(hexagon, (69, 59), mask=hexagon)
+    hexagon.close()
+
+    resource = standard_mission_primary_resources_images[primary_obj].copy()
     if primary_obj == 'Mining Expedition':
-        RESOURCE = scale_image(RESOURCE, 0.2)
+        resource = scale_image(resource, 0.2)
     elif primary_obj == 'Egg Hunt':
-        RESOURCE = scale_image(RESOURCE, 0.25)
+        resource = scale_image(resource, 0.25)
     else:
-        RESOURCE = scale_image(RESOURCE, 0.14)
-    x, y = calc_center(RESOURCE, BACKGROUND)
+        resource = scale_image(resource, 0.14)
+    x, y = calc_center(resource, background)
     if primary_obj == 'Mining Expedition':
-        BACKGROUND.paste(RESOURCE, (x, y-20), mask=RESOURCE)
+        background.paste(resource, (x, y-20), mask=resource)
     else:
-        BACKGROUND.paste(RESOURCE, (x, y-13), mask=RESOURCE)
-    RESOURCE.close()
-    
+        background.paste(resource, (x, y-13), mask=resource)
+    resource.close()
+
     text = values.get((primary_obj, complexity, length), values.get((primary_obj, length), values.get((primary_obj, 'default'), 'Unknown')))
-    DRAW = ImageDraw.Draw(BACKGROUND)
-    text_x, text_y = calc_text_center(BACKGROUND.width, BACKGROUND.height, text, font, font_size)
+    draw = ImageDraw.Draw(background)
+    text_x, text_y = calc_text_center(background.width, background.height, text, font, font_size)
     if primary_obj == 'Mining Expedition':
-        DRAW.text((text_x, text_y+15), text, font=font, fill=text_color)
+        draw.text((text_x, text_y+15), text, font=font, fill=text_color)
     else:
-        DRAW.text((text_x, text_y+25), text, font=font, fill=text_color)
-    del DRAW
-    return BACKGROUND
+        draw.text((text_x, text_y+25), text, font=font, fill=text_color)
+    del draw
+    return background
 
-def render_mission(m_d, six):
-    primary_objs = {
-        'Mining Expedition': './static/img/Mining_expedition_icon.png',
-        'Egg Hunt': './static/img/Egg_collection_icon.png',
-        'On-Site Refining': './static/img/Refining_icon.png',
-        'Salvage Operation': './static/img/Salvage_icon.png',
-        'Escort Duty': './static/img/Escort_icon.png',
-        'Point Extraction': './static/img/Point_extraction_icon.png',
-        'Elimination': './static/img/Elimination_icon.png',
-        'Industrial Sabotage': './static/img/Sabotage_icon.png',
-        'Deep Scan' : './static/img/Deep_scan_icon.png'
-            }
-    secondary_objs = {
-        'ApocaBlooms': './static/img/Apoca_bloom_icon.png',
-        'Fossils': './static/img/Fossil_icon.png',
-        'Boolo Caps': './static/img/Boolo_cap_icon.png',
-        'Dystrum': './static/img/Dystrum_icon.png',
-        'Ebonuts': './static/img/Ebonut_icon.png',
-        'Fester Fleas': './static/img/Fleas_icon.png',
-        'Gunk Seeds': './static/img/Gunk_seed_icon.png',
-        'Hollomite': './static/img/Hollomite_icon.png'
-            }
-    complexities = {
-        '1': './static/img/Icons_complexity_1.png',
-        '2': './static/img/Icons_complexity_2.png',
-        '3': './static/img/Icons_complexity_3.png'
-            }
-    lengths = {
-        '1': './static/img/Icons_length_1.png',
-        '2': './static/img/Icons_length_2.png',
-        '3': './static/img/Icons_length_3.png'
-            }
-    mutators = {
-        'Critical Weakness': './static/img/Mutator_critical_weakness_icon.png',
-        'Gold Rush': './static/img/Mutator_gold_rush_icon.png',
-        'Double XP': './static/img/Mutator_triple_xp_icon.png',
-        'Golden Bugs': './static/img/Mutator_golden_bugs_icon.png',
-        'Low Gravity': './static/img/Mutator_no_fall_damage_icon.png',
-        'Mineral Mania': './static/img/Mutator_mineral_mania_icon.png',
-        'Rich Atmosphere': './static/img/Mutator_rich_atmosphere_icon.png',
-        'Volatile Guts': './static/img/Mutator_volatile_guts_icon.png',
-        'Blood Sugar' : './static/img/Mutator_blood_sugar_icon.png',
-        'Secret Secondary' : './static/img/Mutator_secret_secondary_icon.png'
-            }
-    warnings = {
-        'Cave Leech Cluster': './static/img/Warning_cave_leech_cluster_icon.png',
-        'Exploder Infestation': './static/img/Warning_exploder_infestation_icon.png',
-        'Haunted Cave': './static/img/Warning_haunted_cave_icon.png',
-        'Lethal Enemies': './static/img/Warning_lethal_enemies_icon.png',
-        'Low Oxygen': './static/img/Warning_low_oxygen_icon.png',
-        'Mactera Plague': './static/img/Warning_mactera_plague_icon.png',
-        'Parasites': './static/img/Warning_parasites_icon.png',
-        'Regenerative Bugs': './static/img/Warning_regenerative_bugs_icon.png',
-        'Shield Disruption': './static/img/Warning_shield_disruption_icon.png',
-        'Elite Threat': './static/img/Warning_elite_threat_icon.png',
-        'Swarmageddon': './static/img/Warning_swarmageddon_icon.png',
-        'Lithophage Outbreak': './static/img/Warning_lithophage_outbreak_icon.png',
-        'Rival Presence': './static/img/Warning_rival_presence_icon.png',
-        'Duck and Cover': './static/img/Warning_duck_and_cover_icon.png',
-        'Ebonite Outbreak' : './static/img/Warning_ebonite_outbreak_icon.png',
-            }
-    
-    BACKGROUND = Image.new("RGBA", (350, 300), (0,0,0,0))
-    
-    PRIMARY = Image.open(primary_objs[m_d['PrimaryObjective']])
-    PRIMARY = scale_image(PRIMARY, 0.4)
-    #x, y = calc_center(PRIMARY, BACKGROUND)
-    #print(f'PRIMARY X: {str(x)}')
-    #print(f'PRIMARY Y: {str(y)}')
-    BACKGROUND.paste(PRIMARY, (83, 58), mask=PRIMARY)
-    PRIMARY.close()
+def render_mission(m_d):
+    background = Image.new("RGBA", (350, 300), (0,0,0,0))
 
-    SECONDARY = Image.open(secondary_objs[m_d['SecondaryObjective']])
-    SECONDARY = scale_image(SECONDARY, 0.6)
-    #x, y = calc_center(SECONDARY, BACKGROUND)
-    #print(f'SECONDARY X: {str(x-110)}')
-    #print(f'SECONDARY Y: {str(y-95)}')
-    BACKGROUND.paste(SECONDARY, (-11, -21), mask=SECONDARY)
-    SECONDARY.close()
-    
+    primary = standard_mission_images['primary_objs'][m_d['PrimaryObjective']].copy()
+    primary = scale_image(primary, 0.4)
+    #x, y = calc_center(primary, background)
+    #print(f'primary X: {str(x)}')
+    #print(f'primary Y: {str(y)}')
+    background.paste(primary, (83, 58), mask=primary)
+    primary.close()
+
+    secondary = standard_mission_images['secondary_objs'][m_d['SecondaryObjective']].copy()
+    secondary = scale_image(secondary, 0.6)
+    #x, y = calc_center(secondary, background)
+    #print(f'secondary X: {str(x-110)}')
+    #print(f'secondary Y: {str(y-95)}')
+    background.paste(secondary, (-11, -21), mask=secondary)
+    secondary.close()
+
     if 'MissionWarnings' in m_d:
         MissionWarnings = []
         for warning in m_d['MissionWarnings']:
             MissionWarnings.append(warning)
-        MISSIONWARNING1 = Image.open(warnings[MissionWarnings[0]])
-        MISSIONWARNING1 = scale_image(MISSIONWARNING1, 0.38)
-        #x, y = calc_center(MISSIONWARNING1, BACKGROUND)
+        missionwarning1 = standard_mission_images['warnings'][MissionWarnings[0]].copy()
+        missionwarning1 = scale_image(missionwarning1, 0.38)
+        #x, y = calc_center(missionwarning1, background)
         #print(f'LONEWARNING X: {str(x+100)}')
         #print(f'LONEWARNING Y: {str(y-15)}')
         if len(MissionWarnings) == 1:
-            BACKGROUND.paste(MISSIONWARNING1, (227, 87), mask=MISSIONWARNING1)
-            MISSIONWARNING1.close()
+            background.paste(missionwarning1, (227, 87), mask=missionwarning1)
+            missionwarning1.close()
         elif len(MissionWarnings) == 2:
             #print(f'WARNING 1 X: {str(x+100)}')
             #print(f'WARNING 1 Y: {str(y-60)}')
-            BACKGROUND.paste(MISSIONWARNING1, (227, 42), mask=MISSIONWARNING1)
-            MISSIONWARNING1.close()
-            
-            MISSIONWARNING2 = Image.open(warnings[MissionWarnings[1]])
-            MISSIONWARNING2 = scale_image(MISSIONWARNING2, 0.38)
-            #x, y = calc_center(MISSIONWARNING2, BACKGROUND)
+            background.paste(missionwarning1, (227, 42), mask=missionwarning1)
+            missionwarning1.close()
+
+            missionwarning2 = standard_mission_images['warnings'][MissionWarnings[1]].copy()
+            missionwarning2 = scale_image(missionwarning2, 0.38)
+            #x, y = calc_center(missionwarning2, background)
             #print(f'WARNING 2 X: {str(x+100)}')
             #print(f'WARNING 2 Y: {str(y+40)}')
-            BACKGROUND.paste(MISSIONWARNING2, (227, 142), mask=MISSIONWARNING2)
-            MISSIONWARNING2.close()
+            background.paste(missionwarning2, (227, 142), mask=missionwarning2)
+            missionwarning2.close()
 
     if 'MissionMutator' in m_d:
-        MISSIONMUTATOR = Image.open(mutators[m_d['MissionMutator']])
-        MISSIONMUTATOR = scale_image(MISSIONMUTATOR, 0.38)
-        #x, y = calc_center(MISSIONMUTATOR, BACKGROUND)
+        missionmutator = standard_mission_images['mutators'][m_d['MissionMutator']].copy()
+        missionmutator = scale_image(missionmutator, 0.38)
+        #x, y = calc_center(MISSIONMUTATOR, background)
         #print(f'MUTATOR X: {str(x-100)}')
         #print(f'MUTATOR Y: {str(y-10)}')
-        BACKGROUND.paste(MISSIONMUTATOR, (27, 92), mask=MISSIONMUTATOR)
-        MISSIONMUTATOR.close()
+        background.paste(missionmutator, (27, 92), mask=missionmutator)
+        missionmutator.close()
 
-    COMPLEXITY = Image.open(complexities[m_d['Complexity']])
-    COMPLEXITY = scale_image(COMPLEXITY, 0.45)
-    #x, y = calc_center(COMPLEXITY, BACKGROUND)
-    #print(f'COMPLEXITY X: {str(x)}')
-    #print(f'COMPLEXITY Y: {str(y-120)}')
-    BACKGROUND.paste(COMPLEXITY, (107, 2), mask=COMPLEXITY)
-    COMPLEXITY.close()
+    complexity = standard_mission_images['complexities'][m_d['Complexity']].copy()
+    complexity = scale_image(complexity, 0.45)
+    #x, y = calc_center(complexity, background)
+    #print(f'complexity X: {str(x)}')
+    #print(f'complexity Y: {str(y-120)}')
+    background.paste(complexity, (107, 2), mask=complexity)
+    complexity.close()
 
-    LENGTH = Image.open(lengths[m_d['Length']])
-    LENGTH = scale_image(LENGTH, 0.45)
-    #x, y = calc_center(LENGTH, BACKGROUND)
-    #print(f'LENGTH X: {str(x)}')
-    #print(f'LENGTH Y: {str(y+120)}')
-    BACKGROUND.paste(LENGTH, (107, 242), mask=LENGTH)
-    LENGTH.close()
-    
-    PRIMARY_OBJ_RESOURCE = render_mission_obj_resource(m_d['PrimaryObjective'], m_d['Complexity'], m_d['Length'])
-    PRIMARY_OBJ_RESOURCE = scale_image(PRIMARY_OBJ_RESOURCE, 0.8)
-    #x, y = calc_center(PRIMARY_OBJ_RESOURCE, BACKGROUND)
-    #print(f'OBJ_RESOURCE X: {str(x-110)}')
-    #print(f'OBJ_RESOURCE Y: {str(y+95)}')
-    BACKGROUND.paste(PRIMARY_OBJ_RESOURCE, (-37, 143), mask=PRIMARY_OBJ_RESOURCE)
-    PRIMARY_OBJ_RESOURCE.close()
-    
-    if six:
-        BACKGROUND = scale_image(BACKGROUND, 0.40)
-    else:
-        BACKGROUND = scale_image(BACKGROUND, 0.46)
-    #BACKGROUND.save('TEST.png', format='PNG')
+    length = standard_mission_images['lengths'][m_d['Length']].copy()
+    length = scale_image(length, 0.45)
+    #x, y = calc_center(length, background)
+    #print(f'length X: {str(x)}')
+    #print(f'length Y: {str(y+120)}')
+    background.paste(length, (107, 242), mask=length)
+    length.close()
+
+    primary_obj_resource = render_mission_obj_resource(m_d['PrimaryObjective'], m_d['Complexity'], m_d['Length'])
+    primary_obj_resource = scale_image(primary_obj_resource, 0.8)
+    #x, y = calc_center(primary_obj_resource, background)
+    #print(f'obj_resource X: {str(x-110)}')
+    #print(f'obj_resource Y: {str(y+95)}')
+    background.paste(primary_obj_resource, (-37, 143), mask=primary_obj_resource)
+    primary_obj_resource.close()
+
+    background = scale_image(background, 0.46)
+    #background.save('TEST.png', format='PNG')
     #subprocess.run(['gwenview', 'TEST.png'])
-    #mission = {'rendered_mission': BACKGROUND, 'CodeName': m_d['CodeName'], 'id': m_d['id']}
-    return BACKGROUND
+    #mission = {'rendered_mission': background, 'CodeName': m_d['CodeName'], 'id': m_d['id']}
+    return background
 
 def add_shadowed_text_to_image(bg, text, text_color, shadow_color, font_path, font_size):
     x = bg.width // 2
@@ -443,7 +474,7 @@ def add_shadowed_text_to_image(bg, text, text_color, shadow_color, font_path, fo
     draw = ImageDraw.Draw(blurred)
     draw.text(xy=(x, y), text=text, fill=shadow_color, font=font, anchor='mm')
     blurred = blurred.filter(ImageFilter.BoxBlur(7))
-    
+
     blurred_data = blurred.getdata()
     blurred_data = [(r, g, b, int(a * 2)) for r, g, b, a in blurred_data]
     blurred.putdata(blurred_data)
@@ -457,7 +488,7 @@ def add_shadowed_text_to_image(bg, text, text_color, shadow_color, font_path, fo
 def add_shadowed_text_to_image_SPLITFONTS(bg, text_and_fonts, text_color, shadow_color, font_size):
     def get_text_width(font, text):
         return font.getsize(text)[0]
-    
+
     x = bg.width // 2
     y = bg.height // 2
 
@@ -468,10 +499,10 @@ def add_shadowed_text_to_image_SPLITFONTS(bg, text_and_fonts, text_color, shadow
 
     descriptor_font = ImageFont.truetype(descriptor_font_path, font_size)
     descriptor_width = get_text_width(descriptor_font, descriptor_text)
-    
+
     main_font = ImageFont.truetype(main_font_path, font_size)
     main_width = get_text_width(main_font, main_text)
-    
+
     total_width = descriptor_width + main_width
 
     combined_x = x - (total_width // 2)
@@ -484,7 +515,7 @@ def add_shadowed_text_to_image_SPLITFONTS(bg, text_and_fonts, text_color, shadow
 
     draw_blurred.text(xy=(main_x, y-22), text=main_text, fill=shadow_color, font=main_font)
     blurred = blurred.filter(ImageFilter.BoxBlur(7))
-    
+
     blurred_data = blurred.getdata()
     blurred_data = [(r, g, b, int(a * 2)) for r, g, b, a in blurred_data]
     blurred.putdata(blurred_data)
@@ -510,17 +541,17 @@ def render_dd_biome_codename(codename, biome):
         'Azure Weald': './static/img/DeepDive_MissionBar_AzureWeald.png',
         'Hollow Bough': './static/img/DeepDive_MissionBar_HollowBough.png'
     }
-    
-    BACKGROUND = Image.open(biomes[biome])
-    # BACKGROUND = add_shadowed_text_to_image(BACKGROUND, codename, 'white', '#000000', font_path, font_size)
+
+    background = Image.open(biomes[biome])
+    # background = add_shadowed_text_to_image(background, codename, 'white', '#000000', font_path, font_size)
     text_and_fonts = [('CODENAME: ', "./static/img/RiftSoft-Regular.ttf"), (f'{codename}', './static/img/BebasNeue-Regular.ttf')]
-    BACKGROUND = add_shadowed_text_to_image_SPLITFONTS(BACKGROUND, text_and_fonts, 'white', '#000000', font_size=45)
-    #BACKGROUND.save('TEST.png', format='PNG')
+    background = add_shadowed_text_to_image_SPLITFONTS(background, text_and_fonts, 'white', '#000000', font_size=45)
+    #background.save('TEST.png', format='PNG')
     #subprocess.run(['gwenview', 'TEST.png'])
-    return BACKGROUND
+    return background
 
 def render_dd_secondary_obj_resource(secondary_obj):
-    font_path = './static/img/HammerBro101MovieBold-Regular.ttf'
+    font_path = './static/img/CarbonBold-W00-Regular.ttf'
     font_size = 45
     font = ImageFont.truetype(font_path, font_size)
     text_color = (255, 255, 255)
@@ -529,7 +560,9 @@ def render_dd_secondary_obj_resource(secondary_obj):
         'Eliminate Dreadnought': './static/img/Kill_Dreadnought_Objective_icon.png',
         'Mine Morkite': './static/img/Morkite_icon.png',
         'Get Alien Eggs': './static/img/Alien_egg_icon.png',
-        'Black Box': './static/img/Blackbox_icon.png'
+        'Black Box': './static/img/Blackbox_icon.png',
+        'Build Liquid Morkite Pipeline' : './static/img/Icons_Resources_Detailed_Outline_LiquidMorkiteTankerPod.png',
+        'Perform Deep Scans' : './static/img/Icons_Resources_Detailed_Outline_ResonanceScannerPod.png'
             }
     values = {
         'Repair Minimules': '2',
@@ -537,40 +570,44 @@ def render_dd_secondary_obj_resource(secondary_obj):
         'Mine Morkite': '150',
         'Get Alien Eggs':'2',
         'Black Box':'1',
+        'Build Liquid Morkite Pipeline' : '1',
+        'Perform Deep Scans' : '2'
     }
 
-    BACKGROUND = Image.new("RGBA", (256, 256), (0,0,0,0))
-    HEXAGON = Image.open('./static/img/hexagon.png')
-    HEXAGON = scale_image(HEXAGON, 0.4)
-    #x, y = calc_center(HEXAGON, BACKGROUND)
-    #print(f'HEXAGON X: {str(x)}')
-    #print(f'HEXAGON Y: {str(y)}')
-    BACKGROUND.paste(HEXAGON, (69, 59), mask=HEXAGON)
-    HEXAGON.close()
-    
-    RESOURCE = Image.open(secondary_objs[secondary_obj])
-    if secondary_obj == 'Mine Morkite' or secondary_obj == 'Get Alien Eggs':
-        RESOURCE = scale_image(RESOURCE, 0.2)        
-    elif secondary_obj == 'Black Box':
-        RESOURCE = scale_image(RESOURCE, 0.3)
-    else:
-        RESOURCE = scale_image(RESOURCE, 0.14)
-    x, y = calc_center(RESOURCE, BACKGROUND)
+    background = Image.new("RGBA", (256, 256), (0,0,0,0))
+    hexagon = Image.open('./static/img/hexagon.png')
+    hexagon = scale_image(hexagon, 0.4)
+    #x, y = calc_center(hexagon, background)
+    #print(f'hexagon X: {str(x)}')
+    #print(f'hexagon Y: {str(y)}')
+    background.paste(hexagon, (69, 59), mask=hexagon)
+    hexagon.close()
+
+    resource = Image.open(secondary_objs[secondary_obj])
     if secondary_obj == 'Mine Morkite':
-        BACKGROUND.paste(RESOURCE, (x, y-20), mask=RESOURCE)
+        resource = scale_image(resource, 0.2)
+    elif secondary_obj == 'Black Box':
+        resource = scale_image(resource, 0.3)
+    elif secondary_obj == 'Get Alien Eggs':
+        resource = scale_image(resource, 0.24)
     else:
-        BACKGROUND.paste(RESOURCE, (x, y-13), mask=RESOURCE)
-    RESOURCE.close()
+        resource = scale_image(resource, 0.14)
+    x, y = calc_center(resource, background)
+    if secondary_obj == 'Mine Morkite' or secondary_obj == 'Black Box' or secondary_obj == 'Perform Deep Scans':
+        background.paste(resource, (x, y-20), mask=resource)
+    else:
+        background.paste(resource, (x, y-13), mask=resource)
+    resource.close()
 
     text = values.get(secondary_obj)
-    DRAW = ImageDraw.Draw(BACKGROUND)
-    text_x, text_y = calc_text_center(BACKGROUND.width, BACKGROUND.height, text, font, font_size)
+    draw = ImageDraw.Draw(background)
+    text_x, text_y = calc_text_center(background.width, background.height, text, font, font_size)
     if secondary_obj == 'Mine Morkite':
-        DRAW.text((text_x, text_y+15), text, font=font, fill=text_color)
+        draw.text((text_x, text_y+15), text, font=font, fill=text_color)
     else:
-        DRAW.text((text_x, text_y+25), text, font=font, fill=text_color)
-    del DRAW
-    return BACKGROUND
+        draw.text((text_x, text_y+25), text, font=font, fill=text_color)
+    del draw
+    return background
 
 def render_dd_stage(m_d):
     primary_objs = {
@@ -622,217 +659,103 @@ def render_dd_stage(m_d):
         'Rival Presence': './static/img/Warning_rival_presence_icon.png',
         'Duck and Cover': './static/img/Warning_duck_and_cover_icon.png',
         'Ebonite Outbreak' : './static/img/Warning_ebonite_outbreak_icon.png',
+        'Tougher Enemies' : './static/img/Warning_tougher_enemies_icon.png'
             }
-    
-    BACKGROUND = Image.new("RGBA", (350, 300), (0,0,0,0))
-    
-    PRIMARY = Image.open(primary_objs[m_d['PrimaryObjective']])
-    PRIMARY = scale_image(PRIMARY, 0.4)
-    #x, y = calc_center(PRIMARY, BACKGROUND)
-    #print(f'PRIMARY X: {str(x)}')
-    #print(f'PRIMARY Y: {str(y)}')
-    BACKGROUND.paste(PRIMARY, (83, 58), mask=PRIMARY)
-    PRIMARY.close()
 
-    SECONDARY = render_dd_secondary_obj_resource(m_d['SecondaryObjective'])
-    SECONDARY = scale_image(SECONDARY, 0.6)
-    #x, y = calc_center(SECONDARY, BACKGROUND)
-    #print(f'SECONDARY X: {str(x-110)}')
-    #print(f'SECONDARY Y: {str(y-95)}')
-    BACKGROUND.paste(SECONDARY, (-11, -21), mask=SECONDARY)
-    SECONDARY.close()
-    
+    background = Image.new("RGBA", (350, 300), (0,0,0,0))
+
+    primary = Image.open(primary_objs[m_d['PrimaryObjective']])
+    primary = scale_image(primary, 0.4)
+    #x, y = calc_center(primary, background)
+    #print(f'primary X: {str(x)}')
+    #print(f'primary Y: {str(y)}')
+    background.paste(primary, (83, 58), mask=primary)
+    primary.close()
+
+    secondary = render_dd_secondary_obj_resource(m_d['SecondaryObjective'])
+    secondary = scale_image(secondary, 0.6)
+    #x, y = calc_center(secondary, background)
+    #print(f'secondary X: {str(x-110)}')
+    #print(f'secondary Y: {str(y-95)}')
+    background.paste(secondary, (-11, -21), mask=secondary)
+    secondary.close()
+
     if 'MissionWarnings' in m_d:
         MissionWarnings = []
         for warning in m_d['MissionWarnings']:
             MissionWarnings.append(warning)
-        MISSIONWARNING1 = Image.open(warnings[MissionWarnings[0]])
-        MISSIONWARNING1 = scale_image(MISSIONWARNING1, 0.38)
-        #x, y = calc_center(MISSIONWARNING1, BACKGROUND)
+        missionwarning1 = Image.open(warnings[MissionWarnings[0]])
+        missionwarning1 = scale_image(missionwarning1, 0.38)
+        #x, y = calc_center(missionwarning1, background)
         #print(f'LONEWARNING X: {str(x+100)}')
         #print(f'LONEWARNING Y: {str(y-15)}')
         if len(MissionWarnings) == 1:
-            BACKGROUND.paste(MISSIONWARNING1, (227, 87), mask=MISSIONWARNING1)
-            MISSIONWARNING1.close()
+            background.paste(missionwarning1, (227, 87), mask=missionwarning1)
+            missionwarning1.close()
         elif len(MissionWarnings) == 2:
             #print(f'WARNING 1 X: {str(x+100)}')
             #print(f'WARNING 1 Y: {str(y-60)}')
-            BACKGROUND.paste(MISSIONWARNING1, (227, 42), mask=MISSIONWARNING1)
-            MISSIONWARNING1.close()
-            
-            MISSIONWARNING2 = Image.open(warnings[MissionWarnings[1]])
-            MISSIONWARNING2 = scale_image(MISSIONWARNING2, 0.38)
-            #x, y = calc_center(MISSIONWARNING2, BACKGROUND)
+            background.paste(missionwarning1, (227, 42), mask=missionwarning1)
+            missionwarning1.close()
+
+            missionwarning2 = Image.open(warnings[MissionWarnings[1]])
+            missionwarning2 = scale_image(missionwarning2, 0.38)
+            #x, y = calc_center(missionwarning2, background)
             #print(f'WARNING 2 X: {str(x+100)}')
             #print(f'WARNING 2 Y: {str(y+40)}')
-            BACKGROUND.paste(MISSIONWARNING2, (227, 142), mask=MISSIONWARNING2)
-            MISSIONWARNING2.close()
+            background.paste(missionwarning2, (227, 142), mask=missionwarning2)
+            missionwarning2.close()
 
     if 'MissionMutator' in m_d:
-        MISSIONMUTATOR = Image.open(mutators[m_d['MissionMutator']])
-        MISSIONMUTATOR = scale_image(MISSIONMUTATOR, 0.38)
-        #x, y = calc_center(MISSIONMUTATOR, BACKGROUND)
+        missionmutator = Image.open(mutators[m_d['MissionMutator']])
+        missionmutator = scale_image(missionmutator, 0.38)
+        #x, y = calc_center(MISSIONMUTATOR, background)
         #print(f'MUTATOR X: {str(x-100)}')
         #print(f'MUTATOR Y: {str(y-10)}')
-        BACKGROUND.paste(MISSIONMUTATOR, (27, 92), mask=MISSIONMUTATOR)
-        MISSIONMUTATOR.close()
+        background.paste(missionmutator, (27, 92), mask=missionmutator)
+        missionmutator.close()
 
-    COMPLEXITY = Image.open(complexities[m_d['Complexity']])
-    COMPLEXITY = scale_image(COMPLEXITY, 0.45)
-    #x, y = calc_center(COMPLEXITY, BACKGROUND)
-    #print(f'COMPLEXITY X: {str(x)}')
-    #print(f'COMPLEXITY Y: {str(y-120)}')
-    BACKGROUND.paste(COMPLEXITY, (107, 2), mask=COMPLEXITY)
-    COMPLEXITY.close()
+    complexity = Image.open(complexities[m_d['Complexity']])
+    complexity = scale_image(complexity, 0.45)
+    #x, y = calc_center(complexity, background)
+    #print(f'complexity X: {str(x)}')
+    #print(f'complexity Y: {str(y-120)}')
+    background.paste(complexity, (107, 2), mask=complexity)
+    complexity.close()
 
-    LENGTH = Image.open(lengths[m_d['Length']])
-    LENGTH = scale_image(LENGTH, 0.45)
-    #x, y = calc_center(LENGTH, BACKGROUND)
-    #print(f'LENGTH X: {str(x)}')
-    #print(f'LENGTH Y: {str(y+120)}')
-    BACKGROUND.paste(LENGTH, (107, 242), mask=LENGTH)
-    LENGTH.close()
-    
-    PRIMARY_OBJ_RESOURCE = render_mission_obj_resource(m_d['PrimaryObjective'], m_d['Complexity'], m_d['Length'])
-    PRIMARY_OBJ_RESOURCE = scale_image(PRIMARY_OBJ_RESOURCE, 0.8)
-    #x, y = calc_center(PRIMARY_OBJ_RESOURCE, BACKGROUND)
-    #print(f'OBJ_RESOURCE X: {str(x-110)}')
-    #print(f'OBJ_RESOURCE Y: {str(y+95)}')
-    BACKGROUND.paste(PRIMARY_OBJ_RESOURCE, (-37, 143), mask=PRIMARY_OBJ_RESOURCE)
-    BACKGROUND = scale_image(BACKGROUND, 0.46)
-    PRIMARY_OBJ_RESOURCE.close()
-    
-    return BACKGROUND 
+    length = Image.open(lengths[m_d['Length']])
+    length = scale_image(length, 0.45)
+    #x, y = calc_center(length, background)
+    #print(f'length X: {str(x)}')
+    #print(f'length Y: {str(y+120)}')
+    background.paste(length, (107, 242), mask=length)
+    length.close()
 
-if __name__ == '__main__':
-    import subprocess
-    # dev
-    # deal_dict = {"ChangePercent": 225.62124633789, "DealType": "Sell", "Credits": 42069, "ResourceAmount": 78, "Resource": "Enor Pearl"}
-    # img = render_dailydeal(deal_dict)
+    primary_obj_resource = render_mission_obj_resource(m_d['PrimaryObjective'], m_d['Complexity'], m_d['Length'])
+    primary_obj_resource = scale_image(primary_obj_resource, 0.8)
+    #x, y = calc_center(primary_obj_resource, background)
+    #print(f'obj_resource X: {str(x-110)}')
+    #print(f'obj_resource Y: {str(y+95)}')
+    background.paste(primary_obj_resource, (-37, 143), mask=primary_obj_resource)
+    background = scale_image(background, 0.46)
+    primary_obj_resource.close()
 
-    # m_d = {"CodeName":" ","Complexity":"2","Length":"2","MissionWarnings":["Lithophage Outbreak","Lethal Enemies"],"MissionMutator":"Double XP","PrimaryObjective":"Salvage Operation","SecondaryObjective":"Mine Morkite","id":654}
-    # img = render_dd_stage(m_d)
+    return background
 
-    m_d = {"CodeName":" ","Complexity":"2","Length":"2","MissionWarnings":["Lithophage Outbreak","Lethal Enemies"],"MissionMutator":"Double XP","PrimaryObjective":"Salvage Operation","SecondaryObjective":"Hollomite","id":654}
-    img = render_mission(m_d)
-    
-    os_name = os.name
-    if os_name == 'nt':
-        img.save('TEST.png', format='PNG')
-        subprocess.run(['"C:\\Program Files\\IrfanView\\i_view64.exe"', 'TEST.png'], shell=True)
-        os.remove('TEST.png')
-        quit()
-    elif os_name == 'posix':
-        img.save('TEST.png', format='PNG')
-        subprocess.run(['gwenview', 'TEST.png'])
-        os.remove('TEST.png')
-        quit()
 #-------------------------------------------------------------------------------------------------------------------------------
 
 #PRE-HASH PIL OBJECT ARRAYING
 
-#thread pools for standard missions - microscopic gains. #TODO debug multiprocessing pools, gunicorn circular import
-#def wrap_missions_executor(missions):
-    #mission_futures = []
-    #with ThreadPoolExecutor() as executor:
-        #for mission in missions:
-            #if len(missions) > 5:
-                #six = True
-            #else:
-                #six = False
-            #future = executor.submit(render_mission, mission, six)
-            #mission_futures.append(future)
-        #results = [future.result() for future in mission_futures]
-        #return results
-#def wrap_biome_worker(args):
-    #biome, missions = args
-    #return biome, wrap_missions_executor(missions)
-#def wrap_biomes_executor_ThreadPool(Biomes):
-    #with ThreadPoolExecutor() as executor:
-        #biome_futures = {}
-        #for biome, missions in Biomes.items():
-            #future = executor.submit(wrap_missions_executor, missions)
-            #biome_futures[biome] = future
-        #results = {biome: future.result() for biome, future in biome_futures.items()}
-        #return results
-#def wrap_biomes_executor_ProcessPool(Biomes):
-    #with ProcessPoolExecutor() as executor:
-        #biome_futures = {}
-        #for biome, missions in Biomes.items():
-            #future = executor.submit(wrap_missions_executor, missions)
-            #biome_futures[biome] = future
-    #results = {biome: future.result() for biome, future in biome_futures.items()}
-    #return results
-#def wrap_biomes_executor(Biomes):
-    #if cpu_count() == 1:
-        #rendered_biomes = wrap_biomes_executor_ThreadPool(Biomes)
-        #return rendered_biomes
-    #rendered_biomes = wrap_biomes_executor_ProcessPool(Biomes)
-    #return rendered_biomes
-        
-#def render_biomes(Biomes):
-    ## start_time = time.time()
-    #rendered_biomes = wrap_biomes_executor(Biomes)
-    ## print(time.time() - start_time)
-    #return rendered_biomes
-
 #single threaded
-def render_biomes(Biomes):
-    rendered_biomes = {}
-    for biome, missions in Biomes.items():
-        biome1 = []
-        if len(missions) > 5:
-            six = True
-        else:
-            six = False
-        for mission in missions:
-            mission1 = {}
-            mission1['CodeName'] = mission['CodeName']
-            mission1['id'] = mission['id']
-            mission1['rendered_mission'] = render_mission(mission, six)
-            biome1.append(mission1)
-        rendered_biomes[biome] = biome1
-    return rendered_biomes
-
-def render_biomes_FLAT(Biomes):
-    rendered_biomes = {}
-    for biome, missions in Biomes.items():
-        biome1 = []
-        # if len(missions) > 5:
-        #     six = True
-        # else:
-        #     six = False
-        six = False
-        for mission in missions:
-            mission1 = {}
-            if 'season_modified' in mission:
-                mission1['season_modified'] = {}
-                
-                for season in mission['season_modified']:
-                    modified_mission = mission['season_modified'][season]
-                    mission1['season_modified'][season] = {}
-                    mission1['season_modified'][season]['CodeName'] = modified_mission['CodeName']
-                    mission1['season_modified'][season]['id'] = modified_mission['id']
-                    mission1['season_modified'][season]['season'] = modified_mission['season']
-                    mission1['season_modified'][season]['rendered_mission'] = render_mission(modified_mission, six)
-                    
-            mission1['CodeName'] = mission['CodeName']
-            mission1['season'] = mission['season']
-            mission1['id'] = mission['id']
-            mission1['rendered_mission'] = render_mission(mission, six)
-            biome1.append(mission1)
-        rendered_biomes[biome] = biome1
-    return rendered_biomes
 
 def render_deepdives(DeepDives):
     rendered_deepdives = {}
-    
     for t, deepdive in DeepDives.items():
         rendered_deepdives[t] = {}
         rendered_deepdives[t]['Biome'] = DeepDives[t]['Biome']
         rendered_deepdives[t]['Stages'] = []
         rendered_deepdives[t]['CodeName'] = DeepDives[t]['CodeName']
-        
+
         has_id_999 = False
         has_id_0 = False
         for stage in deepdive['Stages']:
@@ -845,36 +768,90 @@ def render_deepdives(DeepDives):
         # if sum([stage['id'] for stage in deepdive['Stages']]) == 1002:
                 if stage['id'] == 999:
                     stage['id'] = -1
-                    
+
         sorted_stages = sorted(deepdive['Stages'], key=lambda x: x['id'], reverse=True)
         for stage in sorted_stages:
             stage_png = render_dd_stage(stage)
             rendered_deepdives[t]['Stages'].append(stage_png)
-            
+
     return rendered_deepdives
+
+def render_biomes(Biomes):
+    rendered_biomes = {}
+    for biome, missions in Biomes.items():
+        biome1 = []
+        for mission in missions:
+            mission1 = {}
+            mission1['CodeName'] = mission['CodeName']
+            mission1['id'] = mission['id']
+            mission1['rendered_mission'] = render_mission(mission)
+            biome1.append(mission1)
+        rendered_biomes[biome] = biome1
+    return rendered_biomes
+
+def render_biomes_FLAT(Biomes):
+    rendered_biomes = {}
+    for biome, missions in Biomes.items():
+        biome1 = []
+        for mission in missions:
+            mission1 = {}
+
+            mission1['CodeName'] = mission['CodeName']
+            mission1['included_in'] = mission['included_in']
+            mission1['id'] = mission['id']
+            mission1['rendered_mission'] = render_mission(mission)
+            biome1.append(mission1)
+            
+        rendered_biomes[biome] = biome1
+    return rendered_biomes
+
+# Multiprocessed
+def process_mission(biome_mission):
+    biome, mission = biome_mission
+    mission1 = {}
+
+    mission1['CodeName'] = mission['CodeName']
+    mission1['included_in'] = mission['included_in']
+    mission1['id'] = mission['id']
+    mission1['rendered_mission'] = render_mission(mission)
+    
+    return biome, mission1
+
+def render_biomes_FLAT(Biomes, render_pool):
+    all_missions = []
+    for biome, missions in Biomes.items():
+        for mission in missions:
+            all_missions.append([biome, mission])
+
+    processed_missions = render_pool.map(process_mission, all_missions)
+
+    rendered_biomes = {biome : [] for biome in Biomes.keys()}
+    for biome, mission in processed_missions:
+        rendered_biomes[biome].append(mission)
+    return rendered_biomes
 
 #----------------------------------------------------------------
 #ICON SAVE, HASH, AND ARRAY ROTATORS
 def rotate_dailydeal(AllTheDeals, tstamp_Queue, deal_Queue, go_flag):
     while len(tstamp_Queue) == 0:
         continue
-    
+
     deal_dict = AllTheDeals[tstamp_Queue[0]]
     dailydeal = {}
     rendered_dailydeal = render_dailydeal(deal_dict)
-    
+
     DailyDeal = BytesIO()
     rendered_dailydeal.save(DailyDeal, format='PNG')
     rendered_dailydeal.close()
     DailyDeal.seek(0)
     etag = md5(DailyDeal.getvalue()).hexdigest()
-    
+
     dailydeal['rendered_dailydeal'] = DailyDeal
     dailydeal['etag'] = etag
     deal_Queue.append(dailydeal)
     del dailydeal
     timestamp = tstamp_Queue[0]
-    
+
     while go_flag.is_set():
         #applicable_timestamp = tstamp_Queue.queue[0]
         applicable_timestamp = tstamp_Queue[0]
@@ -882,20 +859,20 @@ def rotate_dailydeal(AllTheDeals, tstamp_Queue, deal_Queue, go_flag):
             deal_dict = AllTheDeals[applicable_timestamp]
             dailydeal = {}
             rendered_dailydeal = render_dailydeal(deal_dict)
-            
+
             DailyDeal = BytesIO()
             rendered_dailydeal.save(DailyDeal, format='PNG')
             rendered_dailydeal.close()
             DailyDeal.seek(0)
             etag = md5(DailyDeal.getvalue()).hexdigest()
-            
+
             dailydeal['rendered_dailydeal'] = DailyDeal
             dailydeal['etag'] = etag
             deal_Queue.append(dailydeal)
             deal_Queue.pop(0)
             del dailydeal
             timestamp = applicable_timestamp
-            
+
         sleep(0.75)
 
 def rotate_biomes(DRG, season, tstamp_Queue, next_tstamp_Queue, biomes_lists, rendering_event, go_flag):
@@ -932,7 +909,7 @@ def rotate_biomes(DRG, season, tstamp_Queue, next_tstamp_Queue, biomes_lists, re
         #return timestamp, Biomes1
     def read_biomes(timestamp, season):
         return timestamp, DRG[timestamp][season]
-            
+
     def array_biomes(Biomes, timestamp):
         Biomes1 = {}
         for biome in Biomes.keys():
@@ -940,6 +917,7 @@ def rotate_biomes(DRG, season, tstamp_Queue, next_tstamp_Queue, biomes_lists, re
             for mission in Biomes[biome]:
                 mission0 = {}
                 mission0['CodeName'] = mission['CodeName']
+                mission0['id'] = mission['id']
                 mission_icon = BytesIO()
                 mission['rendered_mission'].save(mission_icon, format='PNG')
                 mission['rendered_mission'].close()
@@ -949,12 +927,12 @@ def rotate_biomes(DRG, season, tstamp_Queue, next_tstamp_Queue, biomes_lists, re
                 mission0['rendered_mission'] = mission_icon
                 Biomes1[biome1+str(mission['id'])] = mission0
         return timestamp, Biomes1
-    
+
     while len(tstamp_Queue) == 0 and len(next_tstamp_Queue) == 0:
         continue
     biomes_Queue = biomes_lists[season][0]
     nextbiomes_Queue = biomes_lists[season][1]
-    
+
     _, Biomes = read_biomes(tstamp_Queue[0], season)
     Biomes = render_biomes(Biomes['Biomes'])
     _, Biomes = array_biomes(Biomes, _)
@@ -980,78 +958,70 @@ def rotate_biomes(DRG, season, tstamp_Queue, next_tstamp_Queue, biomes_lists, re
             rendering_event.set()
             del NextBiomes
         sleep(0.25)
-
-def rotate_biomes_FLAT(DRG, tstamp_Queue, next_tstamp_Queue, nextbiomes_Queue, biomes_Queue, rendering_events, go_flag):
+def init_worker():
+    signal(SIGINT, SIG_DFL)
+    signal(SIGTERM, SIG_DFL)
+    
+def rotate_biomes_FLAT(DRG, tstamp_Queue, next_tstamp_Queue, nextbiomes_Queue, biomes_Queue, rendering_event, go_flag):
     def array_biomes(Biomes, timestamp):
         Biomes1 = {}
         for biome in Biomes.keys():
             biome1 = biome.replace(' ', '-')
             Biomes1[biome1] = {}
             for mission in Biomes[biome]:
-                if 'season_modified' in mission:
-                    for season in mission['season_modified']:
-                        modified_mission = mission['season_modified'][season]
-                        mission1 = {}
-                        mission1['CodeName'] = mission['CodeName']
-                        modified_mission_icon = BytesIO()
-                        modified_mission['rendered_mission'].save(modified_mission_icon, format='PNG')
-                        modified_mission['rendered_mission'].close()
-                        mission_icon.seek(0)
-                        etag = md5(modified_mission_icon.getvalue()).hexdigest()
-                        mission1['etag'] = etag
-                        mission1['rendered_mission'] = modified_mission_icon
-                        Biomes1[modified_mission['CodeName'].replace(' ', '-')+season] = mission1
-                    
-                    mission0 = {}
-                    mission0['CodeName'] = mission['CodeName']
-                    mission_icon = BytesIO()
-                    mission['rendered_mission'].save(mission_icon, format='PNG')
-                    mission['rendered_mission'].close()
-                    mission_icon.seek(0)
-                    etag = md5(mission_icon.getvalue()).hexdigest()
-                    mission0['etag'] = etag
-                    mission0['rendered_mission'] = mission_icon
-                    Biomes1[mission['CodeName'].replace(' ', '-')+mission['season']] = mission0
+                mission0 = {}
+                mission0['CodeName'] = mission['CodeName']
                 
-                else:
-                    mission0 = {}
-                    mission0['CodeName'] = mission['CodeName']
-                    mission_icon = BytesIO()
-                    mission['rendered_mission'].save(mission_icon, format='PNG')
-                    mission['rendered_mission'].close()
-                    mission_icon.seek(0)
-                    etag = md5(mission_icon.getvalue()).hexdigest()
-                    mission0['etag'] = etag
-                    mission0['rendered_mission'] = mission_icon
-                    Biomes1[mission['CodeName'].replace(' ', '-')+mission['season']] = mission0
-                    
+                mission_icon = BytesIO()
+                mission['rendered_mission'].save(mission_icon, format='PNG')
+                mission['rendered_mission'].close()
+                mission_icon.seek(0)
+                
+                etag = md5(mission_icon.getvalue()).hexdigest()
+                mission0['etag'] = etag
+                mission0['rendered_mission'] = mission_icon
+
+                Biomes1[mission['CodeName'].replace(' ', '-')+str(mission['id'])] = mission0
+
         return timestamp, Biomes1
-    
+
     while len(tstamp_Queue) == 0 and len(next_tstamp_Queue) == 0:
+        sleep(0.1)
         continue
-    Biomes = render_biomes_FLAT(DRG[tstamp_Queue[0]]['Biomes'])
-    _, Biomes = array_biomes(Biomes, tstamp_Queue[0])
-    biomes_Queue.append(Biomes)
-    NextBiomes = render_biomes_FLAT(DRG[next_tstamp_Queue[0]]['Biomes'])
-    timestamp_next, NextBiomes = array_biomes(NextBiomes, next_tstamp_Queue[0])
-    nextbiomes_Queue.append(NextBiomes)
-    for event in rendering_events:
-        rendering_events[event].set()
+
+    with Pool(processes=os.cpu_count(), initializer=init_worker) as render_pool:
+        Biomes = render_biomes_FLAT(DRG[tstamp_Queue[0]]['Biomes'], render_pool)
+        _, Biomes = array_biomes(Biomes, tstamp_Queue[0])
+        NextBiomes = render_biomes_FLAT(DRG[next_tstamp_Queue[0]]['Biomes'], render_pool)
+        timestamp_next, NextBiomes = array_biomes(NextBiomes, next_tstamp_Queue[0])
+        
+        nextbiomes_Queue.append(NextBiomes)
+        biomes_Queue.append(Biomes)
+        # render_pool.close()
+    
+ 
+    rendering_event.set()
     del Biomes
     del NextBiomes
     del _
+
     while go_flag.is_set():
         applicable_timestamp = next_tstamp_Queue[0]
         if applicable_timestamp != timestamp_next:
-            NextBiomes = render_biomes_FLAT(DRG[applicable_timestamp]['Biomes'])
-            timestamp_next, NextBiomes = array_biomes(NextBiomes, applicable_timestamp)
-            biomes_Queue.append(nextbiomes_Queue[0])
-            biomes_Queue.pop(0)
-            nextbiomes_Queue.append(NextBiomes)
-            nextbiomes_Queue.pop(0)
-            for event in rendering_events:
-                rendering_events[event].set()
+
+            with Pool(processes=os.cpu_count(), initializer=init_worker) as render_pool:
+                NextBiomes = render_biomes_FLAT(DRG[applicable_timestamp]['Biomes'], render_pool)
+                timestamp_next, NextBiomes = array_biomes(NextBiomes, applicable_timestamp)
+                
+                biomes_Queue.append(nextbiomes_Queue[0])
+                biomes_Queue.pop(0)
+                nextbiomes_Queue.append(NextBiomes)
+                nextbiomes_Queue.pop(0)
+                # render_pool.close()
+
+            rendering_event.set()
             del NextBiomes
+
         sleep(0.25)
 
 def rotate_DDs(DDs, go_flag):
@@ -1075,13 +1045,13 @@ def rotate_DDs(DDs, go_flag):
             dds = dds['Deep Dives']
             try:
                 dds = render_deepdives(dds)
-            except Exception:
+            except:
                 current_json = None
                 sleep(0.5)
                 continue
             if len(json_list) > 1:
                 os.remove(json_list[1])
-                
+
             dd_str = 'Deep Dive Normal'
             img_count = 0
             folder_name = dd_str.replace(' ', '_')
@@ -1095,7 +1065,7 @@ def rotate_DDs(DDs, go_flag):
                 fname = str(img_count)
                 mission.save(f'./static/{folder_name}/{fname}.png')
                 mission.close()
-                
+
             dd_str = 'Deep Dive Elite'
             img_count = 0
             folder_name = dd_str.replace(' ', '_')
@@ -1125,10 +1095,10 @@ def rotate_DDs(DDs, go_flag):
 # def split_json(num_days, DRG):
 #     shutil.rmtree('./static/json/bulkmissions')
 #     os.mkdir('./static/json/bulkmissions')
-    
+
 #     bs = DRG[round_time_down(datetime.utcnow().isoformat())]
 #     DRG = extract_days_from_json(DRG, num_days)
-    
+
 #     for timestamp, dictionary in (DRG.items()):
 #         fname = timestamp.replace(':','-')
 #         with open(f'./static/json/bulkmissions/{fname}.json', 'w') as f:
@@ -1162,7 +1132,7 @@ def split_daily_deals_json():
 def group_by_day_and_split_all(DRG):
     def group_json_by_days(DRG):
         timestamps_dt = [datetime.fromisoformat(ts[:-1]) for ts in DRG.keys()]
-        
+
         grouped_by_days = {}
         for timestamp in timestamps_dt:
             date = timestamp.date().strftime('%Y-%m-%d')
@@ -1170,12 +1140,12 @@ def group_by_day_and_split_all(DRG):
                 grouped_by_days[date] = {}
             timestamp = timestamp.strftime("%Y-%m-%dT%H:%M:%SZ")
             grouped_by_days[date][timestamp] = DRG[timestamp]
-            
+
         return grouped_by_days
     def add_daily_deals_to_grouped_json(DRG):
         with open('drgdailydeals.json', 'r') as f:
             AllTheDeals = json.load(f)
-        
+
             for timestamp, deal in AllTheDeals.items():
                 deal['timestamp'] = timestamp
                 try:
@@ -1187,8 +1157,9 @@ def group_by_day_and_split_all(DRG):
         if os.path.isdir('./static/json/bulkmissions'):
             shutil.rmtree('./static/json/bulkmissions')
         os.mkdir('./static/json/bulkmissions')
-        
+
         for timestamp, dictionary in DRG.items():
+            dictionary['ver'] = 2
             fname = timestamp.replace(':','-')
             with open(f'./static/json/bulkmissions/{fname}.json', 'w') as f:
                 json.dump(dictionary, f)
@@ -1199,27 +1170,27 @@ def group_by_day_and_split_all(DRG):
 
 
 def rotate_jsons_days(DRG, num_days, go_flag):
-    
+
     def extract_days_from_json(data, num_days):
         timestamps = {datetime.strptime(key, '%Y-%m-%d'): value for key, value in data.items()}
         sorted_timestamps = sorted(timestamps.items())
-        
+
         start_date = sorted_timestamps[0][0]
         end_date = sorted_timestamps[-1][0]
-        
+
         complete_dates = [start_date + timedelta(days=i) for i in range((end_date - start_date).days + 1)]
         complete_data = {date.strftime('%Y-%m-%d'): timestamps.get(date, 0) for date in complete_dates}
-        
+
         current_datetime = datetime.utcnow()
         days_from_now = current_datetime + timedelta(days=num_days)
         relevant_days = {key: value for key, value in complete_data.items() if current_datetime <= datetime.strptime(key, '%Y-%m-%d') < days_from_now}
         current_datetime = datetime.utcnow().strftime('%Y-%m-%d')
         relevant_days[current_datetime] = data[current_datetime]
-        
+
         return relevant_days
     def group_json_by_days(DRG):
         timestamps_dt = [datetime.fromisoformat(ts[:-1]) for ts in DRG.keys()]
-        
+
         grouped_by_days = {}
         for timestamp in timestamps_dt:
             date = timestamp.date().strftime('%Y-%m-%d')
@@ -1227,31 +1198,31 @@ def rotate_jsons_days(DRG, num_days, go_flag):
                 grouped_by_days[date] = {}
             timestamp = timestamp.strftime("%Y-%m-%dT%H:%M:%SZ")
             grouped_by_days[date][timestamp] = DRG[timestamp]
-            
+
         return grouped_by_days
-    
+
     completed = []
     days = group_json_by_days(DRG)
     days = extract_days_from_json(DRG, num_days)
-    
+
     dirpath = './static/json/bulkmissions'
     if os.path.isdir(dirpath):
         shutil.rmtree(dirpath)
     os.mkdir(dirpath)
-    
+
     for day, timestamp in days.items():
         with open(f'{dirpath}/{day}.json') as f:
             json.dump(timestamp, f)
-            
+
     while go_flag.is_set():
         sleep(num_days*86400-3600)
         days = group_json_by_days(DRG)
         days = extract_days_from_json(days, num_days)
-        
+
         for path in completed:
             os.remove(path)
             completed.remove(path)
-            
+
         for day, timestamp in days.items():
             path = f'./static/json/bulkmissions/{day}.json'
             completed.append(path)
@@ -1299,7 +1270,7 @@ def order_dictionary_by_date(dictionary):
 #                             current_day = rounded_time.day - days_in_month[rounded_time.month - 1]
 #                             rounded_time = rounded_time.replace(day=1)
 #                             rounded_time = rounded_time.replace(month=current_month)
-                    
+
 #             else:
 #                 rounded_time = rounded_time.replace(minute=0, hour=(rounded_time.hour + 1) % 24)
 #     else:
@@ -1307,7 +1278,7 @@ def order_dictionary_by_date(dictionary):
 #             rounded_time = rounded_time.replace(minute=0)
 #         else:
 #             rounded_time = rounded_time.replace(minute=30)
-        
+
 #     rounded_time_str = rounded_time.strftime("%Y-%m-%dT%H:%M:%SZ")
 #     return rounded_time_str
 # def select_timestamp(next_):
@@ -1351,7 +1322,7 @@ def rotate_timestamp(tstamp_Queue, next_, go_flag):
     applicable_timestamp = select_timestamp(next_=next_)
     tstamp_Queue.append(applicable_timestamp)
     timestamp = tstamp_Queue[0]
-    
+
     while go_flag.is_set():
         applicable_timestamp = select_timestamp(next_=next_)
         if applicable_timestamp != timestamp:
@@ -1366,7 +1337,7 @@ def rotate_timestamps(tstamp_Queue, next_tstamp_Queue, go_flag):
     next_tstamp_Queue.append(applicable_next_timestamp)
     tstamp_Queue.append(applicable_timestamp)
     timestamp = tstamp_Queue[0]
-    
+
     while go_flag.is_set():
         applicable_timestamp = select_timestamp(next_=False)
         if applicable_timestamp != timestamp:
@@ -1383,14 +1354,14 @@ def rotate_timestamp_from_dict(dictionary, tstamp_Queue, next_, go_flag):
     applicable_timestamp = select_timestamp_from_dict(dictionary, next_=next_)
     tstamp_Queue.append(applicable_timestamp)
     timestamp = tstamp_Queue[0]
-    
+
     while go_flag.is_set():
         applicable_timestamp = select_timestamp_from_dict(dictionary, next_=next_)
         if applicable_timestamp != timestamp:
             tstamp_Queue.append(applicable_timestamp)
             tstamp_Queue.pop(0)
             timestamp = tstamp_Queue[0]
-            
+
         sleep(0.25)
 
 def round_time_down(datetime_string):
@@ -1401,78 +1372,102 @@ def round_time_down(datetime_string):
         new_datetime = datetime_string[:14] + '00:00Z'
     return new_datetime
 
-# combines seasons to one key while removing duplicates, see render_biomes_FLAT in this file and renderBiomesFlat/arrayBiomes in index.js for postprocessing
-def flatten_seasons(DRG):
-    def compare_dicts(dict1, dict2, ignore_keys):
-        dict1_filtered = {k: v for k, v in dict1.items() if k not in ignore_keys}
-        dict2_filtered = {k: v for k, v in dict2.items() if k not in ignore_keys}
+def get_mission_icon_suffix_for_rpng_endpoint(dictionary):
+    mission = choice(dictionary['Biomes'][choice(list(dictionary['Biomes'].keys()))])
+    mission_icon_suffix = mission['CodeName'].replace(' ', '-') + str(mission['id'])
+    return mission_icon_suffix
 
-        return dict1_filtered == dict2_filtered
+# combines seasons to one key while removing duplicates, see render_biomes_FLAT in this file and renderBiomesFlat/arrayBiomes in index.js for postprocessing
+def compare_dicts(dict1, dict2, ignore_keys):
+    dict1_filtered = {k: v for k, v in dict1.items() if k not in ignore_keys}
+    dict2_filtered = {k: v for k, v in dict2.items() if k not in ignore_keys}
+    return dict1_filtered == dict2_filtered
+
+def flatten_seasons_v5(DRG):
     combined = {}
-    seasons = list(list(DRG.items())[1][1].keys())
     timestamps = list(DRG.keys())
+    seasons = ['s0', 's1', 's3']
+    
+    for timestamp in timestamps:
+        # del DRG[timestamp]['s2']
+        # del DRG[timestamp]['s4']
+        # del DRG[timestamp]['s5']
+        for season in seasons:
+            for biome, missions in DRG[timestamp][season]['Biomes'].items():
+                for mission in missions:
+                    del mission['id']
+    
     
     for timestamp in timestamps:
         combined[timestamp] = {}
         combined[timestamp]['timestamp'] = timestamp
         combined[timestamp]['Biomes'] = {}
-        for biome in DRG[timestamp]['s0']['Biomes'].keys():
-            combined[timestamp]['Biomes'][biome+'codenames'] = []
-        
-        for biome, missions in DRG[timestamp]['s0']['Biomes'].items():
-            for mission in missions:
-                mission['season'] = 's0'
-                combined[timestamp]['Biomes'][biome+'codenames'].append(mission['CodeName'])
-                
-            combined[timestamp]['Biomes'][biome] = [mission for mission in missions]
-        del DRG[timestamp]['s0']
-    seasons.remove('s0')
-    
-    duplicates = []
-    for timestamp in timestamps:
-        for season in seasons:
+        for i, season in enumerate(seasons):
             for biome, missions in DRG[timestamp][season]['Biomes'].items():
-                for index, mission in enumerate(missions):
+                if i == 0:
+                    combined[timestamp]['Biomes'][biome] = []
+
+                for j, mission in enumerate(missions):
+                    mission['index'] = j
                     mission['season'] = season
-                    if mission['CodeName'] in combined[timestamp]['Biomes'][biome+'codenames']:
-                        duplicates.append([timestamp, biome, mission])
-                    else:
-                        try:
-                            combined[timestamp]['Biomes'][biome].insert(index, mission)
-                        except:
-                            combined[timestamp]['Biomes'][biome].append(mission)
+                    
+                    seen = False
+                    for season_ in seasons:
+                        if season != season_:
+                            for m in DRG[timestamp][season_]['Biomes'][biome]:
+                                if compare_dicts(mission, m, ignore_keys=['index', 'season', 'included_in']):
+                                    seen = True
+                                    if 'included_in' not in mission:
+                                        mission['included_in'] = []
+                                    mission['included_in'].append(season_)
+                                    mission['included_in'].append(season)
+                    
+                    if not seen:
+                        mission['included_in'] = [season]
+                        
+                    mission['included_in'] = sorted(list(set(mission['included_in'])), key=lambda x: (str.isdigit(x), x.lower()))
+
+                combined[timestamp]['Biomes'][biome] += [mission for mission in missions]
     
-    for timestamp, biome, dup_mission in duplicates:
-        for season in seasons:
-            for mission in combined[timestamp]['Biomes'][biome]:
-                if dup_mission['CodeName'] != mission['CodeName']:
-                    continue
-                if compare_dicts(mission, dup_mission, ['season', 'id', 'season_modified']):
-                    continue
-                if 'season_modified' not in mission:
-                    mission['season_modified'] = {}
-                mission['season_modified'][season] = dup_mission
-
+    id = 0
     for timestamp in timestamps:
-        for k in list(combined[timestamp]['Biomes'].keys()):
-            if k.endswith('codenames'):
-                del combined[timestamp]['Biomes'][k]
+        for biome, missions in combined[timestamp]['Biomes'].items():
 
+            filtered_missions = []
+            for i, mission in enumerate(missions):
+                keep = True
+                
+                for j, m in enumerate(missions):
+                    if i < j+1:
+                        continue
+                    if compare_dicts(m, mission, ignore_keys=['id', 'season', 'index']):
+                        keep = False
+                        break
+                if keep:
+                    filtered_missions.append(mission)
+            
+            combined[timestamp]['Biomes'][biome] = sorted(filtered_missions, key=lambda x: x['index'])
+            
+            for mission in combined[timestamp]['Biomes'][biome]:
+                del mission['index']
+                del mission['season']
+                id += 1
+                mission['id'] = id
+                
     return combined
 
-def wait_rotation(rendering_events, index_event, go_flag):
+def wait_rotation(rendering_event, index_event, go_flag):
     target_minutes_59 = [29, 59]
     while go_flag.is_set():
         current_time = datetime.now().time()
         current_minute = current_time.minute
         current_second = current_time.second + current_time.microsecond / 1e6
-        
+
         if current_second > 58.50 and current_minute in target_minutes_59:
-            for s in rendering_events:
-                rendering_events[s].clear()
+            rendering_event.wait()
             index_event.clear()
         sleep(0.2)
-        
+
 def GARBAGE(dictionary, go_flag):
     total_sleep_time = 43200
     while go_flag.is_set():
@@ -1486,7 +1481,9 @@ def GARBAGE(dictionary, go_flag):
 
 
 def SERVER_READY(index_event):
+    start = time()
     index_event.wait()
+    print('Startup time:', round(time() - start, 3), 'seconds.')
     from psutil import Process
     print('Server is ready for requests')
     print("Memory used by process:", round(Process().memory_info().rss / (1024 * 1024), 2), "MB")
@@ -1498,7 +1495,7 @@ def timestamped_print(func):
     def wrapper(*args, **kwargs):
         include_timestamp = kwargs.pop('include_timestamp', True)
         args = [str(arg) for arg in args]
-        
+
         if include_timestamp:
             concatenated_args = ''.join(args)
             if concatenated_args.strip() != '':
@@ -1520,7 +1517,7 @@ def timestamped_open_wrapper(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         f = func(*args, **kwargs)
-        f.write = timestamped_write(f.write) 
+        f.write = timestamped_write(f.write)
         return f
     return wrapper
 open_with_timestamped_write = timestamped_open_wrapper(open)
@@ -1528,6 +1525,7 @@ open_with_timestamped_write = timestamped_open_wrapper(open)
 def cfg_():
     with open('cfg.json', 'r') as f:
         cfg = json.load(f)
+        f.close()
     return cfg
 cfg = cfg_()
 
@@ -1542,10 +1540,8 @@ def merge_parts(part_files, output_file):
 #HTML STRING RENDERERS
 
 #HOMEPAGE
-def rotate_index(rendering_events, current_timestamp_Queue, next_timestamp_Queue, index_event, index_Queue, go_flag):
-    seasons = rendering_events.keys()
-    for s in seasons:
-        rendering_events[s].wait()
+def rotate_index(rendering_event, current_timestamp_Queue, next_timestamp_Queue, index_event, index_Queue, go_flag):
+    rendering_event.wait()
     current_timestamp = current_timestamp_Queue[0]
     # index = {}
     # index_ = render_index().encode()
@@ -1557,9 +1553,7 @@ def rotate_index(rendering_events, current_timestamp_Queue, next_timestamp_Queue
     while go_flag.is_set():
         applicable_timestamp = current_timestamp_Queue[0]
         if applicable_timestamp != current_timestamp:
-            for s in seasons:
-                rendering_events[s].wait()
-                
+            rendering_event.wait()
             # index = {}
             # index_ = render_index().encode()
             # index['index'] = index_
@@ -1839,6 +1833,10 @@ def render_index():
 </body></html>'''
     return html
 
+def render_index():
+    return '''<!doctype html>
+</html>'''
+
 #CLASS XP CALCULATOR
 # obsolete, refer to xp_calculator.html
 def render_xp_calc_index():
@@ -1910,7 +1908,7 @@ tr {
   <th>Rank</th>
   <th><img title="Effective Level" src="/files/icon_class_level.png"></th>
   <th>XP</th>
-  
+
 </tr>
 <tr>
   <!-- <td><span style="color:#9f2c14;">Engineer</span></td> -->
@@ -2061,7 +2059,7 @@ class Dwarf():
         self.xp = 0
         self.level = levels
         self.promotions = promotions
-        self.total_level = 0   
+        self.total_level = 0
     def calculate_class_xp(self, levels):
         self.xp = levels[self.level] + (self.promotions * 315000)
         self.total_level = self.level + (self.promotions * 25)

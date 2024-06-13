@@ -1,6 +1,0 @@
-For future reference these are the relevant mission icon paths in the main game .pak. Access via fmodel or something
-
-FSD/Content/UI/Art/Icons/Icons_MissionMap/Mismap_Mutators
-FSD/Content/UI/Art/Icons/Icons_MissionMap/Mismap_Warnings
-FSD/Content/UI/Art/Icons/Icons_Resources - Obj resources icons
-FSD/Content/UI/Menu_MissionSelectionMK3/Assets/ - Primary Obj icon assets

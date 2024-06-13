@@ -1,4 +1,4 @@
-local json = require("./mods/BulkMissionsScraper/Scripts/dkjson")
+local json = require("./mods/shared/dkjson")
 function IsLoaded()
     local GeneratedMissions = FindAllOf('GeneratedMission')
     if GeneratedMissions then
@@ -21,7 +21,7 @@ function PressStartAndWaitForLoad()
     end
     -- Execute the function that 'press any key' invokes
     for index, startmenu in pairs(startmenus) do
-        startmenu:PressStart()
+        startmenu:OpenGameLevel()
     end
 
     local waiting_for_load = true
@@ -42,45 +42,6 @@ function PressStartAndWaitForLoad()
         end
     end
 end
-
-function TestSeasonSeeds()
-    local utils = require('./mods/BulkMissionsScraper/Scripts/bulkmissions_funcs')
-    local SeasonsAndFuncs = {
-        s0 = utils.S4Off,
-        s4 = utils.S4On
-    }
-
-    -- Initialize Table
-    local god = {}
-    local missionscount = 0
-    local master = {}
-    local SeasonSeeds = {}
-    local GlobalSeed = nil
-    local PreviousGlobalSeed = nil
-    local FSDGameInstance = FindFirstOf('FSDGameInstance')
-    local timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
-    for season, season_switch in pairs(SeasonsAndFuncs) do
-        season_switch()
-
-        -- FSDGameInstance:UpdateGlobelMissionSeed() -- No, this is not a typo (but maybe it was on gsg's end). Unneeded - I believe GetGlobalMissionSeed calls this itself or uses a similar mechanism
-        while true do
-            GlobalSeed = FSDGameInstance:GetGlobalMissionSeed()
-            if utils.IsInTable(SeasonSeeds, GlobalSeed) then
-                print('SEED DUPLICATES FOUND: ')
-                for s, seed in pairs(SeasonSeeds) do
-                    if seed == GlobalSeed then
-                        print(s)
-                        print(season)
-                    end
-                end
-                break
-            else
-                break
-            end
-        end
-        SeasonSeeds[season] = GlobalSeed
-    end
-end
 function TestTwoWeeks()
     local currytime = nil
     -- Get current UTC Time
@@ -94,78 +55,63 @@ function TestTwoWeeks()
     local total_increments = math.floor(diff_seconds / 1800)
     total_increments = total_increments + 1
 
-    local utils = require('./mods/BulkMissionsScraper/Scripts/bulkmissions_funcs')
-    local SeasonsAndFuncs = {
-        s0 = utils.S4Off,
-        s4 = utils.S4On
+    local utils = require('./mods/shared/shared_drgmissions_lua_funcs')
+    -- local pollClient = utils.ConnectPollClient(12345)
+    local SeasonsValues = {
+        ['s0'] = 0,
+        ['s1'] = 1,
+        ['s2'] = 2,
+        ['s3'] = 3,
+        ['s4'] = 4,
+        ['s5'] = 5
     }
 
     -- Initialize Table
     local god = {}
     local count = 0
     local missionscount = 0
-    local timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
-    local GlobalSeed = nil
-    local PreviousGlobalSeed = nil
+    local RandomSeed = nil
+    local PreviousRandomSeed = nil
     local FSDGameInstance = FindFirstOf('FSDGameInstance')
     -- Loop for the increments
     for i = 1, total_increments do
+        local timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
         while true do
-            GlobalSeed = FSDGameInstance:GetGlobalMissionSeed()
-            if GlobalSeed == PreviousGlobalSeed then
-                print('SEEN') -- has never seen as far as i can tell, prob ditch the stall when GetGlobalMissionSeed is trusted enough
-                break
+            FSDGameInstance:UpdateGlobelMissionSeed() -- No, this is not a typo (but maybe it was on gsg's end).
+            RandomSeed = FSDGameInstance:GetGlobalMissionSeedNew().RandomSeed
+            if RandomSeed == PreviousRandomSeed then
+                print('SEEN') -- has never seen as far as i can tell, prob ditch the stall when i trust this enough
             else
                 break
             end
         end
 
         local master = {}
-        local SeasonSeeds = {}
-        for season, season_switch in pairs(SeasonsAndFuncs) do
+        for SeasonKey, SeasonValue in pairs(SeasonsValues) do
             missionscount = 0
-            season_switch()
 
-            while true do
-                GlobalSeed = FSDGameInstance:GetGlobalMissionSeed()
-                if utils.IsInTable(SeasonSeeds, GlobalSeed) then
-                    print('SEED DUPLICATES FOUND: ')
-                    for s, seed in pairs(SeasonSeeds) do
-                        if seed == GlobalSeed then
-                            print(season)
-                            print(s)
-                        end
-                    break
-                    end
-                else
-                    break
-                end
-            end
-            SeasonSeeds[season] = GlobalSeed
-
-            master[season] = {}
-            master[season]['Biomes'] = utils.BiomesTable()
+            master[SeasonKey] = {}
+            master[SeasonKey]['Biomes'] = utils.BiomesTable()
 
             -- Get GeneratedMission UObjects
             local b = nil
-            local missions = utils.GetMissions()
+            local missions = utils.GetMissions(SeasonValue, RandomSeed)
             if missions then
-                timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
-                master[season]['timestamp'] = timestamp
+                master[SeasonKey]['timestamp'] = timestamp
                 for index, mission in pairs(missions) do
                     b = utils.GetBiome(mission)
-                    missionscount = utils.UnpackStandardMission(mission, master, b, missionscount, season)
+                    missionscount = utils.UnpackStandardMission(mission, master, b, missionscount, SeasonKey)
                 end
-                PreviousGlobalSeed = GlobalSeed
             end
-            print('\nNo. of missions in '..season..': '..tostring(missionscount))
-            for biome, ms  in pairs(master[season]['Biomes']) do
+            print('\nNo. of missions in '..SeasonKey..': '..tostring(missionscount))
+            for biome, ms  in pairs(master[SeasonKey]['Biomes']) do
                 if utils.IsTableEmpty(ms) then
-                    master[season]['Biomes'][biome] = nil
+                    master[SeasonKey]['Biomes'][biome] = nil
                 end
             end
         end
-
+        PreviousRandomSeed = tonumber(tostring(RandomSeed))
+        
         god[timestamp] = master
 
         --Get 'current' time
@@ -206,57 +152,47 @@ function TestTwoWeeks()
     end
 end
 function TestCurrentTimeOnly()
-    local utils = require('./mods/BulkMissionsScraper/Scripts/bulkmissions_funcs')
-    local SeasonsAndFuncs = {
-        s0 = utils.S4Off,
-        s4 = utils.S4On
+    local utils = require('./mods/drgmissions_dev/Scripts/bulkmissions_funcs')
+    local SeasonsValues = {
+        ['s0'] = 0,
+        ['s1'] = 1,
+        ['s2'] = 2,
+        ['s3'] = 3,
+        ['s4'] = 4,
+        ['s5'] = 5
     }
 
     -- Initialize Table
     local god = {}
     local missionscount = 0
     local master = {}
-    local SeasonSeeds = {}
-    local GlobalSeed = nil
-    local PreviousGlobalSeed = nil
     local FSDGameInstance = FindFirstOf('FSDGameInstance')
     local timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
-    for season, season_switch in pairs(SeasonsAndFuncs) do
-        season_switch()
-
-        -- FSDGameInstance:UpdateGlobelMissionSeed() -- No, this is not a typo (but maybe it was on gsg's end). Unneeded - I believe GetGlobalMissionSeed calls this itself or uses a similar mechanism
-        while true do
-            GlobalSeed = FSDGameInstance:GetGlobalMissionSeed()
-            if utils.IsInTable(SeasonSeeds, GlobalSeed) then
-                print('SEEN')
-                print(season)
-                print(GlobalSeed)
-            else
-                break
-            end
-        end
-        SeasonSeeds[season] = GlobalSeed
-
+    FSDGameInstance:UpdateGlobelMissionSeed()
+    local RandomSeed = FSDGameInstance:GetGlobalMissionSeedNew().RandomSeed
+    print(tostring(RandomSeed))
+    for SeasonKey, SeasonValue in pairs(SeasonsValues) do
         missionscount = 0
-        master[season] = {}
-        master[season]['Biomes'] = utils.BiomesTable()
+        master[SeasonKey] = {}
+        master[SeasonKey]['Biomes'] = utils.BiomesTable()
 
         -- Get GeneratedMission UObjects
         local b = nil
-        local missions = utils.GetMissions()
+        local missions = utils.GetMissions(SeasonValue, RandomSeed)
         if missions then
             local timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
-            master[season]['timestamp'] = timestamp
+            master[SeasonKey]['timestamp'] = timestamp
+            -- Unpack GeneratedMission UObjects
             for index, mission in pairs(missions) do
                 b = utils.GetBiome(mission)
-                missionscount = utils.UnpackStandardMission(mission, master, b, missionscount, season)
+                missionscount = utils.UnpackStandardMission(mission, master, b, missionscount, SeasonKey)
             end
-            print('\nNo. of missions in '..season..': '..tostring(missionscount))
+            print('\nNo. of missions in '..SeasonKey..': '..tostring(missionscount))
         end
 
-        for biome, ms  in pairs(master[season]['Biomes']) do
+        for biome, ms  in pairs(master[SeasonKey]['Biomes']) do
             if utils.IsTableEmpty(ms) then
-                master[season]['Biomes'][biome] = nil
+                master[SeasonKey]['Biomes'][biome] = nil
             end
         end
     end
@@ -282,6 +218,5 @@ else
 end
 ::isloaded::
 
-TestSeasonSeeds()
 -- TestCurrentTimeOnly()
 -- TestTwoWeeks()

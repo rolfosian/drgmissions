@@ -1,4 +1,4 @@
-local json = require("./mods/BulkMissionsScraper/Scripts/dkjson")
+local json = require("./mods/shared/dkjson")
 function Split(str, separator)
     local result = {}
     local pattern = string.format("([^%s]+)", separator)
@@ -51,7 +51,7 @@ function UnpackDeepDiveMission(mission, master, t)
         {pattern = "1st_Salvage", result = "Salvage Operation"},
         {pattern = "1st_Facility", result = "Industrial Sabotage"},
         {pattern = "Gather_AlienEggs", result = "Egg Hunt"},
-        -- {pattern = "DeepScan", result = "Deep Scan"}
+        {pattern = "DeepScan", result = "Deep Scan"}
     }
     for _, obj in ipairs(primary_objectives) do
         if string.find(PrimaryObjective, obj.pattern) then
@@ -71,6 +71,8 @@ function UnpackDeepDiveMission(mission, master, t)
         {pattern = "DD_Morkite", result = "Mine Morkite"},
         {pattern = "AlienEggs", result = "Get Alien Eggs"},
         {pattern = "DD_Defense", result = "Black Box"},
+        {pattern = 'MorkiteWell', result = 'Build Liquid Morkite Pipeline'},
+        {pattern = 'DeepScan'}, result = 'Perform Deep Scans'
     }
     for _, obj in ipairs(secondary_objectives) do
         if string.find(SecondaryObjective, obj.pattern) then
@@ -96,8 +98,9 @@ function UnpackDeepDiveMission(mission, master, t)
         {pattern = 'RivalIncursion', result = 'Rival Presence'},
         {pattern = 'Ghost', result = 'Haunted Cave'},
         {pattern = 'InfestedEnemies', result = 'Parasites'},
-        -- {pattern = 'DuckAndCover', result = "Duck and Cover"},
-        -- {pattern = 'EboniteOutbreak', result = 'Ebonite Outbreak'}
+        {pattern = 'BulletHell', result = "Duck and Cover"},
+        {pattern = 'RockInfestation', result = 'Ebonite Outbreak'},
+        {pattern = 'TougherEnemies', result = 'Tougher Enemies'}
     }
     local MissionWarnings = mission:GetPropertyValue("MissionWarnings")
     local num_MissionWarnings = MissionWarnings:GetArrayNum()
@@ -151,8 +154,8 @@ function UnpackDeepDiveMission(mission, master, t)
                 {pattern = 'OxygenRich', result = 'Rich Atmosphere'},
                 {pattern = 'ExterminationContract', result = 'Golden Bugs'},
                 {pattern = 'ExplosiveEnemies', result = 'Volatile Guts'},
-                -- {pattern = 'BloodSugar', result = 'Blood Sugar'},
-                -- {pattern = 'SecretSecondary', result = 'Secret Secondary'}
+                {pattern = 'BloodSugar', result = 'Blood Sugar'},
+                {pattern = 'SecretSecondary', result = 'Secret Secondary'}
             }
             for _, obj in ipairs(mutators) do
                 if string.find(MissionMutator, obj.pattern) then
@@ -218,6 +221,10 @@ function UnpackDeepDiveMission(mission, master, t)
         {pattern = 'DNA_2_03_C', result = {complexity = '1', length = '2'}},
         {pattern = 'DNA_2_04_C', result = {complexity = '2', length = '3'}},
         {pattern = 'DNA_2_05_C', result = {complexity = '3', length = '3'}},
+
+        -- Deep Scan
+        {pattern = 'DNA_Web_Small_C', result = {complexity = '2', length = '1'}},
+        {pattern = 'DNA_Web_Medium_C', result = {complexity = '3', length = '2'}}
     }
     if complexity == 'Indefinite' and length == 'Indefinite' then
         for _, dna in pairs(MissionDNAs) do
@@ -231,6 +238,19 @@ function UnpackDeepDiveMission(mission, master, t)
     if PrimaryObjective == "On-Site Refining" and mission1['Complexity'] == 'Indefinite' then
         mission1['Complexity'] = '2'
         mission1['Length'] = '2'
+    end
+
+    if PrimaryObjective == 'Deep Scan' and mission1['Complexity'] == 'Indefinite' and mission1['Length'] ~= 'nil' then
+        local MissionDNAs_Deep_Scan = {
+            {pattern = 'DNA_Web_Small_C', result = {complexity = '2'}},
+            {pattern = 'DNA_Web_Medium_C', result = {complexity = '3'}}
+        }
+        for _, dna in pairs(MissionDNAs_Deep_Scan) do
+            if string.find(MissionDNA, dna.pattern) then
+                mission1['Complexity'] = dna.result.complexity
+                -- mission1['Length'] = dna.result.length
+            end
+        end
     end
 
     -- Industrial Sabotage DNA
@@ -367,7 +387,7 @@ function UnpackDeepDiveMission(mission, master, t)
         DurationLimit = DurationLimit
         }
     end
-    
+
     table.insert(master['Deep Dives'][t]['Stages'], mission1)
 end
 function GetMissions()
@@ -446,7 +466,7 @@ function PressStartAndWaitForLoad()
     end
     -- Execute the function that 'press any key' invokes
     for index, startmenu in pairs(startmenus) do
-        startmenu:PressStart()
+        startmenu:OpenGameLevel()
     end
 
     local waiting_for_load = true

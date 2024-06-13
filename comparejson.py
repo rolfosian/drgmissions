@@ -3,7 +3,10 @@ from drgmissions_scraper_utils import (
     reconstruct_dictionary,
     sort_dictionary,
     order_dictionary_by_date_FIRST_KEY_ROUNDING,
-    find_duplicates
+    find_duplicates,
+    # flatten_seasons_v4,
+    compare_dicts,
+    round_time_down,
 )
 from datetime import datetime
 import re
@@ -153,10 +156,188 @@ def comparedeals():
 
     print(comparedeals.__name__, dailydealsnew == dailydealsold)
 
-comparedeals()
+# comparedeals()
 
-# with open('drgmissionsgod.json', 'r') as f:
-#     drg = json.load(f)
+def check_duplicate_seasons():
+    with open('drgmissionsdev.json', 'r') as f:
+        DRG = order_dictionary_by_date_FIRST_KEY_ROUNDING(json.load(f))
+        DRG = re.sub(r':\d{2}Z', ':00Z', json.dumps(DRG))
+        DRG = json.loads(DRG)
+        DRG = reconstruct_dictionary(DRG)
+        
+    seen = {}
+    for k, v in DRG.items():
+        seen[k] = {}
+        for season, d in v.items():
+            del d['timestamp']
+            for biome in d['Biomes'].keys():
+                for i, m in enumerate(d['Biomes'][biome]):
+                    del d['Biomes'][biome][i]['id']
+            seen[k][season] = json.dumps(d, indent=1)
 
-# timestamp = list(drg.keys())[-1]
-# print(timestamp)
+    
+    for i, (k, v) in enumerate(seen.items()):
+        print(k)
+        seent = []
+        for season, d in v.items():
+            for season_, d_ in v.items():
+                if season_ == season:
+                    continue
+                if d == d_:
+                    if [season, season_] in seent or [season_, season] in seent:
+                        continue
+                    seent.append([season, season_])
+                    print( season, '==', season_)
+        if i == 10:
+            break
+
+# check_duplicate_seasons()
+
+def check_duplicate_missions():
+    with open('drgmissionsdev.json', 'r') as f:
+        DRG = order_dictionary_by_date_FIRST_KEY_ROUNDING(json.load(f))
+        DRG = re.sub(r':\d{2}Z', ':00Z', json.dumps(DRG))
+        DRG = json.loads(DRG)
+        DRG = reconstruct_dictionary(DRG)
+    
+    seasons = ['s0', 's1', 's3']
+    
+    for timestamp in DRG.keys():
+        for season in seasons:
+            for biome, missions in DRG[timestamp][season]['Biomes'].items():
+                seen = []
+                for mission in missions:
+                    seen.append(mission)
+                for mission_ in seen:
+                    if compare_dicts(mission_, mission, ignore_keys=['CodeName', 'id']):
+                        if mission['CodeName'] == mission_['CodeName']:
+                            continue
+                        print(mission, '|', biome, '|', 'Season:', season)
+                        print(mission_, '|', biome, '|', 'Season:', season)
+                        print('--------')
+
+def flatten_seasons_v5():
+    combined = {}
+    
+    with open('drgmissionsdev.json', 'r') as f:
+        DRG = order_dictionary_by_date_FIRST_KEY_ROUNDING(json.load(f))
+        DRG = re.sub(r':\d{2}Z', ':00Z', json.dumps(DRG))
+        DRG = json.loads(DRG)
+        DRG = reconstruct_dictionary(DRG)
+    
+    timestamps = list(DRG.keys())
+    seasons = ['s0', 's1', 's3']
+    
+    for timestamp in timestamps:
+        del DRG[timestamp]['s2']
+        del DRG[timestamp]['s4']
+        del DRG[timestamp]['s5']
+        for season in seasons:
+            for biome, missions in DRG[timestamp][season]['Biomes'].items():
+                for mission in missions:
+                    del mission['id']
+    
+    
+    for timestamp in timestamps:
+        combined[timestamp] = {}
+        combined[timestamp]['timestamp'] = timestamp
+        combined[timestamp]['Biomes'] = {}
+        for i, season in enumerate(seasons):
+            for biome, missions in DRG[timestamp][season]['Biomes'].items():
+                if i == 0:
+                    combined[timestamp]['Biomes'][biome] = []
+
+                for j, mission in enumerate(missions):
+                    mission['index'] = j
+                    mission['season'] = season
+                    
+                    seen = False
+                    for season_ in seasons:
+                        if season != season_:
+                            for m in DRG[timestamp][season_]['Biomes'][biome]:
+                                if compare_dicts(mission, m, ignore_keys=['index', 'season', 'included_in']):
+                                    seen = True
+                                    if 'included_in' not in mission:
+                                        mission['included_in'] = []
+                                    mission['included_in'].append(season_)
+                                    mission['included_in'].append(season)
+                    
+                    if not seen:
+                        mission['included_in'] = [season]
+                        
+                    mission['included_in'] = sorted(list(set(mission['included_in'])), key=lambda x: (str.isdigit(x), x.lower()))
+
+                combined[timestamp]['Biomes'][biome] += [mission for mission in missions]
+    
+    id = 0
+    for timestamp in timestamps:
+        for biome, missions in combined[timestamp]['Biomes'].items():
+
+            filtered_missions = []
+            for i, mission in enumerate(missions):
+                keep = True
+                
+                for j, m in enumerate(missions):
+                    if i < j+1:
+                        continue
+                    if compare_dicts(m, mission, ignore_keys=['id', 'season', 'index']):
+                        keep = False
+                        break
+                if keep:
+                    filtered_missions.append(mission)
+            
+            combined[timestamp]['Biomes'][biome] = sorted(filtered_missions, key=lambda x: x['index'])
+            
+            for mission in combined[timestamp]['Biomes'][biome]:
+                del mission['index']
+                del mission['season']
+                id += 1
+                mission['id'] = id
+                if 'included_in' not in mission:
+                    print(mission)
+    return combined
+flatten_seasons_v5()
+
+def check_biome_obj_configs():
+    with open('drgmissionsdev.json', 'r') as f:
+        DRG = order_dictionary_by_date_FIRST_KEY_ROUNDING(json.load(f))
+        DRG = re.sub(r':\d{2}Z', ':00Z', json.dumps(DRG))
+        DRG = json.loads(DRG)
+        DRG = reconstruct_dictionary(DRG)
+        
+        for timestamp in list(DRG.keys()):
+            for season in list(DRG[timestamp].keys()):
+                if season == 's2' or season == 's4' or season == 's5':
+                    del DRG[timestamp][season]
+                    
+        seasons = list(list(DRG.items())[1][1].keys())
+        timestamps = list(DRG.keys())
+        
+        for timestamp in timestamps:
+            for season in seasons:
+                for biome, missions in DRG[timestamp][season]['Biomes'].items():
+                    seen = []
+                    for mission in missions:
+                        try:
+                            del mission['id']
+                        except:
+                            pass
+                        for m in missions:
+                            try:
+                                del m['id']
+                            except:
+                                pass
+                            if compare_dicts(mission, m, ignore_keys=['id']):
+                                continue
+                            if m['PrimaryObjective'] == mission['PrimaryObjective']:
+                                if m['Complexity'] == mission['Complexity'] and m['Length'] == mission['Length']:
+                                    if mission in seen or m in seen:
+                                        continue
+                                    seen.append(m)
+                                    seen.append(mission)
+                                    
+                                    print(timestamp, season, biome)
+                                    print(mission, f'\n{str(m)}')
+                                    print('---')
+
+# check_biome_obj_configs()
