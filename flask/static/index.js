@@ -181,8 +181,8 @@ var secondaryObjsDD = {
     "Mine Morkite": `${domainURL}/static/img/Morkite_icon_DDsecondaryobj.webp`,
     "Get Alien Eggs": `${domainURL}/static/img/Alien_egg_icon_DDsecondaryobj.webp`,
     "Black Box": `${domainURL}/static/img/Blackbox_icon_DDsecondaryobj.webp`,
-    "Perform Deep Scans": `${domainURL}/static/img/Icons_Resources_Detailed_Outline_LiquidMorkiteTankerPod_DDsecondaryobj.webp`,
-    "Build Liquid Morkite Pipeline" : `${domainURL}/static/img/Icons_Resources_Detailed_Outline_ResonanceScannerPod_DDsecondaryobj.webp`
+    "Perform Deep Scans": `${domainURL}/static/img/Icons_Resources_Detailed_Outline_ResonanceScannerPod_DDsecondaryobj.webp`,
+    "Build Liquid Morkite Pipeline" : `${domainURL}/static/img/Icons_Resources_Detailed_Outline_LiquidMorkiteTankerPod_DDsecondaryobj.webp`
 };
 var secondaryObjsDDImages = {};
 secondaryObjsDDImages.name = 'secondaryObjsDDImages';
@@ -2113,7 +2113,7 @@ var localStorages = {
     'homepageScript' : null,
 };
 var localStoragesHashes = {
-    'img' : -1052216436,
+    'img' : 1996300662,
     'fonts' : 906557479,
     'homepageScript' : 2145285990,
 };

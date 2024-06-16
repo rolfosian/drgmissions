@@ -61,15 +61,15 @@ def render_daily_deal_bubble(changepercent, dealtype):
     font = ImageFont.truetype(font_path, font_size)
     text = str(round(changepercent))
     if len(text) == 2:
-        digit1 = list(text)[0]
-        digit2 = f'{list(text)[1]}%'
+        digit1_text = list(text)[0]
+        digit2_text = f'{list(text)[1]}%'
         
         digit1 = ImageDraw.Draw(bubble)
-        digit1_x, digit1_y = calc_text_center(bubble.width, bubble.height, digit1, font, font_size)
-        digit1.text((digit1_x-60, digit1_y-15), digit1, font=font, fill=(0, 0, 0))
+        digit1_x, digit1_y = calc_text_center(bubble.width, bubble.height, digit1_text, font, font_size)
+        digit1.text((digit1_x-60, digit1_y-15), digit1_text, font=font, fill=(0, 0, 0))
         
         digit2 = ImageDraw.Draw(bubble)
-        digit2.text((digit1_x-5, digit1_y-15), digit2, font=font, fill=(0, 0, 0))
+        digit2.text((digit1_x-5, digit1_y-15), digit2_text, font=font, fill=(0, 0, 0))
         
         del digit1
         del digit2
