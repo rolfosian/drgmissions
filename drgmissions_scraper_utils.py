@@ -120,9 +120,8 @@ def init_polling_server(polling_list, result_list, port):
 
     return server_socket, accept_thread
 
-def shut_down_polling_server(server_socket, accept_thread, stop_event):
+def shut_down_polling_server(server_socket, accept_thread):
         print("IPC is shutting down.")
-        stop_event.clear()
         server_socket.close()
         accept_thread.join()
 
