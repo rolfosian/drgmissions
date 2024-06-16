@@ -52,6 +52,7 @@ function Main()
         ['s4'] = 4,
         ['s5'] = 5
     }
+    local PollingClient = utils.ConnectPollClient(12345)
 
     -- Initialize Table
     local god = {}
@@ -59,8 +60,8 @@ function Main()
     local RandomSeed = nil
     local PreviousRandomSeed = nil
     local missionscount = 0
-    utils.CreatePollFile('firstpoll.txt')
     for _, timestamp in pairs(timestamps) do
+        PollingClient:send('pol')
 
         -- Change System Clock
         local datetime = utils.Split(timestamp, 'T')
@@ -104,15 +105,9 @@ function Main()
         end
         PreviousRandomSeed = tonumber(tostring(RandomSeed))
         god[timestamp] = master
-
-        utils.CreatePollFile('poll.txt')
     end
-
     god = json.encode(god)
-    local file = io.open('redonemissions.json', 'w')
-    if file then
-        file:write(god)
-        file:close()
-    end
+    utils.Send_data(PollingClient, god)
+    PollingClient:close()
 end
 Main()

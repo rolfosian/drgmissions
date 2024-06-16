@@ -5,6 +5,7 @@ import os
 import json
 import re
 from time import sleep
+from random import randint
 from drgmissions_scraper_utils import (
     kill_process_by_name_starts_with,
     upload_file,
@@ -16,6 +17,9 @@ from drgmissions_scraper_utils import (
     sanitize_datetime,
     reverse_date_format,
     order_dictionary_by_date,
+    init_polling_server,
+    shut_down_polling_server,
+    is_port_in_use,
     delete_file,
     print,
     cfg
@@ -23,10 +27,6 @@ from drgmissions_scraper_utils import (
 
 def main():
     maximize_window()
-    if os.path.isfile('poll.txt'):
-        os.remove('poll.txt')
-    if os.path.isfile('firstpoll.txt'):
-        os.remove('firstpoll.txt')
     time_service_query = subprocess.check_output('sc query w32time', stderr=subprocess.PIPE, shell=True).decode('utf-8')
     if 'RUNNING' not in time_service_query:
         enable_system_time()
@@ -46,16 +46,29 @@ def main():
     
     total_increments = 365
     total_increments_ = 365
-    #In case different amount is defined in script
+    
+    
+    while True:
+        port = randint(12345, 65534)
+        if not is_port_in_use(port, '127.0.0.1'):
+            break
+    
     with open('./mods/DailyDealsScraper/Scripts/main.lua', 'r') as f:
-        script = f.readlines()
-        for line in script:
-            if 'local total_days' in line:
-                total_increments = int(line.split('=')[1].strip())
-                total_increments_ = int(str(total_increments))
-                break
+        main = f.readlines()
         f.close()
-                
+    main_lines = []
+    for line in main:
+        #In case different amount is defined in script
+        if 'local total_days' in line:
+            total_increments = int(line.split('=')[1].strip())
+            total_increments_ = int(str(total_increments))
+        if line.startswith('    local PollingClient'):
+            line = f'    local PollingClient = utils.ConnectPollClient({port})\n'
+        main_lines.append(line)
+    with open('./mods/DailyDealsScraper/Scripts/main.lua', 'w') as f:
+        f.writelines(main_lines)
+        f.close()
+    
     #Disable automatic system time
     disable_system_time()
     sleep(2)
@@ -65,83 +78,66 @@ def main():
 
     #Run Deep Rock Galactic headless
     subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
+    
+    AllTheDeals = []
+    polling_list = []
+    server_socket, accept_thread = init_polling_server(port, AllTheDeals, polling_list)
 
     #Wait for JSON
-    AllTheDeals = None
     polls = 0
-    poll_switch = False
+    polling = True
     avg_poll_time = 1
-    files = False
     start_time = None
     elapsed_time = 0
     while True:
+        try:
+            polling_list.pop(0)
+            start_time = time.monotonic()
+            break
+        except:
+            pass
+
+    while True:
         timeout_seconds = (total_increments_ * avg_poll_time) + 300
-        if start_time:
-            elapsed_time = time.monotonic() - start_time
         
-        if poll_switch:
+        try:
+            poll = polling_list.pop(0)
+            elapsed_time = time.monotonic() - start_time
             polls += 1
             avg_poll_time = elapsed_time / polls
             estimated_time_completion =  total_increments * avg_poll_time
-            
             total_increments -= 1
             percent = round((total_increments_ - total_increments) / total_increments_ * 100, 2)
-            print(f"{percent}% Completed | Elapsed time: {format_seconds(elapsed_time)} | {format_seconds(timeout_seconds - elapsed_time)} until timeout | Estimated time until completion: {format_seconds(estimated_time_completion)}    ", end='\r')
-            poll_switch = False
-
-        for filename in os.listdir():
-            if filename == 'firstpoll.txt':
-                start_time = time.monotonic()
-                delete_file('firstpoll.txt')
-
+            print(f"{percent:.2f}% Completed | Elapsed time: {format_seconds(elapsed_time)} | {format_seconds(timeout_seconds - elapsed_time)} until timeout | Estimated time until completion: {format_seconds(estimated_time_completion)}    ", end='\r')
             
-            if filename == 'poll.txt':
-                poll_switch = True
-                delete_file('poll.txt')
-                    
-            if filename == 'drgdailydeals.json':
-                files = True
-                print(f"{percent}% Completed | Elapsed time: {format_seconds(elapsed_time)} | {format_seconds(timeout_seconds - elapsed_time)} until timeout | Estimated time until completion: {format_seconds(estimated_time_completion)}    ")
+            if poll == 'fin':
+                AllTheDeals = json.loads(re.sub(r':\d{2}Z', ':00Z', ''.join(AllTheDeals)))
                 print('Complete. Ending FSD & Unreal processes...')
-                time.sleep(3)
                 kill_process_by_name_starts_with('FSD')
                 kill_process_by_name_starts_with('Unreal')
                 break
-                
-        if files:
-            break
-
-        if elapsed_time > timeout_seconds:
-            print('')
-            print('Timeout... process crashed or froze')
-            kill_process_by_name_starts_with('FSD')
-            kill_process_by_name_starts_with('Unreal')
-            
-            start_time = None
-            total_increments = int(str(total_increments_))
-            polls = 0
-            
-            if os.path.isfile('poll.txt'):
-                delete_file('poll.txt')
-            if os.path.isfile('firstpoll.txt'):
-                delete_file('firstpoll.txt')
-            
-            enable_system_time()
-            time.sleep(4)
-            disable_system_time()
-            subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
-
-    if os.path.isfile('poll.txt'):
-        delete_file('poll.txt')
         
+        except:
+            if elapsed_time > timeout_seconds:
+                print('', include_timestamp=False)
+                print('Timeout... process crashed or froze')
+                kill_process_by_name_starts_with('FSD')
+                kill_process_by_name_starts_with('Unreal')
+                
+                start_time = time.monotonic()
+                total_increments = int(str(total_increments_))
+                polls = 0
+                
+                enable_system_time()
+                time.sleep(4)
+                disable_system_time()
+                subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
+                
+    shut_down_polling_server(server_socket, accept_thread)
+
     #Reset mods.txt
     with open('./mods/mods.txt', 'w') as f:
         f.close()
-    
-    with open('drgdailydeals.json', 'r') as f:
-        AllTheDeals = f.read()
-        AllTheDeals = re.sub(r':\d{2}Z', ':00Z', AllTheDeals)
-        AllTheDeals = json.loads(AllTheDeals)
         
     AllTheDeals = order_dictionary_by_date(AllTheDeals)
 

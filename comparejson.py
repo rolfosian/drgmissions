@@ -91,27 +91,40 @@ def compare_gods():
         # DRG_NEW = json.loads(DRG_NEW)
         # DRG_NEW = order_dictionary_by_date_FIRST_KEY_ROUNDING(DRG_NEW)
 
-    DRG = reconstruct_dictionary(DRG)
-    DRG_NEW = reconstruct_dictionary(DRG_NEW)
+    # DRG = reconstruct_dictionary(DRG)
+    # DRG_NEW = reconstruct_dictionary(DRG_NEW)
     # DRG_NEW = {k : v for k, v in DRG_NEW.items() if k not in invalid_timestamps}
     # DRG = {k : v for k, v in DRG.items() if k not in invalid_timestamps}
     
-    for timestamp, seasons_dict in DRG.items():
-        for season, master in seasons_dict.items():
-            for biome, missions in master['Biomes'].items():
-                for mission in missions:
-                    del mission['id']
+    # for timestamp, seasons_dict in DRG.items():
+    #     for season, master in seasons_dict.items():
+    #         for biome, missions in master['Biomes'].items():
+    #             for mission in missions:
+    #                 del mission['id']
 
-    for timestamp, seasons_dict in DRG_NEW.items():
-        for season, master in seasons_dict.items():
-            for biome, missions in master['Biomes'].items():
-                for mission in missions:
-                    del mission['id']
+    # for timestamp, seasons_dict in DRG_NEW.items():
+    #     for season, master in seasons_dict.items():
+    #         for biome, missions in master['Biomes'].items():
+    #             for mission in missions:
+    #                 del mission['id']
+    
+    for timestamp, master in DRG.items():
+        for biome, missions in master['Biomes'].items():
+            for mission in missions:
+                del mission['id']
+
+    for timestamp, master in DRG_NEW.items():
+        for biome, missions in master['Biomes'].items():
+            for mission in missions:
+                del mission['id']
 
     god = {}
     for timestamp in list(DRG_NEW.keys()):
         # if timestamp not in invalid_timestamps:
-        god[timestamp] = DRG[timestamp]
+        if timestamp in DRG:
+            god[timestamp] = DRG[timestamp]
+        else:
+            del DRG_NEW[timestamp]
         
     # for timestamp in invalid_timestamps:
         # print(timestamp)
@@ -136,8 +149,7 @@ def compare_gods():
     #     print(json.dumps(god[timestamp], indent=4))
     #     break
 
-    
-# compare_gods()
+compare_gods()
 
 def comparedeals():
     with open('drgdailydeals.json', 'r') as f:
@@ -296,7 +308,7 @@ def flatten_seasons_v5():
                 if 'included_in' not in mission:
                     print(mission)
     return combined
-flatten_seasons_v5()
+# flatten_seasons_v5()
 
 def check_biome_obj_configs():
     with open('drgmissionsdev.json', 'r') as f:

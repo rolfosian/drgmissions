@@ -2,6 +2,8 @@ from datetime import datetime, timedelta
 from functools import wraps
 from ctypes import wintypes, byref, WinDLL, WINFUNCTYPE, sizeof, create_unicode_buffer
 from copy import deepcopy
+from random import randint
+import socket
 import subprocess
 import time
 import psutil
@@ -50,6 +52,80 @@ def subprocess_wrapper(command, shell=False, print_=True):
         
     return wrapper
 
+def is_port_in_use(port, ip):
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        s.bind((ip, int(port)))
+        s.close()
+        return False
+    except socket.error:
+        return True
+
+def handle_client(client_socket, client_address, polling_list, result_list):
+    print(f"Connection established from {client_address}")
+    client_socket.settimeout(300)
+    offset = 0
+    client_buffer = bytearray()
+    try:
+        while True:
+            try:
+                data = client_socket.recv(1024*1024*10)
+                if not data:
+                    break
+                data_len = len(data)
+                offset += data_len
+                client_buffer.extend(data)
+                result = client_buffer[offset-data_len:].decode('utf-8').strip()
+                polling_list.append(result) if result == 'pol' else result_list.append(result.strip())
+
+            except socket.timeout:
+                print(f"Socket timeout from {client_address}. Closing connection.")
+                break
+            except (ConnectionAbortedError, ConnectionResetError) as e:
+                print(f"Connection error with {client_address}: {e}")
+                break
+
+    except Exception as e:
+        print(f"Error handling connection from {client_address}: {e}")
+
+    finally:
+        print('Connection closed.')
+        polling_list.append('fin')
+        client_socket.close()
+        return
+
+def accept_connections(server_socket, result_list, polling_list):
+    while True:
+        print("Waiting for a connection...")
+        try:
+            client_socket, client_address = server_socket.accept()
+        except:
+            break
+
+        client_thread = threading.Thread(target=handle_client, args=(client_socket, client_address, polling_list, result_list))
+        client_thread.start()
+
+def init_polling_server(polling_list, result_list, port):
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    server_address = ('localhost', port)
+    server_socket.bind(server_address)
+
+    server_socket.listen(5)
+
+    print(f"IPC server is listening on {server_address}")
+
+    accept_thread = threading.Thread(target=accept_connections, args=(server_socket, result_list, polling_list))
+    accept_thread.start()
+
+    return server_socket, accept_thread
+
+def shut_down_polling_server(server_socket, accept_thread, stop_event):
+        print("IPC is shutting down.")
+        stop_event.clear()
+        server_socket.close()
+        accept_thread.join()
+
 def delete_file(filename):
     while True:
         try:
@@ -89,11 +165,11 @@ def maximize_window():
         user32.GetWindowThreadProcessId(hwnd, byref(window_tid))
         
         process_name = create_unicode_buffer(512)
-        h_process = OpenProcess(0x0400 | 0x0010, False, window_tid.value)
-        QueryFullProcessImageName(h_process, 0, process_name, byref(wintypes.DWORD(sizeof(process_name) // 2)))
+        h_process = kernel32.OpenProcess(0x0400 | 0x0010, False, window_tid.value)
+        kernel32.QueryFullProcessImageNameW(h_process, 0, process_name, byref(wintypes.DWORD(sizeof(process_name) // 2)))
         process_name = process_name.value.split("\\")[-1]
-        
-        if process_name == 'py.exe' or process_name == 'python.exe' and tid == window_tid.value:
+
+        if process_name == 'py.exe' or process_name == 'python.exe' and pid == window_tid.value:
             windows.append(hwnd)
             return False
         
@@ -101,21 +177,17 @@ def maximize_window():
     
     kernel32 = WinDLL('kernel32')
     user32 = WinDLL('user32')
-    
-    EnumWindows = user32.EnumWindows
+
     EnumWindowsProc = WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
-    QueryFullProcessImageName = kernel32.QueryFullProcessImageNameW
-    OpenProcess = kernel32.OpenProcess
-    
-    tid = kernel32.GetCurrentThreadId()
+    pid = kernel32.GetCurrentProcessId()
+
     windows = []
     SW_MAXIMIZE = 3
-    
-    EnumWindows(EnumWindowsProc(lambda *args: enum_windows_proc(*args, windows)), 0)
+    user32.EnumWindows(EnumWindowsProc(lambda *args: enum_windows_proc(*args, windows)), 0)
+
     if windows:
         interpreter_hwnd = windows[0]
         user32.ShowWindow(interpreter_hwnd, SW_MAXIMIZE)
-
 
 #Validation
 #-----------------------
@@ -579,11 +651,6 @@ def validate_drgmissions(DRG, patched):
     check_missions_length_complexity(DRG)
     
     if invalid_keys:
-        if os.path.isfile('poll.txt'):
-            delete_file('poll.txt')
-        if os.path.isfile('firstpoll.txt'):
-            delete_file('firstpoll.txt')
-            
         print('Invalid timestamps found...')
         with open('invalid_timestamps_log.txt', 'w') as f:
             s = ''
@@ -593,6 +660,11 @@ def validate_drgmissions(DRG, patched):
             f.close()
 
         patched = True
+        
+        while True:
+            port = randint(12345, 65534)
+            if not is_port_in_use(port, '127.0.0.1'):
+                break
         
         disable_system_time()
         print('\nPatching invalid timestamps...')
@@ -607,10 +679,24 @@ def validate_drgmissions(DRG, patched):
         with open('./mods/mods.txt', 'w') as f:
             f.write('InvalidTimestampsScraper : 1')
             f.close()
+
+        with open('./mods/InvalidTimestampsScraper/Scripts/main.lua', 'r') as f:
+            main = f.readlines()
+            f.close()
+        main_lines = []
+        for line in main:
+            if line.startswith('    local PollingClient'):
+                line = f'    local PollingClient = utils.ConnectPollClient({port})\n'
+            main_lines.append(line)
+        with open('./mods/InvalidTimestampsScraper/Scripts/main.lua', 'w') as f:
+            f.writelines(main_lines)
+            f.close()
         
         subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
+        polling_list = []
+        DRG_ = []
+        server_socket, accept_thread = init_polling_server(polling_list, DRG_, port)
         
-        files = []
         total_increments = len(invalid_keys)
         total_increments_ = int(str(total_increments))
         timeout_seconds = (total_increments * 1) + 300
@@ -618,77 +704,68 @@ def validate_drgmissions(DRG, patched):
         
         #Wait for JSON
         polls = 0
-        poll_switch = False
         avg_poll_time = 1
-        files = []
         start_time = None
         elapsed_time = 0
         while True:
+            try:
+                polling_list.pop(0)
+                start_time = time.monotonic()
+                break
+            except:
+                pass
+
+        while True:
             timeout_seconds = (total_increments_ * avg_poll_time) + 300
-            if start_time:
+
+            try:
+                poll = polling_list.pop(0)
                 elapsed_time = time.monotonic() - start_time
-            
-            if poll_switch:
                 polls += 1
                 avg_poll_time = elapsed_time / polls
                 estimated_time_completion =  total_increments * avg_poll_time
-                
                 total_increments -= 1
                 percent = round((total_increments_ - total_increments) / total_increments_ * 100, 2)
-                print(f"{percent}% Completed | Elapsed time: {format_seconds(elapsed_time)} | {format_seconds(timeout_seconds - elapsed_time)} until timeout | Estimated time until completion: {format_seconds(estimated_time_completion)}    ", end='\r')
-                poll_switch = False
-
-            for filename in os.listdir():
-                if filename == 'firstpoll.txt':
-                    start_time = time.monotonic()
-                    delete_file('firstpoll.txt')
-
-                if filename == 'poll.txt':
-                    poll_switch = True
-                    delete_file('poll.txt')
-
-                        
-                if filename == 'redonemissions.json':
-                    files.append(filename)
-                    print(f"100.00% Completed | Elapsed time: {format_seconds(elapsed_time)} | {format_seconds(timeout_seconds - elapsed_time)} until timeout | Estimated time until completion: {format_seconds(estimated_time_completion)}    ")
+                print(f"{percent:.2f}% Completed | Elapsed time: {format_seconds(elapsed_time)} | {format_seconds(timeout_seconds - elapsed_time)} until timeout | Estimated time until completion: {format_seconds(estimated_time_completion)}    ", end='\r')
+                
+                if poll == 'fin':
+                    redone_missions = json.loads(re.sub(r':\d{2}Z', ':00Z', ''.join(DRG_)))
                     print('Complete. Ending FSD & Unreal processes...')
-                    time.sleep(3)
                     kill_process_by_name_starts_with('FSD')
                     kill_process_by_name_starts_with('Unreal')
                     break
-                    
-            if files:
-                break
+
             
-            if elapsed_time > timeout_seconds:
-                print('')
-                print('Timeout... process crashed or froze')
-                kill_process_by_name_starts_with('FSD')
-                kill_process_by_name_starts_with('Unreal')
-                
-                start_time = None
-                total_increments = int(str(total_increments_))
-                polls = 0
-                
-                if os.path.isfile('poll.txt'):
-                    delete_file('poll.txt')
-                if os.path.isfile('firstpoll.txt'):
-                    delete_file('firstpoll.txt')
-                
-                enable_system_time()
-                time.sleep(4)
-                disable_system_time()
-                subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
-        
-        if os.path.isfile('poll.txt'):
-            delete_file('poll.txt')
-        
-        with open('redonemissions.json', 'r') as f:
-            redone_missions = f.read()
-            redone_missions = re.sub(r':\d{2}Z', ':00Z', redone_missions)
-            redone_missions = json.loads(redone_missions)
-            f.close()
-        
+            except:
+                if elapsed_time > timeout_seconds:
+                    print('', include_timestamp=False)
+                    print('Timeout... process crashed or froze')
+                    kill_process_by_name_starts_with('FSD')
+                    kill_process_by_name_starts_with('Unreal')
+                    
+                    shut_down_polling_server(server_socket, accept_thread)
+                    DRG = []
+                    polling_list = []
+                    server_socket, accept_thread = init_polling_server(polling_list, DRG, port)
+                    
+                    total_increments = int(str(total_increments_))
+                    polls = 0
+                    
+                    enable_system_time()
+                    time.sleep(4)
+                    disable_system_time()
+                    subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
+                    while True:
+                        try:
+                            polling_list.pop(0)
+                            start_time = time.monotonic()
+                            break
+                        except:
+                            pass
+                    
+                    
+        shut_down_polling_server(server_socket, accept_thread)
+                        
         for timestamp, dict in redone_missions.items():
             DRG[timestamp] = dict
 

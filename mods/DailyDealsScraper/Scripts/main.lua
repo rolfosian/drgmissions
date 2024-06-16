@@ -55,9 +55,10 @@ function Main()
       [0] = 'Buy',
       [1] = 'Sell'
     }
+    local PollingClient = utils.ConnectPollClient(12345)
 
-    utils.CreatePollFile('firstpoll.txt')
     for i = 1, total_days do
+      PollingClient:send('pol')
     -- Initialize Table
       local DailyDeal = {}
       while true do
@@ -109,14 +110,9 @@ function Main()
       count = count + 1
       print(tostring(count)..'\n')
       os.execute(command)
-      utils.CreatePollFile('poll.txt')
     end
-
     DailyDeals = json.encode(DailyDeals)
-    local file = io.open('drgdailydeals.json', 'w')
-    if file then
-      file:write(DailyDeals)
-      file:close()
-    end
+    utils.Send_data(PollingClient, DailyDeals)
+    PollingClient:close()
 end
 Main()

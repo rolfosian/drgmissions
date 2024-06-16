@@ -57,6 +57,7 @@ function Main()
         ['s4'] = 4,
         ['s5'] = 5
     }
+    local PollingClient = utils.ConnectPollClient(12345)
 
     -- Initialize Table
     local god = {}
@@ -66,8 +67,9 @@ function Main()
     local PreviousRandomSeed = nil
     local FSDGameInstance = FindFirstOf('FSDGameInstance')
     -- Loop for the increments
-    utils.CreatePollFile('firstpoll.txt')
     for i = 1, total_increments do
+        PollingClient:send('pol')
+
         local timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
         while true do
             FSDGameInstance:UpdateGlobelMissionSeed() -- No, this is not a typo (but maybe it was on gsg's end).
@@ -132,15 +134,15 @@ function Main()
         count = count + 1
         print(tostring(count)..'\n')
         os.execute(command)
-
-        utils.CreatePollFile('poll.txt')
     end
 
     god = json.encode(god)
-    local file = io.open('drgmissionsgod.json', 'w')
-    if file then
-        file:write(god)
-        file:close()
-    end
+    -- local file = io.open('drgmissionsgod.json', 'w')
+    -- if file then
+    --     file:write(god)
+    --     file:close()
+    -- end
+    utils.Send_data(PollingClient, god)
+    PollingClient:close()
 end
 Main()

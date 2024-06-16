@@ -67,11 +67,11 @@ function UnpackDeepDiveMission(mission, master, t)
     SecondaryObjective = string.format("%s",SecondaryObjective:GetFullName())
     local secondary_objectives = {
         {pattern = "RepairMinimules", result = "Repair Minimules"},
+        {pattern = 'MorkiteWell', result = 'Build Liquid Morkite Pipeline'},
         {pattern = "Elimination_Eggs", result = "Eliminate Dreadnought"},
         {pattern = "DD_Morkite", result = "Mine Morkite"},
         {pattern = "AlienEggs", result = "Get Alien Eggs"},
         {pattern = "DD_Defense", result = "Black Box"},
-        {pattern = 'MorkiteWell', result = 'Build Liquid Morkite Pipeline'},
         {pattern = 'DeepScan', result = 'Perform Deep Scans'}
     }
     for _, obj in ipairs(secondary_objectives) do

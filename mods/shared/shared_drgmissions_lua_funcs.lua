@@ -1,23 +1,27 @@
--- package.cpath = package.cpath..';'..'./mods/shared/socket/socket/core.dll'
--- local socket = require('./mods/shared/socket/socket')
--- function ConnectPollClient(port)
---     local host = "127.0.0.1"
---     local client = assert(socket.connect(host, port))
---     client:settimeout(5)
---     return client
--- end
-function CreatePollFile(filename)
-    while true do
-        local success, error = pcall(function()
-            local file = io.open(filename, 'w')
-            if file then
-                file:close()
-            end
+package.cpath = package.cpath..';'..'./mods/shared/socket/socket/core.dll'
+local socket = require('./mods/shared/socket/socket').udp()
+function ConnectPollClient(port)
+    local client = assert(socket.tcp())
+    client:setoption('keepalive', true)
+    client:connect("127.0.0.1", port)
+    return client
+end
+function Send_data(client, large_string)
+    local chunk_size = 1024*1024*10
+    local offset = 1
+    local total_bytes_sent = 0
+    local count = 0
+
+    while offset <= #large_string do
+        local chunk = large_string:sub(offset, offset + chunk_size - 1)
+        local bytes_sent, err = client:send(chunk)
+        count = count + 1
+        if not bytes_sent then
+            return nil, err
         end
-        )
-        if success then
-            return
-        end
+        print(tostring(client:dirty()))
+        total_bytes_sent = total_bytes_sent + bytes_sent
+        offset = offset + bytes_sent
     end
 end
 function IsInTable(tbl, val)
@@ -482,7 +486,6 @@ return {
     GetBiome = GetBiome,
     Exit = Exit,
     GetMissions = GetMissions_,
-    CreatePollFile = CreatePollFile,
-    Strip = Strip,
-    ConnectPollClient = ConnectPollClient
+    ConnectPollClient = ConnectPollClient,
+    Send_data = Send_data
 }

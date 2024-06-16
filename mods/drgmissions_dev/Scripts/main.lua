@@ -1,4 +1,5 @@
 local json = require("./mods/shared/dkjson")
+package.cpath = package.cpath .. ';'..'./mods/shared/socket/socket/core.dll'
 function IsLoaded()
     local GeneratedMissions = FindAllOf('GeneratedMission')
     if GeneratedMissions then
@@ -65,7 +66,7 @@ function TestTwoWeeks()
         ['s4'] = 4,
         ['s5'] = 5
     }
-
+    -- local PollingClient = utils.ConnectPollClient(12345)
     -- Initialize Table
     local god = {}
     local count = 0
@@ -75,6 +76,8 @@ function TestTwoWeeks()
     local FSDGameInstance = FindFirstOf('FSDGameInstance')
     -- Loop for the increments
     for i = 1, total_increments do
+        -- PollingClient:send('pol')
+
         local timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
         while true do
             FSDGameInstance:UpdateGlobelMissionSeed() -- No, this is not a typo (but maybe it was on gsg's end).
@@ -144,15 +147,12 @@ function TestTwoWeeks()
         os.execute(command)
     end
 
-    god = json.encode(god)
-    local file = io.open('drgmissionsdev.json', 'w')
-    if file then
-        file:write(god)
-        file:close()
-    end
+    -- god = json.encode(god)
+    -- utils.Send_data(PollingClient, god)
+    -- PollingClient:close()
 end
 function TestCurrentTimeOnly()
-    local utils = require('./mods/drgmissions_dev/Scripts/bulkmissions_funcs')
+    local utils = require('./mods/shared/bulkmissions_funcs')
     local SeasonsValues = {
         ['s0'] = 0,
         ['s1'] = 1,
@@ -210,13 +210,12 @@ function TestCurrentTimeOnly()
 --         file:close()
 --     end
 end
-
-if IsLoaded() then
-    goto isloaded
-else
-    PressStartAndWaitForLoad()
-end
-::isloaded::
+-- if IsLoaded() then
+--     goto isloaded
+-- else
+--     PressStartAndWaitForLoad()
+-- end
+-- ::isloaded::
 
 -- TestCurrentTimeOnly()
 -- TestTwoWeeks()
