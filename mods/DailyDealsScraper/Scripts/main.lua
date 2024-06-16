@@ -55,7 +55,8 @@ function Main()
       [0] = 'Buy',
       [1] = 'Sell'
     }
-    local PollingClient = utils.ConnectPollClient(12345)
+    local port = 12345
+    local PollingClient = utils.ConnectPollClient(port)
 
     for i = 1, total_days do
       PollingClient:send('pol')
@@ -113,6 +114,9 @@ function Main()
     end
     DailyDeals = json.encode(DailyDeals)
     utils.Send_data(PollingClient, DailyDeals)
+    PollingClient:close()
+    PollingClient = utils.ConnectPollClient(port)
+    PollingClient:send('fin')
     PollingClient:close()
 end
 Main()

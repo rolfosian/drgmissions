@@ -19,7 +19,6 @@ function Send_data(client, large_string)
         if not bytes_sent then
             return nil, err
         end
-        print(tostring(client:dirty()))
         total_bytes_sent = total_bytes_sent + bytes_sent
         offset = offset + bytes_sent
     end

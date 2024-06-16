@@ -57,7 +57,8 @@ function Main()
         ['s4'] = 4,
         ['s5'] = 5
     }
-    local PollingClient = utils.ConnectPollClient(12345)
+    local port = 12345
+    local PollingClient = utils.ConnectPollClient(port)
 
     -- Initialize Table
     local god = {}
@@ -143,6 +144,9 @@ function Main()
     --     file:close()
     -- end
     utils.Send_data(PollingClient, god)
+    PollingClient:close()
+    PollingClient = utils.ConnectPollClient(port)
+    PollingClient:send('fin')
     PollingClient:close()
 end
 Main()

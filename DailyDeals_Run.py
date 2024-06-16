@@ -62,8 +62,8 @@ def main():
         if 'local total_days' in line:
             total_increments = int(line.split('=')[1].strip())
             total_increments_ = int(str(total_increments))
-        if line.startswith('    local PollingClient'):
-            line = f'    local PollingClient = utils.ConnectPollClient({port})\n'
+        if line.startswith('    local port'):
+            line = f'    local port = {port}\n'
         main_lines.append(line)
     with open('./mods/DailyDealsScraper/Scripts/main.lua', 'w') as f:
         f.writelines(main_lines)

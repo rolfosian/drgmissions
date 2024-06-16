@@ -63,7 +63,6 @@ def is_port_in_use(port, ip):
 
 def handle_client(client_socket, client_address, polling_list, result_list):
     print(f"Connection established from {client_address}")
-    client_socket.settimeout(300)
     offset = 0
     client_buffer = bytearray()
     try:
@@ -76,7 +75,7 @@ def handle_client(client_socket, client_address, polling_list, result_list):
                 offset += data_len
                 client_buffer.extend(data)
                 result = client_buffer[offset-data_len:].decode('utf-8').strip()
-                polling_list.append(result) if result == 'pol' else result_list.append(result.strip())
+                polling_list.append(result) if result == 'pol' or result == 'fin' else result_list.append(result.strip())
 
             except socket.timeout:
                 print(f"Socket timeout from {client_address}. Closing connection.")
@@ -90,13 +89,12 @@ def handle_client(client_socket, client_address, polling_list, result_list):
 
     finally:
         print('Connection closed.')
-        polling_list.append('fin')
         client_socket.close()
         return
 
 def accept_connections(server_socket, result_list, polling_list):
+    print("Waiting for a connection...")
     while True:
-        print("Waiting for a connection...")
         try:
             client_socket, client_address = server_socket.accept()
         except:
@@ -684,8 +682,8 @@ def validate_drgmissions(DRG, patched):
             f.close()
         main_lines = []
         for line in main:
-            if line.startswith('    local PollingClient'):
-                line = f'    local PollingClient = utils.ConnectPollClient({port})\n'
+            if line.startswith('    local port'):
+                line = f'    local port = {port}\n'
             main_lines.append(line)
         with open('./mods/InvalidTimestampsScraper/Scripts/main.lua', 'w') as f:
             f.writelines(main_lines)

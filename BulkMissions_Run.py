@@ -58,8 +58,8 @@ def main():
     for line in main:
         if line.startswith('    local target_date'):
             line = line.replace(line, target_date_format)
-        elif line.startswith('    local PollingClient'):
-            line = f'    local PollingClient = utils.ConnectPollClient({port})\n'
+        elif line.startswith('    local port'):
+            line = f'    local port = {port}\n'
         main_lines.append(line)
             
     with open('./mods/BulkMissionsScraper/Scripts/main.lua', 'w') as f:
