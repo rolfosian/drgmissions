@@ -73,13 +73,16 @@ def handle_client(client_socket, client_address, polling_list, result_list):
                     break
                 data_len = len(data)
                 offset += data_len
+                
                 client_buffer.extend(data)
                 result = client_buffer[offset-data_len:].decode('utf-8').strip()
-                polling_list.append(result) if result == 'pol' or result == 'fin' else result_list.append(result.strip())
+                
+                if result == 'pol' or result == 'fin':
+                    polling_list.append(result)
+                else:
+                    result_list.append(result.strip())
+                    client_socket.sendall('ack\n'.encode())
 
-            except socket.timeout:
-                print(f"Socket timeout from {client_address}. Closing connection.")
-                break
             except (ConnectionAbortedError, ConnectionResetError) as e:
                 print(f"Connection error with {client_address}: {e}")
                 break

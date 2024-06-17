@@ -62,7 +62,7 @@ function Main()
 
     -- Initialize Table
     local god = {}
-    local count = 0
+    -- local count = 0
     local missionscount = 0
     local RandomSeed = nil
     local PreviousRandomSeed = nil
@@ -132,8 +132,8 @@ function Main()
 
         -- Set time forward 30 minutes
         print(command..'\n')
-        count = count + 1
-        print(tostring(count)..'\n')
+        -- count = count + 1
+        -- print(tostring(count)..'\n')
         os.execute(command)
     end
 
@@ -144,9 +144,8 @@ function Main()
     --     file:close()
     -- end
     utils.Send_data(PollingClient, god)
-    PollingClient:close()
-    PollingClient = utils.ConnectPollClient(port)
-    PollingClient:send('fin')
-    PollingClient:close()
+    PollingClient:receive('*l')
+    PollingClient:send('fin\n')
+    PollingClient:send('')
 end
 Main()

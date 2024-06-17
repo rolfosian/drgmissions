@@ -60,6 +60,8 @@ function Main()
 
     for i = 1, total_days do
       PollingClient:send('pol')
+      PollingClient:receive('*l')
+
     -- Initialize Table
       local DailyDeal = {}
       while true do
@@ -114,9 +116,8 @@ function Main()
     end
     DailyDeals = json.encode(DailyDeals)
     utils.Send_data(PollingClient, DailyDeals)
-    PollingClient:close()
-    PollingClient = utils.ConnectPollClient(port)
-    PollingClient:send('fin')
-    PollingClient:close()
+    PollingClient:receive('*l')
+    PollingClient:send('fin\n')
+    PollingClient:send('')
 end
 Main()

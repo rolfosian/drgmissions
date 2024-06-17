@@ -2,8 +2,8 @@ package.cpath = package.cpath..';'..'./mods/shared/socket/socket/core.dll'
 local socket = require('./mods/shared/socket/socket').udp()
 function ConnectPollClient(port)
     local client = assert(socket.tcp())
-    client:setoption('keepalive', true)
     client:connect("127.0.0.1", port)
+    client:setoption('keepalive', true)
     return client
 end
 function Send_data(client, large_string)
