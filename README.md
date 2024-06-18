@@ -1,7 +1,7 @@
 ## **Deep Rock Galactic lua scripts for use with [RE-UE4SS lua API](https://github.com/UE4SS-RE/RE-UE4SS/) to fetch current mission and deep dive data for flask**
 
 - To run DRG headless, use command line arg `-nullrhi` when running the game.
-- Tested working with a Windows 10 virtual machine using `-nullrhi` (Requires OpenGL or dx11 for the UE4SS hook).
+- Tested working with a Windows 10 virtual machine using `-nullrhi` (Requires OpenGL or dx11 for the UE4SS GUI if you want to use it).
 - Make sure to [skip intro videos](https://www.pcgamingwiki.com/wiki/Deep_Rock_Galactic#Skip_intro_videos) and also use `-nosplash` command line arg if desired.
 - Be sure to disable Steam cloud save synchronization.
 - Unzip UE4SS into steamapps\common\Deep Rock Galactic\FSD\Binaries\Win64 - this is also the CWD of the scripts run by the UE4SS hook.
@@ -33,7 +33,7 @@
 5. Run [This batch script](https://github.com/rolfosian/drgmissions/blob/main/vm_fresh_setup.bat) on your new Windows VM and follow the prompts. 
 - The batch script will handle enabling the automatic logon of the windows user account, disables UAC, as well as prompts for Windows GUI performance options plus sets the system clock timezone to UTC and the correct date format for the lua scripts. It will also download and install python + its requests and psutil modules before installing steam and setting all relevant executables to be run with elevated privileges via the registry, as well as disabling automatic Windows updates.
 6. Make sure Steam auto logon is enabled, install Deep Rock Galactic, and set the launch options `-nullrhi` and `-nosplash` as well as [skip intro videos](https://www.pcgamingwiki.com/wiki/Deep_Rock_Galactic#Skip_intro_videos)
-7. Install the [mesa-dist-win msvc release](https://github.com/pal1000/mesa-dist-win/releases/) for enabling OpenGL on Qemu etc. Or, if running Virtualbox, you don't need this, you can just install the Virtualbox Guest Additions with 3d acceleration enabled and change [this](https://github.com/UE4SS-RE/RE-UE4SS/blob/main/assets/UE4SS-settings.ini#L98) to dx11.
+7. Install the [mesa-dist-win msvc release](https://github.com/pal1000/mesa-dist-win/releases/) for enabling OpenGL on Qemu etc. Or, if running Virtualbox, you don't need this, you can just install the Virtualbox Guest Additions with 3d acceleration enabled and change [this](https://github.com/UE4SS-RE/RE-UE4SS/blob/main/assets/UE4SS-settings.ini#L98) to dx11. *only needed if you want to run the ue4ss console gui
 8. Copy the `cfg.json` generated from the flask server setup as `scraper_cfg.json`, the `.*_Run.py` scripts, the `drgmissions_scraper_utils.py` library, and `drgmissions_validator.py` script to the `Deep Rock Galactic\FSD\Binaries\Win64` folder
 9. Finally unzip [UE4SS](https://github.com/UE4SS-RE/RE-UE4SS/releases/download/v3.0.1/UE4SS_v3.0.1.zip) into the `steamapps\common\Deep Rock Galactic\FSD\Binaries\Win64` and merge the [mods](https://github.com/rolfosian/drgmissions/tree/main/mods) folders.
 

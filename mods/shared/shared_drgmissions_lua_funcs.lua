@@ -1,16 +1,24 @@
 package.cpath = package.cpath..';'..'./mods/shared/socket/socket/core.dll'
-local socket = require('./mods/shared/socket/socket').udp()
+local socket = require('./mods/shared/socket/socket')
 function ConnectPollClient(port)
     local client = assert(socket.tcp())
     client:connect("127.0.0.1", port)
     client:setoption('keepalive', true)
+    client:send('polling')
+    client:receive('*l')
     return client
 end
-function Send_data(client, large_string)
+function Send_data(port, large_string)
     local chunk_size = 1024*1024*10
     local offset = 1
     local total_bytes_sent = 0
     local count = 0
+    local client = assert(socket.tcp())
+    client:connect("127.0.0.1", port)
+    client:setoption('keepalive', true)
+    client:send('result')
+    client:receive('*l')
+
 
     while offset <= #large_string do
         local chunk = large_string:sub(offset, offset + chunk_size - 1)
@@ -19,10 +27,12 @@ function Send_data(client, large_string)
         if not bytes_sent then
             return nil, err
         end
-        client:receive("*l")
         total_bytes_sent = total_bytes_sent + bytes_sent
         offset = offset + bytes_sent
     end
+    client:receive("*l")
+    socket.sleep(0.1)
+    client:close()
 end
 function IsInTable(tbl, val)
     for key, value in pairs(tbl) do

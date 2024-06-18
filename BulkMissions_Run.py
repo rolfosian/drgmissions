@@ -7,6 +7,7 @@ from shutil import copy as shutil_copy
 from datetime import datetime
 from random import randint
 from drgmissions_scraper_utils import(
+    IPCServer,
     order_dictionary_by_date_FIRST_KEY_ROUNDING,
     upload_file,
     yes_or_no,
@@ -19,8 +20,6 @@ from drgmissions_scraper_utils import(
     validate_drgmissions,
     flatten_seasons_v5,
     is_port_in_use,
-    init_polling_server,
-    shut_down_polling_server,
     maximize_window,
     delete_file,
     print,
@@ -87,70 +86,62 @@ def main():
     #Run Deep Rock Galactic headless
     subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
     
-    DRG = []
-    polling_list = []
-    server_socket, accept_thread = init_polling_server(polling_list, DRG, port)
+    IPC = IPCServer(port)
 
     #Wait for JSON
     polls = 0
     avg_poll_time = 1
     start_time = None
     elapsed_time = 0
-    while True:
-        try:
-            polling_list.pop(0)
-            start_time = time.monotonic()
-            break
-        except:
-            pass
+    
+    IPC.poll_event.wait()
+    IPC.polling_list.pop(0)
+    IPC.poll_event.clear()
+    start_time = time.monotonic()
 
     while True:
         timeout_seconds = (total_increments_ * avg_poll_time) + 300
-        
-        try:
-            poll = polling_list.pop(0)
-            elapsed_time = time.monotonic() - start_time
-            polls += 1
-            avg_poll_time = elapsed_time / polls
-            estimated_time_completion =  total_increments * avg_poll_time
-            total_increments -= 1
-            percent = round((total_increments_ - total_increments) / total_increments_ * 100, 2)
-            print(f"{percent:.2f}% Completed | Elapsed time: {format_seconds(elapsed_time)} | {format_seconds(timeout_seconds - elapsed_time)} until timeout | Estimated time until completion: {format_seconds(estimated_time_completion)}    ", end='\r')
-            if poll == 'fin':
-                DRG = json.loads(re.sub(r':\d{2}Z', ':00Z', ''.join(DRG)))
-                print('Complete. Ending FSD & Unreal processes...')
-                kill_process_by_name_starts_with('FSD')
-                kill_process_by_name_starts_with('Unreal')
-                break
-        
-        except:
-            if elapsed_time > timeout_seconds:
-                print('', include_timestamp=False)
-                print('Timeout... process crashed or froze')
-                kill_process_by_name_starts_with('FSD')
-                kill_process_by_name_starts_with('Unreal')
-                
-                shut_down_polling_server(server_socket, accept_thread)
-                DRG = []
-                polling_list = []
-                server_socket, accept_thread = init_polling_server(polling_list, DRG, port)
-                
-                total_increments = int(str(total_increments_))
-                polls = 0
-                
-                enable_system_time()
-                time.sleep(4)
-                disable_system_time()
-                subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
-                while True:
-                    try:
-                        polling_list.pop(0)
-                        start_time = time.monotonic()
-                        break
-                    except:
-                        pass
+
+        if elapsed_time > timeout_seconds:
+            print('', include_timestamp=False)
+            print('Timeout... process crashed or froze')
+            kill_process_by_name_starts_with('FSD')
+            kill_process_by_name_starts_with('Unreal')
+            
+            IPC.shut_down()
+            IPC = IPCServer(port)
+            
+            total_increments = int(str(total_increments_))
+            polls = 0
+            avg_poll_time = 1
+            
+            enable_system_time()
+            time.sleep(4)
+            disable_system_time()
+            subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
+            start_time = time.monotonic()
+
+        IPC.poll_event.wait()
+        poll = IPC.polling_list.pop(0)
+        IPC.poll_event.clear()
+        elapsed_time = time.monotonic() - start_time
+        polls += 1
+        avg_poll_time = elapsed_time / polls
+        estimated_time_completion =  total_increments * avg_poll_time
+        total_increments -= 1
+        percent = round((total_increments_ - total_increments) / total_increments_ * 100, 2)
+        percent = f"{percent:.2f}% Completed"
+        if poll == 'enc':
+            percent = 'Encoding JSON...'
+        print(f"{percent} | {format_seconds(timeout_seconds - elapsed_time)} until timeout | Estimated time remaining: {format_seconds(estimated_time_completion)}    ", end='\r')
+        if poll == 'fin':
+            DRG = json.loads(re.sub(r':\d{2}Z', ':00Z', ''.join(IPC.result_list)))
+            print('\nComplete. Ending FSD & Unreal processes...')
+            kill_process_by_name_starts_with('FSD')
+            kill_process_by_name_starts_with('Unreal')
+            break
     
-    shut_down_polling_server(server_socket, accept_thread)
+    IPC.shut_down()
         
     #Reset mods.txt
     with open('./mods/mods.txt', 'w') as f:

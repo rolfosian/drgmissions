@@ -41,7 +41,7 @@ function Main()
     local firstdate = os.date("!*t")
     local current_time = os.time(firstdate)
     --Set target date
-    local target_date = os.time{year=2024, month=07, day=01, hour=00, min=00, sec=00}
+    local target_date = os.time{year=2024, month=08, day=30, hour=00, min=00, sec=00}
     -- Calculate the difference in seconds between the current UTC time and the target date
     local diff_seconds = os.difftime(target_date, current_time)
     -- Calculate total amount of 30 minute increments between current time and the target date
@@ -57,19 +57,20 @@ function Main()
         ['s4'] = 4,
         ['s5'] = 5
     }
-    local port = 12345
+    local port = 53578
     local PollingClient = utils.ConnectPollClient(port)
 
     -- Initialize Table
     local god = {}
-    -- local count = 0
+    local count = 0
     local missionscount = 0
     local RandomSeed = nil
     local PreviousRandomSeed = nil
     local FSDGameInstance = FindFirstOf('FSDGameInstance')
     -- Loop for the increments
     for i = 1, total_increments do
-        PollingClient:send('pol')
+        PollingClient:send('pol\n')
+        PollingClient:receive("*l")
 
         local timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
         while true do
@@ -131,21 +132,28 @@ function Main()
         local command = 'date '..utils.ReverseDateFormat(newtime[1])..' & time '..newtime[2]
 
         -- Set time forward 30 minutes
-        print(command..'\n')
-        -- count = count + 1
+        -- print(command..'\n')
+        count = count + 1
         -- print(tostring(count)..'\n')
         os.execute(command)
     end
 
-    god = json.encode(god)
+    PollingClient:send('enc\n')
+    PollingClient:receive('*l')
+    PollingClient:close()
+
+    print('Encoding JSON...\n')
+    god = json.encode(god) .. 'END'
+    print('Completed encoding JSON...\n')
     -- local file = io.open('drgmissionsgod.json', 'w')
     -- if file then
     --     file:write(god)
     --     file:close()
     -- end
-    utils.Send_data(PollingClient, god)
-    PollingClient:receive('*l')
-    PollingClient:send('fin\n')
-    PollingClient:send('')
+
+    utils.Send_data(port, god)
+    local FinClient = utils.ConnectPollClient(port)
+    FinClient:send('fin\n')
+    FinClient:send('')
 end
 Main()

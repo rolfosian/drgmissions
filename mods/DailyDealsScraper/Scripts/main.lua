@@ -59,8 +59,7 @@ function Main()
     local PollingClient = utils.ConnectPollClient(port)
 
     for i = 1, total_days do
-      PollingClient:send('pol')
-      PollingClient:receive('*l')
+      PollingClient:send('pol\n')
 
     -- Initialize Table
       local DailyDeal = {}
@@ -114,10 +113,15 @@ function Main()
       print(tostring(count)..'\n')
       os.execute(command)
     end
-    DailyDeals = json.encode(DailyDeals)
-    utils.Send_data(PollingClient, DailyDeals)
+
+    PollingClient:send('enc\n')
     PollingClient:receive('*l')
-    PollingClient:send('fin\n')
-    PollingClient:send('')
+    PollingClient:close()
+    
+    DailyDeals = json.encode(DailyDeals) .. 'END'
+    utils.Send_data(port, DailyDeals)
+    local FinClient = utils.ConnectPollClient(port)
+    FinClient:send('fin\n')
+    FinClient:send('')
 end
 Main()

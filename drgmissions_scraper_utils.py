@@ -14,6 +14,99 @@ import json
 import re
 import threading
 
+class IPCServer:
+    def __init__(self, port):
+        self.polling_list = []
+        self.result_list = []
+        self.poll_event = threading.Event()
+        self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server_address = ('localhost', port)
+        self.server_socket.bind(self.server_address)
+        self.server_socket.listen(5)
+        
+        self.handshake_funcs = {
+            'polling' : self.handle_polling_client,
+            'result' : self.handle_result_client
+        }
+        self.accept_thread = threading.Thread(target=self.accept_connections)
+        self.accept_thread.start()
+        print(f"\nIPC server is listening on {self.server_address}")
+
+    def handle_polling_client(self, client_socket, client_address):
+        client_socket.sendall('ack\n'.encode())
+        print(f"\nPolling connection established from {client_address}")
+        
+        try:
+            while True:
+                data = client_socket.recv(1024)
+                if not data:
+                    break
+                result = data.decode('utf-8').strip()
+                while self.poll_event.is_set():
+                    continue
+                self.polling_list.append(result)
+                self.poll_event.set()
+                client_socket.sendall('ack\n'.encode())
+
+        except Exception as e:
+            print(f"\nError handling polling connection from {client_address}: {e}")
+
+        finally:
+            print('\nPolling connection closed.')
+            client_socket.close()
+
+    def handle_result_client(self, client_socket, client_address):
+        client_socket.sendall('ack\n'.encode())
+        print(f"\nResult connection established from {client_address}")
+        client_buffer = bytearray()
+
+        try:
+            while True:
+                data = client_socket.recv(1024*1024*10)
+                client_buffer.extend(data)
+                if client_buffer[4:].decode('utf-8').strip().endswith('END'):
+                    break
+
+            self.result_list.append(client_buffer[:-3].decode('utf-8'))
+            client_socket.sendall('ack\n'.encode())
+            
+
+        except Exception as e:
+            print(f"\nError handling result connection from {client_address}: {e}")
+
+        finally:
+            print('\nResult connection closed.')
+            client_socket.close()
+
+    def handshake(self, client_socket, client_address):
+        try:
+            handshake_message = client_socket.recv(1024).decode('utf-8').strip()
+            self.handshake_funcs[handshake_message](client_socket, client_address)
+        except Exception as e:
+            print(f"\nHandshake error with {client_address}: {e}")
+            client_socket.close()
+
+    def accept_connections(self):
+        print("Waiting for a connection...")
+        while True:
+            try:
+                client_socket, client_address = self.server_socket.accept()
+                client_thread = threading.Thread(target=self.handshake, args=(client_socket, client_address))
+                client_thread.start()
+            except Exception as e:
+                print(f"Error accepting connections: {e}")
+                break
+
+    def shut_down(self):
+        print("\nIPC is shutting down.")
+        self.server_socket.close()
+        self.accept_thread.join()
+
+    def restart_server(self):
+        print("\nRestarting IPC server...")
+        self.shut_down()
+        self.__init__(self.port)
+
 def cfg_():
     with open(os.getcwd()+'/scraper_cfg.json', 'r') as f:
         cfg = json.load(f)
@@ -60,71 +153,6 @@ def is_port_in_use(port, ip):
         return False
     except socket.error:
         return True
-
-def handle_client(client_socket, client_address, polling_list, result_list):
-    print(f"Connection established from {client_address}")
-    offset = 0
-    client_buffer = bytearray()
-    try:
-        while True:
-            try:
-                data = client_socket.recv(1024*1024*10)
-                if not data:
-                    break
-                data_len = len(data)
-                offset += data_len
-                
-                client_buffer.extend(data)
-                result = client_buffer[offset-data_len:].decode('utf-8').strip()
-                
-                if result == 'pol' or result == 'fin':
-                    polling_list.append(result)
-                else:
-                    result_list.append(result.strip())
-                    client_socket.sendall('ack\n'.encode())
-
-            except (ConnectionAbortedError, ConnectionResetError) as e:
-                print(f"Connection error with {client_address}: {e}")
-                break
-
-    except Exception as e:
-        print(f"Error handling connection from {client_address}: {e}")
-
-    finally:
-        print('Connection closed.')
-        client_socket.close()
-        return
-
-def accept_connections(server_socket, result_list, polling_list):
-    print("Waiting for a connection...")
-    while True:
-        try:
-            client_socket, client_address = server_socket.accept()
-        except:
-            break
-
-        client_thread = threading.Thread(target=handle_client, args=(client_socket, client_address, polling_list, result_list))
-        client_thread.start()
-
-def init_polling_server(polling_list, result_list, port):
-    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-    server_address = ('localhost', port)
-    server_socket.bind(server_address)
-
-    server_socket.listen(5)
-
-    print(f"IPC server is listening on {server_address}")
-
-    accept_thread = threading.Thread(target=accept_connections, args=(server_socket, result_list, polling_list))
-    accept_thread.start()
-
-    return server_socket, accept_thread
-
-def shut_down_polling_server(server_socket, accept_thread):
-        print("IPC is shutting down.")
-        server_socket.close()
-        accept_thread.join()
 
 def delete_file(filename):
     while True:
@@ -693,9 +721,8 @@ def validate_drgmissions(DRG, patched):
             f.close()
         
         subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
-        polling_list = []
-        DRG_ = []
-        server_socket, accept_thread = init_polling_server(polling_list, DRG_, port)
+        
+        IPC = IPCServer(port)
         
         total_increments = len(invalid_keys)
         total_increments_ = int(str(total_increments))
@@ -707,64 +734,56 @@ def validate_drgmissions(DRG, patched):
         avg_poll_time = 1
         start_time = None
         elapsed_time = 0
-        while True:
-            try:
-                polling_list.pop(0)
-                start_time = time.monotonic()
-                break
-            except:
-                pass
+        IPC.poll_event.wait()
+        IPC.polling_list.pop(0)
+        start_time = time.monotonic()
+        IPC.poll_event.clear()
 
         while True:
             timeout_seconds = (total_increments_ * avg_poll_time) + 300
-
-            try:
-                poll = polling_list.pop(0)
-                elapsed_time = time.monotonic() - start_time
-                polls += 1
-                avg_poll_time = elapsed_time / polls
-                estimated_time_completion =  total_increments * avg_poll_time
-                total_increments -= 1
-                percent = round((total_increments_ - total_increments) / total_increments_ * 100, 2)
-                print(f"{percent:.2f}% Completed | Elapsed time: {format_seconds(elapsed_time)} | {format_seconds(timeout_seconds - elapsed_time)} until timeout | Estimated time until completion: {format_seconds(estimated_time_completion)}    ", end='\r')
-                
-                if poll == 'fin':
-                    redone_missions = json.loads(re.sub(r':\d{2}Z', ':00Z', ''.join(DRG_)))
-                    print('Complete. Ending FSD & Unreal processes...')
-                    kill_process_by_name_starts_with('FSD')
-                    kill_process_by_name_starts_with('Unreal')
-                    break
-
             
-            except:
-                if elapsed_time > timeout_seconds:
-                    print('', include_timestamp=False)
-                    print('Timeout... process crashed or froze')
-                    kill_process_by_name_starts_with('FSD')
-                    kill_process_by_name_starts_with('Unreal')
+            if elapsed_time > timeout_seconds:
+                print('', include_timestamp=False)
+                print('Timeout... process crashed or froze')
+                kill_process_by_name_starts_with('FSD')
+                kill_process_by_name_starts_with('Unreal')
+                
+                IPC.shut_down()
+                IPC = IPCServer(port)
+                
+                total_increments = int(str(total_increments_))
+                polls = 0
+                avg_poll_time = 1
+                elapsed_time = 0
+                
+                enable_system_time()
+                time.sleep(4)
+                disable_system_time()
+                subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
+                IPC.poll_event.wait()
+                IPC.polling_list.pop(0)
+                start_time = time.monotonic()
                     
-                    shut_down_polling_server(server_socket, accept_thread)
-                    DRG = []
-                    polling_list = []
-                    server_socket, accept_thread = init_polling_server(polling_list, DRG, port)
+            IPC.poll_event.wait()
+            poll = IPC.polling_list.pop(0)
+            IPC.poll_event.clear()
+            
+            elapsed_time = time.monotonic() - start_time
+            polls += 1
+            avg_poll_time = elapsed_time / polls
+            estimated_time_completion =  total_increments * avg_poll_time
+            total_increments -= 1
+            percent = round((total_increments_ - total_increments) / total_increments_ * 100, 2)
+            print(f"{percent:.2f}% Completed | Elapsed time: {format_seconds(elapsed_time)} | {format_seconds(timeout_seconds - elapsed_time)} until timeout | Estimated time until completion: {format_seconds(estimated_time_completion)}    ", end='\r')
+            
+            if poll == 'fin':
+                redone_missions = json.loads(re.sub(r':\d{2}Z', ':00Z', ''.join(DRG_)))
+                print('Complete. Ending FSD & Unreal processes...')
+                kill_process_by_name_starts_with('FSD')
+                kill_process_by_name_starts_with('Unreal')
+                break
                     
-                    total_increments = int(str(total_increments_))
-                    polls = 0
-                    
-                    enable_system_time()
-                    time.sleep(4)
-                    disable_system_time()
-                    subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
-                    while True:
-                        try:
-                            polling_list.pop(0)
-                            start_time = time.monotonic()
-                            break
-                        except:
-                            pass
-                    
-                    
-        shut_down_polling_server(server_socket, accept_thread)
+        IPC.shut_down()
                         
         for timestamp, dict in redone_missions.items():
             DRG[timestamp] = dict

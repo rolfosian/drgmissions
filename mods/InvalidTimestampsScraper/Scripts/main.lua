@@ -63,6 +63,7 @@ function Main()
     local missionscount = 0
     for _, timestamp in pairs(timestamps) do
         PollingClient:send('pol\n')
+        PollingClient:receive("*l")
 
         -- Change System Clock
         local datetime = utils.Split(timestamp, 'T')
@@ -107,10 +108,17 @@ function Main()
         PreviousRandomSeed = tonumber(tostring(RandomSeed))
         god[timestamp] = master
     end
-    god = json.encode(god)
-    utils.Send_data(PollingClient, god)
-    PollingClient:receive("*l")
-    PollingClient:send('fin\n')
-    PollingClient:send('')
+    PollingClient:send('enc\n')
+    PollingClient:receive('*l')
+    PollingClient:close()
+    
+    print('Encoding JSON...\n')
+    god = json.encode(god) .. 'END'
+    print('Completed encoding JSON...\n')
+    utils.Send_data(port, god)
+
+    local FinClient = utils.ConnectPollClient(port)
+    FinClient:send('fin\n')
+    FinClient:send('')
 end
 Main()
