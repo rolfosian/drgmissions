@@ -111,14 +111,15 @@ function Main()
     PollingClient:send('enc\n')
     PollingClient:receive('*l')
     PollingClient:close()
-    
+
     print('Encoding JSON...\n')
     god = json.encode(god) .. 'END'
     print('Completed encoding JSON...\n')
+    -- local file = io.open('redonemissions.json', 'w')
+    -- if file then
+    --     file:write(string.sub(god, 1, -4))
+    --     file:close()
+    -- end
     utils.Send_data(port, god)
-
-    local FinClient = utils.ConnectPollClient(port)
-    FinClient:send('fin\n')
-    FinClient:send('')
 end
 Main()

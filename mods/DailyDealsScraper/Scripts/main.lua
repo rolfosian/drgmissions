@@ -117,11 +117,13 @@ function Main()
     PollingClient:send('enc\n')
     PollingClient:receive('*l')
     PollingClient:close()
-    
+
     DailyDeals = json.encode(DailyDeals) .. 'END'
+    -- local file = io.open('drgdailydeals.json', 'w')
+    -- if file then
+    --     file:write(string.sub(DailyDeals, 1, -4))
+    --     file:close()
+    -- end
     utils.Send_data(port, DailyDeals)
-    local FinClient = utils.ConnectPollClient(port)
-    FinClient:send('fin\n')
-    FinClient:send('')
 end
 Main()

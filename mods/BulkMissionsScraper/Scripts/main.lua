@@ -147,13 +147,9 @@ function Main()
     print('Completed encoding JSON...\n')
     -- local file = io.open('drgmissionsgod.json', 'w')
     -- if file then
-    --     file:write(god)
+    --     file:write(string.sub(god, 1, -4))
     --     file:close()
     -- end
-
     utils.Send_data(port, god)
-    local FinClient = utils.ConnectPollClient(port)
-    FinClient:send('fin\n')
-    FinClient:send('')
 end
 Main()

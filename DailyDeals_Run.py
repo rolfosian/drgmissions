@@ -1,20 +1,17 @@
 import datetime
 import subprocess
-import time
 import os
 import json
-import re
 from time import sleep
 from random import randint
 from drgmissions_scraper_utils import (
     IPCServer,
-    kill_process_by_name_starts_with,
+    wait_for_json,
     upload_file,
     yes_or_no,
     enable_system_time,
     disable_system_time,
     maximize_window,
-    format_seconds,
     sanitize_datetime,
     reverse_date_format,
     order_dictionary_by_date,
@@ -44,13 +41,12 @@ def main():
     currytime = str(currytime).split(' ')
     
     total_increments = 365
-    total_increments_ = 365
-    
     
     while True:
         port = randint(12345, 65534)
         if not is_port_in_use(port, '127.0.0.1'):
             break
+    IPC = IPCServer(port)
     
     with open('./mods/DailyDealsScraper/Scripts/main.lua', 'r') as f:
         main = f.readlines()
@@ -60,7 +56,6 @@ def main():
         #In case different amount is defined in script
         if 'local total_days' in line:
             total_increments = int(line.split('=')[1].strip())
-            total_increments_ = int(str(total_increments))
         if line.startswith('    local port'):
             line = f'    local port = {port}\n'
         main_lines.append(line)
@@ -78,63 +73,7 @@ def main():
     #Run Deep Rock Galactic headless
     subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
     
-    IPC = IPCServer(port)
-
-    #Wait for JSON
-    polls = 0
-    avg_poll_time = 1
-    start_time = None
-    elapsed_time = 0
-    
-    IPC.poll_event.wait()
-    IPC.polling_list.pop(0)
-    IPC.poll_event.clear()
-    start_time = time.monotonic()
-
-    while True:
-        timeout_seconds = (total_increments_ * avg_poll_time) + 300
-        
-        if elapsed_time > timeout_seconds:
-            print('', include_timestamp=False)
-            print('Timeout... process crashed or froze')
-            kill_process_by_name_starts_with('FSD')
-            kill_process_by_name_starts_with('Unreal')
-            
-            IPC.shut_down()
-            IPC = IPCServer(port)
-            
-            total_increments = int(str(total_increments_))
-            polls = 0
-            avg_poll_time = 1
-            
-            enable_system_time()
-            time.sleep(4)
-            disable_system_time()
-            subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
-            start_time = time.monotonic()
-            
-        IPC.poll_event.wait()
-        poll = IPC.polling_list.pop(0)
-        IPC.poll_event.clear()
-        elapsed_time = time.monotonic() - start_time
-        polls += 1
-        avg_poll_time = elapsed_time / polls
-        estimated_time_completion =  total_increments * avg_poll_time
-        total_increments -= 1
-        percent = round((total_increments_ - total_increments) / total_increments_ * 100, 2)
-        percent = f"{percent:.2f}% Completed"
-        if poll == 'enc':
-            percent = 'Encoding JSON...'
-        print(f"{percent} | {format_seconds(timeout_seconds - elapsed_time)} until timeout | Estimated time remaining: {format_seconds(estimated_time_completion)}    ", end='\r')
-        
-        if poll == 'fin':
-            AllTheDeals = json.loads(re.sub(r':\d{2}Z', ':00Z', ''.join(IPC.result_list)))
-            print('Complete. Ending FSD & Unreal processes...')
-            kill_process_by_name_starts_with('FSD')
-            kill_process_by_name_starts_with('Unreal')
-            break
-                
-    IPC.shut_down()
+    AllTheDeals = wait_for_json(IPC, total_increments)
 
     #Reset mods.txt
     with open('./mods/mods.txt', 'w') as f:

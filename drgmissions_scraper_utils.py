@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from functools import wraps
+from typing import Union, Callable
 from ctypes import wintypes, byref, WinDLL, WINFUNCTYPE, sizeof, create_unicode_buffer
 from copy import deepcopy
 from random import randint
@@ -15,7 +16,8 @@ import re
 import threading
 
 class IPCServer:
-    def __init__(self, port):
+    def __init__(self, port:int):
+        self.port = port
         self.polling_list = []
         self.result_list = []
         self.poll_event = threading.Event()
@@ -26,15 +28,17 @@ class IPCServer:
         
         self.handshake_funcs = {
             'polling' : self.handle_polling_client,
-            'result' : self.handle_result_client
+            'pollingq' : lambda x, y: self.handle_polling_client(x, y, quiet=True),
+            'result' : self.handle_result_client,
+            'resultq' : lambda x, y: self.handle_result_client(x, y, quiet=True)
         }
         self.accept_thread = threading.Thread(target=self.accept_connections)
         self.accept_thread.start()
         print(f"\nIPC server is listening on {self.server_address}")
 
-    def handle_polling_client(self, client_socket, client_address):
+    def handle_polling_client(self, client_socket:socket.socket, client_address:tuple, quiet=False):
         client_socket.sendall('ack\n'.encode())
-        print(f"\nPolling connection established from {client_address}")
+        print(f"\nPolling connection established from {client_address}") if not quiet else None
         
         try:
             while True:
@@ -49,15 +53,15 @@ class IPCServer:
                 client_socket.sendall('ack\n'.encode())
 
         except Exception as e:
-            print(f"\nError handling polling connection from {client_address}: {e}")
+            print(f"\nError handling polling connection from {client_address}: {e}") if not quiet else None
 
         finally:
-            print('\nPolling connection closed.')
+            print('\nPolling connection closed.') if not quiet else None
             client_socket.close()
 
-    def handle_result_client(self, client_socket, client_address):
+    def handle_result_client(self, client_socket:socket.socket, client_address:tuple, quiet=False):
         client_socket.sendall('ack\n'.encode())
-        print(f"\nResult connection established from {client_address}")
+        print(f"\nResult connection established from {client_address}") if not quiet else None
         client_buffer = bytearray()
 
         try:
@@ -67,18 +71,22 @@ class IPCServer:
                 if client_buffer[4:].decode('utf-8').strip().endswith('END'):
                     break
 
+            while self.poll_event.is_set():
+                continue
             self.result_list.append(client_buffer[:-3].decode('utf-8'))
             client_socket.sendall('ack\n'.encode())
+            self.polling_list.append('fin')
+            self.poll_event.set()
             
 
         except Exception as e:
-            print(f"\nError handling result connection from {client_address}: {e}")
+            print(f"\nError handling result connection from {client_address}: {e}") if not quiet else None
 
         finally:
-            print('\nResult connection closed.')
+            print('\nResult connection closed.') if not quiet else None
             client_socket.close()
 
-    def handshake(self, client_socket, client_address):
+    def handshake(self, client_socket:socket.socket, client_address:tuple):
         try:
             handshake_message = client_socket.recv(1024).decode('utf-8').strip()
             self.handshake_funcs[handshake_message](client_socket, client_address)
@@ -93,8 +101,7 @@ class IPCServer:
                 client_socket, client_address = self.server_socket.accept()
                 client_thread = threading.Thread(target=self.handshake, args=(client_socket, client_address))
                 client_thread.start()
-            except Exception as e:
-                print(f"Error accepting connections: {e}")
+            except:
                 break
 
     def shut_down(self):
@@ -113,10 +120,10 @@ def cfg_():
     return cfg
 cfg = cfg_()
 
-def wrap_with_color(string, color):
+def wrap_with_color(string:str, color:str):
     return f"\033[0;{color}m{string}\033[0m"
 
-def subprocess_wrapper(command, shell=False, print_=True):
+def subprocess_wrapper(command:str, shell=False, print_=True):
     def wrapper():
         event = threading.Event()
         event.set()
@@ -145,7 +152,7 @@ def subprocess_wrapper(command, shell=False, print_=True):
         
     return wrapper
 
-def is_port_in_use(port, ip):
+def is_port_in_use(port:int, ip:str):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
         s.bind((ip, int(port)))
@@ -154,7 +161,7 @@ def is_port_in_use(port, ip):
     except socket.error:
         return True
 
-def delete_file(filename):
+def delete_file(filename:str):
     while True:
         try:
             os.remove(filename)
@@ -162,11 +169,13 @@ def delete_file(filename):
         except:
             continue
 
-def timestamped_print(func):
+def timestamped_print(func:Callable[..., None]):
     @wraps(func)
     def wrapper(*args, **kwargs):
         include_timestamp = kwargs.pop('include_timestamp', True)
+        start = kwargs.pop('start', '')
         args = [str(arg) for arg in args]
+        args[0] = start + args[0]
         
         if include_timestamp:
             concatenated_args = ''.join(args)
@@ -177,7 +186,7 @@ def timestamped_print(func):
     return wrapper
 print = timestamped_print(print)
 
-def format_seconds(seconds):
+def format_seconds(seconds:Union[int, float]):
     hours = int(seconds // 3600)
     minutes = int((seconds % 3600) // 60)
     remaining_seconds = int(round(seconds % 60))
@@ -219,7 +228,7 @@ def maximize_window():
 
 #Validation
 #-----------------------
-def sort_dictionary(dictionary, custom_order):
+def sort_dictionary(dictionary:dict, custom_order:list):
     sorted_dict = {}
     for key in custom_order:
         if key in dictionary:
@@ -229,14 +238,14 @@ def sort_dictionary(dictionary, custom_order):
     sorted_dict.update(dictionary)
     return sorted_dict
 
-def order_dictionary_by_date(dictionary):
+def order_dictionary_by_date(dictionary:dict):
     sorted_keys = sorted(dictionary.keys(), key=lambda x: datetime.fromisoformat(x.replace('Z', '')))
     ordered_dictionary = {}
     for key in sorted_keys:
         ordered_dictionary[key] = dictionary[key]
     return ordered_dictionary
 
-def order_dictionary_by_date_FIRST_KEY_ROUNDING(dictionary):    
+def order_dictionary_by_date_FIRST_KEY_ROUNDING(dictionary:dict):    
     sorted_keys = sorted(dictionary.keys(), key=lambda x: datetime.fromisoformat(x.replace('Z', '')))
     
     first_key = sorted_keys[0]
@@ -257,7 +266,7 @@ def order_dictionary_by_date_FIRST_KEY_ROUNDING(dictionary):
         ordered_dictionary[key] = dictionary[key]
     return ordered_dictionary
 
-def reconstruct_dictionary(dictionary):
+def reconstruct_dictionary(dictionary:dict):
     god = {}
     mission_key_order = ['PrimaryObjective', 'SecondaryObjective', 'MissionWarnings', 'MissionMutator', 'Complexity', 'Length', 'CodeName', 'id']
     biome_order = ['Glacial Strata', 'Crystalline Caverns', 'Salt Pits', 'Magma Core', 'Azure Weald', 'Sandblasted Corridors', 'Fungus Bogs', 'Radioactive Exclusion Zone', 'Dense Biozone', 'Hollow Bough']
@@ -283,7 +292,7 @@ def reconstruct_dictionary(dictionary):
                 god[timestamp][season][key] = value
     return god
 
-def find_missing_timestamps(dictionary, invalid_keys):
+def find_missing_timestamps(dictionary:dict, invalid_keys:list):
     timestamps = [datetime.fromisoformat(timestamp[:-1]) for timestamp in dictionary.keys()]
     expected_diff = timedelta(minutes=30)
     missing_timestamps = []
@@ -300,7 +309,7 @@ def find_missing_timestamps(dictionary, invalid_keys):
     else:
         print('No missing timestamps found.')
 
-def find_duplicate_seasons(dictionary, invalid_keys):
+def find_duplicate_seasons(dictionary:dict, invalid_keys:list):
     def find_duplicate_strings(dictionary):
         strings = []
         keys = []
@@ -346,7 +355,7 @@ def find_duplicate_seasons(dictionary, invalid_keys):
     else:
         print("No duplicate season data found.")
 
-def find_duplicates(dictionary, invalid_keys):
+def find_duplicates(dictionary:dict, invalid_keys:list):
     def is_not_longer_than_1_hour(datetime1, datetime2):
         time_difference = abs(datetime2 - datetime1)
         one_hour = timedelta(hours=1)
@@ -374,7 +383,7 @@ def find_duplicates(dictionary, invalid_keys):
     for key, value in dictionary_.items():
         god[key] = json.dumps(value)
 
-    def find_duplicate_strings(dictionary):
+    def find_duplicate_strings(dictionary:dict):
         string_count = {}
         for key, value in dictionary.items():
             if value in string_count:
@@ -403,7 +412,7 @@ def find_duplicates(dictionary, invalid_keys):
     else:
         print("No duplicate timestamps found.")
 
-def check_sum_of_missions(dictionary, invalid_keys):
+def check_sum_of_missions(dictionary:dict, invalid_keys:list):
     missions_keys = []
     for timestamp, seasons_dict in dictionary.items():
         for master in seasons_dict.values():
@@ -422,7 +431,7 @@ def check_sum_of_missions(dictionary, invalid_keys):
     else:
         print('No sum of missions outside range.')
         
-def check_missions_keys(dictionary, invalid_keys):
+def check_missions_keys(dictionary:dict, invalid_keys:list):
     missions_keys = []
     for timestamp, seasons_dict in dictionary.items():
         for master in seasons_dict.values():
@@ -440,7 +449,7 @@ def check_missions_keys(dictionary, invalid_keys):
     else:
         print('No sum of missions keys outside range.')
 
-def check_missions_length_complexity(dictionary):
+def check_missions_length_complexity(dictionary:dict):
     missions_keys = []
     for timestamp, seasons_dict in dictionary.items():
         for master in seasons_dict.values():
@@ -460,7 +469,7 @@ def check_missions_length_complexity(dictionary):
     else:
         print('No indefinite complexities or lengths found.')
 
-def round_time_down(datetime_string):
+def round_time_down(datetime_string:str):
     datetime_minutes = int(datetime_string[14:16])
     if datetime_minutes >= 30:
         new_datetime = datetime_string[:14] + '30:00Z'
@@ -470,7 +479,7 @@ def round_time_down(datetime_string):
 
 #------------------------------------------------------------------------------------------------------
 
-def split_file(file_path, max_size):
+def split_file(file_path:str, max_size:int):
     file_parts = []
     part_number = 1
     total_size = os.path.getsize(file_path)
@@ -496,7 +505,7 @@ def split_file(file_path, max_size):
     
     return file_parts
 
-def upload_file(cfg, file_path):
+def upload_file(cfg:dict, file_path:str):
     domain_name = cfg['domain_name']
     bearer_token = cfg['auth_token']
     max_body_size = cfg['max_body_size']
@@ -575,7 +584,7 @@ def get_previous_thursday_date():
 
     return previous_thursday.date().isoformat()
 
-def kill_process_by_name_starts_with(start_string):
+def kill_process_by_name_starts_with(start_string:str):
     try:
         for proc in psutil.process_iter(['pid', 'name']):
             if proc.info['name'].startswith(start_string):
@@ -622,28 +631,17 @@ def toggle_system_time():
     except Exception as e:
         print(f"Error {e}")
 
-def calculate_average_float(float_list):
-    total = 0.0
-    count = 0
-    for num in float_list:
-        total += num
-        count += 1
-    if count == 0:
-        return 0.0
-    average = total / count
-    return round(average, 2)
-
-def sanitize_datetime(datetime_str):
+def sanitize_datetime(datetime_str:str):
     year, month, day, hour, min, sec = map(int, datetime_str[:10].split("-") + datetime_str[11:19].split(":"))
     sanitized_datetime = "{:02d}-{:02d}-{:02d}T{:02d}:{:02d}:{:02d}Z".format(day, month, year %100, hour, min, sec)
     return sanitized_datetime
 
-def reverse_date_format(input_date):
+def reverse_date_format(input_date:str):
     year, month, day = input_date.split('-')
     input_date = f"{day}-{month}-{year[2:]}"
     return input_date
 
-def user_input_set_target_date(current_time):
+def user_input_set_target_date(current_time:datetime):
     while True:
         user_input = input("Enter the target date (YYYY-MM-DD): ")
         try:
@@ -656,7 +654,7 @@ def user_input_set_target_date(current_time):
             print("Invalid date format. Please enter the date in the format (YYYY-MM-DD).")
     return user_date
 
-def yes_or_no(prompt):
+def yes_or_no(prompt:str):
     while True:
         response = input(prompt).strip().lower()
         if response == 'y':
@@ -666,7 +664,84 @@ def yes_or_no(prompt):
         else:
             print("Please enter 'Y' or 'N'.")
 
-def validate_drgmissions(DRG, patched):
+def wait_for_json(IPC:IPCServer, total_increments:int):
+    
+    total_increments_ = int(str(total_increments))
+    estimated_time_completion = (total_increments * 0.2) + 30
+    timeout_seconds = estimated_time_completion + 300
+
+    print('', include_timestamp=False)
+    print(f'Total increments: {str(total_increments)}')
+    print(f'{format_seconds(timeout_seconds)} until timeout')
+    print(f'Estimated time until completion: {format_seconds(estimated_time_completion)}')
+    print('', include_timestamp=False)
+
+    #Wait for JSON
+    polls = 0
+    avg_poll_time = 0.2
+    start_time = None
+    elapsed_time = 0
+    IPC.poll_event.wait()
+    IPC.polling_list.pop(0)
+    start_time = time.monotonic()
+    IPC.poll_event.clear()
+
+    while True:
+        timeout_ = IPC.poll_event.wait(timeout=timeout_seconds)
+        elapsed_time = time.monotonic() - start_time
+        
+        if not timeout_:
+            print('', include_timestamp=False)
+            print('Timeout... process crashed or froze')
+            kill_process_by_name_starts_with('FSD')
+            kill_process_by_name_starts_with('Unreal')
+            
+            IPC.shut_down()
+            IPC = IPCServer(IPC.port)
+            
+            total_increments = int(str(total_increments_))
+            polls = 0
+            avg_poll_time = 0.2
+            estimated_time_completion =  total_increments * avg_poll_time
+            timeout_seconds = estimated_time_completion + 300
+            
+            enable_system_time()
+            time.sleep(4)
+            disable_system_time()
+            subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
+            
+            start_time = time.monotonic()
+            timeout_ = IPC.poll_event.wait(timeout=timeout_seconds)
+            if not timeout_:
+                timeout_seconds = 0.1
+                continue
+        
+        poll = IPC.polling_list.pop(0)
+        IPC.poll_event.clear()
+        polls += 1
+        
+        avg_poll_time = elapsed_time / polls
+        estimated_time_completion =  total_increments * avg_poll_time
+        timeout_seconds = estimated_time_completion + 300
+        total_increments -= 1
+        
+        percent = round((total_increments_ - total_increments) / total_increments_ * 100, 2)
+        percent = f"{percent:.2f}% Completed"
+        if poll == 'enc':
+            percent = 'Encoding JSON...'    
+        print(f"{percent} | {format_seconds(timeout_seconds)} until timeout | Estimated time remaining: {format_seconds(estimated_time_completion)}    ", end='\r')
+        
+        if poll == 'fin':
+            dictionary = json.loads(re.sub(r':\d{2}Z', ':00Z', IPC.result_list[0]))
+            print('\nComplete. Ending FSD & Unreal processes...')
+            kill_process_by_name_starts_with('FSD')
+            kill_process_by_name_starts_with('Unreal')
+            break
+    IPC.shut_down()
+    
+    return dictionary
+
+def validate_drgmissions(DRG:dict, patched:bool):
     DRG = order_dictionary_by_date(DRG)
     DRG = reconstruct_dictionary(DRG)
     
@@ -722,69 +797,9 @@ def validate_drgmissions(DRG, patched):
         
         subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
         
-        IPC = IPCServer(port)
-        
         total_increments = len(invalid_keys)
-        total_increments_ = int(str(total_increments))
-        timeout_seconds = (total_increments * 1) + 300
-        estimated_time_completion = (total_increments * 0.8) + 30
+        redone_missions = wait_for_json(port, total_increments)
         
-        #Wait for JSON
-        polls = 0
-        avg_poll_time = 1
-        start_time = None
-        elapsed_time = 0
-        IPC.poll_event.wait()
-        IPC.polling_list.pop(0)
-        start_time = time.monotonic()
-        IPC.poll_event.clear()
-
-        while True:
-            timeout_seconds = (total_increments_ * avg_poll_time) + 300
-            
-            if elapsed_time > timeout_seconds:
-                print('', include_timestamp=False)
-                print('Timeout... process crashed or froze')
-                kill_process_by_name_starts_with('FSD')
-                kill_process_by_name_starts_with('Unreal')
-                
-                IPC.shut_down()
-                IPC = IPCServer(port)
-                
-                total_increments = int(str(total_increments_))
-                polls = 0
-                avg_poll_time = 1
-                elapsed_time = 0
-                
-                enable_system_time()
-                time.sleep(4)
-                disable_system_time()
-                subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
-                IPC.poll_event.wait()
-                IPC.polling_list.pop(0)
-                start_time = time.monotonic()
-                    
-            IPC.poll_event.wait()
-            poll = IPC.polling_list.pop(0)
-            IPC.poll_event.clear()
-            
-            elapsed_time = time.monotonic() - start_time
-            polls += 1
-            avg_poll_time = elapsed_time / polls
-            estimated_time_completion =  total_increments * avg_poll_time
-            total_increments -= 1
-            percent = round((total_increments_ - total_increments) / total_increments_ * 100, 2)
-            print(f"{percent:.2f}% Completed | Elapsed time: {format_seconds(elapsed_time)} | {format_seconds(timeout_seconds - elapsed_time)} until timeout | Estimated time until completion: {format_seconds(estimated_time_completion)}    ", end='\r')
-            
-            if poll == 'fin':
-                redone_missions = json.loads(re.sub(r':\d{2}Z', ':00Z', ''.join(DRG_)))
-                print('Complete. Ending FSD & Unreal processes...')
-                kill_process_by_name_starts_with('FSD')
-                kill_process_by_name_starts_with('Unreal')
-                break
-                    
-        IPC.shut_down()
-                        
         for timestamp, dict in redone_missions.items():
             DRG[timestamp] = dict
 
@@ -802,12 +817,12 @@ def validate_drgmissions(DRG, patched):
     print('No invalid timestamps found.')
     return DRG, patched
 
-def compare_dicts(dict1, dict2, ignore_keys):
+def compare_dicts(dict1:dict, dict2:dict, ignore_keys:list):
     dict1_filtered = {k: v for k, v in dict1.items() if k not in ignore_keys}
     dict2_filtered = {k: v for k, v in dict2.items() if k not in ignore_keys}
     return dict1_filtered == dict2_filtered
 
-def flatten_seasons_v5(DRG):
+def flatten_seasons_v5(DRG:dict):
     combined = {}
     timestamps = list(DRG.keys())
     seasons = ['s0', 's1', 's3']
