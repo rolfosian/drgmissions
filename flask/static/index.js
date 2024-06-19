@@ -2065,7 +2065,7 @@ async function verifyStorages(date) {
 
                 } else if (key === 'currentDaysJson') {
                     let data = JSON.parse(v);
-                    let ver = 2;
+                    let ver = 3;
                     if (data[0] != date.toISOString().slice(0, 10) || !data[1].hasOwnProperty('ver') || data[1]['ver'] != ver) {
                         setStorages(key, null);
                     } else {

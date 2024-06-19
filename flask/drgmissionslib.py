@@ -1159,7 +1159,7 @@ def group_by_day_and_split_all(DRG):
         os.mkdir('./static/json/bulkmissions')
 
         for timestamp, dictionary in DRG.items():
-            dictionary['ver'] = 2
+            dictionary['ver'] = 3
             fname = timestamp.replace(':','-')
             with open(f'./static/json/bulkmissions/{fname}.json', 'w') as f:
                 json.dump(dictionary, f)

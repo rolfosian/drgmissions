@@ -87,6 +87,9 @@ def compare_gods():
         DRG = json.load(f)
     with open('drgmissionsdev.json', 'r') as f:
         DRG_NEW = json.load(f)
+    
+    print(list(DRG.keys())[-1])
+    print(list(DRG_NEW.keys())[-1])
         # DRG_NEW = re.sub(r':\d{2}Z', ':00Z', f.read())
         # DRG_NEW = json.loads(DRG_NEW)
         # DRG_NEW = order_dictionary_by_date_FIRST_KEY_ROUNDING(DRG_NEW)
