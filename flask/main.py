@@ -133,7 +133,6 @@ def set_signal_handlers(SIGINT, SIGTERM, go_flag):
 
 
 if __name__ == '__main__':
-    from signal import signal, SIGINT, SIGTERM, SIG_DFL
     # reloader override for flask debug server so it doesnt lock up on reload
     from werkzeug._reloader import StatReloaderLoop, reloader_loops
     class ReloaderLoop_(StatReloaderLoop):
