@@ -32,13 +32,14 @@ class IPCServer:
             'result' : self.handle_result_client,
             'resultq' : lambda x, y: self.handle_result_client(x, y, quiet=True)
         }
+
         self.accept_thread = threading.Thread(target=self.accept_connections)
         self.accept_thread.start()
-        print(f"\nIPC server is listening on {self.server_address}")
-
+        print(f"IPC server is listening on {self.server_address}")
+        
     def handle_polling_client(self, client_socket:socket.socket, client_address:tuple, quiet=False):
         client_socket.sendall('ack\n'.encode())
-        print(f"\nPolling connection established from {client_address}") if not quiet else None
+        print(f"Polling connection established from {client_address}") if not quiet else None
         
         try:
             while True:
@@ -53,15 +54,15 @@ class IPCServer:
                 client_socket.sendall('ack\n'.encode())
 
         except Exception as e:
-            print(f"\nError handling polling connection from {client_address}: {e}") if not quiet else None
+            print(f"Error handling polling connection from {client_address}: {e}", start='\n') if not quiet else None
 
         finally:
-            print('\nPolling connection closed.') if not quiet else None
+            print('Polling connection closed.', start='\n') if not quiet else None
             client_socket.close()
 
     def handle_result_client(self, client_socket:socket.socket, client_address:tuple, quiet=False):
         client_socket.sendall('ack\n'.encode())
-        print(f"\nResult connection established from {client_address}") if not quiet else None
+        print(f"Result connection established from {client_address}") if not quiet else None
         client_buffer = bytearray()
 
         try:
@@ -75,15 +76,15 @@ class IPCServer:
                 continue
             self.result_list.append(client_buffer[:-3].decode('utf-8'))
             client_socket.sendall('ack\n'.encode())
+            quiet = True
             self.polling_list.append('fin')
             self.poll_event.set()
-            
 
         except Exception as e:
-            print(f"\nError handling result connection from {client_address}: {e}") if not quiet else None
+            print(f"Error handling result connection from {client_address}: {e}") if not quiet else None
 
         finally:
-            print('\nResult connection closed.') if not quiet else None
+            print('Result connection closed.') if not quiet else None
             client_socket.close()
 
     def handshake(self, client_socket:socket.socket, client_address:tuple):
@@ -91,11 +92,10 @@ class IPCServer:
             handshake_message = client_socket.recv(1024).decode('utf-8').strip()
             self.handshake_funcs[handshake_message](client_socket, client_address)
         except Exception as e:
-            print(f"\nHandshake error with {client_address}: {e}")
+            print(f"Handshake error with {client_address}: {e}", start='\n')
             client_socket.close()
 
     def accept_connections(self):
-        print("Waiting for a connection...")
         while True:
             try:
                 client_socket, client_address = self.server_socket.accept()
@@ -105,12 +105,12 @@ class IPCServer:
                 break
 
     def shut_down(self):
-        print("\nIPC is shutting down.")
+        print("IPC is shutting down.")
         self.server_socket.close()
         self.accept_thread.join()
 
     def restart_server(self):
-        print("\nRestarting IPC server...")
+        print("Restarting IPC server...")
         self.shut_down()
         self.__init__(self.port)
 
@@ -175,13 +175,14 @@ def timestamped_print(func:Callable[..., None]):
         include_timestamp = kwargs.pop('include_timestamp', True)
         start = kwargs.pop('start', '')
         args = [str(arg) for arg in args]
-        args[0] = start + args[0]
         
         if include_timestamp:
             concatenated_args = ''.join(args)
             if concatenated_args.strip() != '':
                 timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
-                args = (f'{timestamp}', *args)
+                args = (f'{start}{timestamp}', *args)
+        else:
+            args[0] = start + args[0]
         return func(*args, **kwargs)
     return wrapper
 print = timestamped_print(print)
@@ -595,30 +596,30 @@ def kill_process_by_name_starts_with(start_string:str):
 
 def enable_system_time():
     try:
-        print('-------------------------------------------------------------------------', include_timestamp=False)
+        # print('-------------------------------------------------------------------------', include_timestamp=False)
         key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r'SYSTEM\\CurrentControlSet\\Services\\W32Time\\Parameters', 0, winreg.KEY_WRITE)
         winreg.SetValueEx(key, 'Type', 0, winreg.REG_SZ, 'NTP')
         winreg.CloseKey(key)
-        subprocess_wrapper(['sc', 'config', 'w32time', 'start=', 'auto'], shell=True)()
-        subprocess_wrapper(['net', 'start', 'w32time'], shell=True)()
+        subprocess_wrapper(['sc', 'config', 'w32time', 'start=', 'auto'], shell=True, print_=False)()
+        subprocess_wrapper(['net', 'start', 'w32time'], shell=True, print_=False)()
         time.sleep(2)
-        subprocess_wrapper(['w32tm', '/resync'], shell=True)()
+        subprocess_wrapper(['w32tm', '/resync'], shell=True, print_=False)()
         print("Automatic system time enabled.")
-        print("-------------------------------------------------------------------------", include_timestamp=False)
+        # print("-------------------------------------------------------------------------", include_timestamp=False)
     except Exception as e:
         print(f"Error: {e}")
 def disable_system_time():
     try:
-        print('-------------------------------------------------------------------------', include_timestamp=False)
+        # print('-------------------------------------------------------------------------', include_timestamp=False)
         output = subprocess.check_output('sc query w32time', stderr=subprocess.PIPE, shell=True).decode('utf-8')
         if 'RUNNING' in output:
             key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r'SYSTEM\\CurrentControlSet\\Services\\W32Time\\Parameters', 0, winreg.KEY_WRITE)
             winreg.SetValueEx(key, 'Type', 0, winreg.REG_SZ, 'NoSync')
             winreg.CloseKey(key)
-            subprocess_wrapper(['sc', 'config', 'w32time', 'start=', 'disabled'], shell=True)()
-            subprocess_wrapper(['net', 'stop', 'w32time'], shell=True)()
+            subprocess_wrapper(['sc', 'config', 'w32time', 'start=', 'disabled'], shell=True, print_=False)()
+            subprocess_wrapper(['net', 'stop', 'w32time'], shell=True, print_=False)()
             print("Automatic system time disabled.")
-            print("-------------------------------------------------------------------------", include_timestamp=False)
+            # print("-------------------------------------------------------------------------", include_timestamp=False)
     except Exception as e:
         print(f"Error: {e}")
 def toggle_system_time():
@@ -665,6 +666,11 @@ def yes_or_no(prompt:str):
             print("Please enter 'Y' or 'N'.")
 
 def wait_for_json(IPC:IPCServer, total_increments:int):
+    pfuncs = {
+        'pol' : lambda total_increments_, total_increments: f"{round((total_increments_ - total_increments) / total_increments_ * 100, 2):.2f}% Completed",
+        'enc' : lambda total_increments_, total_increments: 'Converting lua table to JSON...',
+        'encc' : lambda total_increments_, total_increments: 'Awaiting JSON...'
+    }
     
     total_increments_ = int(str(total_increments))
     estimated_time_completion = (total_increments * 0.2) + 30
@@ -725,18 +731,16 @@ def wait_for_json(IPC:IPCServer, total_increments:int):
         timeout_seconds = estimated_time_completion + 300
         total_increments -= 1
         
-        percent = round((total_increments_ - total_increments) / total_increments_ * 100, 2)
-        percent = f"{percent:.2f}% Completed"
-        if poll == 'enc':
-            percent = 'Encoding JSON...'    
-        print(f"{percent} | {format_seconds(timeout_seconds)} until timeout | Estimated time remaining: {format_seconds(estimated_time_completion)}    ", end='\r')
-        
         if poll == 'fin':
+            print('Serializing JSON...')
             dictionary = json.loads(re.sub(r':\d{2}Z', ':00Z', IPC.result_list[0]))
-            print('\nComplete. Ending FSD & Unreal processes...')
+            print('Complete. Ending FSD & Unreal processes...', start='\n')
             kill_process_by_name_starts_with('FSD')
             kill_process_by_name_starts_with('Unreal')
             break
+        
+        percent = pfuncs[poll](total_increments_, total_increments)
+        print(f"{percent} | {format_seconds(timeout_seconds)} until timeout | Estimated time remaining: {format_seconds(estimated_time_completion)}    ", end='\r')
     IPC.shut_down()
     
     return dictionary

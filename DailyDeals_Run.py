@@ -64,6 +64,7 @@ def main():
         f.close()
     
     #Disable automatic system time
+    print('Disabling automatic system time...')
     disable_system_time()
     sleep(2)
     
@@ -90,6 +91,7 @@ def main():
         json.dump(AllTheDeals, f)
     
     #Enable Automatic system time
+    print('Enabling automatic system time...')
     enable_system_time()
     
     if yes_or_no('Upload JSON? Y/N: '):

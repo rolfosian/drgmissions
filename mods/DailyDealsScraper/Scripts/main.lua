@@ -116,9 +116,10 @@ function Main()
 
     PollingClient:send('enc\n')
     PollingClient:receive('*l')
-    PollingClient:close()
-
     DailyDeals = json.encode(DailyDeals) .. 'END'
+    PollingClient:send('encc\n')
+    PollingClient:receive('*l')
+    PollingClient:close()
     -- local file = io.open('drgdailydeals.json', 'w')
     -- if file then
     --     file:write(string.sub(DailyDeals, 1, -4))

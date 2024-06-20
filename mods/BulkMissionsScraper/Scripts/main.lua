@@ -140,11 +140,13 @@ function Main()
 
     PollingClient:send('enc\n')
     PollingClient:receive('*l')
-    PollingClient:close()
 
     print('Encoding JSON...\n')
     god = json.encode(god) .. 'END'
     print('Completed encoding JSON...\n')
+    PollingClient:send('encc\n')
+    PollingClient:receive('*l')
+    PollingClient:close()
     -- local file = io.open('drgmissionsgod.json', 'w')
     -- if file then
     --     file:write(string.sub(god, 1, -4))

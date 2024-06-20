@@ -68,6 +68,7 @@ def main():
     total_increments = int(diff_seconds // 1800) + 1
 
     #Disable automatic time sync
+    print('Disabling automatic system time...')
     disable_system_time()
     
     #Run Deep Rock Galactic headless
@@ -80,7 +81,9 @@ def main():
         f.close()
         
     #Enable automatic time sync
+    print('Enabling automatic system time...')
     enable_system_time()
+    print('', include_timestamp=False)
 
     DRG = order_dictionary_by_date_FIRST_KEY_ROUNDING(DRG)
     DRG = reconstruct_dictionary(DRG)

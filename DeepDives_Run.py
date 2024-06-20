@@ -25,6 +25,7 @@ def main():
     
     time_service_query = subprocess_wrapper(['sc', 'query', 'w32time'], print_=False)()
     if 'RUNNING' not in time_service_query:
+        print('Enabling automatic system time...')
         enable_system_time()
         time.sleep(2)
     else:
