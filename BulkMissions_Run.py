@@ -27,8 +27,8 @@ def main():
     maximize_window()
     time_service_query = subprocess.check_output('sc query w32time', stderr=subprocess.PIPE, shell=True).decode('utf-8')
     if 'RUNNING' not in time_service_query:
+        print('Enabling automatic system time...')
         enable_system_time()
-        print('')
         sleep(2)
 
     #Set mods.txt for BulkMissions collector
@@ -91,8 +91,7 @@ def main():
         json.dump(DRG, f)
     
     #Validate JSON
-    patched = False
-    DRG, patched = validate_drgmissions(DRG, patched)
+    DRG = validate_drgmissions(DRG)
     
     DRG = flatten_seasons_v5(DRG)
     with open('drgmissionsgod.json', 'w') as f:

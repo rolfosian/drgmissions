@@ -63,13 +63,13 @@ class IPCServer:
     def handle_result_client(self, client_socket:socket.socket, client_address:tuple, quiet=False):
         client_socket.sendall('ack\n'.encode())
         print(f"Result connection established from {client_address}") if not quiet else None
-        client_buffer = bytearray()
+        client_buffer = b''
+        end = b'}END'
 
         try:
             while True:
-                data = client_socket.recv(1024*1024*10)
-                client_buffer.extend(data)
-                if client_buffer[4:].decode('utf-8').strip().endswith('END'):
+                client_buffer += client_socket.recv(1024*1024*10)
+                if client_buffer[-4:] == end:
                     break
 
             while self.poll_event.is_set():
@@ -668,7 +668,7 @@ def yes_or_no(prompt:str):
 def wait_for_json(IPC:IPCServer, total_increments:int):
     pfuncs = {
         'pol' : lambda total_increments_, total_increments: f"{round((total_increments_ - total_increments) / total_increments_ * 100, 2):.2f}% Completed",
-        'enc' : lambda total_increments_, total_increments: 'Converting lua table to JSON...',
+        'enc' : lambda total_increments_, total_increments: 'Encoding JSON...',
         'encc' : lambda total_increments_, total_increments: 'Awaiting JSON...'
     }
     
@@ -745,7 +745,7 @@ def wait_for_json(IPC:IPCServer, total_increments:int):
     
     return dictionary
 
-def validate_drgmissions(DRG:dict, patched:bool):
+def validate_drgmissions(DRG:dict):
     DRG = order_dictionary_by_date(DRG)
     DRG = reconstruct_dictionary(DRG)
     
@@ -766,15 +766,13 @@ def validate_drgmissions(DRG:dict, patched:bool):
             f.write(s)
             f.close()
 
-        patched = True
-        
         while True:
             port = randint(12345, 65534)
             if not is_port_in_use(port, '127.0.0.1'):
                 break
         
         disable_system_time()
-        print('\nPatching invalid timestamps...')
+        print('Patching invalid timestamps...', start='\n')
 
         with open('invalid_keys.txt', 'w') as f:
             filestr = ''
@@ -816,10 +814,10 @@ def validate_drgmissions(DRG:dict, patched:bool):
         os.remove('invalid_keys.txt')
         os.remove('redonemissions.json')
 
-        return validate_drgmissions(DRG, patched)
+        return validate_drgmissions(DRG)
     
     print('No invalid timestamps found.')
-    return DRG, patched
+    return DRG
 
 def compare_dicts(dict1:dict, dict2:dict, ignore_keys:list):
     dict1_filtered = {k: v for k, v in dict1.items() if k not in ignore_keys}
