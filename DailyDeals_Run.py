@@ -6,26 +6,31 @@ from time import sleep
 from random import randint
 from drgmissions_scraper_utils import (
     IPCServer,
+    kill_process_by_name_starts_with,
     wait_for_json,
     upload_file,
     yes_or_no,
     enable_system_time,
     disable_system_time,
     maximize_window,
+    minimize_window,
     sanitize_datetime,
     reverse_date_format,
     order_dictionary_by_date,
     is_port_in_use,
     delete_file,
+    wrap_with_color,
     print,
     cfg
 )
 
 def main():
+    kill_process_by_name_starts_with('FSD')
+    kill_process_by_name_starts_with('Unreal')
     maximize_window()
     time_service_query = subprocess.check_output('sc query w32time', stderr=subprocess.PIPE, shell=True).decode('utf-8')
     if 'RUNNING' not in time_service_query:
-        print('Enabling automatic system time...')
+        print(wrap_with_color('Enabling automatic system time...', '0;33'))
         enable_system_time()
         sleep(2)
     
@@ -65,7 +70,7 @@ def main():
         f.close()
     
     #Disable automatic system time
-    print('Disabling automatic system time...')
+    print(wrap_with_color('Disabling automatic system time...', '0;33'))
     disable_system_time()
     sleep(2)
     
@@ -74,6 +79,7 @@ def main():
 
     #Run Deep Rock Galactic headless
     subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
+    minimize_window('FSD-Win64-Shipping.exe')
     
     AllTheDeals = wait_for_json(IPC, total_increments)
 
@@ -83,28 +89,20 @@ def main():
         
     AllTheDeals = order_dictionary_by_date(AllTheDeals)
 
-    #Reset mods.txt
-    with open('./mods/mods.txt', 'w') as f:
-        f.close()
-    
     #Write AllTheDeals JSON
     with open('drgdailydeals.json', 'w') as f:
         json.dump(AllTheDeals, f)
     
     #Enable Automatic system time
-    print('Enabling automatic system time...')
+    print(wrap_with_color('Enabling automatic system time...', '0;33'))
     enable_system_time()
     
     if yes_or_no('Upload JSON? Y/N: '):
         upload_file(cfg, 'drgdailydeals.json')
-    
-    input('Press enter to exit...')
-    
+
 try:
     if os.path.isfile('drgdailydeals.json'):
         delete_file('drgdailydeals.json')
-    print(os.getcwd(), '\n')
     main()
 except Exception as e:
     print(f'ERROR: {e}')
-    input('Press enter to exit...')

@@ -14,6 +14,18 @@ import winreg
 import json
 import re
 import threading
+from signal import signal, getsignal, SIGINT, SIG_DFL
+
+def wrap_sig_handler(func, self):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        self.shut_down()
+        signal(SIGINT, SIG_DFL)
+        return func(*args, **kwargs)
+    return wrapper
+
+def wrap_with_color(string:str, color:str):
+    return f"\033[0;{color}m{string}\033[0m"
 
 class IPCServer:
     def __init__(self, port:int):
@@ -35,11 +47,14 @@ class IPCServer:
 
         self.accept_thread = threading.Thread(target=self.accept_connections)
         self.accept_thread.start()
-        print(f"IPC server is listening on {self.server_address}")
+        print(wrap_with_color(f"IPC server is listening on {self.server_address}", '40;94'))
+        
+        handler = getsignal(SIGINT)
+        signal(SIGINT, wrap_sig_handler(handler, self))
         
     def handle_polling_client(self, client_socket:socket.socket, client_address:tuple, quiet=False):
         client_socket.sendall('ack\n'.encode())
-        print(f"Polling connection established from {client_address}") if not quiet else None
+        print(wrap_with_color(f"Polling connection established from {client_address}", '40;94')) if not quiet else None
         
         try:
             while True:
@@ -57,12 +72,12 @@ class IPCServer:
             print(f"Error handling polling connection from {client_address}: {e}", start='\n') if not quiet else None
 
         finally:
-            print('Polling connection closed.', start='\n') if not quiet else None
+            print(wrap_with_color('Polling connection closed.','40;94'), start='\n') if not quiet else None
             client_socket.close()
 
     def handle_result_client(self, client_socket:socket.socket, client_address:tuple, quiet=False):
         client_socket.sendall('ack\n'.encode())
-        print(f"Result connection established from {client_address}") if not quiet else None
+        print(wrap_with_color(f"Result connection established from {client_address}", '40;94')) if not quiet else None
         client_buffer = b''
         end = b'}END'
 
@@ -84,7 +99,7 @@ class IPCServer:
             print(f"Error handling result connection from {client_address}: {e}") if not quiet else None
 
         finally:
-            print('Result connection closed.') if not quiet else None
+            print(wrap_with_color('Result connection closed.', '40;94')) if not quiet else None
             client_socket.close()
 
     def handshake(self, client_socket:socket.socket, client_address:tuple):
@@ -92,7 +107,7 @@ class IPCServer:
             handshake_message = client_socket.recv(1024).decode('utf-8').strip()
             self.handshake_funcs[handshake_message](client_socket, client_address)
         except Exception as e:
-            print(f"Handshake error with {client_address}: {e}", start='\n')
+            print(wrap_with_color(f"Handshake error with {client_address}: {e}", '31'), start='\n')
             client_socket.close()
 
     def accept_connections(self):
@@ -105,12 +120,12 @@ class IPCServer:
                 break
 
     def shut_down(self):
-        print("IPC is shutting down.")
+        print(wrap_with_color("IPC is shutting down.", '40;94'))
         self.server_socket.close()
         self.accept_thread.join()
 
     def restart_server(self):
-        print("Restarting IPC server...")
+        print(wrap_with_color("Restarting IPC server...", '40;94'))
         self.shut_down()
         self.__init__(self.port)
 
@@ -119,9 +134,6 @@ def cfg_():
         cfg = json.load(f)
     return cfg
 cfg = cfg_()
-
-def wrap_with_color(string:str, color:str):
-    return f"\033[0;{color}m{string}\033[0m"
 
 def subprocess_wrapper(command:str, shell=False, print_=True):
     def wrapper():
@@ -174,6 +186,7 @@ def timestamped_print(func:Callable[..., None]):
     def wrapper(*args, **kwargs):
         include_timestamp = kwargs.pop('include_timestamp', True)
         start = kwargs.pop('start', '')
+
         args = [str(arg) for arg in args]
         
         if include_timestamp:
@@ -196,6 +209,38 @@ def format_seconds(seconds:Union[int, float]):
         remaining_seconds = 0
     formatted_time = "{:02d}:{:02d}:{:02d}".format(hours, minutes, remaining_seconds)
     return formatted_time
+
+def minimize_window(target_process_name):
+    def enum_windows_proc(hwnd, lparam, windows):
+        length = GetWindowTextLength(hwnd)
+        if length > 0:
+            buf = create_unicode_buffer(length + 1)
+            GetWindowText(hwnd, buf, length + 1)
+            window_title = buf.value
+            
+            if target_process_name in window_title:
+                windows.append(hwnd)
+        return True
+
+    user32 = WinDLL('user32')
+    
+    GetWindowTextLength = user32.GetWindowTextLengthW
+    GetWindowText = user32.GetWindowTextW
+    ShowWindow = user32.ShowWindow
+    ShowWindow.argtypes = [wintypes.HWND, wintypes.BOOL]
+    ShowWindow.restype = wintypes.BOOL
+    EnumWindowsProc = WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
+
+    windows = []
+    SW_MINIMIZE = 6
+    while True:
+        user32.EnumWindows(EnumWindowsProc(lambda *args: enum_windows_proc(*args, windows)), 0)
+
+        if windows:
+            time.sleep(1)
+            for hwnd in windows:
+                user32.ShowWindow(hwnd, SW_MINIMIZE)
+            break
 
 def maximize_window():
     def enum_windows_proc(hwnd, lparam, windows):
@@ -293,6 +338,33 @@ def reconstruct_dictionary(dictionary:dict):
                 god[timestamp][season][key] = value
     return god
 
+def check_duplicate_seasons(DRG):
+    seen = {}
+    for k, v in DRG.items():
+        seen[k] = {}
+        for season, d in v.items():
+            del d['timestamp']
+            for biome in d['Biomes'].keys():
+                for i, m in enumerate(d['Biomes'][biome]):
+                    del d['Biomes'][biome][i]['id']
+            seen[k][season] = json.dumps(d, indent=1)
+
+    
+    for i, (k, v) in enumerate(seen.items()):
+        print(k)
+        seent = []
+        for season, d in v.items():
+            for season_, d_ in v.items():
+                if season_ == season:
+                    continue
+                if d == d_:
+                    if [season, season_] in seent or [season_, season] in seent:
+                        continue
+                    seent.append([season, season_])
+                    print( season, '==', season_)
+        if i == 10:
+            break
+
 def find_missing_timestamps(dictionary:dict, invalid_keys:list):
     timestamps = [datetime.fromisoformat(timestamp[:-1]) for timestamp in dictionary.keys()]
     expected_diff = timedelta(minutes=30)
@@ -308,7 +380,7 @@ def find_missing_timestamps(dictionary:dict, invalid_keys:list):
             print(timestamp)
             invalid_keys.append((f'{timestamp.isoformat()}Z', find_missing_timestamps.__name__))
     else:
-        print('No missing timestamps found.')
+        print(wrap_with_color('No missing timestamps found.', '32'))
 
 def find_duplicate_seasons(dictionary:dict, invalid_keys:list):
     def find_duplicate_strings(dictionary):
@@ -354,7 +426,7 @@ def find_duplicate_seasons(dictionary:dict, invalid_keys:list):
             if timestamp not in invalid_keys:
                 invalid_keys.append((timestamp, func_name))
     else:
-        print("No duplicate season data found.")
+        print(wrap_with_color("No duplicate season data found.", '32'))
 
 def find_duplicates(dictionary:dict, invalid_keys:list):
     def is_not_longer_than_1_hour(datetime1, datetime2):
@@ -411,7 +483,7 @@ def find_duplicates(dictionary:dict, invalid_keys:list):
                 print('Likely not invalid')
 
     else:
-        print("No duplicate timestamps found.")
+        print(wrap_with_color("No duplicate timestamps found.", '32'))
 
 def check_sum_of_missions(dictionary:dict, invalid_keys:list):
     missions_keys = []
@@ -430,7 +502,7 @@ def check_sum_of_missions(dictionary:dict, invalid_keys:list):
         for key in missions_keys:
             print(f'Key:{key}')
     else:
-        print('No sum of missions outside range.')
+        print(wrap_with_color('No sum of missions outside range.', '32'))
         
 def check_missions_keys(dictionary:dict, invalid_keys:list):
     missions_keys = []
@@ -448,7 +520,7 @@ def check_missions_keys(dictionary:dict, invalid_keys:list):
         for key in missions_keys:
             print(f'Key:{key}')
     else:
-        print('No sum of missions keys outside range.')
+        print(wrap_with_color('No sum of missions keys outside range.', '32'))
 
 def check_missions_length_complexity(dictionary:dict):
     missions_keys = []
@@ -468,7 +540,7 @@ def check_missions_length_complexity(dictionary:dict):
             print(f'{timestamp_codename}')
         log.close()
     else:
-        print('No indefinite complexities or lengths found.')
+        print(wrap_with_color('No indefinite complexities or lengths found.', '32'))
 
 def round_time_down(datetime_string:str):
     datetime_minutes = int(datetime_string[14:16])
@@ -589,7 +661,7 @@ def kill_process_by_name_starts_with(start_string:str):
     try:
         for proc in psutil.process_iter(['pid', 'name']):
             if proc.info['name'].startswith(start_string):
-                print(f"Terminating process: {proc.info['name']} (PID: {proc.info['pid']})")
+                print(wrap_with_color(f"Terminating process: {proc.info['name']} (PID: {proc.info['pid']})", '38;2;255;165;0'))
                 proc.kill()
     except:
         return
@@ -604,7 +676,7 @@ def enable_system_time():
         subprocess_wrapper(['net', 'start', 'w32time'], shell=True, print_=False)()
         time.sleep(2)
         subprocess_wrapper(['w32tm', '/resync'], shell=True, print_=False)()
-        print("Automatic system time enabled.")
+        print(wrap_with_color("Automatic system time enabled.", '0;33'))
         # print("-------------------------------------------------------------------------", include_timestamp=False)
     except Exception as e:
         print(f"Error: {e}")
@@ -618,7 +690,7 @@ def disable_system_time():
             winreg.CloseKey(key)
             subprocess_wrapper(['sc', 'config', 'w32time', 'start=', 'disabled'], shell=True, print_=False)()
             subprocess_wrapper(['net', 'stop', 'w32time'], shell=True, print_=False)()
-            print("Automatic system time disabled.")
+            print(wrap_with_color("Automatic system time disabled.", '0;33'))
             # print("-------------------------------------------------------------------------", include_timestamp=False)
     except Exception as e:
         print(f"Error: {e}")
@@ -644,7 +716,7 @@ def reverse_date_format(input_date:str):
 
 def user_input_set_target_date(current_time:datetime):
     while True:
-        user_input = input("Enter the target date (YYYY-MM-DD): ")
+        user_input = input("Enter the target date up to which data will be collected (YYYY-MM-DD): ")
         try:
             user_date = datetime.strptime(user_input, "%Y-%m-%d")
             if user_date > current_time:
@@ -676,11 +748,9 @@ def wait_for_json(IPC:IPCServer, total_increments:int):
     estimated_time_completion = (total_increments * 0.2) + 30
     timeout_seconds = estimated_time_completion + 300
 
-    print('', include_timestamp=False)
-    print(f'Total increments: {str(total_increments)}')
-    print(f'{format_seconds(timeout_seconds)} until timeout')
-    print(f'Estimated time until completion: {format_seconds(estimated_time_completion)}')
-    print('', include_timestamp=False)
+    print(wrap_with_color(f'Total rotations: {str(total_increments)}', '1;37'))
+    print(f'{wrap_with_color(format_seconds(timeout_seconds), "0;33")} until timeout')
+    print(f'Estimated time until completion: {wrap_with_color(format_seconds(estimated_time_completion), "0;33")}')
 
     #Wait for JSON
     polls = 0
@@ -732,15 +802,14 @@ def wait_for_json(IPC:IPCServer, total_increments:int):
         total_increments -= 1
         
         if poll == 'fin':
-            print('Serializing JSON...')
+            print(wrap_with_color('Serializing JSON...', '40;92'))
             dictionary = json.loads(re.sub(r':\d{2}Z', ':00Z', IPC.result_list[0]))
-            print('Complete. Ending FSD & Unreal processes...', start='\n')
             kill_process_by_name_starts_with('FSD')
             kill_process_by_name_starts_with('Unreal')
             break
         
         percent = pfuncs[poll](total_increments_, total_increments)
-        print(f"{percent} | {format_seconds(timeout_seconds)} until timeout | Estimated time remaining: {format_seconds(estimated_time_completion)}    ", end='\r')
+        print(f"[40;92m{percent}[0m | {wrap_with_color(format_seconds(timeout_seconds), '0;33')} until timeout | Estimated time remaining: [0;33m{format_seconds(estimated_time_completion)}[0m    ", end='\r')
     IPC.shut_down()
     
     return dictionary
@@ -816,7 +885,7 @@ def validate_drgmissions(DRG:dict):
 
         return validate_drgmissions(DRG)
     
-    print('No invalid timestamps found.')
+    print(wrap_with_color('No invalid timestamps found.', '32'))
     return DRG
 
 def compare_dicts(dict1:dict, dict2:dict, ignore_keys:list):

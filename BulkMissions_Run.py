@@ -6,6 +6,7 @@ from datetime import datetime
 from random import randint
 from drgmissions_scraper_utils import (
     IPCServer,
+    kill_process_by_name_starts_with,
     order_dictionary_by_date_FIRST_KEY_ROUNDING,
     upload_file,
     yes_or_no,
@@ -17,17 +18,21 @@ from drgmissions_scraper_utils import (
     validate_drgmissions,
     flatten_seasons_v5,
     is_port_in_use,
+    minimize_window,
     maximize_window,
     delete_file,
+    wrap_with_color,
     print,
     cfg
 )
 
 def main():
+    kill_process_by_name_starts_with('FSD')
+    kill_process_by_name_starts_with('Unreal')
     maximize_window()
     time_service_query = subprocess.check_output('sc query w32time', stderr=subprocess.PIPE, shell=True).decode('utf-8')
     if 'RUNNING' not in time_service_query:
-        print('Enabling automatic system time...')
+        print(wrap_with_color('Enabling automatic system time...', '0;33'))
         enable_system_time()
         sleep(2)
 
@@ -68,11 +73,12 @@ def main():
     total_increments = int(diff_seconds // 1800) + 1
 
     #Disable automatic time sync
-    print('Disabling automatic system time...')
+    print(wrap_with_color('Disabling automatic system time...', '0;33'))
     disable_system_time()
     
     #Run Deep Rock Galactic headless
     subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
+    minimize_window('FSD-Win64-Shipping.exe')
     
     DRG = wait_for_json(IPC, total_increments)
         
@@ -81,9 +87,8 @@ def main():
         f.close()
         
     #Enable automatic time sync
-    print('Enabling automatic system time...')
+    print(wrap_with_color('Enabling automatic system time...', '0;33'))
     enable_system_time()
-    print('', include_timestamp=False)
 
     DRG = order_dictionary_by_date_FIRST_KEY_ROUNDING(DRG)
     DRG = reconstruct_dictionary(DRG)
@@ -104,9 +109,6 @@ if __name__ == '__main__':
     try:
         if os.path.isfile('drgmissionsgod.json'):
             delete_file('drgmissionsgod.json')
-        print(os.getcwd(), '\n')
         main()
-        input('Press enter to exit...')
     except Exception as e:
         print(f'ERROR: {e}')
-        input('Press enter to exit...')

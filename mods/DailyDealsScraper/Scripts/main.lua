@@ -108,9 +108,9 @@ function Main()
       local command = 'date '..utils.ReverseDateFormat(newtime[1])..' & time '..newtime[2]
 
       -- Set time forward one day
-      print(command..'\n')
-      count = count + 1
-      print(tostring(count)..'\n')
+      -- print(command..'\n')
+      -- count = count + 1
+      -- print(tostring(count)..'\n')
       os.execute(command)
     end
 

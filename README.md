@@ -13,10 +13,10 @@
 
 - If running the clock changing scripts in a VM, make sure to turn off guest/host timesync, IE: https://www.virtualbox.org/manual/ch09.html#disabletimesync `VBoxManage setextradata VM-name "VBoxInternal/Devices/VMMDev/0/Config/GetHostTimeDisabled" 1`
 
-- The `.*_Run.py` python scripts will handle toggling the system automatic time sync settings on and off.
+- The `.*_Run.py` python scripts will handle toggling the system automatic time sync settings on and off. Run the scripts using `Scrapers_Run.cmd`
 
 - [This lua script will fetch the current Deep Dive data and exit the game in short order](https://github.com/rolfosian/drgmissions/blob/main/mods/DeepDivesScraper/Scripts/main.lua)
-- ~~I have set a crontab entry: `59 10 * * 4 /usr/bin/wakeonlan XX:XX:XX:XX:XX:XX` on my home server to automate this. (cron of course requires adjustment if system clock is not UTC). It sends magic packets to wake a junker hardware tertiary machine I built out of old trash every Thursday at 10:59 which in turn runs [this script](https://github.com/rolfosian/drgmissions/blob/main/DeepDives_Run.py) via [this .bat (not the setup script but the script it generates)](https://github.com/rolfosian/drgmissions/blob/main/vm_fresh_setup.bat#L176) and Task Scheduler On event - Log: System, Source: Microsoft-Windows-Power-Troubleshooter, Event ID: 1 (On wake from sleep). Requires automatic logon of administrator account. This of course could also be done with a Virtual Machine instead.~~ Now using a Win10 Virtual Machine, and running on startup via shortcut to [Run_DeepDives.bat (not the setup script but the script it generates)](https://github.com/rolfosian/drgmissions/blob/main/vm_fresh_setup.bat#L176) in startup folder, requires automatic logon of Windows user and Steam at startup of course also.
+- Using a Win10 Virtual Machine, running on startup via shortcut to [Run_DeepDives.bat (not the setup script but the script it generates)](https://github.com/rolfosian/drgmissions/blob/main/vm_fresh_setup.bat#L176) in startup folder, requires automatic logon of Windows user and Steam launching at startup also.
 
 ## **Flask Service Setup**
 - [This setup script](https://github.com/rolfosian/drgmissions/blob/main/flask/setup.py) will take care of the setup of python venv.
@@ -36,6 +36,7 @@
 7. Install the [mesa-dist-win msvc release](https://github.com/pal1000/mesa-dist-win/releases/) for enabling OpenGL on Qemu etc. Or, if running Virtualbox, you don't need this, you can just install the Virtualbox Guest Additions with 3d acceleration enabled and change [this](https://github.com/UE4SS-RE/RE-UE4SS/blob/main/assets/UE4SS-settings.ini#L98) to dx11. *only needed if you want to run the ue4ss console gui
 8. Copy the `cfg.json` generated from the flask server setup as `scraper_cfg.json`, the `.*_Run.py` scripts, the `drgmissions_scraper_utils.py` library, and `drgmissions_validator.py` script to the `Deep Rock Galactic\FSD\Binaries\Win64` folder
 9. Finally unzip [UE4SS](https://github.com/UE4SS-RE/RE-UE4SS/releases/download/v3.0.1/UE4SS_v3.0.1.zip) into the `steamapps\common\Deep Rock Galactic\FSD\Binaries\Win64` and merge the [mods](https://github.com/rolfosian/drgmissions/tree/main/mods) folders.
+10. Run the desired scrapers via [Scrapers_Run.cmd](https://github.com/rolfosian/drgmissions/blob/main/Scrapers_Run.cmd)
 
 ## **TODO**
 - **Public Enemy Number One**: Check and Update Deep Dive scraper weekly to accomodate currently unknown configurations (havent seen any unknowns in months), **contingencies for if Steam misbehaves**
