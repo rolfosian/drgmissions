@@ -875,89 +875,6 @@ def rotate_dailydeal(AllTheDeals, tstamp_Queue, deal_Queue, go_flag):
 
         sleep(0.75)
 
-def rotate_biomes(DRG, season, tstamp_Queue, next_tstamp_Queue, biomes_lists, rendering_event, go_flag):
-    #order = ['Glacial Strata', 'Crystalline Caverns', 'Salt Pits', 'Magma Core', 'Azure Weald', 'Sandblasted Corridors', 'Fungus Bogs', 'Radioactive Exclusion Zone', 'Dense Biozone', 'Hollow Bough']
-    #thread pools for saving and hashing PIL objects - microscopic gains. #TODO multiprocessing pools
-    #def process_mission(mission):
-        #mission0 = {}
-        #mission0['CodeName'] = mission['CodeName']
-        #mission_icon = BytesIO()
-        #mission['rendered_mission'].save(mission_icon, format='PNG')
-        #mission_icon.seek(0)
-        #etag = hashlib.md5(mission_icon.getvalue()).hexdigest()
-        #mission0['etag'] = etag
-        #mission0['rendered_mission'] = mission_icon
-        #return mission0
-    #def wrap_missions_executor(missions):
-        #mission_futures = []
-        #with ThreadPoolExecutor() as executor:
-            #for mission in missions:
-                #future = executor.submit(process_mission, mission)
-                #mission_futures.append(future)
-            #results = [future.result() for future in mission_futures]
-            #return results
-    #def wrap_biomes_executor(Biomes):
-        #with ThreadPoolExecutor() as executor:
-            #biome_futures = {}
-            #for biome, missions in Biomes.items():
-                #future = executor.submit(wrap_missions_executor, missions)
-                #biome_futures[biome] = future
-            #results = {biome: future.result() for biome, future in biome_futures.items()}
-            #return results
-    #def array_biomes(Biomes, timestamp):
-        #Biomes1 = wrap_biomes_executor(Biomes)
-        #return timestamp, Biomes1
-    def read_biomes(timestamp, season):
-        return timestamp, DRG[timestamp][season]
-
-    def array_biomes(Biomes, timestamp):
-        Biomes1 = {}
-        for biome in Biomes.keys():
-            biome1 = biome.replace(' ', '-')
-            for mission in Biomes[biome]:
-                mission0 = {}
-                mission0['CodeName'] = mission['CodeName']
-                mission0['id'] = mission['id']
-                mission_icon = BytesIO()
-                mission['rendered_mission'].save(mission_icon, format='PNG')
-                mission['rendered_mission'].close()
-                mission_icon.seek(0)
-                etag = md5(mission_icon.getvalue()).hexdigest()
-                mission0['etag'] = etag
-                mission0['rendered_mission'] = mission_icon
-                Biomes1[biome1+str(mission['id'])] = mission0
-        return timestamp, Biomes1
-
-    while len(tstamp_Queue) == 0 and len(next_tstamp_Queue) == 0:
-        continue
-    biomes_Queue = biomes_lists[season][0]
-    nextbiomes_Queue = biomes_lists[season][1]
-
-    _, Biomes = read_biomes(tstamp_Queue[0], season)
-    Biomes = render_biomes(Biomes['Biomes'])
-    _, Biomes = array_biomes(Biomes, _)
-    biomes_Queue.append(Biomes)
-    timestamp_next, NextBiomes = read_biomes(next_tstamp_Queue[0], season)
-    NextBiomes = render_biomes(NextBiomes['Biomes'])
-    timestamp_next, NextBiomes = array_biomes(NextBiomes, timestamp_next)
-    nextbiomes_Queue.append(NextBiomes)
-    rendering_event.set()
-    del Biomes
-    del NextBiomes
-    del _
-    while go_flag.is_set():
-        applicable_timestamp = next_tstamp_Queue[0]
-        if applicable_timestamp != timestamp_next:
-            timestamp_next, NextBiomes = read_biomes(applicable_timestamp, season)
-            NextBiomes = render_biomes(NextBiomes['Biomes'])
-            timestamp_next, NextBiomes = array_biomes(NextBiomes, applicable_timestamp)
-            biomes_Queue.append(nextbiomes_Queue[0])
-            biomes_Queue.pop(0)
-            nextbiomes_Queue.append(NextBiomes)
-            nextbiomes_Queue.pop(0)
-            rendering_event.set()
-            del NextBiomes
-        sleep(0.25)
 def init_worker():
     signal(SIGINT, SIG_DFL)
     signal(SIGTERM, SIG_DFL)
@@ -1083,39 +1000,6 @@ def rotate_DDs(DDs, go_flag):
         sleep(0.25)
 #----------------------------------------------------------------
 #UTILS
-
-# def extract_days_from_json(data, num_days):
-#     timestamps = {datetime.fromisoformat(key.replace('Z', '')): value for key, value in data.items()}
-#     current_datetime = datetime.utcnow()
-
-#     days_from_now = current_datetime + timedelta(days=num_days)
-#     relevant_days = {f"{str(key).replace(' ', 'T')}Z": value for key, value in timestamps.items() if current_datetime <= key < days_from_now}
-#     return relevant_days
-
-# def split_json(num_days, DRG):
-#     shutil.rmtree('./static/json/bulkmissions')
-#     os.mkdir('./static/json/bulkmissions')
-
-#     bs = DRG[round_time_down(datetime.utcnow().isoformat())]
-#     DRG = extract_days_from_json(DRG, num_days)
-
-#     for timestamp, dictionary in (DRG.items()):
-#         fname = timestamp.replace(':','-')
-#         with open(f'./static/json/bulkmissions/{fname}.json', 'w') as f:
-#             json.dump(dictionary, f)
-
-#     fname = round_time_down(datetime.utcnow().isoformat()).replace(':', '-')
-#     with open (f'./static/json/bulkmissions/{fname}.json', 'w') as f:
-#         json.dump(bs, f)
-
-# def rotate_split_jsons(num_days, DRG, index_event):
-#     split_json(num_days, DRG)
-#     index_event.set()
-#     while True:
-#         sleep(num_days*86400-3600)
-#         index_event.clear()
-#         split_json(num_days)
-#         index_event.set()
 
 def split_daily_deals_json():
     with open('drgdailydeals.json', 'r') as f:
@@ -1244,47 +1128,6 @@ def order_dictionary_by_date(dictionary):
     for key in sorted_keys:
         ordered_dictionary[key] = dictionary[key]
     return ordered_dictionary
-
-# grug timedelta
-# def round_time(current_time, next_):
-#     rounded_time = current_time.replace(second=0, microsecond=0)
-#     current_year, current_month, current_day, current_hour, current_minute, current_second = current_time.year, current_time.month, current_time.day, current_time.hour, current_time.minute, current_time.second
-#     days_in_month = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-#     if next_:
-#         if rounded_time.minute < 30:
-#             rounded_time = rounded_time.replace(minute=30)
-#         else:
-#             if rounded_time.hour == 23:
-#                 try:
-#                     rounded_time = rounded_time.replace(minute=0, hour=(rounded_time.hour + 1) % 24, day=(rounded_time.day + 1))
-#                 except ValueError:
-#                     rounded_time = rounded_time.replace(minute=0, hour=(rounded_time.hour + 1) % 24)
-#                     current_day += 1
-#                     current_month += 1
-#                     if current_month > 12:
-#                         rounded_time = rounded_time.replace(month=current_month-12, year=current_year+1, day=1)
-#                     else:
-#                         if rounded_time.month == 2 and current_year % 4 == 0 and (current_year % 100 != 0 or current_year % 400 == 0):
-#                             days_in_month[1] = 29
-#                         if current_day > days_in_month[rounded_time.month - 1]:
-#                             current_day = rounded_time.day - days_in_month[rounded_time.month - 1]
-#                             rounded_time = rounded_time.replace(day=1)
-#                             rounded_time = rounded_time.replace(month=current_month)
-
-#             else:
-#                 rounded_time = rounded_time.replace(minute=0, hour=(rounded_time.hour + 1) % 24)
-#     else:
-#         if current_time.minute < 30:
-#             rounded_time = rounded_time.replace(minute=0)
-#         else:
-#             rounded_time = rounded_time.replace(minute=30)
-
-#     rounded_time_str = rounded_time.strftime("%Y-%m-%dT%H:%M:%SZ")
-#     return rounded_time_str
-# def select_timestamp(next_):
-#     current_time = datetime.utcnow()
-#     rounded_time_str = round_time(current_time, next_)
-#     return rounded_time_str
 
 def round_time(current_time, next_):
     if next_:
@@ -1580,12 +1423,12 @@ def rotate_index(rendering_event, current_timestamp_Queue, next_timestamp_Queue,
 #     return html
 # def array_dd_missions(dd_str, html):
 #     folder_name = dd_str.replace(' ', '_')
-#     html += f'<img class="dd-biome" src="/files/{folder_name}/dd_biome.png">\n<br>\n'
+#     html += f'<img class="dd-biome" src="/static/{folder_name}/dd_biome.png">\n<br>\n'
 #     stg_count = 0
 #     for i in range(3):
 #         stg_count += 1
 #         fname = str(stg_count)
-#         html += f'<div class="mission-hover-zoom"><img class="mission" title="Stage {fname}" src="/files/{folder_name}/{fname}.png"></div>\n'
+#         html += f'<div class="mission-hover-zoom"><img class="mission" title="Stage {fname}" src="/static/{folder_name}/{fname}.png"></div>\n'
 #     return html
 
 #obsolete, refer to index.html
@@ -1844,8 +1687,8 @@ def render_xp_calc_index():
     index_ = '''<!DOCTYPE html>
 <html>
 <head>
-<link rel ="icon" href="/files/favicon.ico" type="image/x-icon">
-<link rel ="stylesheet" href="/files/styles.css" type="text/css">
+<link rel ="icon" href="/static/favicon.ico" type="image/x-icon">
+<link rel ="stylesheet" href="/static/styles.css" type="text/css">
 <title>DRG XP Calculator</title>
 </head>
 <style>
@@ -1864,32 +1707,32 @@ tr {
 }
 </style>
 <body bgcolor="#303030">
-<img id="background-video" src="/files/drop_pod.jpg" type="video/webm">
+<img id="background-video" src="/static/drop_pod.jpg" type="video/webm">
 <div class="overlay"></div>
 <p class="loading">Loading</p>
 <div id="scal" class="collapsed">
 <div class="calc-grid-container">
 <form id="xpForm">
 
-<h2><div class="mission-hover-zoom"><img class="class-iconx" src="/files/class_icons/Icon_Character_Engineer.png"></div></h2>
+<h2><div class="mission-hover-zoom"><img class="class-iconx" src="/static/class_icons/Icon_Character_Engineer.png"></div></h2>
 <label class="classcalcsub" for="engineerLevels">Level:&nbsp;</label>
 <input placeholder="1" class="calcbox" type="number" min="1" max="25" id="engineerLevels" name="engineerLevels"><br><br>
 <label class="classcalcsub" for="engineerPromotions">Promotions:&nbsp;</label>
 <input placeholder="0" class="calcbox" type="number" min="0" id="engineerPromotions" name="engineerPromotions"><br><br>
 
-<h2><div class="mission-hover-zoom"><img class="class-iconx" src="/files/class_icons/Icon_Character_Scout.png"></div></h2>
+<h2><div class="mission-hover-zoom"><img class="class-iconx" src="/static/class_icons/Icon_Character_Scout.png"></div></h2>
 <label class="classcalcsub" for="scoutLevels">Level:&nbsp;</label>
 <input placeholder="1" class="calcbox" type="number" min="1" max="25" id="scoutLevels" name="scoutLevels"><br><br>
 <label class="classcalcsub" for="scoutPromotions">Promotions:&nbsp;</label>
 <input placeholder="0" class="calcbox" type="number" min="0" id="scoutPromotions" name="scoutPromotions"><br><br>
 
-<h2><div class="mission-hover-zoom"><img class="class-iconx" src="/files/class_icons/Icon_Character_Driller.png"></div></h2>
+<h2><div class="mission-hover-zoom"><img class="class-iconx" src="/static/class_icons/Icon_Character_Driller.png"></div></h2>
 <label class="classcalcsub" for="drillerLevels">Level:&nbsp;</label>
 <input placeholder="1" class="calcbox" type="number" min="1" max="25" id="drillerLevels" name="drillerLevels"><br><br>
 <label class="classcalcsub" for="drillerPromotions">Promotions:&nbsp;</label>
 <input placeholder="0" class="calcbox" type="number" min="0" id="drillerPromotions" name="drillerPromotions"><br><br>
 
-<h2><div class="mission-hover-zoom"><img class="class-iconx" src="/files/class_icons/Icon_Character_Gunner.png"></div></h2>
+<h2><div class="mission-hover-zoom"><img class="class-iconx" src="/static/class_icons/Icon_Character_Gunner.png"></div></h2>
 <label class="classcalcsub" for="gunnerLevels">Level:&nbsp;</label>
 <input placeholder="1" class="calcbox" type="number" min="1" max="25" id="gunnerLevels" name="gunnerLevels"><br><br>
 <label class="classcalcsub" for="gunnerPromotions">Promotions:&nbsp;</label>
@@ -1906,7 +1749,7 @@ tr {
 <tr>
   <!-- <th>Class</th> -->
   <th>Rank</th>
-  <th><img title="Effective Level" src="/files/icon_class_level.png"></th>
+  <th><img title="Effective Level" src="/static/icon_class_level.png"></th>
   <th>XP</th>
 
 </tr>
@@ -1944,80 +1787,80 @@ tr {
 <span class="calctitle"><i>Note: To find your Classes' number of promotions, go to Options>Save Menu ingame.</i> | <a class="jsonlink" href="/">HOME</a> | <a class="jsonlink" href="/xp_calc?engineer_level=1&engineer_promos=0&scout_level=1&scout_promos=0&driller_level=1&driller_promos=0&gunner_level=1&gunner_promos=0&hrs=0">XP Calculator Endpoint</a></span><br>
 <p class='gsgdisclaimer'><i>This website is a third-party platform and is not affiliated, endorsed, or sponsored by Ghost Ship Games. The use of Deep Rock Galactic's in-game assets on this website is solely for illustrative purposes and does not imply any ownership or association with the game or its developers. All copyrights and trademarks belong to their respective owners. For official information about Deep Rock Galactic, please visit the official Ghost Ship Games website.</i></p>
 </div>
-<script src="/files/xp_calculator.js"></script>
+<script src="/static/xp_calculator.js"></script>
 <div class="collapsed">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Engineer_Bronze_1.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Engineer_Bronze_2.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Engineer_Bronze_3.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Engineer_Silver_1.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Engineer_Silver_2.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Engineer_Silver_3.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Engineer_Gold_1.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Engineer_Gold_2.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Engineer_Gold_3.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Engineer_Platinum_1.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Engineer_Platinum_2.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Engineer_Platinum_3.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Engineer_Emerald_1.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Engineer_Emerald_2.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Engineer_Emerald_3.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Engineer_Legendary_1.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Engineer_Legendary_2.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Engineer_Legendary_3.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Scout_Bronze_1.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Scout_Bronze_2.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Scout_Bronze_3.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Scout_Silver_1.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Scout_Silver_2.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Scout_Silver_3.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Scout_Gold_1.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Scout_Gold_2.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Scout_Gold_3.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Scout_Platinum_1.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Scout_Platinum_2.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Scout_Platinum_3.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Scout_Emerald_1.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Scout_Emerald_2.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Scout_Emerald_3.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Scout_Legendary_1.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Scout_Legendary_2.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Scout_Legendary_3.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Driller_Bronze_1.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Driller_Bronze_2.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Driller_Bronze_3.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Driller_Silver_1.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Driller_Silver_2.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Driller_Silver_3.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Driller_Gold_1.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Driller_Gold_2.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Driller_Gold_3.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Driller_Platinum_1.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Driller_Platinum_2.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Driller_Platinum_3.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Driller_Emerald_1.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Driller_Emerald_2.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Driller_Emerald_3.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Driller_Legendary_1.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Driller_Legendary_2.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Driller_Legendary_3.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Gunner_Bronze_1.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Gunner_Bronze_2.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Gunner_Bronze_3.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Gunner_Silver_1.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Gunner_Silver_2.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Gunner_Silver_3.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Gunner_Gold_1.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Gunner_Gold_2.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Gunner_Gold_3.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Gunner_Platinum_1.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Gunner_Platinum_2.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Gunner_Platinum_3.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Gunner_Emerald_1.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Gunner_Emerald_2.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Gunner_Emerald_3.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Gunner_Legendary_1.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Gunner_Legendary_2.png">
-<img class="class-icon" src="/files/class_icons/Icon_Character_Gunner_Legendary_3.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Engineer_Bronze_1.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Engineer_Bronze_2.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Engineer_Bronze_3.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Engineer_Silver_1.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Engineer_Silver_2.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Engineer_Silver_3.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Engineer_Gold_1.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Engineer_Gold_2.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Engineer_Gold_3.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Engineer_Platinum_1.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Engineer_Platinum_2.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Engineer_Platinum_3.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Engineer_Emerald_1.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Engineer_Emerald_2.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Engineer_Emerald_3.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Engineer_Legendary_1.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Engineer_Legendary_2.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Engineer_Legendary_3.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Scout_Bronze_1.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Scout_Bronze_2.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Scout_Bronze_3.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Scout_Silver_1.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Scout_Silver_2.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Scout_Silver_3.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Scout_Gold_1.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Scout_Gold_2.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Scout_Gold_3.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Scout_Platinum_1.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Scout_Platinum_2.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Scout_Platinum_3.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Scout_Emerald_1.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Scout_Emerald_2.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Scout_Emerald_3.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Scout_Legendary_1.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Scout_Legendary_2.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Scout_Legendary_3.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Driller_Bronze_1.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Driller_Bronze_2.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Driller_Bronze_3.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Driller_Silver_1.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Driller_Silver_2.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Driller_Silver_3.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Driller_Gold_1.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Driller_Gold_2.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Driller_Gold_3.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Driller_Platinum_1.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Driller_Platinum_2.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Driller_Platinum_3.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Driller_Emerald_1.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Driller_Emerald_2.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Driller_Emerald_3.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Driller_Legendary_1.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Driller_Legendary_2.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Driller_Legendary_3.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Gunner_Bronze_1.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Gunner_Bronze_2.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Gunner_Bronze_3.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Gunner_Silver_1.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Gunner_Silver_2.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Gunner_Silver_3.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Gunner_Gold_1.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Gunner_Gold_2.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Gunner_Gold_3.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Gunner_Platinum_1.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Gunner_Platinum_2.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Gunner_Platinum_3.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Gunner_Emerald_1.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Gunner_Emerald_2.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Gunner_Emerald_3.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Gunner_Legendary_1.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Gunner_Legendary_2.png">
+<img class="class-icon" src="/static/class_icons/Icon_Character_Gunner_Legendary_3.png">
 </div>
 </body>
 </html>'''
