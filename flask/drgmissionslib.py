@@ -929,7 +929,6 @@ def rotate_biomes(DRG, tstamp_Queue, next_tstamp_Queue, nextbiomes_Queue, biomes
 
 def init_worker():
     try:
-        __name__ = 'sneed'
         def shutdown(*args):
             quit()
         signal(SIGINT, shutdown)
@@ -1072,7 +1071,7 @@ def group_by_day_and_split_all(DRG):
         os.mkdir('./static/json/bulkmissions')
 
         for timestamp, dictionary in DRG.items():
-            dictionary['ver'] = 4
+            dictionary['ver'] = 5
             fname = timestamp.replace(':','-')
             with open(f'./static/json/bulkmissions/{fname}.json', 'w') as f:
                 json.dump(dictionary, f)
