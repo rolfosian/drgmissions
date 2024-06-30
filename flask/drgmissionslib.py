@@ -4,14 +4,21 @@ from io import BytesIO
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 from datetime import datetime, timedelta
 from functools import wraps
-from multiprocessing.pool import Pool
-from signal import signal, SIGINT, SIGTERM, SIG_DFL
+from psutil import Process, process_iter
+from signal import signal, SIGINT, SIGTERM
 from random import choice
 import os
 import shutil
 import glob
 import json
 
+def get_process_name():
+    return Process(os.getpid()).name()
+
+if os.cpu_count() >= 4:
+    from multiprocessing.pool import Pool
+    if os.name == 'nt':
+        print('Look at these processes importing everything again lmao. Spawn sucks, man. I\'m not going to bother atomizing this module for spawn at this stage.')
 #----------------------------------------------
 # MISSION ICONS AND DAILY DEAL PIL FUNCTIONS
 def scale_image(image, i):
@@ -63,72 +70,72 @@ def render_daily_deal_bubble(changepercent, dealtype):
     if len(text) == 2:
         digit1_text = list(text)[0]
         digit2_text = f'{list(text)[1]}%'
-        
+
         digit1 = ImageDraw.Draw(bubble)
         digit1_x, digit1_y = calc_text_center(bubble.width, bubble.height, digit1_text, font, font_size)
         digit1.text((digit1_x-60, digit1_y-15), digit1_text, font=font, fill=(0, 0, 0))
-        
+
         digit2 = ImageDraw.Draw(bubble)
         digit2.text((digit1_x-5, digit1_y-15), digit2_text, font=font, fill=(0, 0, 0))
-        
+
         del digit1
         del digit2
-        
+
         savings_profit = ImageDraw.Draw(bubble)
         font_size = 30
         font = ImageFont.truetype(font_path, font_size)
         savings_x, savings_y = calc_text_center(bubble.width, bubble.height, save_profit[dealtype], font, font_size)
         savings_profit.text((savings_x, savings_y+38), save_profit[dealtype], font=font, fill=(0, 0, 0))
-        
+
     else:
         text = f'{text}%'
         changepercent = ImageDraw.Draw(bubble)
         text_x, text_y = calc_text_center(bubble.width, bubble.height, text, font, font_size)
         changepercent.text((text_x, text_y-15), text, font=font, fill=(0, 0, 0))
         del changepercent
-        
+
         savings_profit = ImageDraw.Draw(bubble)
         font_size = 30
         font = ImageFont.truetype(font_path, font_size)
         savings_x, savings_y = calc_text_center(bubble.width, bubble.height, save_profit[dealtype], font, font_size)
         savings_profit.text((savings_x, savings_y+38), save_profit[dealtype], font=font, fill=(0, 0, 0))
-        
+
     del savings_profit
-    
+
     return bubble
 
 def render_daily_deal_resource_and_amount(resources, resource, resourceamount):
-    
+
     resource = Image.open(resources[resource])
     resource = scale_image(resource, 0.3)
-    
+
     text = str(resourceamount)
     font_path = './static/img/Bungee-Regular.ttf'
     font_size = 75
     font = ImageFont.truetype(font_path, font_size)
     text_width = len(text) * font_size
     text_height = len(text) * font_size
-    
+
     image_width = text_width + (2 * resource.width)
     image_height = text_height
-    
+
     background = Image.new("RGBA", (image_width, image_height), (0, 0, 0, 0))
     x, y = calc_center(resource, background)
     background.paste(resource, (25,y))
     background.paste(resource.transpose(Image.FLIP_LEFT_RIGHT), ((image_width - resource.width)-25, y))
     resource.close()
-    
+
     draw = ImageDraw.Draw(background)
     text_x, text_y = calc_text_center(background.width, background.height, text, font, font_size)
     draw.text((text_x, text_y), text, font=font, fill=(255,255,255))
     del draw
-    
+
     return background
 
 def render_daily_deal_credits(credits):
     credits_ = Image.open('./static/img/Credit.png')
     credits_ = scale_image(credits_, 0.4)
-    
+
     text = str(credits)
     font_path = './static/img/Bungee-Regular.ttf'
     font_size = 75
@@ -139,7 +146,7 @@ def render_daily_deal_credits(credits):
     image_height = text_height
     background = Image.new("RGBA", (image_width, image_height), (0, 0, 0, 0))
     x, y = calc_center(credits_, background)
-    
+
     if len(text) < 5:
         background.paste(credits_, (35,y+10))
         background.paste(credits_, ((image_width - credits_.width)-35, y+10))
@@ -147,12 +154,12 @@ def render_daily_deal_credits(credits):
         background.paste(credits_, (55,y+10))
         background.paste(credits_, ((image_width - credits_.width)-55, y+10))
     credits_.close()
-    
+
     draw = ImageDraw.Draw(background)
     text_x, text_y = calc_text_center(background.width, background.height, text, font, font_size)
     draw.text((text_x, text_y), text, font=font, fill=(255,255,255))
     del draw
-    
+
     return background
 
 def render_dailydeal(deal_dict):
@@ -782,26 +789,13 @@ def render_biomes(Biomes):
         biome1 = []
         for mission in missions:
             mission1 = {}
-            mission1['CodeName'] = mission['CodeName']
-            mission1['id'] = mission['id']
-            mission1['rendered_mission'] = render_mission(mission)
-            biome1.append(mission1)
-        rendered_biomes[biome] = biome1
-    return rendered_biomes
-
-def render_biomes_FLAT(Biomes):
-    rendered_biomes = {}
-    for biome, missions in Biomes.items():
-        biome1 = []
-        for mission in missions:
-            mission1 = {}
 
             mission1['CodeName'] = mission['CodeName']
             mission1['included_in'] = mission['included_in']
             mission1['id'] = mission['id']
             mission1['rendered_mission'] = render_mission(mission)
             biome1.append(mission1)
-            
+
         rendered_biomes[biome] = biome1
     return rendered_biomes
 
@@ -814,10 +808,10 @@ def process_mission(biome_mission):
     mission1['included_in'] = mission['included_in']
     mission1['id'] = mission['id']
     mission1['rendered_mission'] = render_mission(mission)
-    
+
     return biome, mission1
 
-def render_biomes_FLAT(Biomes, render_pool):
+def render_biomes_parallel(Biomes, render_pool):
     all_missions = []
     for biome, missions in Biomes.items():
         for mission in missions:
@@ -829,6 +823,8 @@ def render_biomes_FLAT(Biomes, render_pool):
     for biome, mission in processed_missions:
         rendered_biomes[biome].append(mission)
     return rendered_biomes
+
+render_biomes = render_biomes_parallel if os.cpu_count() >= 4 else render_biomes
 
 #----------------------------------------------------------------
 #ICON SAVE, HASH, AND ARRAY ROTATORS
@@ -875,48 +871,86 @@ def rotate_dailydeal(AllTheDeals, tstamp_Queue, deal_Queue, go_flag):
 
         sleep(0.75)
 
+def array_biomes(Biomes, timestamp):
+    Biomes1 = {}
+    for biome in Biomes.keys():
+        biome1 = biome.replace(' ', '-')
+        Biomes1[biome1] = {}
+        for mission in Biomes[biome]:
+            mission0 = {}
+            mission0['CodeName'] = mission['CodeName']
+
+            mission_icon = BytesIO()
+            mission['rendered_mission'].save(mission_icon, format='PNG')
+            mission['rendered_mission'].close()
+            mission_icon.seek(0)
+
+            etag = md5(mission_icon.getvalue()).hexdigest()
+            mission0['etag'] = etag
+            mission0['rendered_mission'] = mission_icon
+
+            Biomes1[mission['CodeName'].replace(' ', '-')+str(mission['id'])] = mission0
+
+    return timestamp, Biomes1
+
+def rotate_biomes(DRG, tstamp_Queue, next_tstamp_Queue, nextbiomes_Queue, biomes_Queue, rendering_event, go_flag):
+    while len(tstamp_Queue) == 0 and len(next_tstamp_Queue) == 0:
+        sleep(0.1)
+        continue
+
+    Biomes = render_biomes(DRG[tstamp_Queue[0]]['Biomes'])
+    _, Biomes = array_biomes(Biomes, tstamp_Queue[0])
+    NextBiomes = render_biomes(DRG[next_tstamp_Queue[0]]['Biomes'])
+    timestamp_next, NextBiomes = array_biomes(NextBiomes, next_tstamp_Queue[0])
+
+    nextbiomes_Queue.append(NextBiomes)
+    biomes_Queue.append(Biomes)
+
+    rendering_event.set()
+    del Biomes
+    del NextBiomes
+    del _
+
+    while go_flag.is_set():
+        applicable_timestamp = next_tstamp_Queue[0]
+        if applicable_timestamp != timestamp_next:
+            NextBiomes = render_biomes(DRG[applicable_timestamp]['Biomes'])
+            timestamp_next, NextBiomes = array_biomes(NextBiomes, applicable_timestamp)
+
+            biomes_Queue.append(nextbiomes_Queue[0])
+            biomes_Queue.pop(0)
+            nextbiomes_Queue.append(NextBiomes)
+            nextbiomes_Queue.pop(0)
+
+            rendering_event.set()
+            del NextBiomes
+
+        sleep(0.25)
+
 def init_worker():
-    signal(SIGINT, SIG_DFL)
-    signal(SIGTERM, SIG_DFL)
-    
-def rotate_biomes_FLAT(DRG, tstamp_Queue, next_tstamp_Queue, nextbiomes_Queue, biomes_Queue, rendering_event, go_flag):
-    def array_biomes(Biomes, timestamp):
-        Biomes1 = {}
-        for biome in Biomes.keys():
-            biome1 = biome.replace(' ', '-')
-            Biomes1[biome1] = {}
-            for mission in Biomes[biome]:
-                mission0 = {}
-                mission0['CodeName'] = mission['CodeName']
-                
-                mission_icon = BytesIO()
-                mission['rendered_mission'].save(mission_icon, format='PNG')
-                mission['rendered_mission'].close()
-                mission_icon.seek(0)
-                
-                etag = md5(mission_icon.getvalue()).hexdigest()
-                mission0['etag'] = etag
-                mission0['rendered_mission'] = mission_icon
+    try:
+        __name__ = 'sneed'
+        def shutdown(*args):
+            quit()
+        signal(SIGINT, shutdown)
+        signal(SIGTERM, shutdown)
+    except:
+        quit()
 
-                Biomes1[mission['CodeName'].replace(' ', '-')+str(mission['id'])] = mission0
-
-        return timestamp, Biomes1
-
+def rotate_biomes_parallel(DRG, tstamp_Queue, next_tstamp_Queue, nextbiomes_Queue, biomes_Queue, rendering_event, go_flag):
     while len(tstamp_Queue) == 0 and len(next_tstamp_Queue) == 0:
         sleep(0.1)
         continue
 
     with Pool(processes=os.cpu_count(), initializer=init_worker) as render_pool:
-        Biomes = render_biomes_FLAT(DRG[tstamp_Queue[0]]['Biomes'], render_pool)
+        Biomes = render_biomes(DRG[tstamp_Queue[0]]['Biomes'], render_pool)
         _, Biomes = array_biomes(Biomes, tstamp_Queue[0])
-        NextBiomes = render_biomes_FLAT(DRG[next_tstamp_Queue[0]]['Biomes'], render_pool)
+        NextBiomes = render_biomes(DRG[next_tstamp_Queue[0]]['Biomes'], render_pool)
         timestamp_next, NextBiomes = array_biomes(NextBiomes, next_tstamp_Queue[0])
-        
+
         nextbiomes_Queue.append(NextBiomes)
         biomes_Queue.append(Biomes)
-        # render_pool.close()
-    
- 
+
     rendering_event.set()
     del Biomes
     del NextBiomes
@@ -927,9 +961,9 @@ def rotate_biomes_FLAT(DRG, tstamp_Queue, next_tstamp_Queue, nextbiomes_Queue, b
         if applicable_timestamp != timestamp_next:
 
             with Pool(processes=os.cpu_count(), initializer=init_worker) as render_pool:
-                NextBiomes = render_biomes_FLAT(DRG[applicable_timestamp]['Biomes'], render_pool)
+                NextBiomes = render_biomes(DRG[applicable_timestamp]['Biomes'], render_pool)
                 timestamp_next, NextBiomes = array_biomes(NextBiomes, applicable_timestamp)
-                
+
                 biomes_Queue.append(nextbiomes_Queue[0])
                 biomes_Queue.pop(0)
                 nextbiomes_Queue.append(NextBiomes)
@@ -940,6 +974,8 @@ def rotate_biomes_FLAT(DRG, tstamp_Queue, next_tstamp_Queue, nextbiomes_Queue, b
             del NextBiomes
 
         sleep(0.25)
+        
+rotate_biomes = rotate_biomes_parallel if os.cpu_count() >= 4 else rotate_biomes
 
 def rotate_DDs(DDs, go_flag):
     def sort_dd_json_list_by_timestamp(json_pattern):
@@ -1001,18 +1037,6 @@ def rotate_DDs(DDs, go_flag):
 #----------------------------------------------------------------
 #UTILS
 
-def split_daily_deals_json():
-    with open('drgdailydeals.json', 'r') as f:
-        AllTheDeals = json.load(f)
-
-    shutil.rmtree('./static/json/dailydeals')
-    os.mkdir('./static/json/dailydeals')
-
-    for timestamp, deal in AllTheDeals.items():
-        fname = timestamp.replace(':', '-')
-        with open(f'./static/json/dailydeals/{fname}.json', 'w') as f:
-            json.dump(deal, f)
-
 def group_by_day_and_split_all(DRG):
     def group_json_by_days(DRG):
         timestamps_dt = [datetime.fromisoformat(ts[:-1]) for ts in DRG.keys()]
@@ -1039,7 +1063,12 @@ def group_by_day_and_split_all(DRG):
         return DRG
     def split_json_bulkmissions_raw(DRG):
         if os.path.isdir('./static/json/bulkmissions'):
-            shutil.rmtree('./static/json/bulkmissions')
+            while True:
+                try:
+                    shutil.rmtree('./static/json/bulkmissions')
+                    break
+                except:
+                    continue
         os.mkdir('./static/json/bulkmissions')
 
         for timestamp, dictionary in DRG.items():
@@ -1230,7 +1259,7 @@ def flatten_seasons_v5(DRG):
     combined = {}
     timestamps = list(DRG.keys())
     seasons = ['s0', 's1', 's3']
-    
+
     for timestamp in timestamps:
         # del DRG[timestamp]['s2']
         # del DRG[timestamp]['s4']
@@ -1239,8 +1268,8 @@ def flatten_seasons_v5(DRG):
             for biome, missions in DRG[timestamp][season]['Biomes'].items():
                 for mission in missions:
                     del mission['id']
-    
-    
+
+
     for timestamp in timestamps:
         combined[timestamp] = {}
         combined[timestamp]['timestamp'] = timestamp
@@ -1253,7 +1282,7 @@ def flatten_seasons_v5(DRG):
                 for j, mission in enumerate(missions):
                     mission['index'] = j
                     mission['season'] = season
-                    
+
                     seen = False
                     for season_ in seasons:
                         if season != season_:
@@ -1264,14 +1293,14 @@ def flatten_seasons_v5(DRG):
                                         mission['included_in'] = []
                                     mission['included_in'].append(season_)
                                     mission['included_in'].append(season)
-                    
+
                     if not seen:
                         mission['included_in'] = [season]
-                        
+
                     mission['included_in'] = sorted(list(set(mission['included_in'])), key=lambda x: (str.isdigit(x), x.lower()))
 
                 combined[timestamp]['Biomes'][biome] += [mission for mission in missions]
-    
+
     id = 0
     for timestamp in timestamps:
         for biome, missions in combined[timestamp]['Biomes'].items():
@@ -1279,7 +1308,7 @@ def flatten_seasons_v5(DRG):
             filtered_missions = []
             for i, mission in enumerate(missions):
                 keep = True
-                
+
                 for j, m in enumerate(missions):
                     if i < j+1:
                         continue
@@ -1288,15 +1317,15 @@ def flatten_seasons_v5(DRG):
                         break
                 if keep:
                     filtered_missions.append(mission)
-            
+
             combined[timestamp]['Biomes'][biome] = sorted(filtered_missions, key=lambda x: x['index'])
-            
+
             for mission in combined[timestamp]['Biomes'][biome]:
                 del mission['index']
                 del mission['season']
                 id += 1
                 mission['id'] = id
-                
+
     return combined
 
 def wait_rotation(rendering_event, index_event, go_flag):
@@ -1322,16 +1351,58 @@ def GARBAGE(dictionary, go_flag):
             elapsed_time += 0.2
         select_timestamp_from_dict(dictionary, False)
 
+def get_process_pss_mb(pid):
+    try:
+        with open(f'/proc/{pid}/smaps_rollup', 'r') as f:
+            lines = f.readlines()
+        for line in lines:
+            if line.startswith('Pss:'):
+                return round(int(line.split()[-2]) / 1024, 2)
+    except Exception as e:
+        print(f'Error accessing pid to get memory info: {e}')
+        
+def get_memory_info_iter(pid):
+    for proc in process_iter(['pid', 'memory_info']):
+        if pid == proc.info['pid']:
+            return proc.info['memory_info']
 
-def SERVER_READY(index_event):
-    start = time()
+def SERVER_READY(index_event, start):
     index_event.wait()
     print('Startup time:', round(time() - start, 3), 'seconds.')
-    from psutil import Process
-    print('Server is ready for requests')
-    print("Memory used by process:", round(Process().memory_info().rss / (1024 * 1024), 2), "MB")
-    del Process
-    return
+    if os.name == 'nt':
+        current_process = Process(os.getpid())
+        mem_info = get_memory_info_iter(current_process.pid)
+        main_process_memory = round(mem_info.private / (1024 * 1024), 2)
+        print(f"Approx. memory used by main process {current_process.pid}: {main_process_memory} MB")
+
+        total_child_processes_memory = 0
+        
+        children = list(current_process.children(recursive=True))
+        for child in children:
+            mem_info = get_memory_info_iter(child.pid)
+            child_process_memory = round(mem_info.private / (1024 * 1024), 2)
+            print(f"Approx. memory used by child process {child.pid}: {child_process_memory} MB")
+            total_child_processes_memory += child_process_memory
+
+        total_memory_used = round(main_process_memory + total_child_processes_memory, 2)
+        print(f"Approx. total memory used by server and its child Processes: {total_memory_used} MB")
+        
+    else:
+        total_memory_used = 0
+        current_process = Process(os.getpid())
+        total_memory_used += get_process_pss_mb(current_process.pid)
+
+        print(f"Memory used by main process {current_process.pid} : {total_memory_used} MB")
+        pids = []
+        for child in current_process.children(recursive=True):
+            pids.append(child.pid)
+
+        for pid in pids:
+            total_memory_used += get_process_pss_mb(pid)
+            
+        total_memory_used = round(total_memory_used, 2)
+        print(f"Total memory used by server and its child processes: {total_memory_used} MB")
+
 
 def timestamped_print(func):
     @wraps(func)
@@ -1380,302 +1451,21 @@ def merge_parts(part_files, output_file):
                 merged_file.write(part.read())
 
 #----------------------------------------------------------------
-#HTML STRING RENDERERS
 
-#HOMEPAGE
+# this is useless and obsolete and i took all the string/etag hashing logic out of it but i keep it running because theres some reference to it somewhere that i cant be bothered checking to see if it will break something or not
 def rotate_index(rendering_event, current_timestamp_Queue, next_timestamp_Queue, index_event, index_Queue, go_flag):
     rendering_event.wait()
     current_timestamp = current_timestamp_Queue[0]
-    # index = {}
-    # index_ = render_index().encode()
-    # index['index'] = index_
-    # etag = md5(index_).hexdigest()
-    # index['etag'] = etag
-    # index_Queue.append(index)
     index_event.set()
     while go_flag.is_set():
         applicable_timestamp = current_timestamp_Queue[0]
         if applicable_timestamp != current_timestamp:
             rendering_event.wait()
-            # index = {}
-            # index_ = render_index().encode()
-            # index['index'] = index_
-            # etag = md5(index_).hexdigest()
-            # index['etag'] = etag
-            # index_Queue.append(index)
-            # index_Queue.pop(0)
             index_event.set()
         sleep(0.33)
 
-# def array_standard_missions(Biomes, biome_str, html):
-#     html += '<br>\n'
-#     url_biome = biome_str.replace(' ', '-')
-#     for mission in Biomes[biome_str]:
-#         fname = f'/png?img={url_biome}{str(mission["id"])}'
-#         html += f'<div class="mission-hover-zoom"><img title="{mission["CodeName"]}" class="mission" src="{fname}"></div>\n'
-#     return html
-# def array_standard_missions_next(Biomes, biome_str, html):
-#     html += '<br>\n'
-#     url_biome = biome_str.replace(' ', '-')
-#     for mission in Biomes[biome_str]:
-#         fname = f'/upcoming_png?img={url_biome}{str(mission["id"])}'
-#         html += f'<div class="mission-hover-zoom"><img title="{mission["CodeName"]}" class="mission" src="{fname}"></div>\n'
-#     return html
-# def array_dd_missions(dd_str, html):
-#     folder_name = dd_str.replace(' ', '_')
-#     html += f'<img class="dd-biome" src="/static/{folder_name}/dd_biome.png">\n<br>\n'
-#     stg_count = 0
-#     for i in range(3):
-#         stg_count += 1
-#         fname = str(stg_count)
-#         html += f'<div class="mission-hover-zoom"><img class="mission" title="Stage {fname}" src="/static/{folder_name}/{fname}.png"></div>\n'
-#     return html
 
 #obsolete, refer to index.html
-def render_index():
-    html = '''<!doctype html>
-<html>
-<head>
-<title>Current Missions from the Hoxxes IV Space Rig Mission Terminal</title>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta property="og:title" content="Current and Upcoming Missions from the Hoxxes IV Mission Terminal">
-<meta property="og:type" content="website">
-<meta property="og:image" content="/static/Mission_control_portrait.png">
-<meta property="og:description" content="Deep Rock Galactic Mission Tracker">
-<link rel ="icon" href="/static/favicon.ico" type="image/x-icon">
-<link rel ="stylesheet" href="/static/styles.css" type="text/css">
-<script src="/static/index.js"></script>
-</head>
-<body bgcolor="#303030">
-<video id="background-video" autoplay muted loop><source src="/static/space_rig.webm" type="video/webm"></video>
-<div class="overlay"></div>
-<p class="loading">Loading</p>
-<div id="mainContent">
-<div id="countdowncontainer">
-<button id="backgroundButton">Hide background</button><button id="buttonsbutton">x</button><br>
-<div id=DAILYDEAL><div id="dailydealhead">NEW DAILY DEAL IN<br><span id="DailyDealcountdown"></span></div><div id="DailyDeal" class="daily_deal_container"></div></div>
-<button id="dailydealbutton">Click here to see Daily Deal</button><br>
-<div id="missionscountdown">NEW MISSIONS IN<br>
-<span id="countdown"></span></div><button id="slideButton">Hide countdown</button><br>
-<button id="currentButton">Click here to see upcoming missions</button>
-<br>
-<select id="season" name="season" class="seasonBox">
-</select>
-</div>
-
-
-<div id="current">
-<div class="grid-container">
-
-<h2>
-<div class="biome-container">
-<img title="Abundant: Magnite; Scarce: Umanite" class="image-container" src="/static/DeepDive_MissionBar_GlacialStrata.png">
-<br><div id="Glacial Strata" class="missions">
-</div>
-</div>
-</h2>
-
-<h2>
-<div class="biome-container">
-<img title="Abundant: Jadiz; Scarce: Bismor" class="image-container" src="/static/DeepDive_MissionBar_CrystalCaves.png">
-<br><div id="Crystalline Caverns" class="missions">
-</div>
-</div>
-</h2>
-
-<h2>
-<div class="biome-container">
-<img title="Abundant: Enor Pearl; Scarce: Bismor" class="image-container" src="/static/DeepDive_MissionBar_SaltPits.png">
-<br><div id="Salt Pits">
-</div>
-</div>
-</h2>
-
-<h2>
-<div class="biome-container">
-<img title="Abundant: Magnite; Scarce: Croppa" class="image-container" src="/static/DeepDive_MissionBar_MagmaCore.png">
-<br><div id="Magma Core" class="missions">
-</div>
-</div>
-</h2>
-
-<h2>
-<div class ="biome-container">
-<img title="Abundant: Croppa; Scarce: Umanite" class="image-container" src="/static/DeepDive_MissionBar_AzureWeald.png">
-<br><div id="Azure Weald" class="missions">
-</div>
-</div>
-</h2>
-
-<h2>
-<div class="biome-container">
-<img title="Abundant: Enor Pearl; Scarce: Bismor" class="image-container" src="/static/DeepDive_MissionBar_Sandblasted.png">
-<br><div id="Sandblasted Corridors" class="missions">
-</div>
-</div>
-</h2>
-
-<h2>
-<div class="biome-container">
-<img title="Abundant: Croppa; Scarce: Jadiz" class="image-container" src="/static/DeepDive_MissionBar_FungusBogs.png">
-<br><div id="Fungus Bogs" class="missions">
-</div>
-</div>
-</h2>
-
-<h2>
-<div class="biome-container">
-<img title="Abundant: Umanite; Scarce: Enor Pearl" class="image-container" src="/static/DeepDive_MissionBar_Radioactive.png">
-<br><div id="Radioactive Exclusion Zone" class="missions">
-</div>
-</div>
-</h2>
-
-<h2>
-<div class="biome-container">
-<img title="Abundant: Bismor; Scarce: Umanite" class="image-container" src="/static/DeepDive_MissionBar_LushDownpour.png">
-<br><div id="Dense Biozone" class="missions">
-</div>
-</div>
-</h2>
-
-<h2>
-<div class="biome-container">
-<img title="Abundant: Jadiz; Scarce: Bismor" class="image-container" src="/static/DeepDive_MissionBar_HollowBough.png">
-<br><div id="Hollow Bough" class="missions">
-</div>
-</div>
-</h2>
-
-</div>
-</div>
-
-
-<div id="upcoming" style="visibility: hidden;">
-<div class="grid-container">
-
-<h2>
-<div class="biome-container">
-<img title="Abundant: Magnite; Scarce: Umanite" class="image-container" src="/static/DeepDive_MissionBar_GlacialStrata.png">
-<br><div id="nextGlacial Strata" class="missions">
-</div>
-
-</div>
-</h2>
-
-<h2>
-<div class="biome-container">
-<img title="Abundant: Jadiz; Scarce: Bismor" class="image-container" src="/static/DeepDive_MissionBar_CrystalCaves.png">
-<br><div id="nextCrystalline Caverns" class="missions">
-</div>
-</div>
-</h2>
-
-<h2>
-<div class="biome-container">
-<img title="Abundant: Enor Pearl; Scarce: Bismor" class="image-container" src="/static/DeepDive_MissionBar_SaltPits.png">
-<br><div id="nextSalt Pits" class="missions">
-</div>
-</div>
-</h2>
-
-<h2>
-<div class="biome-container">
-<img title="Abundant: Magnite; Scarce: Croppa" class="image-container" src="/static/DeepDive_MissionBar_MagmaCore.png">
-<br><div id="nextMagma Core" class="missions">
-</div>
-</div>
-</h2>
-
-<h2>
-<div class ="biome-container">
-<img title="Abundant: Croppa; Scarce: Umanite" class="image-container" src="/static/DeepDive_MissionBar_AzureWeald.png">
-<br><div id="nextAzure Weald" class="missions">
-</div>
-
-</div>
-</h2>
-
-<h2>
-<div class="biome-container">
-<img title="Abundant: Enor Pearl; Scarce: Bismor" class="image-container" src="/static/DeepDive_MissionBar_Sandblasted.png">
-<br><div id="nextSandblasted Corridors">
-</div>
-</h2>
-
-<h2>
-<div class="biome-container">
-<img title="Abundant: Croppa; Scarce: Jadiz" class="image-container" src="/static/DeepDive_MissionBar_FungusBogs.png">
-<br><div id="nextFungus Bogs" class="missions">
-</div>
-</div>
-</h2>
-
-<h2>
-<div class="biome-container">
-<img title="Abundant: Umanite; Scarce: Enor Pearl" class="image-container" src="/static/DeepDive_MissionBar_Radioactive.png">
-<br><div id="nextRadioactive Exclusion Zone" class="missions">
-</div>
-</div>
-</h2>
-
-<h2>
-<div class="biome-container">
-<img title="Abundant: Bismor; Scarce: Umanite" class="image-container" src="/static/DeepDive_MissionBar_LushDownpour.png">
-<br><div id="nextDense Biozone" class="missions">
-</div>
-</div>
-</h2>
-
-<h2>
-<div class="biome-container">
-<img title="Abundant: Jadiz; Scarce: Bismor" class="image-container" src="/static/DeepDive_MissionBar_HollowBough.png">
-<br><div id="nextHollow Bough" class="missions">
-</div>
-</div>
-</h2>
-
-</div>
-</div>
-
-
-<div class="grid-container">
-
-<div class="dd-container">
-<h2>
-<img class="image-container" src="/static/dd.png">
-<div id="Deep Dive Normal" class="dd-missions">
-</div>
-</h2>
-</div>
-
-<div class="dd-container">
-<h2>
-<img class="image-container" src="/static/edd.png">
-<div id="Deep Dive Elite" class="dd-missions">
-</div>
-</h2>
-</div>
-
-</div>
-
-<div>
-
-<div class="ddscountdown">NEW DEEP DIVES IN</div>
-<span id="ddcountdown"></span>
-<hr>
-</div>
-
-<div class="jsonc">
-<div class="jsonlinks"><span style="color: white;font-size: 30px;font-family: BebasNeue, sans-serif;"> <a class="jsonlink" href="/json?data=current">CURRENT MISSION DATA</a> | <a class="jsonlink" href="/json?data=next">UPCOMING MISSION DATA</a> | <a class="jsonlink" href="/json?data=DD">CURRENT DEEP DIVE DATA</a> | <a class="jsonlink" href="/json?data=dailydeal">CURRENT DAILY DEAL DATA</a> | <a class="jsonlink" href="/xp_calculator">CLASS XP CALCULATOR</a> | <a class="jsonlink" href="https://github.com/rolfosian/drgmissions/">GITHUB</a></span> </div>
-<span class="credits">Send credits (eth): 0xb9c8591A80A3158f7cFFf96EC3c7eA9adB7818E7</span>
-</div>
-<p class='gsgdisclaimer'><i>This website is a third-party platform and is not affiliated, endorsed, or sponsored by Ghost Ship Games. The use of Deep Rock Galactic's in-game assets on this website is solely for illustrative purposes and does not imply any ownership or association with the game or its developers. All copyrights and trademarks belong to their respective owners. For official information about Deep Rock Galactic, please visit the official Ghost Ship Games website.</i></p></div>
-</div>
-</body></html>'''
-    return html
-
 def render_index():
     return '''<!doctype html>
 </html>'''

@@ -24,10 +24,11 @@ def when_ready(server):
 
 def post_worker_init(worker):
     from main import go_flag, set_signal_handlers#, rendering_event
-    # from functools import wraps
     from signal import SIGINT, SIGTERM
-    # import os
+    set_signal_handlers(SIGINT, SIGTERM, go_flag, print_=False)
+    # from functools import wraps
     # from time import sleep
+    # import os
 
     # def custom_changed(func, self):
     #     @wraps(func)
@@ -42,7 +43,6 @@ def post_worker_init(worker):
     #     return wrapper
 
     # worker.reloader._callback = custom_changed(worker.reloader._callback, worker)
-    set_signal_handlers(SIGINT, SIGTERM, go_flag)
 
 worker_class = 'gthread'
 threads = 8
