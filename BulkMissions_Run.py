@@ -76,10 +76,18 @@ def main():
     print(wrap_with_color('Disabling automatic system time...', '0;33'))
     disable_system_time()
     
-    #Run Deep Rock Galactic headless
-    subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
-    minimize_window('FSD-Win64-Shipping.exe')
-    
+    while True:
+        #Run Deep Rock Galactic headless
+        subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
+        minimize_window('FSD-Win64-Shipping.exe')
+        
+        tim = IPC.poll_event.wait(timeout=300)
+        if tim:
+            break
+        else:
+            kill_process_by_name_starts_with('FSD')
+            kill_process_by_name_starts_with('Unreal')
+        
     DRG = wait_for_json(IPC, total_increments)
         
     #Reset mods.txt

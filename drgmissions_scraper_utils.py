@@ -668,7 +668,6 @@ def kill_process_by_name_starts_with(start_string:str):
 
 def enable_system_time():
     try:
-        # print('-------------------------------------------------------------------------', include_timestamp=False)
         key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r'SYSTEM\\CurrentControlSet\\Services\\W32Time\\Parameters', 0, winreg.KEY_WRITE)
         winreg.SetValueEx(key, 'Type', 0, winreg.REG_SZ, 'NTP')
         winreg.CloseKey(key)
@@ -677,12 +676,10 @@ def enable_system_time():
         time.sleep(2)
         subprocess_wrapper(['w32tm', '/resync'], shell=True, print_=False)()
         print(wrap_with_color("Automatic system time enabled.", '0;33'))
-        # print("-------------------------------------------------------------------------", include_timestamp=False)
     except Exception as e:
         print(f"Error: {e}")
 def disable_system_time():
     try:
-        # print('-------------------------------------------------------------------------', include_timestamp=False)
         output = subprocess.check_output('sc query w32time', stderr=subprocess.PIPE, shell=True).decode('utf-8')
         if 'RUNNING' in output:
             key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r'SYSTEM\\CurrentControlSet\\Services\\W32Time\\Parameters', 0, winreg.KEY_WRITE)
@@ -691,7 +688,6 @@ def disable_system_time():
             subprocess_wrapper(['sc', 'config', 'w32time', 'start=', 'disabled'], shell=True, print_=False)()
             subprocess_wrapper(['net', 'stop', 'w32time'], shell=True, print_=False)()
             print(wrap_with_color("Automatic system time disabled.", '0;33'))
-            # print("-------------------------------------------------------------------------", include_timestamp=False)
     except Exception as e:
         print(f"Error: {e}")
 def toggle_system_time():
@@ -739,9 +735,9 @@ def yes_or_no(prompt:str):
 
 def wait_for_json(IPC:IPCServer, total_increments:int):
     pfuncs = {
-        'pol' : lambda total_increments_, total_increments: f"{round((total_increments_ - total_increments) / total_increments_ * 100, 2):.2f}% Completed",
-        'enc' : lambda total_increments_, total_increments: 'Encoding JSON...',
-        'encc' : lambda total_increments_, total_increments: 'Awaiting JSON...'
+        'pol' : lambda total_increments_, total_increments: f"{round((total_increments_ - total_increments) / total_increments_ * 100, 2):.2f}%[0m Completed",
+        'enc' : lambda total_increments_, total_increments: '[40;92mEncoding JSON...[0m',
+        'encc' : lambda total_increments_, total_increments: '[40;92mAwaiting JSON...[0m'
     }
     
     total_increments_ = int(str(total_increments))
@@ -809,7 +805,7 @@ def wait_for_json(IPC:IPCServer, total_increments:int):
             break
         
         percent = pfuncs[poll](total_increments_, total_increments)
-        print(f"[40;92m{percent}[0m | {wrap_with_color(format_seconds(timeout_seconds), '0;33')} until timeout | Estimated time remaining: [0;33m{format_seconds(estimated_time_completion)}[0m    ", end='\r')
+        print(f"{percent} | {wrap_with_color(format_seconds(timeout_seconds), '0;33')} until timeout | Estimated time remaining: [0;33m{format_seconds(estimated_time_completion)}[0m    ", end='\r')
     IPC.shut_down()
     
     return dictionary
