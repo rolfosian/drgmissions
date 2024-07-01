@@ -10,10 +10,6 @@ function isLocalStorageAvailable(){
 }
 const isLocalStorageAvailable_ = isLocalStorageAvailable()
 function getDomainURL(){
-    // var currentDomain = window.location.protocol + "//" + window.location.hostname;
-    // if (window.location.port !== "") {
-    //     currentDomain += ":" + window.location.port;
-    // }
     let base = document.querySelector('base').href
     return base.slice(0, base.length-1);
 }
@@ -338,7 +334,7 @@ async function preloadFonts(){
     localStorage.setItem('fonts', JSON.stringify(base64LocalStoragesFonts));
 
     base64LocalStoragesFonts = undefined;
-    fontNamesAndUrls = undefined;
+    // fontNamesAndUrls = undefined;
 }
 
 async function preloadImagesAll() {
@@ -1685,25 +1681,15 @@ function toggleButtons() {
 
     if (buttonDiv.style.display === "none") {
         buttonDiv.style.display = 'block';
-        // for (let i = 0; i < buttonDiv.parentElement.childNodes.length; i++) {
-            // node = buttonDiv.parentElement.childNodes[i]
-            // if (node.nodeName === 'BR') {
-                // console.log(node)
-                // console.log(i)
+        buttonDiv.parentElement.removeChild(currentButtonLineBreak)
 
-            // }
-            // if (buttonDiv.parentElement.childNodes[9] == currentButtonLineBreak) {
-                buttonDiv.parentElement.removeChild(currentButtonLineBreak)
-            // }
-        // }
-        // slideToggle('missionsCountdown', 'missionRotationSlideButton', ['Show Countdown', 'Hide Countdown']);
         document.getElementById('dailyDealButton').textContent = 'Click here to see Daily Deal';
         buttonsButton.textContent = "x";
         setStorages('areButtonsHidden', false);
     } else {
         buttonDiv.style.display = "none";
         buttonDiv.parentElement.insertBefore(currentButtonLineBreak, document.getElementById('currentButton'))
-        // slideToggle('missionsCountdown', 'missionRotationSlideButton', ['Show Countdown', 'Hide Countdown'])
+
         slideToggle('dailyDealMaster', 'dailyDealButton', ['Click here to see Daily Deal', 'Hide Daily Deal'])
         buttonsButton.textContent = "+";
         setStorages('areButtonsHidden', true);
@@ -2232,17 +2218,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             //     's4': 'Critical Corruption',
             //     's5': 'Drilling Deeper'
             };
-            // let seasonBox = document.getElementById('season');
-            // for (let season in seasonBoxValues) {
-            //     let option = document.createElement('option');
-            //     option.value = season;
-            //     option.textContent = seasonBoxValues[season];
-            //     seasonBox.appendChild(option);
-            // }
-            // seasonBox.value = seasonBoxValues[localStorages['seasonSelected']];
-            // seasonBox.selectedIndex = Object.keys(seasonBoxValues).indexOf(localStorages['seasonSelected']);
 
-            // above was too many clicks
             let seasonSelectDiv = document.getElementById('seasonSelect');
             for (let season in seasonBoxValues) {
                 let div = document.createElement('div')
