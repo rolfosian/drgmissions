@@ -18,7 +18,7 @@ from drgmissions_scraper_utils import (
     validate_drgmissions,
     flatten_seasons_v5,
     is_port_in_use,
-    minimize_window,
+    hide_window,
     maximize_window,
     delete_file,
     wrap_with_color,
@@ -79,7 +79,7 @@ def main():
     while True:
         #Run Deep Rock Galactic headless
         subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
-        minimize_window('FSD-Win64-Shipping.exe')
+        hide_window('FSD-Win64-Shipping.exe')
         
         tim = IPC.poll_event.wait(timeout=300)
         if tim:

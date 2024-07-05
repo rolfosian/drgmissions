@@ -20,6 +20,8 @@ def wrap_sig_handler(func, self):
     @wraps(func)
     def wrapper(*args, **kwargs):
         self.shut_down()
+        kill_process_by_name_starts_with('FSD')
+        kill_process_by_name_starts_with('Unreal')
         signal(SIGINT, SIG_DFL)
         return func(*args, **kwargs)
     return wrapper
@@ -210,7 +212,7 @@ def format_seconds(seconds:Union[int, float]):
     formatted_time = "{:02d}:{:02d}:{:02d}".format(hours, minutes, remaining_seconds)
     return formatted_time
 
-def minimize_window(target_process_name):
+def hide_window(target_process_name):
     def enum_windows_proc(hwnd, lparam, windows):
         length = GetWindowTextLength(hwnd)
         if length > 0:
@@ -232,14 +234,17 @@ def minimize_window(target_process_name):
     EnumWindowsProc = WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
 
     windows = []
-    SW_MINIMIZE = 6
+    SW_HIDE = 0
+    start = time.time()
     while True:
         user32.EnumWindows(EnumWindowsProc(lambda *args: enum_windows_proc(*args, windows)), 0)
 
         if windows:
             time.sleep(1)
             for hwnd in windows:
-                user32.ShowWindow(hwnd, SW_MINIMIZE)
+                user32.ShowWindow(hwnd, SW_HIDE)
+            break
+        if time.time() - start >= 5:
             break
 
 def maximize_window():
@@ -314,14 +319,14 @@ def order_dictionary_by_date_FIRST_KEY_ROUNDING(dictionary:dict):
 
 def reconstruct_dictionary(dictionary:dict):
     god = {}
-    mission_key_order = ['PrimaryObjective', 'SecondaryObjective', 'MissionWarnings', 'MissionMutator', 'Complexity', 'Length', 'CodeName', 'id']
+    mission_key_order = ['Seed', 'PrimaryObjective', 'SecondaryObjective', 'MissionWarnings', 'MissionMutator', 'Complexity', 'Length', 'CodeName', 'id']
     biome_order = ['Glacial Strata', 'Crystalline Caverns', 'Salt Pits', 'Magma Core', 'Azure Weald', 'Sandblasted Corridors', 'Fungus Bogs', 'Radioactive Exclusion Zone', 'Dense Biozone', 'Hollow Bough']
     for timestamp, seasons_dict in dictionary.items():
         seasons_dict = sort_dictionary(seasons_dict, ['s0', 's1', 's2', 's3', 's4', 's5'])
         god[timestamp] = {}
         for season, master in seasons_dict.items():
             god[timestamp][season] = {}
-            master = sort_dictionary(master, ['Biomes', 'timestamp'])
+            master = sort_dictionary(master, ['RandomSeed', 'Biomes', 'timestamp'])
             for key, value in master.items():
                 if key == 'Biomes':
                     value = sort_dictionary(value, biome_order)
@@ -511,7 +516,7 @@ def check_missions_keys(dictionary:dict, invalid_keys:list):
             for biome in master['Biomes']:
                 for mission in master['Biomes'][biome]:
                     key_count = len(list(mission.keys()))
-                    if key_count not in [6, 7, 8]:
+                    if key_count not in [7, 8, 9, 10, 11]:
                         missions_keys.append(f'{key}: {biome}')
                         if timestamp not in invalid_keys:
                             invalid_keys.append((timestamp, check_missions_keys.__name__))
@@ -735,7 +740,7 @@ def yes_or_no(prompt:str):
 
 def wait_for_json(IPC:IPCServer, total_increments:int):
     pfuncs = {
-        'pol' : lambda total_increments_, total_increments: f"{round((total_increments_ - total_increments) / total_increments_ * 100, 2):.2f}%[0m Completed",
+        'pol' : lambda total_increments_, total_increments: f"[40;92m{round((total_increments_ - total_increments) / total_increments_ * 100, 2):.2f}%[0m Completed",
         'enc' : lambda total_increments_, total_increments: '[40;92mEncoding JSON...[0m',
         'encc' : lambda total_increments_, total_increments: '[40;92mAwaiting JSON...[0m'
     }
@@ -781,6 +786,7 @@ def wait_for_json(IPC:IPCServer, total_increments:int):
             time.sleep(4)
             disable_system_time()
             subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
+            hide_window('FSD-Win64-Shipping.exe')
             
             start_time = time.monotonic()
             timeout_ = IPC.poll_event.wait(timeout=timeout_seconds)
@@ -845,7 +851,8 @@ def validate_drgmissions(DRG:dict):
                 filestr += f'{key}\n'
             f.write(filestr.strip())
             f.close()
-
+        IPC = IPCServer(port)
+        
         with open('./mods/mods.txt', 'w') as f:
             f.write('InvalidTimestampsScraper : 1')
             f.close()
@@ -862,10 +869,20 @@ def validate_drgmissions(DRG:dict):
             f.writelines(main_lines)
             f.close()
         
+    while True:
+        #Run Deep Rock Galactic headless
         subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
+        hide_window('FSD-Win64-Shipping.exe')
+        
+        tim = IPC.poll_event.wait(timeout=300)
+        if tim:
+            break
+        else:
+            kill_process_by_name_starts_with('FSD')
+            kill_process_by_name_starts_with('Unreal')
         
         total_increments = len(invalid_keys)
-        redone_missions = wait_for_json(port, total_increments)
+        redone_missions = wait_for_json(IPC, total_increments)
         
         for timestamp, dict in redone_missions.items():
             DRG[timestamp] = dict
@@ -912,6 +929,7 @@ def flatten_seasons_v5(DRG:dict):
             for biome, missions in DRG[timestamp][season]['Biomes'].items():
                 if i == 0:
                     combined[timestamp]['Biomes'][biome] = []
+                    combined[timestamp]['RandomSeed'] = DRG[timestamp][season]['RandomSeed']
 
                 for j, mission in enumerate(missions):
                     mission['index'] = j

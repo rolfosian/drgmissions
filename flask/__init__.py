@@ -182,8 +182,6 @@ def create_app(DRG, AllTheDeals, start=start, debug=False):
     #Homepage
     @app.route('/')
     def home():
-        # index_event.wait()
-        # return send_file(BytesIO(index_Queue[0]['index']), mimetype='text/html', etag=index_Queue[0]['etag'])
         return send_file(f'{cwd}/index.html', mimetype='text/html')
 
     # Sends current mission icons, arg format f"?img={mission['CodeName'].replace(' ', '-')}{mission['id']}" - see rotate_biomes in drgmissionslib.py

@@ -402,6 +402,112 @@ function replaceCharactersAtIndices(inputString, replacements) {
     return result;
 }
 
+function getWeekKey(datestring, previous=false) {
+    const date = new Date(datestring)
+    const dayNum = date.getUTCDay()
+    date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+    
+    if (previous) {
+        date.setUTCDate(date.getUTCDate() - 7);
+    }
+
+    const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+    const weekNum = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+    const year = date.getUTCFullYear();
+    return `${year}-W${String(weekNum).padStart(2, '0')}`;
+}
+function getPreviousWeekKeys(dateStr, numWeeks, skip=false) {
+    const date = new Date(dateStr);
+    const weekKeys = [];
+
+    for (let i = 0; i < numWeeks; i++) {
+        if (skip && (i == 0 || i == 1)) {
+            continue
+        }
+        const weekKey = getWeekKey(date.toISOString());
+        weekKeys.push(weekKey);
+        date.setUTCDate(date.getUTCDate() - 7);
+    }
+
+    return weekKeys;
+}
+
+async function populateLocalStoragesSeedMaps(date, update=false) {
+    let weekKeys = getPreviousWeekKeys(date.toISOString(), 2);
+
+    if (!update) {
+        let seedMaps = await Promise.all([
+            loadJSON(`${domainURL}/static/json/randomseeds/${weekKeys[0]}.json`),
+            loadJSON(`${domainURL}/static/json/randomseeds/${weekKeys[1]}.json`)
+        ]);
+
+        setStorages('currentSeedMap', [weekKeys[0], seedMaps[0]]);
+        setStorages('previousSeedMap', [weekKeys[1], seedMaps[1]]);
+        return
+        
+    }
+
+    if (getWeekKey(date.toISOString(), previous=true) != localStorages['currentSeedMap']) {
+        let seedMaps = await Promise.all([
+            loadJSON(`${domainURL}/static/json/randomseeds/${weekKeys[0]}.json`),
+            loadJSON(`${domainURL}/static/json/randomseeds/${weekKeys[1]}.json`)
+        ]);
+
+        setStorages('currentSeedMap', [weekKeys[0], seedMaps[0]]);
+        setStorages('previousSeedMap', [weekKeys[1], seedMaps[1]]);
+        return
+    }
+    
+    let newWeekMap = [weekKeys[0], await loadJSON(`${domainURL}/static/json/randomseeds/${weekKeys[0]}.json`)];
+
+    setStorages['previousSeedMap', localStorages['currentSeedMap']];
+    setStorages['currentSeedMap', newWeekMap];
+}
+
+async function mapSeedToTimestamp(DRG_GLOBALMISSION_SEED) {
+    let date = new Date();
+    let day = date.getUTCDay()
+    let datestring = date.toISOString();
+    let weekKey = getWeekKey(datestring);
+
+    if (weekKey != localStorages['currentSeedMap'][0]) {
+        populateLocalStoragesSeedMaps(date, update=true)
+    }
+
+    let currentDate = datestring.slice(0, 10);
+    let RandomSeed = ((DRG_GLOBALMISSION_SEED >> 1) & 131071);
+
+    if (localStorages['currentSeedMap'][1][currentDate].hasOwnProperty(RandomSeed)) {
+        return localStorages['currentSeedMap'][1][currentDate][RandomSeed];
+    }
+
+    for (let d in localStorages['currentSeedMap']) {
+        if (d != currentDate) {
+            let seedMap = localStorages['currentSeedMap'][d];
+            if (seedMap.hasOwnProperty(RandomSeed)) {
+                return seedMap[RandomSeed];
+            }
+        }
+    }
+
+    try {
+        let weekKeys = getPreviousWeekKeys(datestring, 4, skip=true);
+        for (let i = 0; i < weekKeys.length; i++) {
+            let weekKey = weekKeys[i];
+            let weeklySeedMap = await loadJSON(`${domainURL}/static/${weekKey}.json`);
+            for (let d in weeklySeedMap) {
+                let seedMap = weeklySeedMap[d];
+                if (seedMap.hasOwnProperty(RandomSeed)) {
+                    return seedMap[RandomSeed]
+                }
+            }
+        }
+    } catch (e) {
+        return 'SEED OUT OF RANGE FOR DATASET';
+    }
+    return 'SEED OUT OF RANGE FOR DATASET';
+}
+
 function getCurrentDateMidnightUTC() {
     var now = new Date();
 
@@ -2057,6 +2163,21 @@ async function verifyStorages(date) {
                     } else {
                         localStorages[key] = data;
                     }
+
+                // } else if (key === 'currentSeedMap') {
+                //     if (v[0] == getWeekKey(date.toISOString())) {
+                //         localStorages[key] = JSON.parse(v);
+                //     } else {
+                //         setStorages(key, null);
+                //     }
+
+                // } else if (key === 'previousSeedMap') {
+                //     if (v[0] == getWeekKey(date.toISOString(), previous=true)) {
+                //         localStorages[key] = JSON.parse(v);
+                //     } else {
+                //         setStorages(key, null);
+                //     }
+
                 } else {
                     localStorages[key] = JSON.parse(v);
                 }
@@ -2097,6 +2218,8 @@ var localStorages = {
     'img' : null,
     'fonts' : null,
     'homepageScript' : null,
+    // 'currentSeedMap' : null,
+    // 'previousSeedMap' : null,
 };
 var localStoragesHashes = {
     'img' : 1996300662,
@@ -2150,7 +2273,7 @@ function resetGlobalVars() {
     base64LocalStoragesFonts = {};
     loadedImages = 0;
 
-    localStorages = {
+    var localStorages = {
         'isBackgroundHidden' : false,
         'areButtonsHidden' : false,
         'seasonSelected' : 's0',
@@ -2158,6 +2281,8 @@ function resetGlobalVars() {
         'img' : null,
         'fonts' : null,
         'homepageScript' : null,
+        'currentSeedMap' : null,
+        'previousSeedMap' : null,
     };
 
     cacheActive = false;
@@ -2255,6 +2380,9 @@ document.addEventListener('DOMContentLoaded', async function() {
             } else {
                 await loadImgsFromLocalStorageAll();
             }
+            // if (!localStorages['currentSeedMap']) {
+            //     populateLocalStoragesSeedMaps(date);
+            // }
 
             var breakfast = await initialize(date);
             console.log(breakfast)

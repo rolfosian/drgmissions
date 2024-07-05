@@ -350,6 +350,7 @@ function UnpackStandardMission(mission, master, b, missionscount, season)
     missionscount = missionscount + 1
     local mission1 = {}
     mission1['id'] = missionscount
+    mission1['Seed'] = mission:GetPropertyValue('Seed')
 
     local MissionName = mission:GetPropertyValue("MissionName")
     _L.MissionName = MissionName:ToString()

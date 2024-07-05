@@ -62,7 +62,7 @@ function Main()
 
     -- Initialize Table
     local god = {}
-    local count = 0
+    -- local count = 0
     local missionscount = 0
     local RandomSeed = nil
     local PreviousRandomSeed = nil
@@ -85,17 +85,19 @@ function Main()
 
         local master = {}
         for SeasonKey, SeasonValue in pairs(SeasonsValues) do
+            missionscount = 0
             master[SeasonKey] = {}
             master[SeasonKey]['Biomes'] = utils.BiomesTable()
+            master[SeasonKey]['timestamp'] = timestamp
+            master[SeasonKey]['RandomSeed'] = RandomSeed
+
             -- Get GeneratedMission UObjects
             local b = nil
             local missions = utils.GetMissions(SeasonValue, RandomSeed)
-            if missions then
-                master[SeasonKey]['timestamp'] = timestamp
-                for index, mission in pairs(missions) do
-                    b = utils.GetBiome(mission)
-                    missionscount = utils.UnpackStandardMission(mission, master, b, missionscount, SeasonKey)
-                end
+
+            for index, mission in pairs(missions) do
+                b = utils.GetBiome(mission)
+                missionscount = utils.UnpackStandardMission(mission, master, b, missionscount, SeasonKey)
             end
 
             for biome, ms  in pairs(master[SeasonKey]['Biomes']) do
@@ -133,7 +135,7 @@ function Main()
 
         -- Set time forward 30 minutes
         -- print(command..'\n')
-        count = count + 1
+        -- count = count + 1
         -- print(tostring(count)..'\n')
         os.execute(command)
     end

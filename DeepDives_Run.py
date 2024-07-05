@@ -11,7 +11,7 @@ from drgmissions_scraper_utils import (
     get_previous_thursday_date,
     kill_process_by_name_starts_with,
     maximize_window,
-    minimize_window,
+    hide_window,
     subprocess_wrapper,
     wrap_with_color,
     print,
@@ -49,7 +49,7 @@ def main():
         f.close()
         
     subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
-    minimize_window('FSD-Win64-Shipping.exe')
+    hide_window('FSD-Win64-Shipping.exe')
 
     files = []
     start_time = time.time()
@@ -60,6 +60,7 @@ def main():
             time.sleep(3)
             subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
             start_time = time.time()
+            hide_window('FSD-Win64-Shipping.exe')
             continue
         
         for filename in os.listdir():

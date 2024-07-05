@@ -1034,7 +1034,49 @@ def rotate_DDs(DDs, go_flag):
             del dds
         sleep(0.25)
 #----------------------------------------------------------------
-#UTILS
+#UTILS 
+
+def create_RandomSeed_timestamp_map(DRG):
+    timestamps = list(DRG.keys())
+    seed_map = {}
+    
+    for timestamp in timestamps:
+        RandomSeed = DRG[timestamp]['RandomSeed']
+        seed_map[RandomSeed] = timestamp
+    
+    return seed_map
+def group_seed_map_by_week_and_split_all(seed_map):
+    def group_seed_map_by_week():
+        grouped_by_weeks = {}
+        for seed, timestamp in seed_map.items():
+            dt = datetime.fromisoformat(timestamp[:-1])
+            year, week, _ = dt.isocalendar()
+            week_key = f"{year}-W{week:02d}"
+            
+            if week_key not in grouped_by_weeks:
+                grouped_by_weeks[week_key] = {}
+            if timestamp[:10] not in grouped_by_weeks[week_key]:
+                grouped_by_weeks[timestamp[:10]] = {}
+            
+            grouped_by_weeks[week_key][timestamp[:10]][seed] = timestamp
+
+        return grouped_by_weeks
+    def split_json_seed_map_weeks(grouped_by_weeks):
+        if os.path.isdir('./static/json/randomseeds'):
+            while True:
+                try:
+                    shutil.rmtree('./static/json/randomseeds')
+                    break
+                except:
+                    continue
+        os.mkdir('./static/json/randomseeds')
+        
+        for week_key, seed_map in grouped_by_weeks.items():
+            with open(f'./static/json/randomseeds/{week_key}.json', 'w') as f:
+                json.dump(seed_map, f)
+    
+    grouped_by_weeks = group_seed_map_by_week(seed_map)
+    split_json_seed_map_weeks(grouped_by_weeks)
 
 def group_by_day_and_split_all(DRG):
     def group_json_by_days(DRG):
@@ -1151,7 +1193,7 @@ def sort_dictionary(dictionary, custom_order):
     return sorted_dict
 
 def order_dictionary_by_date(dictionary):
-    sorted_keys = sorted(dictionary.keys(), key=lambda x: datetime.fromisoformat(x.replace('Z', '')))
+    sorted_keys = sorted(dictionary.keys(), key=lambda x: datetime.fromisoformat(x[:-1]))
     ordered_dictionary = {}
     for key in sorted_keys:
         ordered_dictionary[key] = dictionary[key]
@@ -1175,8 +1217,8 @@ def select_timestamp_from_dict(dictionary, next_):
     current_time = datetime.utcnow()
     keys = list(dictionary.keys())
     for i in range(len(keys) - 1):
-        timestamp = datetime.fromisoformat(keys[i].replace('Z', ''))
-        next_timestamp = datetime.fromisoformat(keys[i+1].replace('Z', ''))
+        timestamp = datetime.fromisoformat(keys[i][:-1])
+        next_timestamp = datetime.fromisoformat(keys[i+1][:-1])
         if current_time > timestamp and current_time < next_timestamp:
             if next_:
                 return keys[i+1]
@@ -1188,20 +1230,6 @@ def select_timestamp_from_dict(dictionary, next_):
             except KeyError:
                 pass
 
-# obsolete, consolidated into rotate_timestamps
-def rotate_timestamp(tstamp_Queue, next_, go_flag):
-    applicable_timestamp = select_timestamp(next_=next_)
-    tstamp_Queue.append(applicable_timestamp)
-    timestamp = tstamp_Queue[0]
-
-    while go_flag.is_set():
-        applicable_timestamp = select_timestamp(next_=next_)
-        if applicable_timestamp != timestamp:
-            tstamp_Queue.append(applicable_timestamp)
-            tstamp_Queue.pop(0)
-            timestamp = tstamp_Queue[0]
-        sleep(0.25)
-
 def rotate_timestamps(tstamp_Queue, next_tstamp_Queue, go_flag):
     applicable_timestamp = select_timestamp(next_=False)
     applicable_next_timestamp = select_timestamp(next_=True)
@@ -1212,7 +1240,6 @@ def rotate_timestamps(tstamp_Queue, next_tstamp_Queue, go_flag):
     while go_flag.is_set():
         applicable_timestamp = select_timestamp(next_=False)
         if applicable_timestamp != timestamp:
-            select_timestamp(next_=True)
             next_tstamp_Queue.append(select_timestamp(next_=True))
             next_tstamp_Queue.pop(0)
             tstamp_Queue.append(applicable_timestamp)
@@ -1277,6 +1304,7 @@ def flatten_seasons_v5(DRG):
             for biome, missions in DRG[timestamp][season]['Biomes'].items():
                 if i == 0:
                     combined[timestamp]['Biomes'][biome] = []
+                    combined[timestamp]['RandomSeed'] = DRG[timestamp][season]['RandomSeed']
 
                 for j, mission in enumerate(missions):
                     mission['index'] = j

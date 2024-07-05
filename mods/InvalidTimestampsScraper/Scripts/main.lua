@@ -85,20 +85,20 @@ function Main()
         local master = {}
         for SeasonKey, SeasonValue in pairs(SeasonsValues) do
             missionscount = 0
-
             master[SeasonKey] = {}
             master[SeasonKey]['Biomes'] = utils.BiomesTable()
+            master[SeasonKey]['timestamp'] = timestamp
+            master[SeasonKey]['RandomSeed'] = RandomSeed
 
             -- Get GeneratedMission UObjects
             local b = nil
             local missions = utils.GetMissions(SeasonValue, RandomSeed)
-            if missions then
-                master[SeasonKey]['timestamp'] = timestamp
-                for index, mission in pairs(missions) do
-                    b = utils.GetBiome(mission)
-                    missionscount = utils.UnpackStandardMission(mission, master, b, missionscount, SeasonKey)
-                end
+
+            for index, mission in pairs(missions) do
+                b = utils.GetBiome(mission)
+                missionscount = utils.UnpackStandardMission(mission, master, b, missionscount, SeasonKey)
             end
+
             for biome, ms  in pairs(master[SeasonKey]['Biomes']) do
                 if utils.IsTableEmpty(ms) then
                     master[SeasonKey]['Biomes'][biome] = nil
@@ -115,6 +115,9 @@ function Main()
     print('Encoding JSON...\n')
     god = json.encode(god) .. 'END'
     print('Completed encoding JSON...\n')
+    PollingClient:send('encc\n')
+    PollingClient:receive('*l')
+    PollingClient:close()
     -- local file = io.open('redonemissions.json', 'w')
     -- if file then
     --     file:write(string.sub(god, 1, -4))
