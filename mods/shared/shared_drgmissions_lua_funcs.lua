@@ -1,5 +1,9 @@
-package.cpath = package.cpath..';'..'./mods/shared/socket/socket/core.dll'
+local cpath_orig = tostring(package.cpath)
+package.cpath = package.cpath..';./mods/shared/set_clock/set_clock.dll'
+local clock = require('set_clock')
+package.cpath = cpath_orig..';'..'./mods/shared/socket/socket/core.dll'
 local socket = require('./mods/shared/socket/socket')
+
 function ConnectPollClient(port, handshake)
     handshake = handshake or 'polling'
     local client = assert(socket.tcp())
@@ -85,8 +89,7 @@ function IncrementDatetime(datetime)
       month = month - 12
       year = year + 1
     end
-    local updatedDatetime = string.format("%02d-%02d-%02d %02d:%02d:%02d", year % 100, month, day, hour, min, sec)
-    return updatedDatetime
+    return clock.SetSystemClock(year, month, day, hour, min, sec)
   end
 function IncrementDatetimeOneDay(datetime)
     local year, month, day, hour, min, sec = datetime:match("(%d+)-(%d+)-(%d+) (%d+):(%d+):(%d+)")
@@ -109,8 +112,7 @@ function IncrementDatetimeOneDay(datetime)
       month = month - 12
       year = year + 1
     end
-    local updatedDatetime = string.format("%4d-%02d-%02d %02d:%02d:%02d", year, month, day, hour, min, sec)
-    return updatedDatetime
+    return clock.SetSystemClock(year, month, day, hour, min, sec)
 end
 function TableToString(table, indent)
     indent = indent or ""
@@ -504,5 +506,6 @@ return {
     Exit = Exit,
     GetMissions = GetMissions_,
     ConnectPollClient = ConnectPollClient,
-    Send_data = Send_data
+    Send_data = Send_data,
+    SetSystemClock = clock.SetSystemClock
 }

@@ -101,17 +101,7 @@ function Main()
 
       currytime = string.format("%04d-%02d-%02d %02d:%02d:%02d", year, month, day, hour, minute, second)
 
-      newtime = utils.IncrementDatetimeOneDay(currytime)
-      newtime = utils.Split(newtime, ' ')
-
-      -- Remove ReverseDateFormat function and just use newtime[1] if your system date format is YY-MM-DD
-      local command = 'date '..utils.ReverseDateFormat(newtime[1])..' & time '..newtime[2]
-
-      -- Set time forward one day
-      -- print(command..'\n')
-      -- count = count + 1
-      -- print(tostring(count)..'\n')
-      os.execute(command)
+      utils.IncrementDatetimeOneDay(currytime)
     end
 
     PollingClient:send('enc\n')

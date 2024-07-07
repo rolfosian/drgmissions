@@ -134,17 +134,7 @@ function TestTwoWeeks()
         currytime = string.format("%04d-%02d-%02d %02d:%02d:%02d", year, month, day, hour, minute, second)
 
         -- Increment currytime forward by 30 minutes
-        local newtime = utils.IncrementDatetime(currytime)
-        newtime = utils.Split(newtime, ' ')
-
-        -- Remove ReverseDateFormat function and just use newtime[1] if your system date format is YY-MM-DD
-        local command = 'date '..utils.ReverseDateFormat(newtime[1])..' & time '..newtime[2]
-
-        -- Set time forward 30 minutes
-        print(command..'\n')
-        count = count + 1
-        print(tostring(count)..'\n')
-        os.execute(command)
+        utils.IncrementDatetime(currytime)
     end
 
     -- god = json.encode(god)

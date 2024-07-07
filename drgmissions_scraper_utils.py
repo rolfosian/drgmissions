@@ -786,7 +786,7 @@ def wait_for_json(IPC:IPCServer, total_increments:int):
             time.sleep(4)
             disable_system_time()
             subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
-            hide_window('FSD-Win64-Shipping.exe')
+            # hide_window('FSD-Win64-Shipping.exe')
             
             start_time = time.monotonic()
             timeout_ = IPC.poll_event.wait(timeout=timeout_seconds)
@@ -869,34 +869,34 @@ def validate_drgmissions(DRG:dict):
             f.writelines(main_lines)
             f.close()
         
-    while True:
-        #Run Deep Rock Galactic headless
-        subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
-        hide_window('FSD-Win64-Shipping.exe')
-        
-        tim = IPC.poll_event.wait(timeout=300)
-        if tim:
-            break
-        else:
-            kill_process_by_name_starts_with('FSD')
-            kill_process_by_name_starts_with('Unreal')
-        
-        total_increments = len(invalid_keys)
-        redone_missions = wait_for_json(IPC, total_increments)
-        
-        for timestamp, dict in redone_missions.items():
-            DRG[timestamp] = dict
+        while True:
+            #Run Deep Rock Galactic headless
+            subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
+            # hide_window('FSD-Win64-Shipping.exe')
+            
+            tim = IPC.poll_event.wait(timeout=300)
+            if tim:
+                break
+            else:
+                kill_process_by_name_starts_with('FSD')
+                kill_process_by_name_starts_with('Unreal')
+            
+            total_increments = len(invalid_keys)
+            redone_missions = wait_for_json(IPC, total_increments)
+            
+            for timestamp, dict in redone_missions.items():
+                DRG[timestamp] = dict
 
-        DRG = order_dictionary_by_date(DRG)
-        DRG = reconstruct_dictionary(DRG)
+            DRG = order_dictionary_by_date(DRG)
+            DRG = reconstruct_dictionary(DRG)
 
-        with open('./mods/mods.txt', 'w') as f:
-            f.close()
-        enable_system_time()
-        os.remove('invalid_keys.txt')
-        os.remove('redonemissions.json')
+            with open('./mods/mods.txt', 'w') as f:
+                f.close()
+            enable_system_time()
+            os.remove('invalid_keys.txt')
+            os.remove('redonemissions.json')
 
-        return validate_drgmissions(DRG)
+            return validate_drgmissions(DRG)
     
     print(wrap_with_color('No invalid timestamps found.', '32'))
     return DRG

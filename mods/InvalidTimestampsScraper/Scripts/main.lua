@@ -66,10 +66,15 @@ function Main()
         PollingClient:receive("*l")
 
         -- Change System Clock
-        local datetime = utils.Split(timestamp, 'T')
-        datetime[2] = datetime[2]:gsub('Z', '')
-        local command = 'date '..utils.ReverseDateFormat(datetime[1])..' & time '..datetime[2]
-        os.execute(command)
+        local _, _, year, month, day, hour, min, sec = timestamp:match("^(%d{4})-(%d{2})-(%d{2})T(%d{2}):(%d{2}):(%d{2})Z$")
+        year = tonumber(year)
+        month = tonumber(month)
+        day = tonumber(day)
+        hour = tonumber(hour)
+        min = tonumber(min)
+        sec = tonumber(sec)
+        
+        utils.SetSystemClock(year, month, day, hour, min, sec)
 
         while true do
             FSDGameInstance:UpdateGlobelMissionSeed() -- No, this is not a typo (but maybe it was on gsg's end).

@@ -79,7 +79,7 @@ def main():
     while True:
         #Run Deep Rock Galactic headless
         subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
-        hide_window('FSD-Win64-Shipping.exe')
+        # hide_window('FSD-Win64-Shipping.exe')
         
         tim = IPC.poll_event.wait(timeout=300)
         if tim:
