@@ -447,7 +447,7 @@ async function populateLocalStoragesSeedMaps(date, update=false) {
         
     }
 
-    if (getWeekKey(date.toISOString(), previous=true) != localStorages['currentSeedMap']) {
+    if (getWeekKey(date.toISOString(), previous=true) != localStorages['currentSeedMap'][0]) {
         let seedMaps = await Promise.all([
             loadJSON(`${domainURL}/static/json/randomseeds/${weekKeys[0]}.json`),
             loadJSON(`${domainURL}/static/json/randomseeds/${weekKeys[1]}.json`)
@@ -460,8 +460,8 @@ async function populateLocalStoragesSeedMaps(date, update=false) {
     
     let newWeekMap = [weekKeys[0], await loadJSON(`${domainURL}/static/json/randomseeds/${weekKeys[0]}.json`)];
 
-    setStorages['previousSeedMap', localStorages['currentSeedMap']];
-    setStorages['currentSeedMap', newWeekMap];
+    setStorages(['previousSeedMap', localStorages['currentSeedMap']]);
+    setStorages(['currentSeedMap', newWeekMap]);
 }
 
 async function mapSeedToTimestamp(DRG_GLOBALMISSION_SEED) {
@@ -471,40 +471,45 @@ async function mapSeedToTimestamp(DRG_GLOBALMISSION_SEED) {
     let weekKey = getWeekKey(datestring);
 
     if (weekKey != localStorages['currentSeedMap'][0]) {
-        populateLocalStoragesSeedMaps(date, update=true)
+        await populateLocalStoragesSeedMaps(date, update=true)
     }
 
     let currentDate = datestring.slice(0, 10);
-    let RandomSeed = ((DRG_GLOBALMISSION_SEED >> 1) & 131071);
+    let RandomSeed = (DRG_GLOBALMISSION_SEED >> 1) & 131071;
 
     if (localStorages['currentSeedMap'][1][currentDate].hasOwnProperty(RandomSeed)) {
         return localStorages['currentSeedMap'][1][currentDate][RandomSeed];
     }
 
-    for (let d in localStorages['currentSeedMap']) {
+    for (let d in localStorages['currentSeedMap'][1]) {
         if (d != currentDate) {
-            let seedMap = localStorages['currentSeedMap'][d];
+            let seedMap = localStorages['currentSeedMap'][1][d];
             if (seedMap.hasOwnProperty(RandomSeed)) {
                 return seedMap[RandomSeed];
             }
         }
     }
 
-    try {
-        let weekKeys = getPreviousWeekKeys(datestring, 4, skip=true);
-        for (let i = 0; i < weekKeys.length; i++) {
-            let weekKey = weekKeys[i];
-            let weeklySeedMap = await loadJSON(`${domainURL}/static/${weekKey}.json`);
-            for (let d in weeklySeedMap) {
-                let seedMap = weeklySeedMap[d];
-                if (seedMap.hasOwnProperty(RandomSeed)) {
-                    return seedMap[RandomSeed]
-                }
+    for (let d in localStorages['previousSeedMap'][1]) {
+        let seedMap = localStorages['previousSeedMap'][1][d]
+        if (seedMap.hasOwnProperty(RandomSeed)) {
+            return seedMap[RandomSeed];
+        }
+    }
+
+    let weekKeys = getPreviousWeekKeys(datestring, 4, skip=true);
+    for (let i = 0; i < weekKeys.length; i++) {
+        let weekKey = weekKeys[i];
+        let weeklySeedMap = await loadJSON(`${domainURL}/static/${weekKey}.json`);
+        for (let d in weeklySeedMap) {
+            let seedMap = weeklySeedMap[d];
+            if (seedMap.hasOwnProperty(RandomSeed)) {
+                return seedMap[RandomSeed];
             }
         }
-    } catch (e) {
-        return 'SEED OUT OF RANGE FOR DATASET';
     }
+    // if it reaches this point then someone has had their lobby open for over a whole month with a mission selected lmao; or they have been messing with their system clock,
+    // or i didnt bother to refactor the scraper/startup json splitting routine and bloat the dataset for historical long term edge cases
     return 'SEED OUT OF RANGE FOR DATASET';
 }
 
