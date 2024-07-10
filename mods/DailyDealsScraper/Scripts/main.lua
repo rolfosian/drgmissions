@@ -60,6 +60,7 @@ function Main()
 
     for i = 1, total_days do
       PollingClient:send('pol\n')
+      PollingClient:receive('*l')
 
     -- Initialize Table
       local DailyDeal = {}

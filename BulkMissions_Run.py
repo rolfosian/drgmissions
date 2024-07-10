@@ -18,6 +18,7 @@ from drgmissions_scraper_utils import (
     validate_drgmissions,
     flatten_seasons_v5,
     is_port_in_use,
+    launch_game,
     hide_window,
     maximize_window,
     delete_file,
@@ -76,17 +77,8 @@ def main():
     print(wrap_with_color('Disabling automatic system time...', '0;33'))
     disable_system_time()
     
-    while True:
-        #Run Deep Rock Galactic headless
-        subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
-        # hide_window('FSD-Win64-Shipping.exe')
-        
-        tim = IPC.poll_event.wait(timeout=300)
-        if tim:
-            break
-        else:
-            kill_process_by_name_starts_with('FSD')
-            kill_process_by_name_starts_with('Unreal')
+    #launch game with 'start steam://run/548430//' shell command
+    launch_game(IPC)
         
     DRG = wait_for_json(IPC, total_increments)
         
@@ -97,15 +89,18 @@ def main():
     #Enable automatic time sync
     print(wrap_with_color('Enabling automatic system time...', '0;33'))
     enable_system_time()
-
+    
+    print(wrap_with_color('Reconstructing JSON...', '40;92'))
     DRG = order_dictionary_by_date_FIRST_KEY_ROUNDING(DRG)
     DRG = reconstruct_dictionary(DRG)
     with open('drgmissionsgod.json.bak', 'w') as f:
         json.dump(DRG, f)
     
     #Validate JSON
+    print(wrap_with_color('Validating JSON...', '40;92'))
     DRG = validate_drgmissions(DRG)
     
+    print(wrap_with_color('Flattening seasons...', '40;92'))
     DRG = flatten_seasons_v5(DRG)
     with open('drgmissionsgod.json', 'w') as f:
         json.dump(DRG, f)

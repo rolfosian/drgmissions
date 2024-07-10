@@ -1,12 +1,11 @@
 #include <windows.h>
-#include <stdbool.h>
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
 
 // gcc -shared -o set_clock.dll set_clock.c -Iinclude -Wl,-Bstatic -llua
 
-static bool SetSystemClock(int year, int month, int day, int hour, int minute, int second) {
+static int SetSystemClock(int year, int month, int day, int hour, int minute, int second) {
     SYSTEMTIME st;
 
     st.wYear = year;
@@ -17,11 +16,7 @@ static bool SetSystemClock(int year, int month, int day, int hour, int minute, i
     st.wSecond = second;
     st.wMilliseconds = 0;
 
-    if (!SetSystemTime(&st)) {
-        return false;
-    } else {
-        return true;
-    }
+    return SetSystemTime(&st);
 }
 
 static int l_SetSystemClock(lua_State *L) {
@@ -32,12 +27,7 @@ static int l_SetSystemClock(lua_State *L) {
     int minute = (int)lua_tonumber(L, 5);
     int second = (int)lua_tonumber(L, 6);
 
-    if (SetSystemClock(year, month, day, hour, minute, second)) {
-        lua_pushboolean(L, true);
-    } else {
-        lua_pushboolean(L, false);
-    }
-    
+    lua_pushboolean(L, SetSystemClock(year, month, day, hour, minute, second));
     return 1;
 }
 

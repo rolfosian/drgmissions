@@ -16,6 +16,7 @@ import re
 import threading
 from signal import signal, getsignal, SIGINT, SIG_DFL
 
+# this half works but doesnt work if the socket hasnt accepted a connection yet, presumably because the accept method is blocking
 def wrap_sig_handler(func, self):
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -137,7 +138,21 @@ def cfg_():
     return cfg
 cfg = cfg_()
 
-def subprocess_wrapper(command:str, shell=False, print_=True):
+def launch_game(IPC:IPCServer):
+    print(wrap_with_color('Launching Deep Rock Galactic...', '38;2;255;165;0'))
+    
+    while True:
+        subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
+        # hide_window('FSD-Win64-Shipping.exe')
+        
+        tim = IPC.poll_event.wait(timeout=300)
+        if tim:
+            break
+        else:
+            kill_process_by_name_starts_with('FSD')
+            kill_process_by_name_starts_with('Unreal')
+
+def subprocess_wrapper(command:str, shell=False, print_=True, check_timeout=False):
     def wrapper():
         event = threading.Event()
         event.set()
@@ -154,8 +169,15 @@ def subprocess_wrapper(command:str, shell=False, print_=True):
 
         stdout_thread = threading.Thread(target=read_stdout, args=(event, process, print_))
         stdout_thread.start()
-
-        process.wait()
+        
+        if check_timeout:
+            try:
+                process.wait(timeout=10)
+            except:
+                print(wrap_with_color(f'Warning: {command} command hung, killing process...', '1;31'))
+                process.kill()
+        else:
+            process.wait()
 
         event.clear()
         stdout_thread.join()
@@ -679,7 +701,7 @@ def enable_system_time():
         subprocess_wrapper(['sc', 'config', 'w32time', 'start=', 'auto'], shell=True, print_=False)()
         subprocess_wrapper(['net', 'start', 'w32time'], shell=True, print_=False)()
         time.sleep(2)
-        subprocess_wrapper(['w32tm', '/resync'], shell=True, print_=False)()
+        subprocess_wrapper(['w32tm', '/resync'], shell=True, print_=False, check_timeout=True)()
         print(wrap_with_color("Automatic system time enabled.", '0;33'))
     except Exception as e:
         print(f"Error: {e}")
@@ -740,7 +762,7 @@ def yes_or_no(prompt:str):
 
 def wait_for_json(IPC:IPCServer, total_increments:int):
     pfuncs = {
-        'pol' : lambda total_increments_, total_increments: f"[40;92m{round((total_increments_ - total_increments) / total_increments_ * 100, 2):.2f}%[0m Completed",
+        'pol' : lambda total_increments_, total_increments: f"[40;92m{round((total_increments_ - total_increments) / total_increments_ * 100, 2):.2f}%[0m",
         'enc' : lambda total_increments_, total_increments: '[40;92mEncoding JSON...[0m',
         'encc' : lambda total_increments_, total_increments: '[40;92mAwaiting JSON...[0m'
     }
@@ -811,7 +833,7 @@ def wait_for_json(IPC:IPCServer, total_increments:int):
             break
         
         percent = pfuncs[poll](total_increments_, total_increments)
-        print(f"{percent} | {wrap_with_color(format_seconds(timeout_seconds), '0;33')} until timeout | Estimated time remaining: [0;33m{format_seconds(estimated_time_completion)}[0m    ", end='\r')
+        print(f"[K{percent} | {wrap_with_color(format_seconds(timeout_seconds), '0;33')} until timeout | Estimated time remaining: [0;33m{format_seconds(estimated_time_completion)}[0m    ", end='\r')
     IPC.shut_down()
     
     return dictionary
@@ -868,18 +890,8 @@ def validate_drgmissions(DRG:dict):
         with open('./mods/InvalidTimestampsScraper/Scripts/main.lua', 'w') as f:
             f.writelines(main_lines)
             f.close()
-        
-        while True:
-            #Run Deep Rock Galactic headless
-            subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
-            # hide_window('FSD-Win64-Shipping.exe')
             
-            tim = IPC.poll_event.wait(timeout=300)
-            if tim:
-                break
-            else:
-                kill_process_by_name_starts_with('FSD')
-                kill_process_by_name_starts_with('Unreal')
+            launch_game(IPC)
             
             total_increments = len(invalid_keys)
             redone_missions = wait_for_json(IPC, total_increments)

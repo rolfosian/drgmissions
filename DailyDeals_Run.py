@@ -14,6 +14,7 @@ from drgmissions_scraper_utils import (
     disable_system_time,
     maximize_window,
     hide_window,
+    launch_game,
     sanitize_datetime,
     reverse_date_format,
     order_dictionary_by_date,
@@ -72,22 +73,12 @@ def main():
     #Disable automatic system time
     print(wrap_with_color('Disabling automatic system time...', '0;33'))
     disable_system_time()
-    sleep(2)
     
     # Set the clock to 00:00:00
     subprocess.run(['date', reverse_date_format(currytime[0]), '&', 'time', currytime[1]], shell=True)
 
-    while True:
-        #Run Deep Rock Galactic headless
-        subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
-        # hide_window('FSD-Win64-Shipping.exe')
-        
-        tim = IPC.poll_event.wait(timeout=300)
-        if tim:
-            break
-        else:
-            kill_process_by_name_starts_with('FSD')
-            kill_process_by_name_starts_with('Unreal')
+    #launch game with 'start steam://run/548430//' shell command
+    launch_game(IPC)
 
     AllTheDeals = wait_for_json(IPC, total_increments)
 

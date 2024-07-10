@@ -55,15 +55,6 @@ end
 function IsTableEmpty(t)
     return next(t) == nil
 end
-function ReverseDateFormat(inputDate)
-    local oldDate = Split(inputDate, "-")
-    local year = oldDate[1]
-    local month = oldDate[2]
-    local day = oldDate[3]
-    
-    local reversedDate = day .. "-" .. month .. "-" .. year
-    return reversedDate
-  end
 function IncrementDatetime(datetime)
     local year, month, day, hour, min, sec = datetime:match("(%d+)-(%d+)-(%d+) (%d+):(%d+):(%d+)")
     year, month, day, hour, min, sec = tonumber(year), tonumber(month), tonumber(day), tonumber(hour), tonumber(min), tonumber(sec)
@@ -494,7 +485,6 @@ return {
     GetDNAValues = GetDNAValues,
     IsInTable = IsInTable,
     IsTableEmpty = IsTableEmpty,
-    ReverseDateFormat = ReverseDateFormat,
     IncrementDatetime = IncrementDatetime,
     IncrementDatetimeOneDay = IncrementDatetimeOneDay,
     TableToString = TableToString,

@@ -39,7 +39,7 @@ def main():
         time.sleep(2)
     else:
         print(wrap_with_color('Resyncing system time in case of drift...','0;33'))
-        subprocess_wrapper(['w32tm', '/resync'], print_=False)()
+        subprocess_wrapper(['w32tm', '/resync'], print_=False, check_timeout=True)()
     
     if auto:
         wait_until_next_thursday_11am_utc()
@@ -60,7 +60,7 @@ def main():
             time.sleep(3)
             subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
             start_time = time.time()
-            hide_window('FSD-Win64-Shipping.exe')
+            # hide_window('FSD-Win64-Shipping.exe')
             continue
         
         for filename in os.listdir():
