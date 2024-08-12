@@ -16,7 +16,7 @@ import re
 import threading
 from signal import signal, getsignal, SIGINT, SIG_DFL
 
-# this half works but doesnt work if the socket hasnt accepted a connection yet, presumably because the accept method is blocking
+# this half works but doesnt work if the self (class IPCServer) hasnt accepted a connection yet, presumably because the accept method is blocking idfk or care shit seems stable enough not to need to fix this anyway
 def wrap_sig_handler(func, self):
     @wraps(func)
     def wrapper(*args, **kwargs):

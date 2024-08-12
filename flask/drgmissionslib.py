@@ -940,7 +940,7 @@ def rotate_biomes_parallel(DRG, tstamp_Queue, next_tstamp_Queue, nextbiomes_Queu
     while len(tstamp_Queue) == 0 and len(next_tstamp_Queue) == 0:
         sleep(0.1)
         continue
-
+    
     with Pool(processes=os.cpu_count(), initializer=init_worker) as render_pool:
         Biomes = render_biomes(DRG[tstamp_Queue[0]]['Biomes'], render_pool)
         _, Biomes = array_biomes(Biomes, tstamp_Queue[0])
@@ -1035,48 +1035,6 @@ def rotate_DDs(DDs, go_flag):
         sleep(0.25)
 #----------------------------------------------------------------
 #UTILS 
-
-def create_RandomSeed_timestamp_map(DRG):
-    timestamps = list(DRG.keys())
-    seed_map = {}
-    
-    for timestamp in timestamps:
-        RandomSeed = DRG[timestamp]['RandomSeed']
-        seed_map[RandomSeed] = timestamp
-    
-    return seed_map
-def group_seed_map_by_week_and_split_all(seed_map):
-    def group_seed_map_by_week():
-        grouped_by_weeks = {}
-        for seed, timestamp in seed_map.items():
-            dt = datetime.fromisoformat(timestamp[:-1])
-            year, week, _ = dt.isocalendar()
-            week_key = f"{year}-W{week:02d}"
-            
-            if week_key not in grouped_by_weeks:
-                grouped_by_weeks[week_key] = {}
-            if timestamp[:10] not in grouped_by_weeks[week_key]:
-                grouped_by_weeks[timestamp[:10]] = {}
-            
-            grouped_by_weeks[week_key][timestamp[:10]][seed] = timestamp
-
-        return grouped_by_weeks
-    def split_json_seed_map_weeks(grouped_by_weeks):
-        if os.path.isdir('./static/json/randomseeds'):
-            while True:
-                try:
-                    shutil.rmtree('./static/json/randomseeds')
-                    break
-                except:
-                    continue
-        os.mkdir('./static/json/randomseeds')
-        
-        for week_key, seed_map in grouped_by_weeks.items():
-            with open(f'./static/json/randomseeds/{week_key}.json', 'w') as f:
-                json.dump(seed_map, f)
-    
-    grouped_by_weeks = group_seed_map_by_week(seed_map)
-    split_json_seed_map_weeks(grouped_by_weeks)
 
 def group_by_day_and_split_all(DRG):
     def group_json_by_days(DRG):

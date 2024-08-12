@@ -390,161 +390,65 @@ function UnpackDeepDiveMission(mission, master, t)
 
     table.insert(master['Deep Dives'][t]['Stages'], mission1)
 end
-function GetMissions()
-    local missions = FindAllOf("GeneratedMission")
-    if missions then
-        return missions
-    else
-        return nil
-    end
-end
-function GetBiome(mission)
-    local b = mission:GetPropertyValue('Biome')
-    b = string.format("%s",b:GetFullName())
-    local biomesmatch = {
-    {pattern = 'BIOME_AzureWeald', result = 'Azure Weald'},
-    {pattern = 'BIOME_CrystalCaves', result = 'Crystalline Caverns'},
-    {pattern = 'BIOME_SaltCaves', result = 'Salt Pits'},
-    {pattern = 'BIOME_FungusBogs', result = "Fungus Bogs"},
-    {pattern = 'BIOME_MagmaCaves', result = 'Magma Core'},
-    {pattern = 'BIOME_IceCaves', result = 'Glacial Strata'},
-    {pattern = 'BIOME_HollowBough', result = 'Hollow Bough'},
-    {pattern = 'BIOME_SandblastedCorridors', result = 'Sandblasted Corridors'},
-    {pattern = 'BIOME_RadioactiveZone', result = 'Radioactive Exclusion Zone'},
-    {pattern = 'BIOME_LushDownpour', result = 'Dense Biozone'}
-    }
-    for _, obj in ipairs(biomesmatch) do
-        if string.find(b, obj.pattern) then
-            b = obj.result
-            break
-        end
-    end
-    return b
-end
-function GetDeepDiveCodename(t) -- Get DD Codename terminal label widget assets
-    local fsdlabelwidgets = FindAllOf('FSDLabelWidget')
-    local text = nil
-    local name
-    if fsdlabelwidgets then
-        for index, fsdlabelwidget in pairs(fsdlabelwidgets) do
-            local fullname = string.format("%s",fsdlabelwidget:GetFullName())
-            if string.find(fullname, 'Data_CodeName') and string.find(fullname, 'Normal') and t == 'Deep Dive Normal' then
-                text = fsdlabelwidget:GetPropertyValue('text')
-                name = text:ToString()
-                break
-            elseif string.find(fullname, 'Data_CodeName') and string.find(fullname, 'Hard') and t == 'Deep Dive Elite' then
-                text = fsdlabelwidget:GetPropertyValue('text')
-                name = text:ToString()
-                break
-            end
-        end
-        return name
-    end
-end
 function HasKey(table, key)
     return table[key] ~= nil
 end
-function IsLoaded()
-    local GeneratedMissions = FindAllOf('GeneratedMission')
-    if GeneratedMissions then
-        if #GeneratedMissions > 6 then
-            return true
-        else
-            return false
-        end
-    else
-        return false
-    end
-end
-function PressStartAndWaitForLoad()
-    local startmenus = nil
-    while true do
-        startmenus = FindAllOf('Bp_StartMenu_PlayerController_C')
-        if startmenus then
-            break
-        end
-    end
-    -- Execute the function that 'press any key' invokes
-    for index, startmenu in pairs(startmenus) do
-        startmenu:OpenGameLevel()
-    end
-
-    local waiting_for_load = true
-    -- Wait for Space Rig to load
-    while waiting_for_load do
-        local count = 0
-        local umgsequenceplayers = FindAllOf('UMGSequencePlayer')
-        if umgsequenceplayers then
-            for index, sequenceplayer in ipairs(umgsequenceplayers) do
-                local fullname = string.format("%s",sequenceplayer:GetFullName())
-                if string.match(fullname, 'UMGSequencePlayer /Engine/Transient%.GameEngine_.*:BP_GameInstance_C_.*%.ConsoleScreen_Crafting_C_.*%.UMGSequencePlayer_.*') then
-                    count = count + 1
-                    if count > 11 then
-                        waiting_for_load = false
-                    end
-                end
-            end
-        end
-    end
-end
-function Main()
-    if IsLoaded() then
-        goto isloaded
-    else
-        PressStartAndWaitForLoad()
-    end
-    ::isloaded::
-    -- local utils = require('./mods/BulkMissionsScraper/Scripts/old/bulkmissions_funcs')
-
+Biomesmatch = {
+    ['Biome /Game/Landscape/Biomes/Biomes_Ingame/AzureWeald/BIOME_AzureWeald.BIOME_AzureWeald'] = 'Azure Weald',
+    ['Biome /Game/Landscape/Biomes/Biomes_Ingame/CrystalCaves/BIOME_CrystalCaves.BIOME_CrystalCaves'] = 'Crystalline Caverns',
+    ['Biome /Game/Landscape/Biomes/Biomes_Ingame/SaltCaves/BIOME_SaltCaves.BIOME_SaltCaves'] = 'Salt Pits',
+    ['Biome /Game/Landscape/Biomes/Biomes_Ingame/FungusBogs/BIOME_FungusBogs.BIOME_FungusBogs'] = "Fungus Bogs",
+    ['Biome /Game/Landscape/Biomes/Biomes_Ingame/MagmaCaves/BIOME_MagmaCaves.BIOME_MagmaCaves'] = 'Magma Core',
+    ['Biome /Game/Landscape/Biomes/Biomes_Ingame/IceCaves/BIOME_IceCaves.BIOME_IceCaves'] = 'Glacial Strata',
+    ['Biome /Game/Landscape/Biomes/Biomes_Ingame/HollowBough/BIOME_HollowBough.BIOME_HollowBough'] = 'Hollow Bough',
+    ['Biome /Game/Landscape/Biomes/Biomes_Ingame/SandblastedCorridors/BIOME_SandblastedCorridors.BIOME_SandblastedCorridors'] = 'Sandblasted Corridors',
+    ['Biome /Game/Landscape/Biomes/Biomes_Ingame/RadioactiveZone/BIOME_RadioactiveZone.BIOME_RadioactiveZone'] = 'Radioactive Exclusion Zone',
+    ['Biome /Game/Landscape/Biomes/Biomes_Ingame/LushDownpour/BIOME_LushDownpour.BIOME_LushDownpour'] = 'Dense Biozone'
+}
+function Main_()
     local currentDateTime = os.date("!%Y-%m-%dT%H-%M-%SZ")
     currentDateTime = 'DD_'..currentDateTime
-    -- Initialize Table
-    local master = {}
-    master['Deep Dives'] = {}
-    master['Deep Dives']['Deep Dive Normal'] = {}
-    master['Deep Dives']['Deep Dive Normal']['CodeName'] = GetDeepDiveCodename('Deep Dive Normal')
-    master['Deep Dives']['Deep Dive Elite'] = {}
-    master['Deep Dives']['Deep Dive Elite']['CodeName'] = GetDeepDiveCodename('Deep Dive Elite')
-    master['Deep Dives']['Deep Dive Normal']['Stages'] = {}
-    master['Deep Dives']['Deep Dive Elite']['Stages'] = {}
-    -- Get GeneratedMission UObjects
-    local missions = GetMissions()
-    local MissionStructure = nil
-    local t = nil
-    local b = nil
-    if missions then
-        for index, mission in pairs(missions) do
-            -- Check if Mission is a DD Stage or not
-            MissionStructure = mission:GetPropertyValue("MissionStructure")
 
-            if MissionStructure == 1 then
-                t = 'Deep Dive Normal'
-                if not HasKey(master['Deep Dives'][t], 'Biome') then
-                    b = GetBiome(mission)
-                    master['Deep Dives'][t]['Biome'] = b
-                end
-                UnpackDeepDiveMission(mission, master, t)
-
-            elseif MissionStructure == 2 then
-                t = 'Deep Dive Elite'
-                if not HasKey(master['Deep Dives'][t], 'Biome') then
-                    b = GetBiome(mission)
-                    master['Deep Dives'][t]['Biome'] = b
-                end
-                UnpackDeepDiveMission(mission, master, t)
-
+    local DeepDiveManager = nil
+    while true do
+        local DeepDives = FindAllOf('DeepDive')
+        if DeepDives then
+            if #DeepDives > 1 then
+                DeepDiveManager = FindFirstOf('DeepDiveManager')
+                break
             end
         end
-        -- Press X to json
-        -- master = TableToString(master)
-        -- print(master)
-        master = json.encode(master, {indent=true})
-        local file = io.open(currentDateTime..'.json', 'w')
-        if file then
-            file:write(master)
-            file:close()
-        end
-        -- utils.Exit()
+    end
+
+    local master = {}
+    master['Deep Dives'] = {}
+
+    local dd = DeepDiveManager:GetActiveNormalDeepDive()
+    master['Deep Dives']['Deep Dive Normal'] = {}
+    master['Deep Dives']['Deep Dive Normal']['CodeName'] = dd:GetPropertyValue('DeepDiveName'):ToString()
+    master['Deep Dives']['Deep Dive Normal']['Biome'] = Biomesmatch[dd:GetPropertyValue('Biome'):GetFullName()]
+    master['Deep Dives']['Deep Dive Normal']['Stages'] = {}
+    local stages = dd:GetPropertyValue('missions')
+    for i = 1, 3 do
+        UnpackDeepDiveMission(stages[i], master, 'Deep Dive Normal')
+    end
+
+    local edd = DeepDiveManager:GetActiveHardDeepDive()
+    master['Deep Dives']['Deep Dive Elite'] = {}
+    master['Deep Dives']['Deep Dive Elite']['CodeName'] = edd:GetPropertyValue('DeepDiveName'):ToString()
+    master['Deep Dives']['Deep Dive Elite']['Biome'] = Biomesmatch[edd:GetPropertyValue('Biome'):GetFullName()]
+    master['Deep Dives']['Deep Dive Elite']['Stages'] = {}
+    stages = edd:GetPropertyValue('missions')
+    for i = 1, 3 do
+        UnpackDeepDiveMission(stages[i], master, 'Deep Dive Elite')
+    end
+    -- print(TableToString(master))
+
+    local file = io.open(currentDateTime..'.json', 'w')
+    if file then
+        file:write(master)
+        file:close()
     end
 end
-Main()
+
+Main_()

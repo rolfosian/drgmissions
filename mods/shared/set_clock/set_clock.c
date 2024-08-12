@@ -19,16 +19,15 @@ static int SetSystemClock(int year, int month, int day, int hour, int minute, in
     return SetSystemTime(&st);
 }
 
-static int l_SetSystemClock(lua_State *L) {
+static void l_SetSystemClock(lua_State *L) {
     int year = (int)lua_tonumber(L, 1);
     int month = (int)lua_tonumber(L, 2);
     int day = (int)lua_tonumber(L, 3);
     int hour = (int)lua_tonumber(L, 4);
     int minute = (int)lua_tonumber(L, 5);
     int second = (int)lua_tonumber(L, 6);
-
-    lua_pushboolean(L, SetSystemClock(year, month, day, hour, minute, second));
-    return 1;
+    
+    return lua_pushboolean(L, SetSystemClock(year, month, day, hour, minute, second));
 }
 
 static const struct luaL_Reg set_clock [] = {

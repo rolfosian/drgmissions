@@ -402,115 +402,47 @@ function replaceCharactersAtIndices(inputString, replacements) {
     return result;
 }
 
-function getWeekKey(datestring, previous=false) {
-    const date = new Date(datestring)
-    const dayNum = date.getUTCDay()
-    date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+function getGlobalMissionSeed() {
+    const now = new Date();
+    const month = now.getUTCMonth() + 1;
+    const day = now.getUTCDate();
+    const year = now.getUTCFullYear();
+    const hour = now.getUTCHours();
+    const minute = now.getUTCMinutes();
     
-    if (previous) {
-        date.setUTCDate(date.getUTCDate() - 7);
-    }
-
-    const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
-    const weekNum = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
-    const year = date.getUTCFullYear();
-    return `${year}-W${String(weekNum).padStart(2, '0')}`;
-}
-function getPreviousWeekKeys(dateStr, numWeeks, skip=false) {
-    const date = new Date(dateStr);
-    const weekKeys = [];
-
-    for (let i = 0; i < numWeeks; i++) {
-        if (skip && (i == 0 || i == 1)) {
-            continue
-        }
-        const weekKey = getWeekKey(date.toISOString());
-        weekKeys.push(weekKey);
-        date.setUTCDate(date.getUTCDate() - 7);
-    }
-
-    return weekKeys;
-}
-
-async function populateLocalStoragesSeedMaps(date, update=false) {
-    let weekKeys = getPreviousWeekKeys(date.toISOString(), 2);
-
-    if (!update) {
-        let seedMaps = await Promise.all([
-            loadJSON(`${domainURL}/static/json/randomseeds/${weekKeys[0]}.json`),
-            loadJSON(`${domainURL}/static/json/randomseeds/${weekKeys[1]}.json`)
-        ]);
-
-        setStorages('currentSeedMap', [weekKeys[0], seedMaps[0]]);
-        setStorages('previousSeedMap', [weekKeys[1], seedMaps[1]]);
-        return
-        
-    }
-
-    if (getWeekKey(date.toISOString(), previous=true) != localStorages['currentSeedMap'][0]) {
-        let seedMaps = await Promise.all([
-            loadJSON(`${domainURL}/static/json/randomseeds/${weekKeys[0]}.json`),
-            loadJSON(`${domainURL}/static/json/randomseeds/${weekKeys[1]}.json`)
-        ]);
-
-        setStorages('currentSeedMap', [weekKeys[0], seedMaps[0]]);
-        setStorages('previousSeedMap', [weekKeys[1], seedMaps[1]]);
-        return
-    }
+    const seed = ((year * 0x2a90af)
+                ^ (month * 0x4f9ffb7)
+                ^ (day * 0x73387)
+                ^ (hour * 0x5b53f5)
+                ^ Math.floor(minute / 30))
+                % 100000;
     
-    let newWeekMap = [weekKeys[0], await loadJSON(`${domainURL}/static/json/randomseeds/${weekKeys[0]}.json`)];
-
-    setStorages(['previousSeedMap', localStorages['currentSeedMap']]);
-    setStorages(['currentSeedMap', newWeekMap]);
+    return seed;
 }
 
-async function mapSeedToTimestamp(DRG_GLOBALMISSION_SEED) {
-    let date = new Date();
-    let day = date.getUTCDay()
-    let datestring = date.toISOString();
-    let weekKey = getWeekKey(datestring);
+function reverseGlobalMissionSeed(seed) {
+    const now = new Date();
+    const possibleMinutes = [];
 
-    if (weekKey != localStorages['currentSeedMap'][0]) {
-        await populateLocalStoragesSeedMaps(date, update=true)
-    }
+    for (let minute = 0; minute < 60; minute += 30) {
+        const possibleSeed = ((now.getUTCFullYear() * 0x2a90af)
+                            ^ ((now.getUTCMonth() + 1) * 0x4f9ffb7)
+                            ^ (now.getUTCDate() * 0x73387)
+                            ^ (now.getUTCHours() * 0x5b53f5)
+                            ^ Math.floor(minute / 30))
+                            % 100000;
 
-    let currentDate = datestring.slice(0, 10);
-    let RandomSeed = (DRG_GLOBALMISSION_SEED >> 1) & 131071;
-
-    if (localStorages['currentSeedMap'][1][currentDate].hasOwnProperty(RandomSeed)) {
-        return localStorages['currentSeedMap'][1][currentDate][RandomSeed];
-    }
-
-    for (let d in localStorages['currentSeedMap'][1]) {
-        if (d != currentDate) {
-            let seedMap = localStorages['currentSeedMap'][1][d];
-            if (seedMap.hasOwnProperty(RandomSeed)) {
-                return seedMap[RandomSeed];
-            }
+        if (possibleSeed === seed) {
+            possibleMinutes.push(minute);
         }
     }
 
-    for (let d in localStorages['previousSeedMap'][1]) {
-        let seedMap = localStorages['previousSeedMap'][1][d]
-        if (seedMap.hasOwnProperty(RandomSeed)) {
-            return seedMap[RandomSeed];
-        }
+    if (possibleMinutes.length === 0) {
+        return null;
     }
 
-    let weekKeys = getPreviousWeekKeys(datestring, 4, skip=true);
-    for (let i = 0; i < weekKeys.length; i++) {
-        let weekKey = weekKeys[i];
-        let weeklySeedMap = await loadJSON(`${domainURL}/static/${weekKey}.json`);
-        for (let d in weeklySeedMap) {
-            let seedMap = weeklySeedMap[d];
-            if (seedMap.hasOwnProperty(RandomSeed)) {
-                return seedMap[RandomSeed];
-            }
-        }
-    }
-    // if it reaches this point then someone has had their lobby open for over a whole month with a mission selected lmao; or they have been messing with their system clock,
-    // or i didnt bother to refactor the scraper/startup json splitting routine and bloat the dataset for historical long term edge cases
-    return 'SEED OUT OF RANGE FOR DATASET';
+    now.setUTCMinutes(possibleMinutes[0]);
+    return now.toISOString();
 }
 
 function getCurrentDateMidnightUTC() {
@@ -878,40 +810,7 @@ function resizeCanvas(div, canvas, x, y) {
     div.style.height = `${newHeight.toString()}px`;
 }
 
-function renderBiomes_(dictionary) {
-    let renderedBiomes = {};
-
-    for (var season in dictionary) {
-        var Biomes = dictionary[season]['Biomes'];
-        renderedBiomes[season] = {};
-        renderedBiomes[season]['Biomes'] = {};
-
-        for (let biome in Biomes) {
-            let biomeMissions = Biomes[biome];
-            let biome1 = [];
-
-            for (let i = 0; i < biomeMissions.length; i++) {
-                let mission = biomeMissions[i];
-                let mission1 = {};
-
-                mission1['CodeName'] = mission['CodeName'];
-                mission1['id'] = mission['id'];
-                mission1['season'] = mission['season']
-
-                let mission_icon_canvas_div = renderMission(mission);
-                mission1['rendered_mission'] = mission_icon_canvas_div;
-
-                biome1.push(mission1);
-            }
-
-            renderedBiomes[season]['Biomes'][biome] = biome1;
-        };
-    };
-
-    return renderedBiomes;
-}
-
-function renderBiomesFlat(dictionary) {
+function renderBiomes(dictionary) {
     let renderedBiomes = {};
     var Biomes = dictionary['Biomes'];
     renderedBiomes['Biomes'] = {};
@@ -938,18 +837,6 @@ function renderBiomesFlat(dictionary) {
         renderedBiomes['Biomes'][biome] = biome1;
     };
     return renderedBiomes;
-}
-function renderBiomes(dictionary) {
-    let bs;
-    if (dictionary.hasOwnProperty('s0')) {
-        bs = renderBiomes_(dictionary);
-        // console.log(bs['timestamp']);
-        return bs;
-    } else {
-        bs =  renderBiomesFlat(dictionary);
-        // console.log(bs['timestamp']);
-        return bs;
-    }
 }
 
 function isMidnightUpcoming(date) {
@@ -2278,7 +2165,7 @@ function resetGlobalVars() {
     base64LocalStoragesFonts = {};
     loadedImages = 0;
 
-    var localStorages = {
+    localStorages = {
         'isBackgroundHidden' : false,
         'areButtonsHidden' : false,
         'seasonSelected' : 's0',
