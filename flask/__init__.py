@@ -12,6 +12,8 @@ from drgmissionslib import (
     class_xp_levels,
     select_timestamp_from_dict,
     flatten_seasons_v5,
+    split_all_mission_timestamps,
+    load_individual_mission_timestamp,
     group_by_day_and_split_all,
     order_dictionary_by_date,
     render_xp_calc_index,
@@ -51,9 +53,12 @@ def serialize_json():
     t = select_timestamp_from_dict(DRG, False)
     del t
 
-    # split into individual json files for static site
+    # split into individual json
     print('Adding daily deals, grouping timestamps by day, and spltting json files for static site...')
     group_by_day_and_split_all(DRG)
+    print('Splitting all timestamps...')
+    split_all_mission_timestamps(DRG)
+    del DRG
 
     with open('drgdailydeals.json', 'r') as f:
         AllTheDeals = f.read()
@@ -62,9 +67,9 @@ def serialize_json():
     AllTheDeals = json.loads(AllTheDeals)
     AllTheDeals = order_dictionary_by_date(AllTheDeals)
 
-    return DRG, AllTheDeals
+    return AllTheDeals
 
-def create_app(DRG, AllTheDeals, start=start, debug=False):
+def create_app(AllTheDeals, start=start, debug=False):
     if os.cpu_count() >= 4:
         from multiprocessing import Manager, Event
     else:
@@ -100,7 +105,7 @@ def create_app(DRG, AllTheDeals, start=start, debug=False):
 
     currybiomes = M.list()
     nextbiomes = M.list()
-    threads.append(threading.Thread(target=rotate_biomes, args=(DRG, tstamp, next_tstamp, nextbiomes, currybiomes, rendering_event, go_flag)))
+    threads.append(threading.Thread(target=rotate_biomes, args=(tstamp, next_tstamp, nextbiomes, currybiomes, rendering_event, go_flag)))
 
     # Deep Dives rotator
     DDs = M.list()
@@ -117,7 +122,7 @@ def create_app(DRG, AllTheDeals, start=start, debug=False):
     # Listener that clears the rendering event 1.5 seconds before the 30 minute mission rollover interval so the homepage won't load for clients until the rotators are done rendering the mission icons
     threads.append(threading.Thread(target=wait_rotation, args=(rendering_event, index_event, go_flag)))
 
-    threads.append(threading.Thread(target=GARBAGE, args=(DRG, go_flag)))
+    # threads.append(threading.Thread(target=GARBAGE, args=(DRG, go_flag)))
     threads.append(threading.Thread(target=SERVER_READY, args=(index_event, start)))
 
     def start_threads():
@@ -197,7 +202,7 @@ def create_app(DRG, AllTheDeals, start=start, debug=False):
     @app.route('/rpng')
     def serve_random_img():
         try:
-            mission = currybiomes[0][get_mission_icon_suffix_for_rpng_endpoint(DRG[tstamp[0]])]
+            mission = currybiomes[0][get_mission_icon_suffix_for_rpng_endpoint(load_individual_mission_timestamp(tstamp[0]))]
             return send_file(BytesIO(mission['rendered_mission'].getvalue()), mimetype='image/png', etag=mission['etag'])
         except:
             return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
@@ -227,8 +232,8 @@ def create_app(DRG, AllTheDeals, start=start, debug=False):
         try:
             json_args = {
                 'DD': DDs[0],
-                'current': DRG[tstamp[0]],
-                'next': DRG[next_tstamp[0]],
+                'current': load_individual_mission_timestamp(tstamp[0]),
+                'next': load_individual_mission_timestamp(next_tstamp[0]),
                 'dailydeal': AllTheDeals[dailydeal_tstamp[0]]
             }
             return jsonify(json_args[request.args['data']])

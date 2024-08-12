@@ -2,14 +2,14 @@ from __init__ import SIGINT, SIGTERM, name, create_app, serialize_json
 
 if name == 'nt':
     if __name__ == '__main__':
-        app, start_threads, join_threads, set_signal_handlers, go_flag, M, rendering_event = create_app(*serialize_json(), debug=True)
+        app, start_threads, join_threads, set_signal_handlers, go_flag, M, rendering_event = create_app(serialize_json(), debug=True)
 else:
     if __name__ == '__main__':
         debug=True
     else:
         debug=False
         
-    app, start_threads, join_threads, set_signal_handlers, go_flag, M, rendering_event = create_app(*serialize_json(), debug=debug)
+    app, start_threads, join_threads, set_signal_handlers, go_flag, M, rendering_event = create_app(serialize_json(), debug=debug)
 
 if __name__ == '__main__':
     print('Starting threads...')

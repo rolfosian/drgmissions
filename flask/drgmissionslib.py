@@ -893,14 +893,14 @@ def array_biomes(Biomes, timestamp):
 
     return timestamp, Biomes1
 
-def rotate_biomes(DRG, tstamp_Queue, next_tstamp_Queue, nextbiomes_Queue, biomes_Queue, rendering_event, go_flag):
+def rotate_biomes(tstamp_Queue, next_tstamp_Queue, nextbiomes_Queue, biomes_Queue, rendering_event, go_flag):
     while len(tstamp_Queue) == 0 and len(next_tstamp_Queue) == 0:
         sleep(0.1)
         continue
 
-    Biomes = render_biomes(DRG[tstamp_Queue[0]]['Biomes'])
+    Biomes = render_biomes(load_individual_mission_timestamp(tstamp_Queue[0])['Biomes'])
     _, Biomes = array_biomes(Biomes, tstamp_Queue[0])
-    NextBiomes = render_biomes(DRG[next_tstamp_Queue[0]]['Biomes'])
+    NextBiomes = render_biomes(load_individual_mission_timestamp(next_tstamp_Queue[0])['Biomes'])
     timestamp_next, NextBiomes = array_biomes(NextBiomes, next_tstamp_Queue[0])
 
     nextbiomes_Queue.append(NextBiomes)
@@ -914,7 +914,7 @@ def rotate_biomes(DRG, tstamp_Queue, next_tstamp_Queue, nextbiomes_Queue, biomes
     while go_flag.is_set():
         applicable_timestamp = next_tstamp_Queue[0]
         if applicable_timestamp != timestamp_next:
-            NextBiomes = render_biomes(DRG[applicable_timestamp]['Biomes'])
+            NextBiomes = render_biomes(load_individual_mission_timestamp(applicable_timestamp)['Biomes'])
             timestamp_next, NextBiomes = array_biomes(NextBiomes, applicable_timestamp)
 
             biomes_Queue.append(nextbiomes_Queue[0])
@@ -936,15 +936,15 @@ def init_worker():
     except:
         quit()
 
-def rotate_biomes_parallel(DRG, tstamp_Queue, next_tstamp_Queue, nextbiomes_Queue, biomes_Queue, rendering_event, go_flag):
+def rotate_biomes_parallel(tstamp_Queue, next_tstamp_Queue, nextbiomes_Queue, biomes_Queue, rendering_event, go_flag):
     while len(tstamp_Queue) == 0 and len(next_tstamp_Queue) == 0:
         sleep(0.1)
         continue
     
     with Pool(processes=os.cpu_count(), initializer=init_worker) as render_pool:
-        Biomes = render_biomes(DRG[tstamp_Queue[0]]['Biomes'], render_pool)
+        Biomes = render_biomes(load_individual_mission_timestamp(tstamp_Queue[0])['Biomes'], render_pool)
         _, Biomes = array_biomes(Biomes, tstamp_Queue[0])
-        NextBiomes = render_biomes(DRG[next_tstamp_Queue[0]]['Biomes'], render_pool)
+        NextBiomes = render_biomes(load_individual_mission_timestamp(next_tstamp_Queue[0])['Biomes'], render_pool)
         timestamp_next, NextBiomes = array_biomes(NextBiomes, next_tstamp_Queue[0])
 
         nextbiomes_Queue.append(NextBiomes)
@@ -960,7 +960,7 @@ def rotate_biomes_parallel(DRG, tstamp_Queue, next_tstamp_Queue, nextbiomes_Queu
         if applicable_timestamp != timestamp_next:
 
             with Pool(processes=os.cpu_count(), initializer=init_worker) as render_pool:
-                NextBiomes = render_biomes(DRG[applicable_timestamp]['Biomes'], render_pool)
+                NextBiomes = render_biomes(load_individual_mission_timestamp(applicable_timestamp)['Biomes'], render_pool)
                 timestamp_next, NextBiomes = array_biomes(NextBiomes, applicable_timestamp)
 
                 biomes_Queue.append(nextbiomes_Queue[0])
@@ -1036,6 +1036,24 @@ def rotate_DDs(DDs, go_flag):
 #----------------------------------------------------------------
 #UTILS 
 
+def load_individual_mission_timestamp(applicable_timestamp):
+    with open(f'./static/json/bulkmissions_granules/{applicable_timestamp.replace(":", "-")}.json', 'r') as f:
+        return json.load(f)
+
+def split_all_mission_timestamps(DRG):
+    if os.path.isdir('./static/json/bulkmissions_granules'):
+        while True:
+            try:
+                shutil.rmtree('./static/json/bulkmissions_granules')
+                break
+            except:
+                pass
+    os.mkdir('./static/json/bulkmissions_granules')
+    
+    for ts, v in DRG.items():
+        with open(f'./static/json/bulkmissions_granules/{ts.replace(":", "-")}.json', 'w') as f:
+            json.dump(v, f)
+            
 def group_by_day_and_split_all(DRG):
     def group_json_by_days(DRG):
         timestamps_dt = [datetime.fromisoformat(ts[:-1]) for ts in DRG.keys()]
