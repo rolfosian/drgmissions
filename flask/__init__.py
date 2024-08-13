@@ -227,18 +227,18 @@ def create_app(AllTheDeals, start=start, debug=False):
 
     #json endpoint
     #eg http://127.0.0.1:5000/json?data=current for current mission metadata
+    json_args = {
+        'DD': lambda: DDs[0],
+        'current': lambda: load_individual_mission_timestamp(tstamp[0]),
+        'next': lambda: load_individual_mission_timestamp(next_tstamp[0]),
+        'dailydeal': lambda: AllTheDeals[dailydeal_tstamp[0]]
+    }
     @app.route('/json')
     def serve_json():
         try:
-            json_args = {
-                'DD': DDs[0],
-                'current': load_individual_mission_timestamp(tstamp[0]),
-                'next': load_individual_mission_timestamp(next_tstamp[0]),
-                'dailydeal': AllTheDeals[dailydeal_tstamp[0]]
-            }
-            return jsonify(json_args[request.args['data']])
+            return jsonify(json_args[request.args['data']]())
         except:
-            return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
+            return '<!doctype html><html lang="en"><title>400 Bad Request</title><h1>Bad Request</h1><p>The server could not understand your request. Please make sure you have entered the correct information and try again.</p>', 400
 
     #Class XP calculator HTML that has its own javascript. The JS doesn't use the below endpoint - it is client side, but there is a link to the endpoint on the page.
     xp_calculator_index = render_xp_calc_index()

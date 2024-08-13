@@ -14,7 +14,7 @@ function getDomainURL(){
     return base.slice(0, base.length-1);
 }
 
-domainURL = getDomainURL();
+const domainURL = getDomainURL();
 
 // caching parameters
 var totalImages = 98;
@@ -2056,20 +2056,6 @@ async function verifyStorages(date) {
                         localStorages[key] = data;
                     }
 
-                // } else if (key === 'currentSeedMap') {
-                //     if (v[0] == getWeekKey(date.toISOString())) {
-                //         localStorages[key] = JSON.parse(v);
-                //     } else {
-                //         setStorages(key, null);
-                //     }
-
-                // } else if (key === 'previousSeedMap') {
-                //     if (v[0] == getWeekKey(date.toISOString(), previous=true)) {
-                //         localStorages[key] = JSON.parse(v);
-                //     } else {
-                //         setStorages(key, null);
-                //     }
-
                 } else {
                     localStorages[key] = JSON.parse(v);
                 }
@@ -2110,9 +2096,8 @@ var localStorages = {
     'img' : null,
     'fonts' : null,
     'homepageScript' : null,
-    // 'currentSeedMap' : null,
-    // 'previousSeedMap' : null,
 };
+
 var localStoragesHashes = {
     'img' : 1996300662,
     'fonts' : 906557479,
@@ -2164,6 +2149,7 @@ function resetGlobalVars() {
     base64LocalStoragesImg = {};
     base64LocalStoragesFonts = {};
     loadedImages = 0;
+    unAvailableDeepDiveDataRetries = 0;
 
     localStorages = {
         'isBackgroundHidden' : false,
