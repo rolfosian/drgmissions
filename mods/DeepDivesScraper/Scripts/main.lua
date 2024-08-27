@@ -415,7 +415,7 @@ function Main_()
         if DeepDives then
             if #DeepDives > 1 then
                 DeepDiveManager = FindFirstOf('DeepDiveManager')
-                break
+                if DeepDiveManager then break end
             end
         end
     end
