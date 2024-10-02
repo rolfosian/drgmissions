@@ -19,6 +19,7 @@ def when_ready(server):
         return wrapper
 
     start_threads()
+    server.handle_term = server.handle_quit
     server.stop = custom_changed_(server.stop)
     set_signal_handlers(SIGINT, SIGTERM, go_flag)
 

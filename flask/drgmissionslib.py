@@ -7,18 +7,32 @@ from functools import wraps
 from psutil import Process, process_iter
 from signal import signal, SIGINT, SIGTERM
 from random import choice
+from copy import deepcopy
 import os
 import shutil
 import glob
 import json
+cpu_count = os.cpu_count()
+cpu_count = 1 # dont bother lol
 
 def get_process_name():
     return Process(os.getpid()).name()
 
-if os.cpu_count() >= 4:
-    from multiprocessing.pool import Pool
+if cpu_count >= 4:
+    from multiprocessing import Pool, Manager, Event
     if os.name == 'nt':
         print('Look at these processes importing everything again lmao. Spawn sucks, man. I\'m not going to bother atomizing this module for spawn at this stage.')
+else:
+    Event = None
+    if get_process_name() == 'gunicorn':
+        from multiprocessing import Manager
+    else:
+        class Manager:
+            def list(self):
+                return []
+            def shutdown(self):
+                return
+            
 #----------------------------------------------
 # MISSION ICONS AND DAILY DEAL PIL FUNCTIONS
 def scale_image(image, i):
@@ -788,12 +802,9 @@ def render_biomes(Biomes):
     for biome, missions in Biomes.items():
         biome1 = []
         for mission in missions:
-            mission1 = {}
-
-            mission1['CodeName'] = mission['CodeName']
-            mission1['included_in'] = mission['included_in']
-            mission1['id'] = mission['id']
+            mission1 = deepcopy(mission)
             mission1['rendered_mission'] = render_mission(mission)
+            
             biome1.append(mission1)
 
         rendered_biomes[biome] = biome1
@@ -802,11 +813,8 @@ def render_biomes(Biomes):
 # Multiprocessed
 def process_mission(biome_mission):
     biome, mission = biome_mission
-    mission1 = {}
-
-    mission1['CodeName'] = mission['CodeName']
-    mission1['included_in'] = mission['included_in']
-    mission1['id'] = mission['id']
+    
+    mission1 = deepcopy(mission)
     mission1['rendered_mission'] = render_mission(mission)
 
     return biome, mission1
@@ -824,7 +832,7 @@ def render_biomes_parallel(Biomes, render_pool):
         rendered_biomes[biome].append(mission)
     return rendered_biomes
 
-render_biomes = render_biomes_parallel if os.cpu_count() >= 4 else render_biomes
+render_biomes = render_biomes_parallel if cpu_count >= 4 else render_biomes
 
 #----------------------------------------------------------------
 #ICON SAVE, HASH, AND ARRAY ROTATORS
@@ -871,25 +879,25 @@ def rotate_dailydeal(AllTheDeals, tstamp_Queue, deal_Queue, go_flag):
 
         sleep(0.75)
 
+#array as a VERB
 def array_biomes(Biomes, timestamp):
     Biomes1 = {}
     for biome in Biomes.keys():
         biome1 = biome.replace(' ', '-')
         Biomes1[biome1] = {}
         for mission in Biomes[biome]:
-            mission0 = {}
-            mission0['CodeName'] = mission['CodeName']
-
             mission_icon = BytesIO()
             mission['rendered_mission'].save(mission_icon, format='PNG')
             mission['rendered_mission'].close()
             mission_icon.seek(0)
 
             etag = md5(mission_icon.getvalue()).hexdigest()
-            mission0['etag'] = etag
-            mission0['rendered_mission'] = mission_icon
+            mission['etag'] = etag
+            mission['rendered_mission'] = mission_icon
+            mission['biome'] = biome
+            mission['included_in'] = mission['included_in']
 
-            Biomes1[mission['CodeName'].replace(' ', '-')+str(mission['id'])] = mission0
+            Biomes1[mission['CodeName'].replace(' ', '-')+str(mission['id'])] = mission
 
     return timestamp, Biomes1
 
@@ -930,25 +938,28 @@ def rotate_biomes(tstamp_Queue, next_tstamp_Queue, nextbiomes_Queue, biomes_Queu
 def init_worker():
     try:
         def shutdown(*args):
+            exit(0)
             quit()
         signal(SIGINT, shutdown)
         signal(SIGTERM, shutdown)
     except:
+        exit(0)
         quit()
 
 def rotate_biomes_parallel(tstamp_Queue, next_tstamp_Queue, nextbiomes_Queue, biomes_Queue, rendering_event, go_flag):
+    render_pool = Pool(processes=cpu_count, initializer=init_worker)
     while len(tstamp_Queue) == 0 and len(next_tstamp_Queue) == 0:
         sleep(0.1)
         continue
-    
-    with Pool(processes=os.cpu_count(), initializer=init_worker) as render_pool:
-        Biomes = render_biomes(load_individual_mission_timestamp(tstamp_Queue[0])['Biomes'], render_pool)
-        _, Biomes = array_biomes(Biomes, tstamp_Queue[0])
-        NextBiomes = render_biomes(load_individual_mission_timestamp(next_tstamp_Queue[0])['Biomes'], render_pool)
-        timestamp_next, NextBiomes = array_biomes(NextBiomes, next_tstamp_Queue[0])
 
-        nextbiomes_Queue.append(NextBiomes)
-        biomes_Queue.append(Biomes)
+    # with Pool(processes=cpu_count, initializer=init_worker) as render_pool:
+    Biomes = render_biomes(load_individual_mission_timestamp(tstamp_Queue[0])['Biomes'], render_pool)
+    _, Biomes = array_biomes(Biomes, tstamp_Queue[0])
+    NextBiomes = render_biomes(load_individual_mission_timestamp(next_tstamp_Queue[0])['Biomes'], render_pool)
+    timestamp_next, NextBiomes = array_biomes(NextBiomes, next_tstamp_Queue[0])
+
+    nextbiomes_Queue.append(NextBiomes)
+    biomes_Queue.append(Biomes)
 
     rendering_event.set()
     del Biomes
@@ -959,7 +970,8 @@ def rotate_biomes_parallel(tstamp_Queue, next_tstamp_Queue, nextbiomes_Queue, bi
         applicable_timestamp = next_tstamp_Queue[0]
         if applicable_timestamp != timestamp_next:
 
-            with Pool(processes=os.cpu_count(), initializer=init_worker) as render_pool:
+            # with Pool(processes=cpu_count, initializer=init_worker) as render_pool:
+            try:
                 NextBiomes = render_biomes(load_individual_mission_timestamp(applicable_timestamp)['Biomes'], render_pool)
                 timestamp_next, NextBiomes = array_biomes(NextBiomes, applicable_timestamp)
 
@@ -967,14 +979,20 @@ def rotate_biomes_parallel(tstamp_Queue, next_tstamp_Queue, nextbiomes_Queue, bi
                 biomes_Queue.pop(0)
                 nextbiomes_Queue.append(NextBiomes)
                 nextbiomes_Queue.pop(0)
-                # render_pool.close()
 
-            rendering_event.set()
-            del NextBiomes
-
+                rendering_event.set()
+                del NextBiomes
+            except:
+                pass
+            
         sleep(0.25)
-        
-rotate_biomes = rotate_biomes_parallel if os.cpu_count() >= 4 else rotate_biomes
+    
+    # spawn seems to throw a shitfit here and imports this whole fucking module again on every process in the pool for some reason on sigint but it appears to close correctly so i shrug
+    # beats initializing a new pool every rotation in any case
+    render_pool.terminate()
+    render_pool.close()
+    
+rotate_biomes = rotate_biomes_parallel if cpu_count >= 2 else rotate_biomes
 
 def rotate_DDs(DDs, go_flag):
     def sort_dd_json_list_by_timestamp(json_pattern):
@@ -1454,6 +1472,58 @@ def merge_parts(part_files, output_file):
                 merged_file.write(part.read())
 
 #----------------------------------------------------------------
+
+def render_ogembed_html(mission, identifier, route, timestamp):
+    s = {
+        's0' : [0, 5],
+        's1' : [1, 2],
+        's3' : [3, 4],
+    }
+    mutator = mission['MissionMutator'] if 'MissionMutator' in mission else 'None'
+    warnings = 'None'
+    
+    seasons = []
+    for s_ in s:
+        for s__ in s[s_]:
+            seasons.append(s__)
+    seasons.sort()
+    seasons = ', '.join([str(x) for x in seasons])
+    
+    if 'MissionWarnings'in mission:
+        warnings = mission['MissionWarnings']
+        warnings = ', '.join(warnings) if len(warnings) == 2 else ''.join(warnings)
+            
+    return f'''<!DOCTYPE html>
+<head>
+<meta property="og:title" content="{mission['CodeName']}"/>
+<meta property="og:type" content="website"/>
+<meta property="og:image" content="/{route}?img={identifier}"/>
+<meta property="og:image:width" content="350"/>
+<meta property="og:image:height" content="300"/>
+<meta property="og:description" content="Timestamp: {timestamp} (UTC)\nBiome: {mission['biome'].upper()}\nPrimary: {mission['PrimaryObjective'].upper()} | Secondary: {mission['SecondaryObjective'].upper()}\nIn Season(s): {seasons}\nComplexity: {mission['Complexity']}\nLength: {mission['Length']}\nMutator: {mutator.upper()}\nWarning(s): {warnings.upper()}\n"/>
+<meta http-equiv="refresh" content="0;url=/">
+</head>
+</html>'''
+
+def render_dd_ogembed_html(stage, dd, identifier):
+    mutator = stage['MissionMutator'] if 'MissionMutator' in stage else 'None'
+    warnings = 'None'
+    
+    if 'MissionWarnings'in stage:
+        warnings = stage['MissionWarnings']
+        warnings = ', '.join(warnings) if len(warnings) == 2 else ''.join(warnings)
+
+    return f'''<!DOCTYPE html>
+<head>
+<meta property="og:title" content="{identifier[0]} Stage {identifier[1]}"/>
+<meta property="og:type" content="website"/>
+<meta property="og:image" content="/dd_png?img={'-'.join(identifier)}"/>
+<meta property="og:image:width" content="350"/>
+<meta property="og:image:height" content="300"/>
+<meta property="og:description" content="Biome: {dd['Biome'].upper()}\nComplexity: {stage['Complexity']}\nLength: {stage['Length']}\nMutator: {mutator.upper()}\nWarning(s): {warnings.upper()}\n"/>
+<meta http-equiv="refresh" content="0;url=/">
+</head>
+</html>'''
 
 # this is useless and obsolete and i took all the string/etag hashing logic out of it but i keep it running because theres some reference to it somewhere that i cant be bothered checking to see if it will break something or not
 def rotate_index(rendering_event, current_timestamp_Queue, next_timestamp_Queue, index_event, index_Queue, go_flag):

@@ -8,17 +8,23 @@ function isLocalStorageAvailable(){
         return false;
     }
 }
-const isLocalStorageAvailable_ = isLocalStorageAvailable()
+const isLocalStorageAvailable_ = isLocalStorageAvailable();
 function getDomainURL(){
-    let base = document.querySelector('base').href
+    let base = document.querySelector('base').href;
     return base.slice(0, base.length-1);
 }
 
 const domainURL = getDomainURL();
 
 // caching parameters
-var totalImages = 98;
+var totalImages = 98; //99;
 var loadedImages = 0;
+
+// var miscImg = {
+//     'copy-icon' : `${domainURL}/static/copy-icon.webp`
+// };
+// var miscImages = {};
+// miscImages.name = 'miscImages';
 
 var biomeBanners = {
     'Crystalline Caverns': `${domainURL}/static/DeepDive_MissionBar_CrystalCaves.webp`,
@@ -31,7 +37,7 @@ var biomeBanners = {
     'Magma Core': `${domainURL}/static/DeepDive_MissionBar_MagmaCore.webp`,
     'Azure Weald': `${domainURL}/static/DeepDive_MissionBar_AzureWeald.webp`,
     'Hollow Bough': `${domainURL}/static/DeepDive_MissionBar_HollowBough.webp`
-}
+};
 var biomeBannersImages = {};
 biomeBannersImages.name = 'biomeBanners';
 
@@ -300,7 +306,8 @@ async function loadImgsFromLocalStorageAll() {
         loadImgsFromLocalStorageObj(biomesDD, biomesDDImages),
         loadImgsFromLocalStorageObj(biomeBanners, biomeBannersImages),
         loadImgsFromLocalStorageObj(deepDivesBanners, deepDivesBannersImages),
-        loadImgsFromLocalStorageObj(dailyDealResources, dailyDealResourcesImages)
+        loadImgsFromLocalStorageObj(dailyDealResources, dailyDealResourcesImages),
+        // loadImgsFromLocalStorageObj(miscImg, miscImages)
     ]);
     base64LocalStoragesImg = undefined;
 }
@@ -351,7 +358,8 @@ async function preloadImagesAll() {
         preloadImages(biomesDD, biomesDDImages),
         preloadImages(dailyDealResources, dailyDealResourcesImages),
         preloadImages(biomeBanners, biomeBannersImages),
-        preloadImages(deepDivesBanners, deepDivesBannersImages)
+        preloadImages(deepDivesBanners, deepDivesBannersImages),
+        // preloadImages(miscImg, miscImages)
     ]);
     if (isLocalStorageAvailable_) {
         console.log('New img hash:', simpleHash(JSON.stringify(base64LocalStoragesImg)))
@@ -691,11 +699,47 @@ async function getDeepDiveData() {
     return data;
 }
 
+const mBedDest = {
+    "current" : (m, t) => `${domainURL}/m_bed?t=current&m=${m}`,
+    "next" : (m, t) => `${domainURL}/m_bed?t=next&m=${m}`,
+    "dd" : (m, t) => `${domainURL}/dd_m_bed?t=${t}&m=${m}`
+};
+
+function copyToClipboard(text, event) {
+    navigator.clipboard.writeText(text)
+        .then(() => {
+            const tooltip = document.createElement('div');
+            tooltip.textContent = 'Copied to clipboard';
+            tooltip.style.fontFamily = "CarbonThin-W00-Regular"; 
+            tooltip.style.position = 'absolute';
+            tooltip.style.background = 'black';
+            tooltip.style.color = 'white';
+            tooltip.style.padding = '5px 10px';
+            tooltip.style.borderRadius = '5px';
+            tooltip.style.opacity = '1';
+            tooltip.style.transition = 'opacity 1s ease';
+            tooltip.style.pointerEvents = 'none';
+            tooltip.style.zIndex = 9999;
+
+            document.body.appendChild(tooltip);
+            tooltip.style.left = `${event.pageX}px`;
+            tooltip.style.top = `${event.pageY}px`;
+
+            setTimeout(() => {
+                tooltip.style.opacity = '0';
+                setTimeout(() => {
+                    document.body.removeChild(tooltip);
+                }, 500);
+            }, 500);
+        })
+        .catch(err => console.error('Failed to copy text: ', err));
+}
+
 function renderMission(m_d) {
     const div = document.createElement('div');
     div.classList.add('mission-hover-zoom');
     div.classList.add('mission');
-    div.id = m_d['CodeName'];
+    div.id = (m_d['CodeName']+m_d['id']).replace(' ', '-');
 
     const canvas = document.createElement('canvas');
     canvas.title = m_d["CodeName"];
@@ -795,8 +839,8 @@ function renderMission(m_d) {
     }
     ctx.save();
 
-    resizeCanvas(div, canvas, 0.35, 0.35)
-    div.appendChild(canvas)
+    resizeCanvas(div, canvas, 0.35, 0.35);
+    div.appendChild(canvas);
     return div;
 }
 
@@ -837,6 +881,17 @@ function renderBiomes(dictionary) {
         renderedBiomes['Biomes'][biome] = biome1;
     };
     return renderedBiomes;
+}
+function updateBiomesMbeds(Biomes) {
+    for (let biome in Biomes) {
+        let biomeMissions = Biomes[biome];
+
+        for (let i = 0; i < biomeMissions.length; i++) {
+            let mission = biomeMissions[i];
+            mission['rendered_mission'].href = mission['rendered_mission'].href.replace('t=next', 't=current');
+        }
+    }
+    return Biomes;
 }
 
 function isMidnightUpcoming(date) {
@@ -1204,12 +1259,12 @@ function renderDeepDiveBiomeCodename(biome, codename) {
 
 function renderDeepDiveStage(m_d, stageCount) {
     const div = document.createElement('div');
+    let stageCount_ = stageCount.toString()
     div.classList.add('mission-hover-zoom');
     div.classList.add('mission');
-    div.id = m_d['CodeName'];
 
     const canvas = document.createElement('canvas');
-    canvas.title = `Stage ${stageCount.toString()}`;
+    canvas.title = `Stage ${stageCount_}`;
     canvas.width = 350;
     canvas.height = 300;
     var ctx = canvas.getContext('2d');
@@ -2099,7 +2154,7 @@ var localStorages = {
 };
 
 var localStoragesHashes = {
-    'img' : 1996300662,
+    'img' : 1996300662,//-1714409925,
     'fonts' : 906557479,
     'homepageScript' : 2145285990,
 };
@@ -2122,6 +2177,8 @@ currentButtonLineBreak.id = 'currentButtonLineBreak'
 var initialized = false;
 
 function resetGlobalVars() {
+    // miscImages = {};
+    // miscImages.name = 'miscImages';
     biomeBannersImages = {};
     biomeBannersImages.name = 'biomeBanners';
     deepDivesBannersImages = {};
@@ -2158,9 +2215,7 @@ function resetGlobalVars() {
         'currentDaysJson' : null,
         'img' : null,
         'fonts' : null,
-        'homepageScript' : null,
-        'currentSeedMap' : null,
-        'previousSeedMap' : null,
+        'homepageScript' : null
     };
 
     cacheActive = false;
@@ -2258,9 +2313,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             } else {
                 await loadImgsFromLocalStorageAll();
             }
-            // if (!localStorages['currentSeedMap']) {
-            //     populateLocalStoragesSeedMaps(date);
-            // }
 
             var breakfast = await initialize(date);
             console.log(breakfast)
@@ -2295,8 +2347,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             document.head.appendChild(homepageScript);
             await onLoad();
             break
-            // await homepageScript.onload();
-
 
             // homepageScript.src = "/static/homepage.js"
             // homepageScript.onload = async function () {

@@ -2,7 +2,7 @@ from time import time
 start = time()
 from signal import getsignal, signal, SIGINT, SIGTERM, SIG_DFL
 from functools import wraps
-from flask import Flask, request, send_file, jsonify
+from flask import Flask, request, send_file, jsonify, Response
 from io import BytesIO
 from shutil import copy as shutil_copy
 from drgmissionslib import (
@@ -10,12 +10,16 @@ from drgmissionslib import (
     open_with_timestamped_write,
     cfg,
     class_xp_levels,
+    Event,
+    Manager,
     select_timestamp_from_dict,
     flatten_seasons_v5,
     split_all_mission_timestamps,
     load_individual_mission_timestamp,
     group_by_day_and_split_all,
     order_dictionary_by_date,
+    render_ogembed_html,
+    render_dd_ogembed_html,
     render_xp_calc_index,
     rotate_timestamps,
     rotate_timestamp_from_dict,
@@ -25,15 +29,14 @@ from drgmissionslib import (
     rotate_index,
     get_mission_icon_suffix_for_rpng_endpoint,
     wait_rotation,
-    GARBAGE,
     SERVER_READY,
     merge_parts,
-    get_process_name,
     Dwarf,
     )
 import os
 import json
 import threading
+Event = threading.Event if not Event else Event
 cwd = os.getcwd()
 name = os.name
 
@@ -70,19 +73,6 @@ def serialize_json():
     return AllTheDeals
 
 def create_app(AllTheDeals, start=start, debug=False):
-    if os.cpu_count() >= 4:
-        from multiprocessing import Manager, Event
-    else:
-        from threading import Event
-        if get_process_name() == 'gunicorn':
-            from multiprocessing import Manager
-        else:
-            class Manager:
-                def list(self):
-                    return []
-                def shutdown(self):
-                    return
-
     M = Manager()
     rendering_event = Event()
 
@@ -127,6 +117,7 @@ def create_app(AllTheDeals, start=start, debug=False):
 
     def start_threads():
         for thread in threads:
+            thread.daemon = True
             thread.start()
 
     def join_threads(go_flag):
@@ -183,7 +174,10 @@ def create_app(AllTheDeals, start=start, debug=False):
         reloader_loops['auto'] = ReloaderLoop_
 
     app = Flask('drgmissions', static_folder='./static')
-
+    
+    four_0_four_response = Response('<!doctype html><html lang="en"><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', status=404, mimetype='text/html')
+    four_0_0_response = Response('<!doctype html><html lang="en"><title>400 Bad Request</title><h1>Bad Request</h1><p>The server could not understand your request. Please make sure you have entered the correct information and try again.</p>', status=400, mimetype='text/html')
+    
     #Homepage
     @app.route('/')
     def home():
@@ -197,7 +191,7 @@ def create_app(AllTheDeals, start=start, debug=False):
             mission = currybiomes[0][request.args['img']]
             return send_file(BytesIO(mission['rendered_mission'].getvalue()), mimetype='image/png', etag=mission['etag'])
         except:
-            return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
+            return four_0_four_response
 
     @app.route('/rpng')
     def serve_random_img():
@@ -205,7 +199,7 @@ def create_app(AllTheDeals, start=start, debug=False):
             mission = currybiomes[0][get_mission_icon_suffix_for_rpng_endpoint(load_individual_mission_timestamp(tstamp[0]))]
             return send_file(BytesIO(mission['rendered_mission'].getvalue()), mimetype='image/png', etag=mission['etag'])
         except:
-            return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
+            return four_0_four_response
 
     # Sends upcoming mission icons, arg format f"?img={Biome.replace(' ', '-')}{mission['CodeName'].replace(' ', '-')}{mission['id']}" - see rotate_biomes in drgmissionslib.py
     # eg http://127.0.0.1:5000/upcoming_png?img=Spiked-Shelter42069 (mission['CodeName'] is 'Spiked Shelter' and mission['id'] is 42069)
@@ -215,7 +209,15 @@ def create_app(AllTheDeals, start=start, debug=False):
             mission = nextbiomes[0][request.args['img']]
             return send_file(BytesIO(mission['rendered_mission'].getvalue()), mimetype='image/png', etag=mission['etag'])
         except:
-            return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
+            return four_0_four_response
+        
+    @app.route('/dd_png')
+    def serve_dd_img():
+        try:
+            arg_parts = request.args['img'].split('-')
+            return send_file(f'{cwd}/static/{arg_parts[0]}/{arg_parts[1]}.png')
+        except:
+            return four_0_four_response
 
     #Sends current daily deal image
     @app.route('/dailydeal')
@@ -223,7 +225,7 @@ def create_app(AllTheDeals, start=start, debug=False):
         try:
             return send_file(BytesIO(dailydeal[0]['rendered_dailydeal'].getvalue()), mimetype='image/png', etag=dailydeal[0]['etag'])
         except:
-            return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
+            return four_0_four_response
 
     #json endpoint
     #eg http://127.0.0.1:5000/json?data=current for current mission metadata
@@ -238,7 +240,36 @@ def create_app(AllTheDeals, start=start, debug=False):
         try:
             return jsonify(json_args[request.args['data']]())
         except:
-            return '<!doctype html><html lang="en"><title>400 Bad Request</title><h1>Bad Request</h1><p>The server could not understand your request. Please make sure you have entered the correct information and try again.</p>', 400
+            return four_0_0_response
+    
+    # args - 127.0.0.1:5000/m_embed?m=Spiked-Shelter42069&t=current (mission['CodeName'] is 'Spiked Shelter' and mission['id'] is 42069)
+    # these embeds look like shit tbh i wouldnt use them
+    embed_dest = {
+        'current' : lambda identifier: (currybiomes[0][identifier], 'png', tstamp[0]),
+        'next' : lambda identifier: (nextbiomes[0][identifier], 'upcoming_png', next_tstamp[0]),
+        'dd' : lambda identifier: DDs[0]['Deep Dives'][identifier]
+    }
+    @app.route('/m_bed')
+    def serve_embed():
+        try:
+            identifier = request.args['m']
+            route_ = request.args['t']
+            mission, route_, timestamp = embed_dest[route_](identifier)
+            return Response(render_ogembed_html(mission, identifier, route_, timestamp), mimetype='text/html')
+        except:
+            return four_0_0_response
+        
+    # this doesnt work and i cant be bothered fixing it
+    # @app.route('/dd_m_bed')
+    # def serve_dd_embed():
+    #     try:
+    #         identifier = request.args['m'][:-1].replace('_', ' ')
+    #         dd = embed_dest['dd'](identifier[0])
+    #         stage = dd['Stages'][int(identifier[1])-1]
+    #         return Response(render_dd_ogembed_html(stage, dd, identifier), mimetype='text/html')
+    #     except Exception as e:
+    #         print(e)
+    #         return four_0_0_response
 
     #Class XP calculator HTML that has its own javascript. The JS doesn't use the below endpoint - it is client side, but there is a link to the endpoint on the page.
     xp_calculator_index = render_xp_calc_index()
@@ -296,9 +327,8 @@ def create_app(AllTheDeals, start=start, debug=False):
                 'xp_per_hr' : str(xp_per_hr),
                 }
             return jsonify(values)
-        except Exception as e:
-            print(e)
-            return '<!doctype html><html lang="en"><title>400 Bad Request</title><h1>Bad Request</h1><p>The server could not understand your request. Please make sure you have entered the correct information and try again.</p>', 400
+        except:
+            return four_0_0_response
 
     AUTH_TOKEN = cfg['auth_token']
 
@@ -309,7 +339,7 @@ def create_app(AllTheDeals, start=start, debug=False):
         try:
             token = request.headers.get('Authorization')
             if not token or token != f"Bearer {AUTH_TOKEN}":
-                return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
+                return four_0_four_response
             if 'file' not in request.files:
                 return "No file in the request", 400
 
@@ -354,7 +384,7 @@ def create_app(AllTheDeals, start=start, debug=False):
         except Exception as e:
             with open_with_timestamped_write('error.log', 'a') as f:
                 f.write(f'{e}\n')
-            return '<!doctype html><html lang=en><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', 404
+            return four_0_four_response
 
     @app.route('/test')
     def test():

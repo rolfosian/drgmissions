@@ -108,8 +108,21 @@ transition: opacity 0.5s ease-in-out;
 width: 80%;
 height: auto;
 }
+.copy-icon {
+position: relative;
+margin-left: -100%;
+margin-top: -100%;
+top: 35px;
+left: 145px;
+opacity: 0;
+transition: opacity 0.5s ease;
+z-index: 9998;
+}
 .mission-hover-zoom {
 display: inline-block
+}
+.mission-hover-zoom:hover .copy-icon {
+    opacity: 1;
 }
 .mission-hover-zoom canvas {
 transition: transform .6s ease;

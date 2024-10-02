@@ -1,0 +1,55 @@
+{
+    "Deep Dives":{
+      "Deep Dive Normal":{
+        "Stages":[{
+            "SecondaryObjective":"Build Liquid Morkite Pipeline",
+            "Complexity":"3",
+            "Length":"3",
+            "PrimaryObjective":"Salvage Operation",
+            "id":411
+          },{
+            "SecondaryObjective":"Perform Deep Scans",
+            "id":410,
+            "Length":"2",
+            "MissionWarnings":["Shield Disruption"],
+            "Complexity":"1",
+            "PrimaryObjective":"Industrial Sabotage"
+          },{
+            "SecondaryObjective":"Get Alien Eggs",
+            "id":409,
+            "Length":"2",
+            "MissionWarnings":["Lethal Enemies"],
+            "Complexity":"3",
+            "PrimaryObjective":"Escort Duty"
+          }],
+        "CodeName":"STRANGE WILDERNESS",
+        "Biome":"Crystalline Caverns"
+      },
+      "Deep Dive Elite":{
+        "Stages":[{
+            "SecondaryObjective":"Build Liquid Morkite Pipeline",
+            "id":407,
+            "Length":"1",
+            "MissionWarnings":["Ebonite Outbreak"],
+            "Complexity":"2",
+            "PrimaryObjective":"Deep Scan"
+          },{
+            "SecondaryObjective":"Mine Morkite",
+            "id":406,
+            "Length":"2",
+            "MissionWarnings":["Low Oxygen"],
+            "Complexity":"2",
+            "PrimaryObjective":"Elimination"
+          },{
+            "SecondaryObjective":"Get Alien Eggs",
+            "id":405,
+            "Length":"2",
+            "MissionWarnings":["Regenerative Bugs"],
+            "Complexity":"3",
+            "PrimaryObjective":"On-Site Refining"
+          }],
+        "CodeName":"FORGOTTEN PATROL",
+        "Biome":"Salt Pits"
+      }
+    }
+  }
