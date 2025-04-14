@@ -446,7 +446,7 @@ function Main_()
 
     local file = io.open(currentDateTime..'.json', 'w')
     if file then
-        file:write(master)
+        file:write(json.encode(master))
         file:close()
     end
 end

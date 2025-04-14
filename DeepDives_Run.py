@@ -49,7 +49,7 @@ def main():
         f.close()
         
     subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
-    hide_window('FSD-Win64-Shipping.exe')
+    # hide_window('FSD-Win64-Shipping.exe')
 
     files = []
     start_time = time.time()
