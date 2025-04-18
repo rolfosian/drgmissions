@@ -46,9 +46,7 @@ def main():
     current_time = current_time.replace(hour=0, minute=0, second=0)
     currytime = current_time.strftime("%Y-%m-%dT%H:%M:%SZ")
     currytime = datetime.strptime(sanitize_datetime(currytime), "%d-%m-%yT%H:%M:%SZ")
-    currytime.hour = 0
-    currytime.minute = 0
-    currytime.second = 0
+    currytime = currytime.replace(tzinfo=timezone.utc, hour=0, minute=0, second=0)
     
     total_increments = 365
     

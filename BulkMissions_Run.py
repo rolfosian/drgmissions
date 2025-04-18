@@ -49,7 +49,7 @@ def main():
     if year_range:
         yearly_results = []
         wanted_years = user_input_year_range()
-        user_dates = [datetime(year=y, month=1, day=1) for y in wanted_years]
+        user_dates = [datetime(year=y, month=1, day=1, tzinfo=timezone.utc) for y in wanted_years]
         
         
         print(wrap_with_color('Disabling automatic system time...', '0;33'))
