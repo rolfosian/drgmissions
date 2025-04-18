@@ -1,9 +1,11 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from functools import wraps
 from typing import Union, Callable
-from ctypes import wintypes, byref, WinDLL, WINFUNCTYPE, sizeof, create_unicode_buffer
+from ctypes import wintypes, byref, WinDLL, WINFUNCTYPE, sizeof, create_unicode_buffer, Structure
 from copy import deepcopy
+from time import sleep
 from random import randint
+import sys
 import socket
 import subprocess
 import time
@@ -15,6 +17,14 @@ import json
 import re
 import threading
 from signal import signal, getsignal, SIGINT, SIG_DFL
+from traceback import format_exc
+import colorama
+colorama.init()
+
+def handle_exc(e):
+    print(e)
+    for line in format_exc().splitlines():
+        print(line)
 
 # this half works but doesnt work if the self (class IPCServer) hasnt accepted a connection yet, presumably because the accept method is blocking idfk or care shit seems stable enough not to need to fix this anyway
 def wrap_sig_handler(func, self):
@@ -205,7 +215,7 @@ def delete_file(filename:str):
         except:
             continue
 
-def timestamped_print(func:Callable[..., None]):
+def timestamped_print(func:Callable[..., str]):
     @wraps(func)
     def wrapper(*args, **kwargs):
         include_timestamp = kwargs.pop('include_timestamp', True)
@@ -216,13 +226,31 @@ def timestamped_print(func:Callable[..., None]):
         if include_timestamp:
             concatenated_args = ''.join(args)
             if concatenated_args.strip() != '':
-                timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+                timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
                 args = (f'{start}{timestamp}', *args)
         else:
             args[0] = start + args[0]
         return func(*args, **kwargs)
     return wrapper
 print = timestamped_print(print)
+
+def timestamped_input(func: Callable[..., str]):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        include_timestamp = kwargs.pop('include_timestamp', True)
+        start = kwargs.pop('start', '')
+        prompt = args[0] if args else ''
+
+        if include_timestamp and prompt.strip() != '':
+            timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+            prompt = f'{start}{timestamp} {prompt}'
+        else:
+            prompt = f'{start}{prompt}'
+
+        return func(prompt)
+    return wrapper
+
+input = timestamped_input(input)
 
 def format_seconds(seconds:Union[int, float]):
     hours = int(seconds // 3600)
@@ -647,14 +675,14 @@ def wait_until_next_hour():
     time_to_wait = (next_hour - now).total_seconds()
     
     while time_to_wait > 0:
-        time_to_wait = (next_hour - datetime.utcnow()).total_seconds()
+        time_to_wait = (next_hour - datetime.now(timezone.utc)).total_seconds()
         print(f"Time to wait: {format_seconds(time_to_wait)}", end="\r")
         time.sleep(0.2)
         
     print(f"Time to wait: {format_seconds(0)}")
 
 def wait_until_next_thursday_11am_utc():
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     
     days_until_thursday = (3 - now.weekday()) % 7
     
@@ -667,7 +695,7 @@ def wait_until_next_thursday_11am_utc():
     time_to_wait = (next_thursday_11am_utc - now).total_seconds()
     
     while time_to_wait > 0:
-        time_to_wait = (next_thursday_11am_utc - datetime.utcnow()).total_seconds()
+        time_to_wait = (next_thursday_11am_utc - datetime.now(timezone.utc)).total_seconds()
         print(f"Time to wait: {format_seconds(round(time_to_wait))}", end="\r")
         time.sleep(0.5)
     
@@ -692,6 +720,30 @@ def kill_process_by_name_starts_with(start_string:str):
                 proc.kill()
     except:
         return
+    
+def set_system_time(dt: datetime):
+    class SYSTEMTIME(Structure):
+        _fields_ = [
+            ("wYear", wintypes.WORD),
+            ("wMonth", wintypes.WORD),
+            ("wDayOfWeek", wintypes.WORD),
+            ("wDay", wintypes.WORD),
+            ("wHour", wintypes.WORD),
+            ("wMinute", wintypes.WORD),
+            ("wSecond", wintypes.WORD),
+            ("wMilliseconds", wintypes.WORD),
+        ]
+
+    system_time = SYSTEMTIME()
+    system_time.wYear = dt.year
+    system_time.wMonth = dt.month
+    system_time.wDay = dt.day
+    system_time.wHour = dt.hour
+    system_time.wMinute = dt.minute
+    system_time.wSecond = dt.second
+    system_time.wMilliseconds = 0
+
+    WinDLL('kernel32.dll').SetSystemTime(byref(system_time))
 
 def enable_system_time():
     try:
@@ -737,6 +789,25 @@ def reverse_date_format(input_date:str):
     input_date = f"{day}-{month}-{year[2:]}"
     return input_date
 
+def user_input_year_range():
+    years = []
+    while True:
+        try:
+            start_year_input = input("Enter start year (YYYY): ")
+            if len(start_year_input) != 4 or not start_year_input.isdigit() or int(start_year_input) < 1972:
+                raise Exception("Invalid input. Please enter a year in the format (YYYY) after 1971.")
+            
+            end_year_input = input("Enter end year (YYYY). Dataset will end at the end of the year BEFORE this year: ")
+            if len(end_year_input) != 4 or not end_year_input.isdigit() or int(end_year_input) <= int(start_year_input):
+                raise Exception(f"Invalid input. Please enter a year in the format (YYYY) after {start_year_input}.")
+            
+            for i in range(int(start_year_input), int(end_year_input)+1):
+                years.append(i)
+            return years
+        except Exception as e:
+            print(e)
+            continue
+
 def user_input_set_target_date(current_time:datetime):
     while True:
         user_input = input("Enter the target date up to which data will be collected (YYYY-MM-DD): ")
@@ -766,6 +837,7 @@ def wait_for_json(IPC:IPCServer, total_increments:int):
         'enc' : lambda total_increments_, total_increments: '[40;92mEncoding JSON...[0m',
         'encc' : lambda total_increments_, total_increments: '[40;92mAwaiting JSON...[0m'
     }
+    fin = "fin"
     
     total_increments_ = int(str(total_increments))
     estimated_time_completion = (total_increments * 0.2) + 30
@@ -825,15 +897,14 @@ def wait_for_json(IPC:IPCServer, total_increments:int):
         timeout_seconds = estimated_time_completion + 300
         total_increments -= 1
         
-        if poll == 'fin':
+        if poll == fin:
             print(wrap_with_color('Serializing JSON...', '40;92'))
             dictionary = json.loads(re.sub(r':\d{2}Z', ':00Z', IPC.result_list[0]))
             kill_process_by_name_starts_with('FSD')
             kill_process_by_name_starts_with('Unreal')
             break
         
-        percent = pfuncs[poll](total_increments_, total_increments)
-        print(f"[K{percent} | {wrap_with_color(format_seconds(timeout_seconds), '0;33')} until timeout | Estimated time remaining: [0;33m{format_seconds(estimated_time_completion)}[0m    ", end='\r')
+        print(f"[K{pfuncs[poll](total_increments_, total_increments)} | {wrap_with_color(format_seconds(timeout_seconds), '0;33')} until timeout | Estimated time remaining: [0;33m{format_seconds(estimated_time_completion)}[0m    ", end='\r')
     IPC.shut_down()
     
     return dictionary

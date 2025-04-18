@@ -1,22 +1,23 @@
-import datetime
-import subprocess
-import os
-import json
-from time import sleep
-from random import randint
 from drgmissions_scraper_utils import (
+    os,
+    json,
+    sleep,
+    randint,
+    subprocess,
+    datetime, 
+    timezone,
     IPCServer,
+    handle_exc,
     kill_process_by_name_starts_with,
     wait_for_json,
     upload_file,
     yes_or_no,
     enable_system_time,
     disable_system_time,
+    set_system_time,
     maximize_window,
-    hide_window,
     launch_game,
     sanitize_datetime,
-    reverse_date_format,
     order_dictionary_by_date,
     is_port_in_use,
     delete_file,
@@ -41,11 +42,13 @@ def main():
         f.close()
 
     # Get the current UTC date
-    current_time = datetime.datetime.utcnow()
+    current_time = datetime.now(timezone.utc)
     current_time = current_time.replace(hour=0, minute=0, second=0)
     currytime = current_time.strftime("%Y-%m-%dT%H:%M:%SZ")
-    currytime = datetime.datetime.strptime(sanitize_datetime(currytime), "%d-%m-%yT%H:%M:%SZ")
-    currytime = str(currytime).split(' ')
+    currytime = datetime.strptime(sanitize_datetime(currytime), "%d-%m-%yT%H:%M:%SZ")
+    currytime.hour = 0
+    currytime.minute = 0
+    currytime.second = 0
     
     total_increments = 365
     
@@ -63,9 +66,11 @@ def main():
         #In case different amount is defined in script
         if 'local total_days' in line:
             total_increments = int(line.split('=')[1].strip())
+            
         if line.startswith('    local port'):
             line = f'    local port = {port}\n'
         main_lines.append(line)
+        
     with open('./mods/DailyDealsScraper/Scripts/main.lua', 'w') as f:
         f.writelines(main_lines)
         f.close()
@@ -75,7 +80,7 @@ def main():
     disable_system_time()
     
     # Set the clock to 00:00:00
-    subprocess.run(['date', reverse_date_format(currytime[0]), '&', 'time', currytime[1]], shell=True)
+    set_system_time(currytime)
 
     #launch game with 'start steam://run/548430//' shell command
     launch_game(IPC)
@@ -104,4 +109,4 @@ try:
         delete_file('drgdailydeals.json')
     main()
 except Exception as e:
-    print(f'ERROR: {e}')
+    handle_exc(e)

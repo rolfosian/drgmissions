@@ -18,6 +18,15 @@ IF %ERRORLEVEL% EQU 0 (
 )
 :startScript
 
+for /f "delims=" %%a in ('tzutil /g') do set timezone=%%a
+if /i "%timezone%"=="UTC" (
+
+) else (
+    echo System Timezone is not UTC, it is %timezone%
+    echo Please set system Timezone to UTC
+    pause
+)
+
 echo:Please ensure your environment is set up to handle abuse of the system clock.
 :resetScript
 echo:Select a scraper option:

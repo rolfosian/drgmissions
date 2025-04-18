@@ -1,9 +1,10 @@
 #Automatically run with bat file on system startup
-import subprocess
-import time
-import os
-import sys
 from drgmissions_scraper_utils import (
+    os,
+    subprocess,
+    time,
+    sys,
+    handle_exc,
     yes_or_no,
     upload_file,
     enable_system_time,
@@ -11,7 +12,6 @@ from drgmissions_scraper_utils import (
     get_previous_thursday_date,
     kill_process_by_name_starts_with,
     maximize_window,
-    hide_window,
     subprocess_wrapper,
     wrap_with_color,
     print,
@@ -49,7 +49,6 @@ def main():
         f.close()
         
     subprocess.Popen(['start', 'steam://run/548430//'], shell=True)
-    # hide_window('FSD-Win64-Shipping.exe')
 
     files = []
     start_time = time.time()
@@ -97,4 +96,4 @@ def main():
 try:
     main()
 except Exception as e:
-    print(e)
+    handle_exc(e)
