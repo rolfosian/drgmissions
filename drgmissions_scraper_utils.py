@@ -813,6 +813,7 @@ def user_input_set_target_date(current_time:datetime):
         user_input = input("Enter the target date up to which data will be collected (YYYY-MM-DD): ")
         try:
             user_date = datetime.strptime(user_input, "%Y-%m-%d")
+            user_date = user_date.replace(tzinfo=timezone.utc)
             if user_date > current_time:
                 break
             else:
