@@ -587,6 +587,8 @@ def main():
     to_cleanup = os.listdir(cwd)
     cleanup_all = True
     
+    subprocess.run(["apt", "install", "-y", "p7zip-full"])
+    
     print('Welcome to the drgmissions service setup. Follow the prompts and make sure to copy down the cfg.json when it is generated.')
     print('--------------------------------------------------------------------------------')
     

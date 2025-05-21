@@ -2,12 +2,13 @@ from hashlib import md5
 from time import sleep, time
 from io import BytesIO
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from functools import wraps
 from psutil import Process, process_iter
 from signal import signal, SIGINT, SIGTERM
 from random import choice
 from copy import deepcopy
+import subprocess
 import os
 import shutil
 import glob
@@ -1054,23 +1055,32 @@ def rotate_DDs(DDs, go_flag):
 #----------------------------------------------------------------
 #UTILS 
 
+def rmtree_older_than(path, age_minutes=30):
+    cutoff = time.time() - (age_minutes * 60)
+    for root, dirs, files in os.walk(path, topdown=False):
+        for name in files:
+            filepath = os.path.join(root, name)
+            if os.path.getmtime(filepath) < cutoff:
+                os.remove(filepath)
+        for name in dirs:
+            dirpath = os.path.join(root, name)
+            try:
+                if not os.listdir(dirpath):
+                    os.rmdir(dirpath)
+            except OSError:
+                pass
+
 def load_individual_mission_timestamp(applicable_timestamp):
     with open(f'./static/json/bulkmissions_granules/{applicable_timestamp.replace(":", "-")}.json', 'r') as f:
         return json.load(f)
 
 def split_all_mission_timestamps(DRG):
-    if os.path.isdir('./static/json/bulkmissions_granules'):
-        while True:
-            try:
-                shutil.rmtree('./static/json/bulkmissions_granules')
-                break
-            except:
-                pass
-    os.mkdir('./static/json/bulkmissions_granules')
+    os.makedirs('./static/json/bulkmissions_granules', exist_ok=True)
     
     for ts, v in DRG.items():
         with open(f'./static/json/bulkmissions_granules/{ts.replace(":", "-")}.json', 'w') as f:
             json.dump(v, f)
+    rmtree_older_than("./static/json/bulkmissions_granules", age_minutes=30)
             
 def group_by_day_and_split_all(DRG):
     def group_json_by_days(DRG):
@@ -1097,20 +1107,14 @@ def group_by_day_and_split_all(DRG):
                     continue
         return DRG
     def split_json_bulkmissions_raw(DRG):
-        if os.path.isdir('./static/json/bulkmissions'):
-            while True:
-                try:
-                    shutil.rmtree('./static/json/bulkmissions')
-                    break
-                except:
-                    continue
-        os.mkdir('./static/json/bulkmissions')
+        os.makedirs('./static/json/bulkmissions', exist_ok=True)
 
         for timestamp, dictionary in DRG.items():
             dictionary['ver'] = 5
             fname = timestamp.replace(':','-')
             with open(f'./static/json/bulkmissions/{fname}.json', 'w') as f:
                 json.dump(dictionary, f)
+        rmtree_older_than("./static/json/bulkmissions", age_minutes=30)
 
     to_split = group_json_by_days(DRG)
     to_split = add_daily_deals_to_grouped_json(to_split)
@@ -1129,10 +1133,10 @@ def rotate_jsons_days(DRG, num_days, go_flag):
         complete_dates = [start_date + timedelta(days=i) for i in range((end_date - start_date).days + 1)]
         complete_data = {date.strftime('%Y-%m-%d'): timestamps.get(date, 0) for date in complete_dates}
 
-        current_datetime = datetime.utcnow()
+        current_datetime = datetime.now(timezone.utc)
         days_from_now = current_datetime + timedelta(days=num_days)
         relevant_days = {key: value for key, value in complete_data.items() if current_datetime <= datetime.strptime(key, '%Y-%m-%d') < days_from_now}
-        current_datetime = datetime.utcnow().strftime('%Y-%m-%d')
+        current_datetime = datetime.now(timezone.utc).strftime('%Y-%m-%d')
         relevant_days[current_datetime] = data[current_datetime]
 
         return relevant_days
@@ -1202,17 +1206,17 @@ def round_time(current_time, next_):
     rounded_time_str = rounded_time.strftime("%Y-%m-%dT%H:%M:%SZ")
     return rounded_time_str
 def select_timestamp(next_):
-    current_time = datetime.utcnow()
+    current_time = datetime.now(timezone.utc)
     rounded_time_str = round_time(current_time, next_)
     return rounded_time_str
 
 # obsolete for its original purpose but serves to clear memory now
 def select_timestamp_from_dict(dictionary, next_):
-    current_time = datetime.utcnow()
+    current_time = datetime.now(timezone.utc)
     keys = list(dictionary.keys())
     for i in range(len(keys) - 1):
-        timestamp = datetime.fromisoformat(keys[i][:-1])
-        next_timestamp = datetime.fromisoformat(keys[i+1][:-1])
+        timestamp = datetime.fromisoformat(keys[i][:-1]+'+00:00')
+        next_timestamp = datetime.fromisoformat(keys[i+1][:-1]+'+00:00')
         if current_time > timestamp and current_time < next_timestamp:
             if next_:
                 return keys[i+1]
@@ -1372,6 +1376,9 @@ def GARBAGE(dictionary, go_flag):
             elapsed_time += 0.2
         select_timestamp_from_dict(dictionary, False)
 
+def get_available_memory():
+    return int(subprocess.check_output(["free", "-b"]).splitlines()[1].split()[6])
+
 def get_process_pss_mb(pid):
     try:
         with open(f'/proc/{pid}/smaps_rollup', 'r') as f:
@@ -1434,7 +1441,7 @@ def timestamped_print(func):
         if include_timestamp:
             concatenated_args = ''.join(args)
             if concatenated_args.strip() != '':
-                timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+                timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
                 args = (f'{timestamp}', *args)
         return func(*args, **kwargs)
     return wrapper
@@ -1444,7 +1451,7 @@ def timestamped_write(func):
     @wraps(func)
     def wrapper(data):
         if type(data) == str:
-            timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+            timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
             data = f'{timestamp}: {data}'
         return func(data)
     return wrapper

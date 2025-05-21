@@ -12,6 +12,7 @@ from drgmissionslib import (
     class_xp_levels,
     Event,
     Manager,
+    rmtree_older_than,
     select_timestamp_from_dict,
     flatten_seasons_v5,
     split_all_mission_timestamps,
@@ -32,6 +33,9 @@ from drgmissionslib import (
     SERVER_READY,
     merge_parts,
     Dwarf,
+    shutil,
+    subprocess,
+    get_available_memory
     )
 import os
 import json
@@ -41,27 +45,46 @@ cwd = os.getcwd()
 name = os.name
 
 def serialize_json():
-    with open('drgmissionsgod.json', 'r') as f:
-        print('Loading bulkmissions json...')
-        DRG = json.load(f)
-        f.close()
+    def inline():
+        with open('drgmissionsgod.json', 'r') as f:
+            print('Loading bulkmissions json...')
+            DRG = json.load(f)
+            f.close()
 
-    for k in DRG:
-        if 's0' in DRG[k].keys():
-            # merge season branches to one
-            print('Merging seasons...')
-            DRG = flatten_seasons_v5(DRG)
-        break
-    # Remove past timestamps from memory
-    t = select_timestamp_from_dict(DRG, False)
-    del t
+        for k in DRG:
+            if 's0' in DRG[k].keys():
+                # merge season branches to one
+                print('Merging seasons...')
+                DRG = flatten_seasons_v5(DRG)
+            break
+        # Remove past timestamps from memory
+        t = select_timestamp_from_dict(DRG, False)
+        del t
 
-    # split into individual json
-    print('Adding daily deals, grouping timestamps by day, and spltting json files for static site...')
-    group_by_day_and_split_all(DRG)
-    print('Splitting all timestamps...')
-    split_all_mission_timestamps(DRG)
-    del DRG
+        # split into individual json
+        print('Adding daily deals, grouping timestamps by day, and spltting json files for static site...')
+        group_by_day_and_split_all(DRG)
+        print('Splitting all timestamps...')
+        split_all_mission_timestamps(DRG)
+        del DRG
+        
+    from subprocess import run
+    
+    if os.path.isdir('./static/json/bulkmissions_granules'):
+        while True:
+            try:
+                shutil.rmtree('./static/json/bulkmissions_granules')
+                break
+            except:
+                pass
+        while True:
+            try:
+                shutil.rmtree('./static/json/bulkmissions')
+                break
+            except:
+                pass
+
+    run(["7z", "x", "drgmissionsgod_serialized_json.7z", "-o./static/json"])
 
     with open('drgdailydeals.json', 'r') as f:
         AllTheDeals = f.read()
@@ -172,8 +195,14 @@ def create_app(AllTheDeals, start=start, debug=False):
                 return super().restart_with_reloader()
 
         reloader_loops['auto'] = ReloaderLoop_
-
+    
+    global_event = Event()
+    global_event.set()
     app = Flask('drgmissions', static_folder='./static')
+    
+    @app.before_request()
+    def before_r():
+        global_event.wait()
     
     four_0_four_response = Response('<!doctype html><html lang="en"><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>', status=404, mimetype='text/html')
     four_0_0_response = Response('<!doctype html><html lang="en"><title>400 Bad Request</title><h1>Bad Request</h1><p>The server could not understand your request. Please make sure you have entered the correct information and try again.</p>', status=400, mimetype='text/html')
@@ -181,6 +210,7 @@ def create_app(AllTheDeals, start=start, debug=False):
     #Homepage
     @app.route('/')
     def home():
+        # Only absolute path works for some reason, fucked if I know lOol
         return send_file(f'{cwd}/index.html', mimetype='text/html')
 
     # Sends current mission icons, arg format f"?img={mission['CodeName'].replace(' ', '-')}{mission['id']}" - see rotate_biomes in drgmissionslib.py
@@ -345,8 +375,30 @@ def create_app(AllTheDeals, start=start, debug=False):
 
             file_ = request.files['file']
             filename = file_.filename
-
-            if filename.endswith('_part'):
+            
+            if filename == "drgmissionsgod_serialized_json.7z":
+                file_.save(f"{cwd}/{filename}")
+                
+                global_event.clear()
+                subprocess.run(["7z", "x", "drgmissionsgod_serialized_json.7z", f"{cwd}/static/json", "-aoa"])
+                global_event.set()
+                
+                rmtree_older_than(f"{cwd}/static/json/bulkmissions", age_minutes=30)
+                rmtree_older_than(f"{cwd}/static/json/bulkmissions_granules", age_minutes=30)
+                
+            
+            elif filename == "drgmissionsgod.7z":
+                file_.save(f"{cwd}/{filename}")
+                os.rename("drgmissionsgod.json", "drgmissionsgod.json.bak")
+                subprocess.run(["7z", "x", "drgmissionsgod.7z", f"{cwd}"])
+                os.remove("drgmissionsgod.7z")
+                
+                if os.path.getsize("drgmissionsgod.json") * 10 < get_available_memory():
+                    global_event.clear()
+                    serialize_json()
+                    global_event.set()
+                
+            elif filename.endswith('_part'):
                 actual_filename = filename.split('.json')[0]+'.json'
                 if actual_filename not in file_parts:
                     file_parts[actual_filename] = []

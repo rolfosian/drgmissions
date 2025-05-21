@@ -1997,7 +1997,6 @@ async function initialize(date) {
     </div>
     <span style="color: white;font-size: 30px;font-family: CarbonThin-W00-Regular;"><em><span style="font-size: 15px;">*url arg for icons is mission-codename-with-hyphen-instead-of-whitespace + id</span></em></span>
     <p class='gsgdisclaimer'><i>This website is a third-party platform and is not affiliated, endorsed, or sponsored by Ghost Ship Games. The use of Deep Rock Galactic's in-game assets on this website is solely for illustrative purposes and does not imply any ownership or association with the game or its developers. All copyrights and trademarks belong to their respective owners. For official information about Deep Rock Galactic, please visit the official Ghost Ship Games website.</i></p></div>
-    <span class="credits">Send credits (eth): 0xb9c8591A80A3158f7cFFf96EC3c7eA9adB7818E7</span>
     `;
 
     let mainContent = document.getElementById('mainContent');
