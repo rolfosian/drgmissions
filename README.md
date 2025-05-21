@@ -1,3 +1,5 @@
+## **Make sure to extract drgmissionsgod.json.7z if you want to run the server or mission finder in the flask folder
+
 ## **Deep Rock Galactic lua scripts for use with [RE-UE4SS lua API](https://github.com/UE4SS-RE/RE-UE4SS/) to fetch current mission and deep dive data for flask**
 
 - To run DRG headless, use command line arg `-nullrhi` when running the game.
