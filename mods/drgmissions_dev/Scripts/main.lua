@@ -64,7 +64,8 @@ function TestTwoWeeks()
         ['s2'] = 2,
         ['s3'] = 3,
         ['s4'] = 4,
-        ['s5'] = 5
+        ['s5'] = 5,
+        ['s6'] = 6
     }
     -- local PollingClient = utils.ConnectPollClient(12345)
     -- Initialize Table
@@ -149,7 +150,8 @@ function TestCurrentTimeOnly()
         ['s2'] = 2,
         ['s3'] = 3,
         ['s4'] = 4,
-        ['s5'] = 5
+        ['s5'] = 5,
+        ['s6'] = 6
     }
 
     -- Initialize Table

@@ -51,7 +51,8 @@ function UnpackDeepDiveMission(mission, master, t)
         {pattern = "1st_Salvage", result = "Salvage Operation"},
         {pattern = "1st_Facility", result = "Industrial Sabotage"},
         {pattern = "Gather_AlienEggs", result = "Egg Hunt"},
-        {pattern = "DeepScan", result = "Deep Scan"}
+        {pattern = "DeepScan", result = "Deep Scan"},
+        {pattern = "HeavyExcavation", result = "Heavy Excavation"}
     }
     for _, obj in ipairs(primary_objectives) do
         if string.find(PrimaryObjective, obj.pattern) then
@@ -403,7 +404,8 @@ Biomesmatch = {
     ['Biome /Game/Landscape/Biomes/Biomes_Ingame/HollowBough/BIOME_HollowBough.BIOME_HollowBough'] = 'Hollow Bough',
     ['Biome /Game/Landscape/Biomes/Biomes_Ingame/SandblastedCorridors/BIOME_SandblastedCorridors.BIOME_SandblastedCorridors'] = 'Sandblasted Corridors',
     ['Biome /Game/Landscape/Biomes/Biomes_Ingame/RadioactiveZone/BIOME_RadioactiveZone.BIOME_RadioactiveZone'] = 'Radioactive Exclusion Zone',
-    ['Biome /Game/Landscape/Biomes/Biomes_Ingame/LushDownpour/BIOME_LushDownpour.BIOME_LushDownpour'] = 'Dense Biozone'
+    ['Biome /Game/Landscape/Biomes/Biomes_Ingame/LushDownpour/BIOME_LushDownpour.BIOME_LushDownpour'] = 'Dense Biozone',
+    ['Biome /Game/Landscape/Biomes/Biomes_Ingame/OssuaryDepths/BIOME_OssuaryDepths.BIOME_OssuaryDepths'] = 'Ossuary Depths'
 }
 function Main_()
     local currentDateTime = os.date("!%Y-%m-%dT%H-%M-%SZ")

@@ -370,9 +370,9 @@ def order_dictionary_by_date_FIRST_KEY_ROUNDING(dictionary:dict):
 def reconstruct_dictionary(dictionary:dict):
     god = {}
     mission_key_order = ['Seed', 'PrimaryObjective', 'SecondaryObjective', 'MissionWarnings', 'MissionMutator', 'Complexity', 'Length', 'CodeName', 'id']
-    biome_order = ['Glacial Strata', 'Crystalline Caverns', 'Salt Pits', 'Magma Core', 'Azure Weald', 'Sandblasted Corridors', 'Fungus Bogs', 'Radioactive Exclusion Zone', 'Dense Biozone', 'Hollow Bough']
+    biome_order = ['Glacial Strata', 'Crystalline Caverns', 'Salt Pits', 'Magma Core', 'Azure Weald', 'Sandblasted Corridors', 'Fungus Bogs', 'Radioactive Exclusion Zone', 'Dense Biozone', 'Hollow Bough', 'Ossuary Depths']
     for timestamp, seasons_dict in dictionary.items():
-        seasons_dict = sort_dictionary(seasons_dict, ['s0', 's1', 's2', 's3', 's4', 's5'])
+        seasons_dict = sort_dictionary(seasons_dict, ['s0', 's1', 's2', 's3', 's4', 's5', 's6'])
         god[timestamp] = {}
         for season, master in seasons_dict.items():
             god[timestamp][season] = {}
@@ -832,7 +832,7 @@ def yes_or_no(prompt:str):
         else:
             print("Please enter 'Y' or 'N'.")
 
-def wait_for_json(IPC:IPCServer, total_increments:int):
+def wait_for_json(IPC:IPCServer, total_increments:int) -> dict:
     pfuncs = {
         'pol' : lambda total_increments_, total_increments: f"[40;92m{round((total_increments_ - total_increments) / total_increments_ * 100, 2):.2f}%[0m",
         'enc' : lambda total_increments_, total_increments: '[40;92mEncoding JSON...[0m',
@@ -990,15 +990,21 @@ def compare_dicts(dict1:dict, dict2:dict, ignore_keys:list):
     dict2_filtered = {k: v for k, v in dict2.items() if k not in ignore_keys}
     return dict1_filtered == dict2_filtered
 
-def flatten_seasons_v5(DRG:dict):
+def flatten_seasons_v6(DRG:dict):
     combined = {}
     timestamps = list(DRG.keys())
     seasons = ['s0', 's1', 's3']
     
     for timestamp in timestamps:
-        del DRG[timestamp]['s2']
-        del DRG[timestamp]['s4']
-        del DRG[timestamp]['s5']
+        if 's2' in DRG[timestamp]:
+            del DRG[timestamp]['s2']
+        if 's4' in DRG[timestamp]:
+            del DRG[timestamp]['s4']
+        if 's5' in DRG[timestamp]:
+            del DRG[timestamp]['s5']
+        if 's6' in DRG[timestamp]:
+            del DRG[timestamp]['s6']
+
         for season in seasons:
             for biome, missions in DRG[timestamp][season]['Biomes'].items():
                 for mission in missions:

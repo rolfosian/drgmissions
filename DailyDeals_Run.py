@@ -90,10 +90,11 @@ def main():
         f.close()
         
     AllTheDeals = order_dictionary_by_date(AllTheDeals)
+    AllTheDeals = json.dumps(AllTheDeals).replace(':01Z', ':00Z')
 
     #Write AllTheDeals JSON
     with open('drgdailydeals.json', 'w') as f:
-        json.dump(AllTheDeals, f)
+        f.write(AllTheDeals)
     
     #Enable Automatic system time
     print(wrap_with_color('Enabling automatic system time...', '0;33'))

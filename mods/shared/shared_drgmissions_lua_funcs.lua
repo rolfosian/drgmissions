@@ -145,7 +145,8 @@ MapKeys = {
     [2] = 1,
     [3] = 3,
     [4] = 3,
-    [5] = 5
+    [5] = 5,
+    [6] = 6
 }
 function GetSeedTable(Season, RandomSeed)
     local NewSeed = {
@@ -164,15 +165,16 @@ function GetMissions_(Season, RandomSeed)
     return Missions
 end
 PrimaryObjectives = {
- ['BlueprintGeneratedClass /Game/GameElements/Objectives/OBJ_1st_PointExtraction.OBJ_1st_PointExtraction_C'] = 'Point Extraction',
- ['BlueprintGeneratedClass /Game/GameElements/Objectives/Elimination/OBJ_Eliminate_Eggs.OBJ_Eliminate_Eggs_C'] = 'Elimination',
- ['BlueprintGeneratedClass /Game/GameElements/Objectives/Escort/OBJ_1st_Escort.OBJ_1st_Escort_C'] = 'Escort Duty',
- ['BlueprintGeneratedClass /Game/GameElements/Objectives/OBJ_1st_Extraction.OBJ_1st_Extraction_C'] = 'Mining Expedition',
- ['BlueprintGeneratedClass /Game/GameElements/Objectives/Refinery/OBJ_1st_Refinery.OBJ_1st_Refinery_C'] = 'On-Site Refining',
- ['BlueprintGeneratedClass /Game/GameElements/Objectives/Salvage/OBJ_1st_Salvage.OBJ_1st_Salvage_C'] = 'Salvage Operation',
- ['BlueprintGeneratedClass /Game/GameElements/Objectives/Facility/OBJ_1st_Facility.OBJ_1st_Facility_C'] = 'Industrial Sabotage',
- ['BlueprintGeneratedClass /Game/GameElements/Objectives/OBJ_1st_Gather_AlienEggs.OBJ_1st_Gather_AlienEggs_C'] = 'Egg Hunt',
- ['BlueprintGeneratedClass /Game/GameElements/Objectives/DeepScan/OBJ_1st_DeepScan.OBJ_1st_DeepScan_C'] = 'Deep Scan'
+    ['BlueprintGeneratedClass /Game/GameElements/Objectives/OBJ_1st_PointExtraction.OBJ_1st_PointExtraction_C'] = 'Point Extraction',
+    ['BlueprintGeneratedClass /Game/GameElements/Objectives/Elimination/OBJ_Eliminate_Eggs.OBJ_Eliminate_Eggs_C'] = 'Elimination',
+    ['BlueprintGeneratedClass /Game/GameElements/Objectives/Escort/OBJ_1st_Escort.OBJ_1st_Escort_C'] = 'Escort Duty',
+    ['BlueprintGeneratedClass /Game/GameElements/Objectives/OBJ_1st_Extraction.OBJ_1st_Extraction_C'] = 'Mining Expedition',
+    ['BlueprintGeneratedClass /Game/GameElements/Objectives/Refinery/OBJ_1st_Refinery.OBJ_1st_Refinery_C'] = 'On-Site Refining',
+    ['BlueprintGeneratedClass /Game/GameElements/Objectives/Salvage/OBJ_1st_Salvage.OBJ_1st_Salvage_C'] = 'Salvage Operation',
+    ['BlueprintGeneratedClass /Game/GameElements/Objectives/Facility/OBJ_1st_Facility.OBJ_1st_Facility_C'] = 'Industrial Sabotage',
+    ['BlueprintGeneratedClass /Game/GameElements/Objectives/OBJ_1st_Gather_AlienEggs.OBJ_1st_Gather_AlienEggs_C'] = 'Egg Hunt',
+    ['BlueprintGeneratedClass /Game/GameElements/Objectives/DeepScan/OBJ_1st_DeepScan.OBJ_1st_DeepScan_C'] = 'Deep Scan',
+    ['BlueprintGeneratedClass /Game/GameElements/Objectives/DeepScan/OBJ_1st_HeavyExcavation.OBJ_1st_HeavyExcavation_C'] = 'Heavy Excavation'
 }
 function GetPrimaryObj(fullname)
     return PrimaryObjectives[fullname]
@@ -222,8 +224,7 @@ Warnings = {
     ['MissionWarning /Game/GameElements/Missions/Warnings/ExploderInfestation/WRN_ExploderInfestation.WRN_ExploderInfestation'] = 'Exploder Infestation',
     ['MissionWarning /Game/GameElements/Missions/Warnings/CaveLeechDen/WRN_CaveLeechDen.WRN_CaveLeechDen'] = 'Cave Leech Cluster',
     ['MissionWarning /Game/GameElements/Missions/Warnings/BulletHell/WRN_BulletHell.WRN_BulletHell'] = 'Duck and Cover',
-    ['MissionWarning /Game/GameElements/Missions/Warnings/RockInfestation/WRN_RockInfestation.WRN_RockInfestation'] = 'Ebonite Outbreak',
-    ['MissionWarning /Game/GameElements/Missions/Warnings/TougherEnemies/WRN_TougherEnemies.WRN_TougherEnemies'] = 'Tougher Enemies'
+    ['MissionWarning /Game/GameElements/Missions/Warnings/RockInfestation/WRN_RockInfestation.WRN_RockInfestation'] = 'Ebonite Outbreak'
 }
 function GetMissionWarning(fullname)
     return Warnings[fullname]
@@ -269,6 +270,9 @@ MissionDNAs = {
     --Deep Scan
     ['BlueprintGeneratedClass /Game/GameElements/Missions/DNA_Web_Medium.DNA_Web_Medium_C'] = {complexity = '3', length='2'},
     ['BlueprintGeneratedClass /Game/GameElements/Missions/DNA_Web_Small.DNA_Web_Small_C'] = {complexity = '2', length='1'}
+
+    --Heavy Excavation
+    --TODO
 }
 MissionDNAs_obscure = {
     ['Egg Hunt'] = {
@@ -440,7 +444,8 @@ function BiomesTable()
         ['Sandblasted Corridors'] = {},
         ['Magma Core'] = {},
         ['Azure Weald'] = {},
-        ['Hollow Bough'] = {}
+        ['Hollow Bough'] = {},
+        ["Ossuary Depths"] = {}
     }
 end
 Biomesmatch = {
@@ -453,7 +458,8 @@ Biomesmatch = {
     ['Biome /Game/Landscape/Biomes/Biomes_Ingame/HollowBough/BIOME_HollowBough.BIOME_HollowBough'] = 'Hollow Bough',
     ['Biome /Game/Landscape/Biomes/Biomes_Ingame/SandblastedCorridors/BIOME_SandblastedCorridors.BIOME_SandblastedCorridors'] = 'Sandblasted Corridors',
     ['Biome /Game/Landscape/Biomes/Biomes_Ingame/RadioactiveZone/BIOME_RadioactiveZone.BIOME_RadioactiveZone'] = 'Radioactive Exclusion Zone',
-    ['Biome /Game/Landscape/Biomes/Biomes_Ingame/LushDownpour/BIOME_LushDownpour.BIOME_LushDownpour'] = 'Dense Biozone'
+    ['Biome /Game/Landscape/Biomes/Biomes_Ingame/LushDownpour/BIOME_LushDownpour.BIOME_LushDownpour'] = 'Dense Biozone',
+    ['Biome /Game/Landscape/Biomes/Biomes_Ingame/OssuaryDepths/BIOME_OssuaryDepths.BIOME_OssuaryDepths'] = 'Ossuary Depths'
 }
 function GetBiome(mission)
     local b = mission:GetPropertyValue('Biome')

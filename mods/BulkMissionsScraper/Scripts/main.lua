@@ -55,7 +55,8 @@ function Main()
         ['s2'] = 2,
         ['s3'] = 3,
         ['s4'] = 4,
-        ['s5'] = 5
+        ['s5'] = 5,
+        ['s6'] = 6
     }
     local port = 53578
     local PollingClient = utils.ConnectPollClient(port)
