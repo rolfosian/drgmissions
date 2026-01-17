@@ -19,8 +19,8 @@ cpu_count = 1 # dont bother lol
 def get_process_name():
     return Process(os.getpid()).name()
 
-if cpu_count >= 4:
-    from multiprocessing import Pool, Manager, Event
+# if cpu_count >= 4:
+    # from multiprocessing import Pool, Manager, Event
     # if os.name == 'nt':
         # print('Look at these processes importing everything again lmao. Spawn sucks, man. I\'m not going to bother atomizing this module for spawn at this stage.')
 # else:
@@ -1296,15 +1296,13 @@ def flatten_seasons_v6(DRG:dict):
     seasons = ['s0', 's1', 's3']
     
     for timestamp in timestamps:
-        if 's2' in DRG[timestamp]:
-            del DRG[timestamp]['s2']
-        if 's4' in DRG[timestamp]:
-            del DRG[timestamp]['s4']
-        if 's5' in DRG[timestamp]:
-            del DRG[timestamp]['s5']
-        if 's6' in DRG[timestamp]:
-            del DRG[timestamp]['s6']
-
+        # if 's2' in DRG[timestamp]:
+        #     del DRG[timestamp]['s2']
+        # if 's4' in DRG[timestamp]:
+        #     del DRG[timestamp]['s4']
+        # if 's5' in DRG[timestamp]:
+        #     del DRG[timestamp]['s5']
+            
         for season in seasons:
             for biome, missions in DRG[timestamp][season]['Biomes'].items():
                 for mission in missions:

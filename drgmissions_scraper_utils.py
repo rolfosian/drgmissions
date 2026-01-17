@@ -996,14 +996,12 @@ def flatten_seasons_v6(DRG:dict):
     seasons = ['s0', 's1', 's3']
     
     for timestamp in timestamps:
-        if 's2' in DRG[timestamp]:
-            del DRG[timestamp]['s2']
-        if 's4' in DRG[timestamp]:
-            del DRG[timestamp]['s4']
-        if 's5' in DRG[timestamp]:
-            del DRG[timestamp]['s5']
-        if 's6' in DRG[timestamp]:
-            del DRG[timestamp]['s6']
+        # if 's2' in DRG[timestamp]:
+        #     del DRG[timestamp]['s2']
+        # if 's4' in DRG[timestamp]:
+        #     del DRG[timestamp]['s4']
+        # if 's5' in DRG[timestamp]:
+        #     del DRG[timestamp]['s5']
 
         for season in seasons:
             for biome, missions in DRG[timestamp][season]['Biomes'].items():

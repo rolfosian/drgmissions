@@ -1,16 +1,5 @@
 local json = require("./mods/shared/dkjson")
-function IsLoaded()
-    local GeneratedMissions = FindAllOf('GeneratedMission')
-    if GeneratedMissions then
-        if #GeneratedMissions > 6 then
-            return true
-        else
-            return false
-        end
-    else
-        return false
-    end
-end
+local isLoaded
 function PressStartAndWaitForLoad()
     local startmenus = nil
     while true do
@@ -36,6 +25,7 @@ function PressStartAndWaitForLoad()
                     count = count + 1
                     if count > 11 then
                         waiting_for_load = false
+                        isLoaded = true
                     end
                 end
             end
@@ -60,10 +50,10 @@ function TestTwoWeeks()
     local SeasonsValues = {
         ['s0'] = 0,
         ['s1'] = 1,
-        ['s2'] = 2,
+        -- ['s2'] = 2,
         ['s3'] = 3,
-        ['s4'] = 4,
-        ['s5'] = 5,
+        -- ['s4'] = 4,
+        -- ['s5'] = 5,
         ['s6'] = 6
     }
     -- local PollingClient = utils.ConnectPollClient(12345)
@@ -137,19 +127,23 @@ function TestTwoWeeks()
         utils.IncrementDatetime(currytime)
     end
 
-    -- god = json.encode(god)
     -- utils.Send_data(PollingClient, god)
     -- PollingClient:close()
+    local file = io.open('drgmissionsdev.json', 'w')
+    if file then
+        file:write(json.encode(god))
+        file:close()
+    end
 end
 function TestCurrentTimeOnly()
     local utils = require('./mods/shared/shared_drgmissions_lua_funcs')
     local SeasonsValues = {
         ['s0'] = 0,
         ['s1'] = 1,
-        ['s2'] = 2,
+        -- ['s2'] = 2,
         ['s3'] = 3,
-        ['s4'] = 4,
-        ['s5'] = 5,
+        -- ['s4'] = 4,
+        -- ['s5'] = 5,
         ['s6'] = 6
     }
 
@@ -203,12 +197,15 @@ function TestCurrentTimeOnly()
 --         file:close()
 --     end
 end
--- if IsLoaded() then
---     goto isloaded
--- else
---     PressStartAndWaitForLoad()
--- end
--- ::isloaded::
+function Main()
+    if isLoaded then
+        goto isloaded
+    else
+        PressStartAndWaitForLoad()
+    end
+    ::isloaded::
 
--- TestCurrentTimeOnly()
--- TestTwoWeeks()
+    -- TestCurrentTimeOnly()
+    -- TestTwoWeeks()
+end
+Main()
