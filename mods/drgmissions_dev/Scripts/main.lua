@@ -1,5 +1,4 @@
 local json = require("./mods/shared/dkjson")
-package.cpath = package.cpath .. ';'..'./mods/shared/socket/socket/core.dll'
 function IsLoaded()
     local GeneratedMissions = FindAllOf('GeneratedMission')
     if GeneratedMissions then
@@ -143,7 +142,7 @@ function TestTwoWeeks()
     -- PollingClient:close()
 end
 function TestCurrentTimeOnly()
-    local utils = require('./mods/shared/bulkmissions_funcs')
+    local utils = require('./mods/shared/shared_drgmissions_lua_funcs')
     local SeasonsValues = {
         ['s0'] = 0,
         ['s1'] = 1,
@@ -161,8 +160,10 @@ function TestCurrentTimeOnly()
     local FSDGameInstance = FindFirstOf('FSDGameInstance')
     local timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
     FSDGameInstance:UpdateGlobelMissionSeed()
+
     local RandomSeed = FSDGameInstance:GetGlobalMissionSeedNew().RandomSeed
     print(tostring(RandomSeed))
+
     for SeasonKey, SeasonValue in pairs(SeasonsValues) do
         missionscount = 0
         master[SeasonKey] = {}

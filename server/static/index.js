@@ -106,7 +106,7 @@ function setBiomeAndDeepDivesBanners() {
         'Magma Core': 'Abundant: Magnite; Scarce: Croppa',
         'Azure Weald': 'Abundant: Croppa; Scarce: Umanite',
         'Hollow Bough': 'Abundant: Jadiz; Scarce: Bismor',
-        "Ossuary Depths" : "Abundant: X; Scarce: Y"
+        "Ossuary Depths" : "Abundant: Bismor; Scarce: Magnite"
     }
     for (let biome in minerals) {
         canvasOne = addBiomeName(biomeBannersImages[biome], biome, minerals[biome]);
@@ -150,7 +150,7 @@ var primaryObjResources = {
     'Elimination': `${domainURL}/static/img/Kill_Dreadnought_Objective_icon.webp`,
     'Industrial Sabotage': `${domainURL}/static/img/Icon_Facility_DataRack.webp`,
     'Deep Scan' : `${domainURL}/static/img/Icons_Resources_Detailed_Outline_ResonanceScannerPod.webp`,
-    'Heavy Excavation' : `${domainURL}/static/img/Icons_Resources_Detailed_Outline_ResonanceScannerPod.webp`
+    'Heavy Excavation' : `${domainURL}/static/img/Icons_Resources_Detailed_Outline_Resinite_Deposit.webp`
 };
 var primaryObjResourcesImages = {};
 primaryObjResourcesImages.name = 'primaryObjResourcesImages';
@@ -229,7 +229,8 @@ var secondaryObjsDD = {
     "Get Alien Eggs": `${domainURL}/static/img/Alien_egg_icon_DDsecondaryobj.webp`,
     "Black Box": `${domainURL}/static/img/Blackbox_icon_DDsecondaryobj.webp`,
     "Perform Deep Scans": `${domainURL}/static/img/Icons_Resources_Detailed_Outline_ResonanceScannerPod_DDsecondaryobj.webp`,
-    "Build Liquid Morkite Pipeline" : `${domainURL}/static/img/Icons_Resources_Detailed_Outline_LiquidMorkiteTankerPod_DDsecondaryobj.webp`
+    "Build Liquid Morkite Pipeline" : `${domainURL}/static/img/Icons_Resources_Detailed_Outline_LiquidMorkiteTankerPod_DDsecondaryobj.webp`,
+    'Extract Resinite Masses' : `${domainURL}/static/img/Icons_Resources_Detailed_Outline_Resinite_Deposit.webp`
 };
 var secondaryObjsDDImages = {};
 secondaryObjsDDImages.name = 'secondaryObjsDDImages';
@@ -847,6 +848,10 @@ function renderMission(m_d) {
         'Salvage Operation,default': '3',
         'Deep Scan,2,1' : '3',
         'Deep Scan,3,2' : '5',
+        'Heavy Excavation,2,1' : '2',
+        'Heavy Excavation,3,1' : '2',
+        'Heavy Excavation,2,2' : '3',
+        "Heavy Excavation,2,3" : "3"
     };
 
     const hexagon = primaryObjResourcesImages['hexagon']
@@ -1389,7 +1394,11 @@ function renderDeepDiveStage(m_d, stageCount) {
         'Salvage Operation,2': '2',
         'Salvage Operation,default': '3',
         'Deep Scan,2,1' : '3',
-        'Deep Scan,3,2' : '5'
+        'Deep Scan,3,2' : '5',
+        'Heavy Excavation,2,1' : '2',
+        'Heavy Excavation,3,1' : '2',
+        'Heavy Excavation,2,2' : '3',
+        "Heavy Excavation,2,3" : "3"
     };
 
     const hexagon = primaryObjResourcesImages['hexagon'];

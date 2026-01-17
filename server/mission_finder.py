@@ -13,20 +13,20 @@ def with_specials(base):
     return ["None", "All"] + base
 
 valid_biomes = ['Glacial Strata', 'Crystalline Caverns', 'Salt Pits', 'Magma Core', 'Azure Weald', 
-                'Sandblasted Corridors', 'Fungus Bogs', 'Radioactive Exclusion Zone', 'Dense Biozone', 'Hollow Bough']
+                'Sandblasted Corridors', 'Fungus Bogs', 'Radioactive Exclusion Zone', 'Dense Biozone', 'Hollow Bough', 'Ossuary Depths']
 
 valid_secondaries = sorted(['Dystrum', 'Glyphid Eggs', 'ApocaBlooms', 'Hollomite', 'Fossils',
                             'Ebonuts', 'Gunk Seeds', 'Boolo Caps', 'Fester Fleas', 'Bha Barnacles'], key=lambda x: (str.isdigit(x), x.lower()))
 
 valid_primaries = sorted(['Deep Scan', 'Escort Duty', 'Elimination', 'Industrial Sabotage', 'Mining Expedition',
-                          'Salvage Operation', 'On-Site Refining', 'Point Extraction', 'Egg Hunt'], key=lambda x: (str.isdigit(x), x.lower()))
+                          'Salvage Operation', 'On-Site Refining', 'Point Extraction', 'Egg Hunt', 'Heavy Excavation'], key=lambda x: (str.isdigit(x), x.lower()))
 
 valid_mutators = with_specials(sorted(['Gold Rush', 'Blood Sugar', 'Critical Weakness', 'Rich Atmosphere', 'Golden Bugs', 'Double XP',
                                        'Low Gravity', 'Secret Secondary', 'Volatile Guts', 'Mineral Mania'], key=lambda x: (str.isdigit(x), x.lower())))
 
 valid_warnings = with_specials(sorted(['Cave Leech Cluster', 'Parasites', 'Mactera Plague', 'Low Oxygen', 'Exploder Infestation', 'Rival Presence', 
                                        'Shield Disruption', 'Lithophage Outbreak', 'Haunted Cave', 'Regenerative Bugs', 'Lethal Enemies', 'Swarmageddon', 
-                                       'Elite Threat', 'Ebonite Outbreak', 'Duck and Cover'], key=lambda x: (str.isdigit(x), x.lower())))
+                                       'Elite Threat', 'Ebonite Outbreak', 'Duck and Cover', 'Pit Jaw Colony'], key=lambda x: (str.isdigit(x), x.lower())))
 
 valid_lengths = ["1", "2", "3"]
 valid_complexities = ["1", "2", "3"]

@@ -3,7 +3,6 @@ package.cpath = package.cpath..';./mods/shared/set_clock/set_clock.dll'
 local clock = require('set_clock')
 package.cpath = cpath_orig..';'..'./mods/shared/socket/socket/core.dll'
 local socket = require('./mods/shared/socket/socket')
-
 function ConnectPollClient(port, handshake)
     handshake = handshake or 'polling'
     local client = assert(socket.tcp())
@@ -174,7 +173,7 @@ PrimaryObjectives = {
     ['BlueprintGeneratedClass /Game/GameElements/Objectives/Facility/OBJ_1st_Facility.OBJ_1st_Facility_C'] = 'Industrial Sabotage',
     ['BlueprintGeneratedClass /Game/GameElements/Objectives/OBJ_1st_Gather_AlienEggs.OBJ_1st_Gather_AlienEggs_C'] = 'Egg Hunt',
     ['BlueprintGeneratedClass /Game/GameElements/Objectives/DeepScan/OBJ_1st_DeepScan.OBJ_1st_DeepScan_C'] = 'Deep Scan',
-    ['BlueprintGeneratedClass /Game/GameElements/Objectives/DeepScan/OBJ_1st_HeavyExcavation.OBJ_1st_HeavyExcavation_C'] = 'Heavy Excavation'
+    ['BlueprintGeneratedClass /Game/GameElements/Objectives/Excavation/OBJ_Excavation.OBJ_Excavation_C'] = 'Heavy Excavation'
 }
 function GetPrimaryObj(fullname)
     return PrimaryObjectives[fullname]
@@ -224,7 +223,8 @@ Warnings = {
     ['MissionWarning /Game/GameElements/Missions/Warnings/ExploderInfestation/WRN_ExploderInfestation.WRN_ExploderInfestation'] = 'Exploder Infestation',
     ['MissionWarning /Game/GameElements/Missions/Warnings/CaveLeechDen/WRN_CaveLeechDen.WRN_CaveLeechDen'] = 'Cave Leech Cluster',
     ['MissionWarning /Game/GameElements/Missions/Warnings/BulletHell/WRN_BulletHell.WRN_BulletHell'] = 'Duck and Cover',
-    ['MissionWarning /Game/GameElements/Missions/Warnings/RockInfestation/WRN_RockInfestation.WRN_RockInfestation'] = 'Ebonite Outbreak'
+    ['MissionWarning /Game/GameElements/Missions/Warnings/RockInfestation/WRN_RockInfestation.WRN_RockInfestation'] = 'Ebonite Outbreak',
+    ['MissionWarning /Game/GameElements/Missions/Warnings/PitJawColony/WRN_PitJawColony.WRN_PitJawColony'] = 'Pit Jaw Colony',
 }
 function GetMissionWarning(fullname)
     return Warnings[fullname]
@@ -269,10 +269,13 @@ MissionDNAs = {
 
     --Deep Scan
     ['BlueprintGeneratedClass /Game/GameElements/Missions/DNA_Web_Medium.DNA_Web_Medium_C'] = {complexity = '3', length='2'},
-    ['BlueprintGeneratedClass /Game/GameElements/Missions/DNA_Web_Small.DNA_Web_Small_C'] = {complexity = '2', length='1'}
+    ['BlueprintGeneratedClass /Game/GameElements/Missions/DNA_Web_Small.DNA_Web_Small_C'] = {complexity = '2', length='1'},
 
     --Heavy Excavation
-    --TODO
+    ['BlueprintGeneratedClass /Game/GameElements/Missions/DNA_Wheel_ShortAverage.DNA_Wheel_ShortAverage_C'] = {complexity = '2', length = '1'},
+    ['BlueprintGeneratedClass /Game/GameElements/Missions/DNA_Wheel_ShortComplex.DNA_Wheel_ShortComplex_C'] = {complexity = '3', length = '1'},
+    ['BlueprintGeneratedClass /Game/GameElements/Missions/DNA_Wheel_Medium.DNA_Wheel_Medium_C'] = {complexity = '2', length = '2'},
+    ['BlueprintGeneratedClass /Game/GameElements/Missions/DNA_Wheel_MediumComplex.DNA_Wheel_MediumComplex_C'] = {complexity = '3', length = '2'}
 }
 MissionDNAs_obscure = {
     ['Egg Hunt'] = {
@@ -459,7 +462,7 @@ Biomesmatch = {
     ['Biome /Game/Landscape/Biomes/Biomes_Ingame/SandblastedCorridors/BIOME_SandblastedCorridors.BIOME_SandblastedCorridors'] = 'Sandblasted Corridors',
     ['Biome /Game/Landscape/Biomes/Biomes_Ingame/RadioactiveZone/BIOME_RadioactiveZone.BIOME_RadioactiveZone'] = 'Radioactive Exclusion Zone',
     ['Biome /Game/Landscape/Biomes/Biomes_Ingame/LushDownpour/BIOME_LushDownpour.BIOME_LushDownpour'] = 'Dense Biozone',
-    ['Biome /Game/Landscape/Biomes/Biomes_Ingame/OssuaryDepths/BIOME_OssuaryDepths.BIOME_OssuaryDepths'] = 'Ossuary Depths'
+    ['Biome /Game/Landscape/Biomes/Biomes_Ingame/BoneYards/BIOME_OssuaryDepths.BIOME_OssuaryDepths'] = 'Ossuary Depths'
 }
 function GetBiome(mission)
     local b = mission:GetPropertyValue('Biome')
