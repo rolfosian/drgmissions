@@ -17,14 +17,8 @@ function getDomainURL(){
 const domainURL = getDomainURL();
 
 // caching parameters
-var totalImages = 98; //99;
+var totalImages = 98;
 var loadedImages = 0;
-
-// var miscImg = {
-//     'copy-icon' : `${domainURL}/static/copy-icon.webp`
-// };
-// var miscImages = {};
-// miscImages.name = 'miscImages';
 
 var biomeBanners = {
     'Crystalline Caverns': `${domainURL}/static/img/DeepDive_MissionBar_CrystalCaves.webp`,
@@ -49,7 +43,7 @@ var deepDivesBanners = {
 var deepDivesBannersImages = {};
 deepDivesBannersImages.name = 'deepDivesBanners';
 
-async function sliceCorners(img, sliceSize = 50) {
+async function sliceCorners(img, sliceSize = 38) {
     return new Promise(resolve => {
         const canvas = document.createElement("canvas")
         canvas.width = img.width
@@ -79,49 +73,64 @@ async function sliceCorners(img, sliceSize = 50) {
     })
 }
 
+async function addBiomeName(img, name, title) {
+    const imgCopy = await sliceCorners(img);
+    const canvas = document.createElement("canvas");
+
+    const ctx = canvas.getContext("2d");
+    canvas.width = imgCopy.width;
+    canvas.height = imgCopy.height;
+
+    ctx.drawImage(imgCopy, 0, 0);
+    addShadowedTextToCenterOfImage(canvas, name, 72, "BebasNeue");
+
+    canvas.classList.add("banner");
+    canvas.title = title;
+
+    return canvas;
+}
+
+const biomeMinerals = {
+    "Crystalline Caverns": "Abundant: Jadiz | Scarce: Bismor",
+    "Glacial Strata": "Abundant: Magnite | Scarce: Umanite",
+    "Radioactive Exclusion Zone": "Abundant: Umanite | Scarce: Enor Pearl",
+    "Fungus Bogs": "Abundant: Croppa | Scarce: Jadiz",
+    "Dense Biozone": "Abundant: Bismor | Scarce: Umanite",
+    "Salt Pits": "Abundant: Enor Pearl | Scarce: Bismor",
+    "Sandblasted Corridors": "Abundant: Enor Pearl | Scarce: Bismor",
+    "Magma Core": "Abundant: Magnite | Scarce: Croppa",
+    "Azure Weald": "Abundant: Croppa | Scarce: Umanite",
+    "Hollow Bough": "Abundant: Jadiz | Scarce: Bismor",
+    "Ossuary Depths": "Abundant: Bismor | Scarce: Magnite"
+};
+
+async function buildBiomeBanners(biome) {
+    const img = biomeBannersImages[biome];
+    const title = biomeMinerals[biome];
+
+    const [canvasOne, canvasTwo] = await Promise.all([
+        addBiomeName(img, biome, title),
+        addBiomeName(img, biome, title)
+    ]);
+
+    const divs = document.querySelectorAll(`div[biome="${biome}"]`);
+    divs[0]?.prepend(canvasOne);
+    divs[1]?.prepend(canvasTwo);
+}
+
+function attachDeepDiveBanner(deepDive) {
+    const div = document.querySelector(`div[dd="${deepDive}"]`);
+    const banner = deepDivesBannersImages[deepDive];
+
+    banner.classList.add("banner");
+    div?.prepend(banner);
+}
+
 async function setBiomeAndDeepDivesBanners() {
-    async function addBiomeName(img, name, title) {
-        const imgCopy = await sliceCorners(img);
-        const canvas = document.createElement("canvas");
+    const biomeTasks = Object.keys(biomeMinerals).map(buildBiomeBanners);
+    const deepDiveTasks = Object.keys(deepDivesBannersImages).map(attachDeepDiveBanner);
 
-        const ctx = canvas.getContext("2d");
-        canvas.width = imgCopy.width;
-        canvas.height = imgCopy.height;
-        ctx.drawImage(imgCopy, 0, 0);
-
-        addShadowedTextToCenterOfImage(canvas, name, 72, "BebasNeue");
-        canvas.classList.add("banner");
-        canvas.title = title;
-        return canvas;
-    }
-
-    let minerals = {
-        'Crystalline Caverns': 'Abundant: Jadiz; Scarce: Bismor',
-        'Glacial Strata' : "Abundant: Magnite; Scarce: Umanite",
-        'Radioactive Exclusion Zone': 'Abundant: Umanite; Scarce: Enor Pearl',
-        'Fungus Bogs': 'Abundant: Croppa; Scarce: Jadiz',
-        'Dense Biozone': 'Abundant: Bismor; Scarce: Umanite',
-        'Salt Pits': 'Abundant: Enor Pearl; Scarce: Bismor',
-        'Sandblasted Corridors': 'Abundant: Enor Pearl; Scarce: Bismor',
-        'Magma Core': 'Abundant: Magnite; Scarce: Croppa',
-        'Azure Weald': 'Abundant: Croppa; Scarce: Umanite',
-        'Hollow Bough': 'Abundant: Jadiz; Scarce: Bismor',
-        "Ossuary Depths" : "Abundant: Bismor; Scarce: Magnite"
-    }
-    for (let biome in minerals) {
-        canvasOne = await addBiomeName(biomeBannersImages[biome], biome, minerals[biome]);
-        canvasTwo = await addBiomeName(biomeBannersImages[biome], biome, minerals[biome]);
-
-        let divs = document.querySelectorAll(`div[biome="${biome}"]`);
-        divs[0].prepend(canvasOne);
-        divs[1].prepend(canvasTwo);
-    }
-
-    for (let deepDive in deepDivesBannersImages) {
-        let div = document.querySelector(`div[dd="${deepDive}"]`);
-        deepDivesBannersImages[deepDive].classList.add('banner');
-        div.prepend(deepDivesBannersImages[deepDive]);
-    }
+    await Promise.all([...biomeTasks, ...deepDiveTasks]);
 }
 
 var primaryObjs = {
@@ -235,21 +244,6 @@ var secondaryObjsDD = {
 var secondaryObjsDDImages = {};
 secondaryObjsDDImages.name = 'secondaryObjsDDImages';
 
-// var biomesDD = {
-//     'Crystalline Caverns': `${domainURL}/static/img/DeepDive_MissionBar_CrystalCaves.webp`,
-//     'Glacial Strata': `${domainURL}/static/img/DeepDive_MissionBar_GlacialStrata.webp`,
-//     'Radioactive Exclusion Zone': `${domainURL}/static/img/DeepDive_MissionBar_Radioactive.webp`,
-//     'Fungus Bogs': `${domainURL}/static/img/DeepDive_MissionBar_FungusBogs.webp`,
-//     'Dense Biozone': `${domainURL}/static/img/DeepDive_MissionBar_LushDownpour.webp`,
-//     'Salt Pits': `${domainURL}/static/img/DeepDive_MissionBar_SaltPits.webp`,
-//     'Sandblasted Corridors': `${domainURL}/static/img/DeepDive_MissionBar_Sandblasted.webp`,
-//     'Magma Core': `${domainURL}/static/img/DeepDive_MissionBar_MagmaCore.webp`,
-//     'Azure Weald': `${domainURL}/static/img/DeepDive_MissionBar_AzureWeald.webp`,
-//     'Hollow Bough': `${domainURL}/static/img/DeepDive_MissionBar_HollowBough.webp`
-// };
-// var biomesDDImages = {};
-// biomesDDImages.name = 'biomesDDImages';
-
 var dailyDealResources = {
     'Bismor': `${domainURL}/static/img/Bismor_icon.webp`,
     'Croppa': `${domainURL}/static/img/Croppa_icon.webp`,
@@ -349,11 +343,9 @@ async function loadImgsFromLocalStorageAll() {
         loadImgsFromLocalStorageObj(mutators, mutatorsImages),
         loadImgsFromLocalStorageObj(warnings, warningsImages),
         loadImgsFromLocalStorageObj(secondaryObjsDD, secondaryObjsDDImages),
-        // loadImgsFromLocalStorageObj(biomesDD, biomesDDImages),
         loadImgsFromLocalStorageObj(biomeBanners, biomeBannersImages),
         loadImgsFromLocalStorageObj(deepDivesBanners, deepDivesBannersImages),
         loadImgsFromLocalStorageObj(dailyDealResources, dailyDealResourcesImages),
-        // loadImgsFromLocalStorageObj(miscImg, miscImages)
     ]);
     base64LocalStoragesImg = undefined;
 }
@@ -401,11 +393,9 @@ async function preloadImagesAll() {
         preloadImages(mutators, mutatorsImages),
         preloadImages(warnings, warningsImages),
         preloadImages(secondaryObjsDD, secondaryObjsDDImages),
-        // preloadImages(biomesDD, biomesDDImages),
         preloadImages(dailyDealResources, dailyDealResourcesImages),
         preloadImages(biomeBanners, biomeBannersImages),
         preloadImages(deepDivesBanners, deepDivesBannersImages),
-        // preloadImages(miscImg, miscImages)
     ]);
     if (isLocalStorageAvailable_) {
         console.log('New img hash:', simpleHash(JSON.stringify(base64LocalStoragesImg)))
@@ -744,43 +734,6 @@ async function getDeepDiveData() {
     }
     return data;
 }
-
-const mBedDest = {
-    "current" : (m, t) => `${domainURL}/m_bed?t=current&m=${m}`,
-    "next" : (m, t) => `${domainURL}/m_bed?t=next&m=${m}`,
-    "dd" : (m, t) => `${domainURL}/dd_m_bed?t=${t}&m=${m}`
-};
-
-function copyToClipboard(text, event) {
-    navigator.clipboard.writeText(text)
-        .then(() => {
-            const tooltip = document.createElement('div');
-            tooltip.textContent = 'Copied to clipboard';
-            tooltip.style.fontFamily = "CarbonThin-W00-Regular"; 
-            tooltip.style.position = 'absolute';
-            tooltip.style.background = 'black';
-            tooltip.style.color = 'white';
-            tooltip.style.padding = '5px 10px';
-            tooltip.style.borderRadius = '5px';
-            tooltip.style.opacity = '1';
-            tooltip.style.transition = 'opacity 1s ease';
-            tooltip.style.pointerEvents = 'none';
-            tooltip.style.zIndex = 9999;
-
-            document.body.appendChild(tooltip);
-            tooltip.style.left = `${event.pageX}px`;
-            tooltip.style.top = `${event.pageY}px`;
-
-            setTimeout(() => {
-                tooltip.style.opacity = '0';
-                setTimeout(() => {
-                    document.body.removeChild(tooltip);
-                }, 500);
-            }, 500);
-        })
-        .catch(err => console.error('Failed to copy text: ', err));
-}
-
 function renderMission(m_d) {
     const div = document.createElement('div');
     div.classList.add('mission-hover-zoom');
@@ -982,16 +935,6 @@ async function tempCacheUpcomingBiomes(isMidnightUpcoming_, date) {
     // console.log(date.toISOString())
 }
 
-function getMissionIconSuffixForEndpoint(dictionary) {
-    let biomes = Object.values(dictionary['Biomes']).flat();
-    biomes.sort(() => Math.random() - 0.5);
-
-    for (let i = 0; i < biomes.length; i++) {
-        let mission = biomes[i];
-        let missionIconSuffix = mission['CodeName'].replace(' ', '-') + mission['id'].toString();
-        return [missionIconSuffix, mission['CodeName']];
-    }
-}
 function getBiomesOnInit() {
     let dictionary = getCurrentMissionData();
     let currentBiomes = renderBiomes(dictionary);
@@ -1093,8 +1036,7 @@ async function refreshBiomes(isMidnightUpcoming_) {
         rolloverCurrentDaysJsonLink(expectedCurrentTimestamp);
     }
     arrayBiomes(biomes, localStorages['seasonSelected']);
-    // document.getElementById('currentMissionIconHref').href = `/png?img=${getMissionIconSuffixForEndpoint(biomes[0])[0]}`
-    // document.getElementById('nextMissionIconHref').href = `/upcoming_png?img=${getMissionIconSuffixForEndpoint(biomes[1])[0]}`
+
     if (document.getElementById('currentButton').textContent == 'Click here to see current missions') {
         document.getElementById('currentButton').click();
     }
@@ -1202,11 +1144,9 @@ function arrayBiomes(Biomes, season) {
         };
 
         if (!(biome in currentBiomes)) {
-            let spanElement = document.createElement("span");
-            spanElement.className = "scanners";
-            spanElement.textContent = "// SCANNERS OUT OF RANGE \\\\";
-            biomeDiv.appendChild(spanElement);
+            biomeDiv.parentElement.parentElement.style.display = "none";
         } else {
+            biomeDiv.parentElement.parentElement.style.display = "inline-block";
             biomeMissions = currentBiomes[biome];
             for (let i = 0; i < biomeMissions.length; i++) {
                 let mission = biomeMissions[i];
@@ -1218,11 +1158,9 @@ function arrayBiomes(Biomes, season) {
         }
 
         if (!(biome in nextBiomes)) {
-            let spanElement = document.createElement("span");
-            spanElement.className = "scanners";
-            spanElement.textContent = "// SCANNERS OUT OF RANGE \\\\";
-            nextBiomeDiv.appendChild(spanElement);
+            nextBiomeDiv.parentElement.parentElement.style.display = "none";
         } else {
+            nextBiomeDiv.parentElement.parentElement.style.display = "inline-block";
             biomeMissions = nextBiomes[biome];
             for (let i = 0; i < biomeMissions.length; i++) {
                 let mission = biomeMissions[i];
@@ -1233,7 +1171,6 @@ function arrayBiomes(Biomes, season) {
             }
         }
     };
-    reorderBiomesInHTML();
     equalizeGridItems();
 }
 
@@ -1862,65 +1799,6 @@ window.addEventListener('resize', function(event) {
         equalizeGridItems();
     }
 });
-function reorderBiomesInHTML() {
-    function isMissionsEmpty(missions) {
-        return missions.children.length == 1 && missions.children[0].tagName === "SPAN";
-    }
-
-    const orderPriority = ['Glacial Strata', 'Crystalline Caverns', 'Salt Pits', 'Magma Core', 'Azure Weald', 
-        'Sandblasted Corridors', 'Fungus Bogs', 'Radioactive Exclusion Zone', 'Dense Biozone', 'Hollow Bough', 'Ossuary Depths']
-
-    const mainContent = document.getElementById('mainContent');
-
-    let current = mainContent.querySelector("#current").querySelector(".grid-container");
-    let upcoming = mainContent.querySelector("#upcoming").querySelector(".grid-container");
-
-    let currentHTMLBiomes = current.querySelectorAll("h2");
-    let upcomingHTMLBiomes = upcoming.querySelectorAll("h2")
-
-    for (let orderName of orderPriority) {
-        for (let h2 of currentHTMLBiomes) {
-            let biomeName = h2.querySelector(".biome-container").getAttribute("biome");
-            if (biomeName == orderName) {
-                h2.remove();
-                current.appendChild(h2);
-                break;
-            }
-        }
-        for (let h2 of upcomingHTMLBiomes) {
-            let biomeName = h2.querySelector(".biome-container").getAttribute("biome");
-            if (biomeName == orderName) {
-                h2.remove();
-                upcoming.appendChild(h2);
-                break;
-            }
-        }
-    }
-
-    current = mainContent.querySelector("#current").querySelector(".grid-container");
-    upcoming = mainContent.querySelector("#upcoming").querySelector(".grid-container");
-
-    currentHTMLBiomes = current.querySelectorAll("h2");
-    upcomingHTMLBiomes = upcoming.querySelectorAll("h2")
-
-    for (let h2 of currentHTMLBiomes) {
-        let biomeContainer = h2.querySelector(".biome-container");
-        let missions = biomeContainer.querySelector(".missions");
-            if (isMissionsEmpty(missions)) {
-                h2.remove();
-                current.appendChild(h2);
-            }
-    }
-
-    for (let h2 of upcomingHTMLBiomes) {
-        let biomeContainer = h2.querySelector(".biome-container");
-        let missions = biomeContainer.querySelector(".missions");
-        if (isMissionsEmpty(missions)) {
-            h2.remove();
-            upcoming.appendChild(h2);
-        }
-    }
-}
 async function initialize(date) {
     let biomes_;
     let dailyDeal_;
@@ -1945,14 +1823,6 @@ async function initialize(date) {
 
     let currentDatetime = date.toISOString().slice(0, 10);
     let currentDateTimeHREF = `${domainURL}/static/json/bulkmissions/${currentDatetime}.json`;
-
-    let currentMissionIcon = getMissionIconSuffixForEndpoint(biomes_[0]);
-    let currentMissionIconSuffix = currentMissionIcon[0];
-    let currentMissionIconSuffixTitle = currentMissionIcon[1];
-    
-    let nextMissionIcon = getMissionIconSuffixForEndpoint(biomes_[1]);
-    let nextMissionIconSuffix = nextMissionIcon[0];
-    let nextMissionIconSuffixTitle = nextMissionIcon[1];
 
     // let nextDatetime = getNextDateMidnightUTC(date).slice(0, 10);
     // let nextDateTimeHREF = `${domainURL}/static/json/bulkmissions/${nextDatetime}.json`;
@@ -2149,17 +2019,16 @@ async function initialize(date) {
 
     </div>
 
-    <div>
-
+    <div id="deepDiveCountdownContainer">
     <div class="deepDiveCountdownHead">NEW DEEP DIVES IN</div>
     <span id="deepDiveCountdown"></span>
-    <hr>
     </div>
+
+    <hr>
 
     <div class="jsonc">
     <div class="jsonlinks"><span style="color: white;font-size: 30px;font-family: BebasNeue;"><a id="currentDaysJsonLink" class="jsonlink" href="${currentDateTimeHREF}">TODAY'S DATA</a> | <a class="jsonlink" href="/json?data=current">CURRENT MISSION DATA</a> | <a class="jsonlink" href="/json?data=next">UPCOMING MISSION DATA</a> | <a class="jsonlink" href="${ddDatetimeHREF}">CURRENT DEEP DIVE DATA</a> | <a class="jsonlink" href="/json?data=dailydeal">DAILY DEAL DATA</a> | <a class="jsonlink" href="/static/xp_calculator.html">CLASS XP CALCULATOR</a> | <a class="jsonlink" href="https://github.com/rolfosian/drgmissions/">GITHUB</a></span></div>
     </div>
-    <span style="color: white;font-size: 30px;font-family: CarbonThin-W00-Regular;"><em><span style="font-size: 15px;">*url arg for icons is mission-codename-with-hyphen-instead-of-whitespace + id</span></em></span>
     <p class='gsgdisclaimer'><i>This website is a third-party platform and is not affiliated, endorsed, or sponsored by Ghost Ship Games. The use of Deep Rock Galactic's in-game assets on this website is solely for illustrative purposes and does not imply any ownership or association with the game or its developers. All copyrights and trademarks belong to their respective owners. For official information about Deep Rock Galactic, please visit the official Ghost Ship Games website.</i></p></div>
     `;
 
@@ -2313,7 +2182,6 @@ var localStorages = {
     'currentDaysJson' : null,
     'img' : null,
     'fonts' : null,
-    // 'homepageScript' : null,
 };
 
 var localStoragesHashes = {
@@ -2361,8 +2229,6 @@ function resetGlobalVars() {
     warningsImages.name = 'warningsImages';
     secondaryObjsDDImages = {};
     secondaryObjsDDImages.name = 'secondaryObjsDDImages';
-    // biomesDDImages = {};
-    // biomesDDImages.name = 'biomesDDImages';
     dailyDealResourcesImages = {};
     dailyDealResourcesImages.name = 'dailyDealResourcesImages';
     base64LocalStoragesImg = {};
@@ -2408,6 +2274,227 @@ function seasonSelect(checkBox) {
     let checkBoxes = document.querySelectorAll('input[type=checkbox]');
     unCheckCheckboxes(checkBoxes, checkBox, checkBox.value);
     changeSeason(biomes, checkBox.value);
+}
+
+async function deepDiveCountDown() {
+    let targetDay = 4;
+    let targetHour = 11;
+    let targetTime = new Date();
+    let countdownTimer;
+
+    function startCountdown() {
+        targetTime.setUTCHours(targetHour, 0, 0, 0);
+        if (targetTime.getUTCDay() === targetDay && Date.now() > targetTime.getTime()) {
+            targetTime.setUTCDate(targetTime.getUTCDate() + 7);
+        }
+        while (targetTime.getUTCDay() !== targetDay) {
+            targetTime.setUTCDate(targetTime.getUTCDate() + 1);
+        }
+        countdownTimer = setInterval(updateCountdown)
+    }
+
+    function updateCountdown() {
+        let now;
+        let remainingTime;
+        if (!deepDiveData) {
+            remainingTime = 0;
+            document.getElementById("deepDiveCountdown").classList.add('glow-text-red-white');
+        } else {
+            now = Date.now();
+            remainingTime = targetTime.getTime() - now;
+            document.getElementById("deepDiveCountdown").classList.remove('glow-text-red-white');
+        }
+        if (remainingTime <= 0) {
+            clearInterval(countdownTimer);
+            document.getElementById("deepDiveCountdown").innerHTML = "0:00:00:00";
+            refreshDeepDives().then(() => {
+                startCountdown();
+            });
+        } else {(0)
+            let days = Math.floor(remainingTime / (1000 * 60 * 60 * 24));
+            let hours = Math.floor((remainingTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            let minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
+            let seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
+            let formattedTime = formatTime(days, hours, minutes, seconds);
+            document.getElementById("deepDiveCountdown").innerHTML = formattedTime;
+        }
+    }
+    function formatTime(days, hours, minutes, seconds) {
+        return `${days}:${formatNumber(hours)}:${formatNumber(minutes)}:${formatNumber(seconds)}`;
+    }
+
+    function formatNumber(number) {
+        return number.toString().padStart(2, "0");
+    }
+    startCountdown(1000);
+}
+
+function topMissionsCountdown() {
+    let countdownElement = document.getElementById('missionsCountdown');
+    let countdownTimer;
+    let targetTime = new Date();
+    let isMidnightUpcoming_;
+
+    function startCountdown() {
+        targetTime.setSeconds(0);
+        targetTime.setMilliseconds(0);
+        if (targetTime.getMinutes() < 30) {
+            targetTime.setMinutes(30);
+        } else {
+            targetTime.setMinutes(0);
+            targetTime.setHours(targetTime.getHours() + 1);
+        }
+        countdownTimer = setInterval(updateCountdown, 1000);
+    }
+
+    function dispatchCacheEvent(isMidnightUpcoming_, date_) {
+        let upcomingBiomeCacheEvent = new Event('upcomingBiomeCache');
+        upcomingBiomeCacheEvent.isMidnightUpcoming = isMidnightUpcoming_;
+        upcomingBiomeCacheEvent.date = date_;
+        document.dispatchEvent(upcomingBiomeCacheEvent);
+    }
+
+    function updateCountdown() {
+        let date_ = new Date();
+        let remainingTime = Math.floor(((targetTime - date_ + 2) / 1000));
+        if (remainingTime >= 0){
+            isMidnightUpcoming_ = isMidnightUpcoming(date_);
+        }
+        if (remainingTime < 102 && !cacheActive && remainingTime > 0) {
+            cacheActive = true;
+            dispatchCacheEvent(isMidnightUpcoming_, date_)
+        }
+        if (remainingTime < 0 && !isRefreshing) {
+            isRefreshing = true
+            if (!cacheActive) {
+                cacheActive = true;
+                dispatchCacheEvent(isMidnightUpcoming_, date_)
+            }
+            clearInterval(countdownTimer);
+            let refreshBiomesEvent = new Event('refreshBiomes');
+            refreshBiomesEvent.isMidnightUpcoming = isMidnightUpcoming_;
+            document.dispatchEvent(refreshBiomesEvent);
+        } else if (remainingTime >= 0) {
+            let minutes = Math.floor(remainingTime / 60);
+            let seconds = remainingTime % 60;
+            let countdownString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            countdownElement.textContent = countdownString;
+        }
+    }
+
+    document.addEventListener('upcomingBiomeCache', async function(event) {
+        tempCacheUpcomingBiomes(event.isMidnightUpcoming, event.date)
+    });
+
+    document.addEventListener('refreshBiomes', async function(event) {
+        while (!tempBiomes) {
+            await sleep(1);
+        }
+        startCountdown();
+        await refreshBiomes(event.isMidnightUpcoming)
+        cacheActive = false;
+        isRefreshing = false;
+    });
+
+    startCountdown();
+}
+
+function topDailyDealCountdown() {
+    let targetHour = 0;
+    let targetTime = new Date();
+    let countdownTimer;
+    let isDailyDealRefreshing;
+
+    function startCountdown() {
+        targetTime.setUTCHours(targetHour, 0, 0, 0);
+        targetTime.setUTCDate(targetTime.getUTCDate() + 1);
+        countdownTimer = setInterval(updateCountdown, 1000)
+    }
+    function updateCountdown() {
+        let date = new Date()
+        let now = date.getTime();
+        let remainingTime = targetTime.getTime() - now;
+        if (remainingTime < 0 && !isDailyDealRefreshing) {
+            isDailyDealRefreshing = true;
+            clearInterval(countdownTimer);
+            let event = new Event('refreshDailyDeal')
+            event.dateString = date.toISOString().slice(0, 10)
+            document.dispatchEvent(event)
+        }
+            let hours = Math.floor((remainingTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            let minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
+            let seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
+            let formattedTime = padZero(hours) + ":" + padZero(minutes) + ":" + padZero(seconds);
+            document.getElementById("dailyDealCountdown").innerHTML = formattedTime;
+        }
+
+    function padZero(number) {
+        return number.toString().padStart(2, "0");
+    }
+
+    document.addEventListener('refreshDailyDeal', async function(event) {
+        while (localStorages['currentDaysJson'][0] != event.dateString) {
+            await sleep(1);
+        }
+        await refreshDailyDeal();
+        startCountdown();
+        isDailyDealRefreshing = false;
+    });
+
+    startCountdown();
+};
+
+async function onLoad() {
+    arrayBiomes(biomes, localStorages['seasonSelected']);
+    if (tempDailyDeal) {
+        arrayDailyDeal(tempDailyDeal);
+        tempDailyDeal = undefined;
+    } else {
+        arrayDailyDeal(dailyDeal);
+    }
+
+    document.querySelector('p.loading').style.display = 'none';
+    document.getElementById("current").classList.toggle("collapsed");
+    toggleCollapse();
+    document.getElementById("upcoming").style.visibility = 'visible';
+    initialized = true;
+
+    setupIdleVideoPause('background-video', 10000);
+    topDailyDealCountdown();
+    topMissionsCountdown();
+
+    document.getElementById('topCountdownContainer').classList.remove('collapsed')
+    document.querySelector("#mainContent").style.opacity = "1";
+    
+    let dailyDealButton = document.getElementById('dailyDealButton');
+    dailyDealButton.setAttribute('onclick', "slideToggle('dailyDealMaster', 'dailyDealButton', ['Click here to see Daily Deal', 'Hide Daily Deal'])");
+    slideToggle('dailyDealMaster', 'dailyDealButton', ['Click here to see Daily Deal', 'Hide Daily Deal']);
+
+    let buttonsButton = document.getElementById('buttonsButton');
+    buttonsButton.setAttribute('onclick', 'toggleButtons()');
+
+    currentButton = document.getElementById('currentButton');
+    currentButton.setAttribute('onclick', 'toggleCollapse()');
+
+    backgroundButton = document.getElementById('backgroundButton');
+    backgroundButton.setAttribute('onclick', 'toggleBackground()');
+
+    deepDiveData = await getDeepDiveData();
+    if (deepDiveData) {
+        arrayDeepDives(deepDiveData);
+        document.querySelectorAll('.dd-missions').forEach((element)=> {
+            element.style.opacity = "1";
+        });
+    } else {
+        let deepDiveCountdownElement = document.getElementById("deepDiveCountdown");
+        deepDiveCountdownElement.classList.add('glow-text-red-white');
+        deepDiveCountdownElement.innerHTML = "0:00:00:00";
+        document.querySelectorAll('.dd-missions').forEach((element)=> {
+            element.style.opacity = "1";
+        });
+        await handleUnavailableDeepDiveData();
+    };
+    deepDiveCountDown();
 }
 
 document.addEventListener('DOMContentLoaded', async function() {
@@ -2498,244 +2585,10 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
             continue
         }
-            document.getElementById('missionsCountdown').textContent = getMissionsRemainderTimeOnInit(date)
-            // var homepageScript = document.createElement('script');
-            // homepageScript.textContent = localStorages['homepageScript']
-            // document.head.appendChild(homepageScript);
 
-            async function deepDiveCountDown() {
-                let targetDay = 4;
-                let targetHour = 11;
-                let targetTime = new Date();
-                let countdownTimer;
-            
-                function startCountdown() {
-                    targetTime.setUTCHours(targetHour, 0, 0, 0);
-                    if (targetTime.getUTCDay() === targetDay && Date.now() > targetTime.getTime()) {
-                        targetTime.setUTCDate(targetTime.getUTCDate() + 7);
-                    }
-                    while (targetTime.getUTCDay() !== targetDay) {
-                        targetTime.setUTCDate(targetTime.getUTCDate() + 1);
-                    }
-                    countdownTimer = setInterval(updateCountdown)
-                }
-            
-                function updateCountdown() {
-                    let now;
-                    let remainingTime;
-                    if (!deepDiveData) {
-                        remainingTime = 0;
-                        document.getElementById("deepDiveCountdown").classList.add('glow-text-red-white');
-                    } else {
-                        now = Date.now();
-                        remainingTime = targetTime.getTime() - now;
-                        document.getElementById("deepDiveCountdown").classList.remove('glow-text-red-white');
-                    }
-                    if (remainingTime <= 0) {
-                        clearInterval(countdownTimer);
-                        document.getElementById("deepDiveCountdown").innerHTML = "0:00:00:00";
-                        refreshDeepDives().then(() => {
-                            startCountdown();
-                        });
-                    } else {(0)
-                        let days = Math.floor(remainingTime / (1000 * 60 * 60 * 24));
-                        let hours = Math.floor((remainingTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                        let minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
-                        let seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
-                        let formattedTime = formatTime(days, hours, minutes, seconds);
-                        document.getElementById("deepDiveCountdown").innerHTML = formattedTime;
-                    }
-                }
-                function formatTime(days, hours, minutes, seconds) {
-                    return `${days}:${formatNumber(hours)}:${formatNumber(minutes)}:${formatNumber(seconds)}`;
-                }
-            
-                function formatNumber(number) {
-                    return number.toString().padStart(2, "0");
-                }
-                startCountdown(1000);
-            }
-            
-            function topMissionsCountdown() {
-                let countdownElement = document.getElementById('missionsCountdown');
-                let countdownTimer;
-                let targetTime = new Date();
-                let isMidnightUpcoming_;
-            
-                function startCountdown() {
-                    targetTime.setSeconds(0);
-                    targetTime.setMilliseconds(0);
-                    if (targetTime.getMinutes() < 30) {
-                        targetTime.setMinutes(30);
-                    } else {
-                        targetTime.setMinutes(0);
-                        targetTime.setHours(targetTime.getHours() + 1);
-                    }
-                    countdownTimer = setInterval(updateCountdown, 1000);
-                }
-            
-                function dispatchCacheEvent(isMidnightUpcoming_, date_) {
-                    let upcomingBiomeCacheEvent = new Event('upcomingBiomeCache');
-                    upcomingBiomeCacheEvent.isMidnightUpcoming = isMidnightUpcoming_;
-                    upcomingBiomeCacheEvent.date = date_;
-                    document.dispatchEvent(upcomingBiomeCacheEvent);
-                }
-            
-                function updateCountdown() {
-                    let date_ = new Date();
-                    let remainingTime = Math.floor(((targetTime - date_ + 2) / 1000));
-                    if (remainingTime >= 0){
-                        isMidnightUpcoming_ = isMidnightUpcoming(date_);
-                    }
-                    if (remainingTime < 102 && !cacheActive && remainingTime > 0) {
-                        cacheActive = true;
-                        dispatchCacheEvent(isMidnightUpcoming_, date_)
-                    }
-                    if (remainingTime < 0 && !isRefreshing) {
-                        isRefreshing = true
-                        if (!cacheActive) {
-                            cacheActive = true;
-                            dispatchCacheEvent(isMidnightUpcoming_, date_)
-                        }
-                        clearInterval(countdownTimer);
-                        let refreshBiomesEvent = new Event('refreshBiomes');
-                        refreshBiomesEvent.isMidnightUpcoming = isMidnightUpcoming_;
-                        document.dispatchEvent(refreshBiomesEvent);
-                    } else if (remainingTime >= 0) {
-                        let minutes = Math.floor(remainingTime / 60);
-                        let seconds = remainingTime % 60;
-                        let countdownString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-                        countdownElement.textContent = countdownString;
-                    }
-                }
-            
-                document.addEventListener('upcomingBiomeCache', async function(event) {
-                    tempCacheUpcomingBiomes(event.isMidnightUpcoming, event.date)
-                });
-            
-                document.addEventListener('refreshBiomes', async function(event) {
-                    while (!tempBiomes) {
-                        await sleep(1);
-                    }
-                    startCountdown();
-                    await refreshBiomes(event.isMidnightUpcoming)
-                    cacheActive = false;
-                    isRefreshing = false;
-                });
-            
-                startCountdown();
-            }
-            
-            function topDailyDealCountdown() {
-                let targetHour = 0;
-                let targetTime = new Date();
-                let countdownTimer;
-                let isDailyDealRefreshing;
-            
-                function startCountdown() {
-                    targetTime.setUTCHours(targetHour, 0, 0, 0);
-                    targetTime.setUTCDate(targetTime.getUTCDate() + 1);
-                    countdownTimer = setInterval(updateCountdown, 1000)
-                }
-                function updateCountdown() {
-                    let date = new Date()
-                    let now = date.getTime();
-                    let remainingTime = targetTime.getTime() - now;
-                    if (remainingTime < 0 && !isDailyDealRefreshing) {
-                        isDailyDealRefreshing = true;
-                        clearInterval(countdownTimer);
-                        let event = new Event('refreshDailyDeal')
-                        event.dateString = date.toISOString().slice(0, 10)
-                        document.dispatchEvent(event)
-                    }
-                        let hours = Math.floor((remainingTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                        let minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
-                        let seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
-                        let formattedTime = padZero(hours) + ":" + padZero(minutes) + ":" + padZero(seconds);
-                        document.getElementById("dailyDealCountdown").innerHTML = formattedTime;
-                    }
-            
-                function padZero(number) {
-                    return number.toString().padStart(2, "0");
-                }
-            
-                document.addEventListener('refreshDailyDeal', async function(event) {
-                    while (localStorages['currentDaysJson'][0] != event.dateString) {
-                        await sleep(1);
-                    }
-                    await refreshDailyDeal();
-                    startCountdown();
-                    isDailyDealRefreshing = false;
-                });
-            
-                startCountdown();
-            };
-            
-            async function onLoad() {
-                arrayBiomes(biomes, localStorages['seasonSelected']);
-                if (tempDailyDeal) {
-                    arrayDailyDeal(tempDailyDeal);
-                    tempDailyDeal = undefined;
-                } else {
-                    arrayDailyDeal(dailyDeal);
-                }
-            
-                document.querySelector('p.loading').style.display = 'none';
-                document.getElementById("current").classList.toggle("collapsed");
-                toggleCollapse();
-                document.getElementById("upcoming").style.visibility = 'visible';
-                initialized = true;
-            
-                setupIdleVideoPause('background-video', 10000);
-                topDailyDealCountdown();
-                topMissionsCountdown();
-            
-                // let season = document.getElementById('season');
-                // season.setAttribute('onchange', 'changeSeason(biomes, this.value)');
-                // season.disabled = false;
-            
-                document.getElementById('topCountdownContainer').classList.remove('collapsed')
-                document.querySelectorAll('.biome-container').forEach((element)=> {
-                    element.style.opacity = "1";
-                });
-                
-            
-                let dailyDealButton = document.getElementById('dailyDealButton');
-                dailyDealButton.setAttribute('onclick', "slideToggle('dailyDealMaster', 'dailyDealButton', ['Click here to see Daily Deal', 'Hide Daily Deal'])");
-                slideToggle('dailyDealMaster', 'dailyDealButton', ['Click here to see Daily Deal', 'Hide Daily Deal']);
-                // dailyDealButton.disabled = false;
-            
-                let buttonsButton = document.getElementById('buttonsButton');
-                buttonsButton.setAttribute('onclick', 'toggleButtons()');
-                // buttonsButton.disabled = false;
-            
-                currentButton = document.getElementById('currentButton');
-                currentButton.setAttribute('onclick', 'toggleCollapse()');
-                // currentButton.disabled = false;
-            
-                backgroundButton = document.getElementById('backgroundButton');
-                backgroundButton.setAttribute('onclick', 'toggleBackground()');
-                // backgroundButton.disabled = false;
-            
-                deepDiveData = await getDeepDiveData();
-                if (deepDiveData) {
-                    arrayDeepDives(deepDiveData);
-                    document.querySelectorAll('.dd-missions').forEach((element)=> {
-                        element.style.opacity = "1";
-                    });
-                } else {
-                    let deepDiveCountdownElement = document.getElementById("deepDiveCountdown");
-                    deepDiveCountdownElement.classList.add('glow-text-red-white');
-                    deepDiveCountdownElement.innerHTML = "0:00:00:00";
-                    document.querySelectorAll('.dd-missions').forEach((element)=> {
-                        element.style.opacity = "1";
-                    });
-                    await handleUnavailableDeepDiveData();
-                };
-                deepDiveCountDown();
-            }
+        document.getElementById('missionsCountdown').textContent = getMissionsRemainderTimeOnInit(date)
 
-            await onLoad();
-            break;
+        await onLoad();
+        break;
     }
 });
