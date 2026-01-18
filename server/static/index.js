@@ -49,7 +49,7 @@ var deepDivesBanners = {
 var deepDivesBannersImages = {};
 deepDivesBannersImages.name = 'deepDivesBanners';
 
-function sliceCorners(img, sliceSize = 50) {
+async function sliceCorners(img, sliceSize = 50) {
     return new Promise(resolve => {
         const canvas = document.createElement("canvas")
         canvas.width = img.width
@@ -73,15 +73,15 @@ function sliceCorners(img, sliceSize = 50) {
 
         canvas.toBlob(blob => {
             const out = new Image()
+            out.onload = () => resolve(out)
             out.src = URL.createObjectURL(blob)
-            resolve(out)
         })
     })
 }
 
-function setBiomeAndDeepDivesBanners() {
-    function addBiomeName(img, name, title) {
-        const imgCopy = sliceCorners(img);
+async function setBiomeAndDeepDivesBanners() {
+    async function addBiomeName(img, name, title) {
+        const imgCopy = await sliceCorners(img);
         const canvas = document.createElement("canvas");
 
         const ctx = canvas.getContext("2d");
@@ -89,7 +89,7 @@ function setBiomeAndDeepDivesBanners() {
         canvas.height = imgCopy.height;
         ctx.drawImage(imgCopy, 0, 0);
 
-        addShadowedTextToCenterOfImage(canvas, name, 14, "BebasNeue");
+        addShadowedTextToCenterOfImage(canvas, name, 72, "BebasNeue");
         canvas.classList.add("banner");
         canvas.title = title;
         return canvas;
@@ -109,8 +109,8 @@ function setBiomeAndDeepDivesBanners() {
         "Ossuary Depths" : "Abundant: Bismor; Scarce: Magnite"
     }
     for (let biome in minerals) {
-        canvasOne = addBiomeName(biomeBannersImages[biome], biome, minerals[biome]);
-        canvasTwo = addBiomeName(biomeBannersImages[biome], biome, minerals[biome]);
+        canvasOne = await addBiomeName(biomeBannersImages[biome], biome, minerals[biome]);
+        canvasTwo = await addBiomeName(biomeBannersImages[biome], biome, minerals[biome]);
 
         let divs = document.querySelectorAll(`div[biome="${biome}"]`);
         divs[0].prepend(canvasOne);
@@ -134,7 +134,7 @@ var primaryObjs = {
     'Elimination': `${domainURL}/static/img/Elimination_icon.webp`,
     'Industrial Sabotage': `${domainURL}/static/img/Sabotage_icon.webp`,
     'Deep Scan' : `${domainURL}/static/img/Deep_scan_icon.webp`,
-    'Heavy Excavation' : `${domainURL}/static/img/Deep_scan_icon.webp`
+    'Heavy Excavation' : `${domainURL}/static/img/Heavy_excavation_icon.webp`
 };
 var primaryObjsImages = {};
 primaryObjsImages.name = 'primaryObjsImages';
@@ -217,7 +217,7 @@ var warnings = {
     'Rival Presence': `${domainURL}/static/img/Warning_rival_presence_icon.webp`,
     'Duck and Cover': `${domainURL}/static/img/Warning_duck_and_cover_icon.webp`,
     'Ebonite Outbreak' : `${domainURL}/static/img/Warning_ebonite_outbreak_icon.webp`,
-    'Tougher Enemies' : `${domainURL}/static/img/Warning_tougher_enemies_icon.webp`
+    'Pit Jaw Colony' : `${domainURL}/static/img/Warning_pit_jaw_colony_icon.webp`,
 };
 var warningsImages = {};
 warningsImages.name = 'warningsImages';
@@ -230,7 +230,7 @@ var secondaryObjsDD = {
     "Black Box": `${domainURL}/static/img/Blackbox_icon_DDsecondaryobj.webp`,
     "Perform Deep Scans": `${domainURL}/static/img/Icons_Resources_Detailed_Outline_ResonanceScannerPod_DDsecondaryobj.webp`,
     "Build Liquid Morkite Pipeline" : `${domainURL}/static/img/Icons_Resources_Detailed_Outline_LiquidMorkiteTankerPod_DDsecondaryobj.webp`,
-    'Extract Resinite Masses' : `${domainURL}/static/img/Icons_Resources_Detailed_Outline_Resinite_Deposit.webp`
+    'Extract Resinite Masses' : `${domainURL}/static/img/Icons_Resources_Detailed_Outline_Resinite_Deposit_DDsecondaryobj.webp`
 };
 var secondaryObjsDDImages = {};
 secondaryObjsDDImages.name = 'secondaryObjsDDImages';
@@ -804,15 +804,15 @@ function renderMission(m_d) {
         m_d['MissionWarnings'].forEach((warning) => {
             MissionWarnings.push(warning);
         });
-        const MISSIONWARNING1 = warningsImages[MissionWarnings[0]];
-        const scaledWidth = MISSIONWARNING1.width * 0.38;
-        const scaledHeight = MISSIONWARNING1.height * 0.38;
+        const missionWarningOne = warningsImages[MissionWarnings[0]];
+        const scaledWidth = missionWarningOne.width * 0.38;
+        const scaledHeight = missionWarningOne.height * 0.38;
         if (MissionWarnings.length === 1) {
-            ctx.drawImage(MISSIONWARNING1, 227, 87, scaledWidth, scaledHeight);
+            ctx.drawImage(missionWarningOne, 227, 87, scaledWidth, scaledHeight);
         } else if (MissionWarnings.length === 2) {
-            const MISSIONWARNING2 = warningsImages[MissionWarnings[1]];
-            ctx.drawImage(MISSIONWARNING1, 227, 42, scaledWidth, scaledHeight);
-            ctx.drawImage(MISSIONWARNING2, 227, 142, scaledWidth, scaledHeight);
+            const missionWarningTwo = warningsImages[MissionWarnings[1]];
+            ctx.drawImage(missionWarningOne, 227, 42, scaledWidth, scaledHeight);
+            ctx.drawImage(missionWarningTwo, 227, 142, scaledWidth, scaledHeight);
         }
     }
 
@@ -850,8 +850,8 @@ function renderMission(m_d) {
         'Deep Scan,3,2' : '5',
         'Heavy Excavation,2,1' : '2',
         'Heavy Excavation,3,1' : '2',
+        'Heavy Excavation,3,2' : '3',
         'Heavy Excavation,2,2' : '3',
-        "Heavy Excavation,2,3" : "3"
     };
 
     const hexagon = primaryObjResourcesImages['hexagon']
@@ -1093,8 +1093,8 @@ async function refreshBiomes(isMidnightUpcoming_) {
         rolloverCurrentDaysJsonLink(expectedCurrentTimestamp);
     }
     arrayBiomes(biomes, localStorages['seasonSelected']);
-    document.getElementById('currentMissionIconHref').href = `/png?img=${getMissionIconSuffixForEndpoint(biomes[0])[0]}`
-    document.getElementById('nextMissionIconHref').href = `/upcoming_png?img=${getMissionIconSuffixForEndpoint(biomes[1])[0]}`
+    // document.getElementById('currentMissionIconHref').href = `/png?img=${getMissionIconSuffixForEndpoint(biomes[0])[0]}`
+    // document.getElementById('nextMissionIconHref').href = `/upcoming_png?img=${getMissionIconSuffixForEndpoint(biomes[1])[0]}`
     if (document.getElementById('currentButton').textContent == 'Click here to see current missions') {
         document.getElementById('currentButton').click();
     }
@@ -1233,6 +1233,7 @@ function arrayBiomes(Biomes, season) {
             }
         }
     };
+    reorderBiomesInHTML();
     equalizeGridItems();
 }
 
@@ -1245,8 +1246,8 @@ function drawText(ctx, text, x, y, fillStyle, fontSize, fontName) {
 function shadowText(ctx, text, x, y, shadowColor, fontSize, fontName) {
     ctx.font = `${fontSize}px ${fontName}`;
     ctx.shadowColor = shadowColor;
-    ctx.shadowBlur = 7;
-    ctx.lineWidth = 5;
+    ctx.shadowBlur = 14;
+    ctx.lineWidth = 10;
     ctx.strokeStyle = 'black';
     ctx.strokeText(text, x, y);
     ctx.shadowBlur = 0
@@ -1259,7 +1260,7 @@ function getTextMetrics(context, text, font) {
 
 function addShadowedTextToCenterOfImage(canvas, text, fontSize, fontName) {
     const x = canvas.width / 2;
-    const y = canvas.height / 2;
+    const y = canvas.height / 2 + 5;
 
     const tempCanvas = document.createElement('canvas');
     tempCanvas.width = canvas.width;
@@ -1278,7 +1279,7 @@ function addShadowedTextToCenterOfImage(canvas, text, fontSize, fontName) {
 // only for deep dive biome image - codename text
 function addShadowedTextForDeepDiveCodeName(canvas, texts, fontSize) {
     const x = canvas.width / 2;
-    const y = canvas.height / 2;
+    const y = canvas.height / 2 + 10;
 
     const descriptorText = texts[0];
     const codename = texts[1];
@@ -1303,21 +1304,21 @@ function addShadowedTextForDeepDiveCodeName(canvas, texts, fontSize) {
 
     const codenameX = combinedX + descriptorWidth;
 
-    shadowText(codename, codenameX, y+15, 'black', fontSize, mainFontName);
-    drawText(codename, codenameX, y+15, 'white', fontSize, mainFontName);
+    shadowText(tempCtx, codename, codenameX, y+15, 'black', fontSize, mainFontName);
+    drawText(tempCtx, codename, codenameX, y+15, 'white', fontSize, mainFontName);
 
     canvas.getContext('2d').drawImage(tempCanvas, 0, 0);
 }
 
-function renderDeepDiveBiomeCodename(biome, codename) {
+async function renderDeepDiveBiomeCodename(biome, codename) {
     const texts = ['CODENAME: ', codename];
-    const fontSize = 45;
+    const fontSize = 72;
     const canvas = document.createElement('canvas');
     canvas.classList.add('dd-biome');
     const ctx = canvas.getContext('2d');
     for (let biomeName in biomeBanners) {
         if (biomeName == biome) {
-            const img = sliceCorners(biomeBannersImages[biomeName]);
+            const img = await sliceCorners(biomeBannersImages[biomeName]);
             canvas.width = img.width;
             canvas.height = img.height;
             ctx.drawImage(img, 0, 0);
@@ -1345,21 +1346,24 @@ function renderDeepDiveStage(m_d, stageCount) {
 
     const secondaryImg = secondaryObjsDDImages[m_d['SecondaryObjective']];
     ctx.drawImage(secondaryImg, -11, -21, secondaryImg.width * 0.6, secondaryImg.height * 0.6);
-
     if (m_d['MissionWarnings']) {
         let MissionWarnings = [];
+
         m_d['MissionWarnings'].forEach((warning) => {
             MissionWarnings.push(warning);
         });
-        const MISSIONWARNING1 = warningsImages[MissionWarnings[0]];
-        const scaledWidth = MISSIONWARNING1.width * 0.38;
-        const scaledHeight = MISSIONWARNING1.height * 0.38;
+
+        const missionWarningOne = warningsImages[MissionWarnings[0]];
+        const scaledWidth = missionWarningOne.width * 0.38;
+        const scaledHeight = missionWarningOne.height * 0.38;
+
         if (MissionWarnings.length === 1) {
-            ctx.drawImage(MISSIONWARNING1, 227, 87, scaledWidth, scaledHeight);
+            ctx.drawImage(missionWarningOne, 227, 87, scaledWidth, scaledHeight);
+
         } else if (MissionWarnings.length === 2) {
-            const MISSIONWARNING2 = warningsImages[MissionWarnings[1]];
-            ctx.drawImage(MISSIONWARNING1, 227, 42, scaledWidth, scaledHeight);
-            ctx.drawImage(MISSIONWARNING2, 227, 142, scaledWidth, scaledHeight);
+            const missionWarningTwo = warningsImages[MissionWarnings[1]];
+            ctx.drawImage(missionWarningOne, 227, 42, scaledWidth, scaledHeight);
+            ctx.drawImage(missionWarningTwo, 227, 142, scaledWidth, scaledHeight);
         }
     }
 
@@ -1469,7 +1473,7 @@ async function arrayDeepDives(deepDiveData) {
         var deepDiveNormalDiv = document.getElementById('Deep-Dive-Normal');
         var deepDiveEliteDiv = document.getElementById('Deep-Dive-Elite');
 
-        var deepDiveNormalBiome = renderDeepDiveBiomeCodename(deepDiveNormal['Biome'], deepDiveNormal['CodeName']);
+        var deepDiveNormalBiome = await renderDeepDiveBiomeCodename(deepDiveNormal['Biome'], deepDiveNormal['CodeName']);
         while(deepDiveNormalDiv.hasChildNodes()) {
             deepDiveNormalDiv.removeChild(deepDiveNormalDiv.lastChild);
         };
@@ -1477,7 +1481,7 @@ async function arrayDeepDives(deepDiveData) {
         deepDiveNormalDiv.appendChild(document.createElement("br"));
 
 
-        var deepDiveEliteBiome = renderDeepDiveBiomeCodename(deepDiveElite['Biome'], deepDiveElite['CodeName']);
+        var deepDiveEliteBiome = await renderDeepDiveBiomeCodename(deepDiveElite['Biome'], deepDiveElite['CodeName']);
         while(deepDiveEliteDiv.hasChildNodes()) {
             deepDiveEliteDiv.removeChild(deepDiveEliteDiv.lastChild);
         };
@@ -1745,6 +1749,22 @@ function equalizeGridItems() {
     checkOverflowAndFixScanners(gridItems);
 }
 
+function toggleCollapse() {
+    var current = document.getElementById("current");
+    var upcoming = document.getElementById("upcoming");
+    var currentButton = document.getElementById("currentButton");
+    current.classList.toggle("collapsed");
+    upcoming.classList.toggle("collapsed");
+    if (current.classList.contains("collapsed")) {
+        currentButton.textContent = "Click here to see current missions";
+        document.title = "Upcoming Missions from the Hoxxes IV Mission Terminal";
+    } else {
+        currentButton.textContent = "Click here to see upcoming missions";
+        document.title = "Current Missions from the Hoxxes IV Mission Terminal";
+    }
+    equalizeGridItems()
+};
+
 function toggleBackground() {
     var video = document.getElementById("background-video");
     var backgroundbutton = document.getElementById('backgroundButton');
@@ -1842,6 +1862,65 @@ window.addEventListener('resize', function(event) {
         equalizeGridItems();
     }
 });
+function reorderBiomesInHTML() {
+    function isMissionsEmpty(missions) {
+        return missions.children.length == 1 && missions.children[0].tagName === "SPAN";
+    }
+
+    const orderPriority = ['Glacial Strata', 'Crystalline Caverns', 'Salt Pits', 'Magma Core', 'Azure Weald', 
+        'Sandblasted Corridors', 'Fungus Bogs', 'Radioactive Exclusion Zone', 'Dense Biozone', 'Hollow Bough', 'Ossuary Depths']
+
+    const mainContent = document.getElementById('mainContent');
+
+    let current = mainContent.querySelector("#current").querySelector(".grid-container");
+    let upcoming = mainContent.querySelector("#upcoming").querySelector(".grid-container");
+
+    let currentHTMLBiomes = current.querySelectorAll("h2");
+    let upcomingHTMLBiomes = upcoming.querySelectorAll("h2")
+
+    for (let orderName of orderPriority) {
+        for (let h2 of currentHTMLBiomes) {
+            let biomeName = h2.querySelector(".biome-container").getAttribute("biome");
+            if (biomeName == orderName) {
+                h2.remove();
+                current.appendChild(h2);
+                break;
+            }
+        }
+        for (let h2 of upcomingHTMLBiomes) {
+            let biomeName = h2.querySelector(".biome-container").getAttribute("biome");
+            if (biomeName == orderName) {
+                h2.remove();
+                upcoming.appendChild(h2);
+                break;
+            }
+        }
+    }
+
+    current = mainContent.querySelector("#current").querySelector(".grid-container");
+    upcoming = mainContent.querySelector("#upcoming").querySelector(".grid-container");
+
+    currentHTMLBiomes = current.querySelectorAll("h2");
+    upcomingHTMLBiomes = upcoming.querySelectorAll("h2")
+
+    for (let h2 of currentHTMLBiomes) {
+        let biomeContainer = h2.querySelector(".biome-container");
+        let missions = biomeContainer.querySelector(".missions");
+            if (isMissionsEmpty(missions)) {
+                h2.remove();
+                current.appendChild(h2);
+            }
+    }
+
+    for (let h2 of upcomingHTMLBiomes) {
+        let biomeContainer = h2.querySelector(".biome-container");
+        let missions = biomeContainer.querySelector(".missions");
+        if (isMissionsEmpty(missions)) {
+            h2.remove();
+            upcoming.appendChild(h2);
+        }
+    }
+}
 async function initialize(date) {
     let biomes_;
     let dailyDeal_;
@@ -1902,7 +1981,7 @@ async function initialize(date) {
 
     <h2>
     <div class="biome-container" biome="Salt Pits">
-    <br><div id="Salt Pits">
+    <br><div id="Salt Pits", class="missions">
     </div>
     </div>
     </h2>
@@ -2009,7 +2088,7 @@ async function initialize(date) {
 
     <h2>
     <div class="biome-container" biome="Sandblasted Corridors">
-    <br><div id="nextSandblasted Corridors">
+    <br><div id="nextSandblasted Corridors" class="missions">
     </div>
     </h2>
 
@@ -2078,7 +2157,7 @@ async function initialize(date) {
     </div>
 
     <div class="jsonc">
-    <div class="jsonlinks"><span style="color: white;font-size: 30px;font-family: BebasNeue;"><a id="currentDaysJsonLink" class="jsonlink" href="${currentDateTimeHREF}">TODAY'S DATA</a> | <a class="jsonlink" href="/json?data=current">CURRENT MISSION DATA</a> | <a class="jsonlink" href="/json?data=next">UPCOMING MISSION DATA</a> | <a class="jsonlink" href="${ddDatetimeHREF}">CURRENT DEEP DIVE DATA</a> | <a class="jsonlink" href="/static/xp_calculator.html">CLASS XP CALCULATOR</a> | <a class="jsonlink" href="https://github.com/rolfosian/drgmissions/">GITHUB</a></span></div>
+    <div class="jsonlinks"><span style="color: white;font-size: 30px;font-family: BebasNeue;"><a id="currentDaysJsonLink" class="jsonlink" href="${currentDateTimeHREF}">TODAY'S DATA</a> | <a class="jsonlink" href="/json?data=current">CURRENT MISSION DATA</a> | <a class="jsonlink" href="/json?data=next">UPCOMING MISSION DATA</a> | <a class="jsonlink" href="${ddDatetimeHREF}">CURRENT DEEP DIVE DATA</a> | <a class="jsonlink" href="/json?data=dailydeal">DAILY DEAL DATA</a> | <a class="jsonlink" href="/static/xp_calculator.html">CLASS XP CALCULATOR</a> | <a class="jsonlink" href="https://github.com/rolfosian/drgmissions/">GITHUB</a></span></div>
     </div>
     <span style="color: white;font-size: 30px;font-family: CarbonThin-W00-Regular;"><em><span style="font-size: 15px;">*url arg for icons is mission-codename-with-hyphen-instead-of-whitespace + id</span></em></span>
     <p class='gsgdisclaimer'><i>This website is a third-party platform and is not affiliated, endorsed, or sponsored by Ghost Ship Games. The use of Deep Rock Galactic's in-game assets on this website is solely for illustrative purposes and does not imply any ownership or association with the game or its developers. All copyrights and trademarks belong to their respective owners. For official information about Deep Rock Galactic, please visit the official Ghost Ship Games website.</i></p></div>
@@ -2086,7 +2165,7 @@ async function initialize(date) {
 
     let mainContent = document.getElementById('mainContent');
     mainContent.innerHTML = html;
-    setBiomeAndDeepDivesBanners();
+    await setBiomeAndDeepDivesBanners();
 
     return [biomes_, dailyDeal_]
 }
@@ -2230,7 +2309,7 @@ function setStorages(key, value, storages=localStorages) {
 var localStorages = {
     'isBackgroundHidden' : false,
     'areButtonsHidden' : false,
-    'seasonSelected' : 's0',
+    'seasonSelected' : 's6',
     'currentDaysJson' : null,
     'img' : null,
     'fonts' : null,
@@ -2238,9 +2317,8 @@ var localStorages = {
 };
 
 var localStoragesHashes = {
-    'img' : 1996300662,//-1714409925,
+    'img' : 1803545822,
     'fonts' : 906557479,
-    // 'homepageScript' : 2145285990,
 };
 
 var isSeasonUpdating = false;
@@ -2295,11 +2373,10 @@ function resetGlobalVars() {
     localStorages = {
         'isBackgroundHidden' : false,
         'areButtonsHidden' : false,
-        'seasonSelected' : 's0',
+        'seasonSelected' : 's6',
         'currentDaysJson' : null,
         'img' : null,
-        'fonts' : null,
-        // 'homepageScript' : null
+        'fonts' : null
     };
 
     cacheActive = false;
@@ -2351,9 +2428,10 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
 
             let seasonBoxValues = {
+                's6' : '<span style="color:#f5c560;">Relics of Hoxxes</span>',
                 's0' : '<span style="color:#69d6fe;">Unseasoned</span> | <span style="color:#2bc796;">Drilling Deeper</span>',
                 's1' : '<span style="color:#dc6a2a;">Rival</span> <span style="color:#efc8c9;">Incursion</span> | <span style="color:#dc6a2a;">Rival</span> <span style="color:#8ad6fc;">Escalation</span>',
-                's3' : '<span style="color:#fdb925;">Plaguefall</span> | <span style="color:#eb402b;">Critical Corruption</span>',
+                's3' : '<span style="color:#fdb925;">Plaguefall</span> | <span style="color:#eb402b;">Critical Corruption</span>'
             };
 
             let seasonSelectDiv = document.getElementById('seasonSelect');
@@ -2593,22 +2671,6 @@ document.addEventListener('DOMContentLoaded', async function() {
                 startCountdown();
             };
             
-            function toggleCollapse() {
-                var current = document.getElementById("current");
-                var upcoming = document.getElementById("upcoming");
-                var currentButton = document.getElementById("currentButton");
-                current.classList.toggle("collapsed");
-                upcoming.classList.toggle("collapsed");
-                if (current.classList.contains("collapsed")) {
-                    currentButton.textContent = "Click here to see current missions";
-                    document.title = "Upcoming Missions from the Hoxxes IV Mission Terminal";
-                } else {
-                    currentButton.textContent = "Click here to see upcoming missions";
-                    document.title = "Current Missions from the Hoxxes IV Mission Terminal";
-                }
-                equalizeGridItems()
-            };
-            
             async function onLoad() {
                 arrayBiomes(biomes, localStorages['seasonSelected']);
                 if (tempDailyDeal) {
@@ -2670,7 +2732,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                     });
                     await handleUnavailableDeepDiveData();
                 };
-                deepDiveCountDown()
+                deepDiveCountDown();
             }
 
             await onLoad();

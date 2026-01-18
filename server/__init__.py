@@ -1,7 +1,9 @@
 from time import time
+
+from fastapi.params import File
 start = time()
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, UploadFile
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse, PlainTextResponse, FileResponse, StreamingResponse
 
@@ -21,28 +23,29 @@ from drgmissionslib import (
 import os
 import json
 import threading
+import traceback
 cwd = os.getcwd()
 name = os.name
 
 def get_DD() -> str:
     with open(f"./static/json/DD_{get_previous_thursday_date()}T11-00-00Z.json", "r") as f:
-        return f.read()
+        return json.load(f)
     
 def get_current() -> str:
-    with open(f"./static/json/bulkmissions/{round_time(datetime.now(tz=timezone.utc), False)}", "r") as f:
-        return f.read()
-    
+    with open(f"./static/json/bulkmissions_granules/{round_time(datetime.now(tz=timezone.utc), False)}.json".replace(":", "-"), "r") as f:
+        return json.load(f)
+
 def get_next() -> str:
-    with open(f"./static/json/bulkmissions/{round_time(datetime.now(tz=timezone.utc), True)}", "r") as f:
-        return f.read()
-    
+    with open(f"./static/json/bulkmissions_granules/{round_time(datetime.now(tz=timezone.utc), True)}.json".replace(":", "-"), "r") as f:
+        return json.load(f)
+
 def get_daily_deal() -> str:
-    with open(f"drgdailydeals.json", "r") as f:
-        return json.dumps(json.load(f)[datetime.now(tz=timezone.utc).strftime("%Y-%m-%dT00:00:00Z")])
+    with open("drgdailydeals.json", "r") as f:
+        return json.load(f)[datetime.now(tz=timezone.utc).strftime("%Y-%m-%dT00:00:00Z")]
 
 def serialize_json() -> dict:
-    from subprocess import run
-    run(["7z", "x", "drgmissionsgod_serialized_json.7z", "-o./static/json"])
+    # from subprocess import run
+    # run(["7z", "x", "drgmissionsgod_serialized_json.7z", "-o./static/json"])
 
     with open('drgdailydeals.json', 'r') as f:
         AllTheDeals = f.read()
@@ -53,12 +56,12 @@ def serialize_json() -> dict:
 
     return AllTheDeals
 
-def create_app() -> FastAPI:
+def create_app(AllTheDeals: dict) -> FastAPI:
     app = FastAPI()
     app.mount("/static", StaticFiles(directory="static"), name="static")
 
     four_0_four_response = PlainTextResponse(status_code=404, content='<!doctype html><html lang="en"><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>')
-    four_0_0_response = PlainTextResponse(satus_code=400, content='<!doctype html><html lang="en"><title>400 Bad Request</title><h1>Bad Request</h1><p>The server could not understand your request. Please make sure you have entered the correct information and try again.</p>')
+    four_0_0_response = PlainTextResponse(status_code=400, content='<!doctype html><html lang="en"><title>400 Bad Request</title><h1>Bad Request</h1><p>The server could not understand your request. Please make sure you have entered the correct information and try again.</p>')
     
     home_response = FileResponse(path=f"{cwd}/index.html", media_type="text/html")
     @app.get('/')
@@ -82,37 +85,44 @@ def create_app() -> FastAPI:
 
     AUTH_TOKEN = cfg['auth_token']
 
+
+    class FileStorageWrapper:
+        def __init__(self, upload_file: UploadFile):
+            self.upload_file = upload_file
+            self.filename = upload_file.filename
+
+        def save(self, dst):
+            with open(dst, "wb") as f:
+                f.write(self.upload_file.file.read())
+
     #Route for deployment of weekly deep dive metadata
     file_parts = {}
-    @app.post('/upload')
-    def upload(request: Request):
+    @app.post("/upload")
+    async def upload(request: Request, file: UploadFile = File(...)):
         try:
-            token = request.headers.get('Authorization')
+            token = request.headers.get("Authorization")
             if not token or token != f"Bearer {AUTH_TOKEN}":
                 return four_0_four_response
-            
-            if 'file' not in request.files:
-                return PlainTextResponse(satus_code=400, content="No file in the request")
 
-            file_ = request.files['file']
+            file_ = FileStorageWrapper(file)
             filename = file_.filename
 
-            if filename.endswith('.json') or  filename.endswith('.py'):
-                file_.save(f'{cwd}/{filename}')
-                if filename.startswith('DD'):
-                    for f in os.listdir(f"{cwd}/static/json"):
-                        if f.startswith('DD'):
-                            os.remove(f"{cwd}/static/json/{f}")
-                    shutil_copy(f'{cwd}/{filename}', f'{cwd}/static/json/{filename}')
-
+            if filename.endswith(".json") or filename.endswith(".py"):
+                file_.save(f"{cwd}/{filename}")
+                if filename.startswith("DD"):
+                    for f_name in os.listdir(f"{cwd}/static/json"):
+                        if f_name.startswith("DD"):
+                            os.remove(f"{cwd}/static/json/{f_name}")
+                    shutil.copy(f"{cwd}/{filename}", f"{cwd}/static/json/{filename}")
             else:
-                file_.save(f'{cwd}/{filename}')
+                file_.save(f"{cwd}/{filename}")
 
-            response_data = {'message': 'Success'}
+            response_data = {"message": "Success"}
             return JSONResponse(status_code=200, content=response_data)
-        except Exception as e:
-            with open_with_timestamped_write('error.log', 'a') as f:
-                f.write(f'{e}\n')
+
+        except Exception:
+            with open_with_timestamped_write("error.log", "a") as f:
+                f.write(f"{traceback.format_exc()}\n")
             return four_0_four_response
 
     @app.get('/test')

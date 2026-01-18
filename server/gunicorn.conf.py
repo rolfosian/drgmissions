@@ -1,4 +1,4 @@
-worker_class = 'gthread'
+worker_class = "uvicorn.workers.UvicornWorker"
 threads = 8
 bind = '0.0.0.0:5000'
 

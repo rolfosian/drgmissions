@@ -993,7 +993,7 @@ def compare_dicts(dict1:dict, dict2:dict, ignore_keys:list):
 def flatten_seasons_v6(DRG:dict):
     combined = {}
     timestamps = list(DRG.keys())
-    seasons = ['s0', 's1', 's3']
+    seasons = ['s0', 's1', 's3', 's6']
     
     for timestamp in timestamps:
         # if 's2' in DRG[timestamp]:
