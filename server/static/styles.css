@@ -100,7 +100,7 @@ text-align:  center;
 padding: 0px;
 text-align: center;
 }
-.biome-container {
+#mainContent {
 opacity: 0;
 transition: opacity 0.5s ease-in-out;
 }
