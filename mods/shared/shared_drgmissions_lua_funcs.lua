@@ -148,12 +148,11 @@ MapKeys = {
     [6] = 6
 }
 function GetSeedTable(Season, RandomSeed)
-    local NewSeed = {
+    return {
         RandomSeed = RandomSeed,
         Season = Season,
         MapKey = MapKeys[Season]
     }
-    return NewSeed
 end
 function GetMissions_(Season, RandomSeed)
     local Missions = {}
@@ -225,6 +224,7 @@ Warnings = {
     ['MissionWarning /Game/GameElements/Missions/Warnings/BulletHell/WRN_BulletHell.WRN_BulletHell'] = 'Duck and Cover',
     ['MissionWarning /Game/GameElements/Missions/Warnings/RockInfestation/WRN_RockInfestation.WRN_RockInfestation'] = 'Ebonite Outbreak',
     ['MissionWarning /Game/GameElements/Missions/Warnings/PitJawColony/WRN_PitJawColony.WRN_PitJawColony'] = 'Pit Jaw Colony',
+    ['MissionWarning /Game/GameElements/Missions/Warnings/ScrabNestingGrounds/WRN_ScrabNestingGrounds.WRN_ScrabNestingGrounds'] = 'Scrab Nesting Grounds'
 }
 function GetMissionWarning(fullname)
     return Warnings[fullname]

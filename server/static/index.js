@@ -43,6 +43,20 @@ var deepDivesBanners = {
 var deepDivesBannersImages = {};
 deepDivesBannersImages.name = 'deepDivesBanners';
 
+const biomeMinerals = {
+    "Crystalline Caverns": "Abundant: Jadiz | Scarce: Bismor",
+    "Glacial Strata": "Abundant: Magnite | Scarce: Umanite",
+    "Radioactive Exclusion Zone": "Abundant: Umanite | Scarce: Enor Pearl",
+    "Fungus Bogs": "Abundant: Croppa | Scarce: Jadiz",
+    "Dense Biozone": "Abundant: Bismor | Scarce: Umanite",
+    "Salt Pits": "Abundant: Enor Pearl | Scarce: Bismor",
+    "Sandblasted Corridors": "Abundant: Enor Pearl | Scarce: Bismor",
+    "Magma Core": "Abundant: Magnite | Scarce: Croppa",
+    "Azure Weald": "Abundant: Croppa | Scarce: Umanite",
+    "Hollow Bough": "Abundant: Jadiz | Scarce: Bismor",
+    "Ossuary Depths": "Abundant: Bismor | Scarce: Magnite"
+};
+
 async function sliceCorners(img, sliceSize = 38) {
     return new Promise(resolve => {
         const canvas = document.createElement("canvas")
@@ -90,28 +104,13 @@ async function addBiomeName(img, name, title) {
     return canvas;
 }
 
-const biomeMinerals = {
-    "Crystalline Caverns": "Abundant: Jadiz | Scarce: Bismor",
-    "Glacial Strata": "Abundant: Magnite | Scarce: Umanite",
-    "Radioactive Exclusion Zone": "Abundant: Umanite | Scarce: Enor Pearl",
-    "Fungus Bogs": "Abundant: Croppa | Scarce: Jadiz",
-    "Dense Biozone": "Abundant: Bismor | Scarce: Umanite",
-    "Salt Pits": "Abundant: Enor Pearl | Scarce: Bismor",
-    "Sandblasted Corridors": "Abundant: Enor Pearl | Scarce: Bismor",
-    "Magma Core": "Abundant: Magnite | Scarce: Croppa",
-    "Azure Weald": "Abundant: Croppa | Scarce: Umanite",
-    "Hollow Bough": "Abundant: Jadiz | Scarce: Bismor",
-    "Ossuary Depths": "Abundant: Bismor | Scarce: Magnite"
-};
-
 async function buildBiomeBanners(biome) {
     const img = biomeBannersImages[biome];
     const title = biomeMinerals[biome];
 
-    const [canvasOne, canvasTwo] = await Promise.all([
-        addBiomeName(img, biome, title),
-        addBiomeName(img, biome, title)
-    ]);
+    const canvasOne = await addBiomeName(img, biome, title);
+    const canvasTwo = canvasOne.cloneNode(false);
+    canvasTwo.src = canvasOne.src;
 
     const divs = document.querySelectorAll(`div[biome="${biome}"]`);
     divs[0]?.prepend(canvasOne);
@@ -227,6 +226,7 @@ var warnings = {
     'Duck and Cover': `${domainURL}/static/img/Warning_duck_and_cover_icon.webp`,
     'Ebonite Outbreak' : `${domainURL}/static/img/Warning_ebonite_outbreak_icon.webp`,
     'Pit Jaw Colony' : `${domainURL}/static/img/Warning_pit_jaw_colony_icon.webp`,
+    'Scrab Nesting Grounds' : `${domainURL}/static/img/Warning_scrab_nesting_grounds_icon.webp`
 };
 var warningsImages = {};
 warningsImages.name = 'warningsImages';
@@ -725,6 +725,8 @@ async function getDeepDiveData() {
     let data;
     try {
         data = await loadJSONnoRetry(`${domainURL}/static/json/DD_${datetime}.json`);
+        if (data["detail"] == "Not Found") return undefined;
+        
         if (verifyDeepDiveData(data)) {
             return data;
         } else {
@@ -1402,7 +1404,7 @@ function sortDeepDiveStages(stages) {
     }
     return stages.slice().sort((a, b) => b['id'] - a['id']);
 }
-
+// array as a verb
 async function arrayDeepDives(deepDiveData) {
     try {
         var deepDiveNormal = deepDiveData["Deep Dives"]["Deep Dive Normal"];
@@ -2024,12 +2026,14 @@ async function initialize(date) {
     <span id="deepDiveCountdown"></span>
     </div>
 
+    <div id="footer">
     <hr>
 
     <div class="jsonc">
     <div class="jsonlinks"><span style="color: white;font-size: 30px;font-family: BebasNeue;"><a id="currentDaysJsonLink" class="jsonlink" href="${currentDateTimeHREF}">TODAY'S DATA</a> | <a class="jsonlink" href="/json?data=current">CURRENT MISSION DATA</a> | <a class="jsonlink" href="/json?data=next">UPCOMING MISSION DATA</a> | <a class="jsonlink" href="${ddDatetimeHREF}">CURRENT DEEP DIVE DATA</a> | <a class="jsonlink" href="/json?data=dailydeal">DAILY DEAL DATA</a> | <a class="jsonlink" href="/static/xp_calculator.html">CLASS XP CALCULATOR</a> | <a class="jsonlink" href="https://github.com/rolfosian/drgmissions/">GITHUB</a></span></div>
     </div>
     <p class='gsgdisclaimer'><i>This website is a third-party platform and is not affiliated, endorsed, or sponsored by Ghost Ship Games. The use of Deep Rock Galactic's in-game assets on this website is solely for illustrative purposes and does not imply any ownership or association with the game or its developers. All copyrights and trademarks belong to their respective owners. For official information about Deep Rock Galactic, please visit the official Ghost Ship Games website.</i></p></div>
+    </div>
     `;
 
     let mainContent = document.getElementById('mainContent');
@@ -2185,7 +2189,7 @@ var localStorages = {
 };
 
 var localStoragesHashes = {
-    'img' : 1803545822,
+    'img' : 611688081,
     'fonts' : 906557479,
 };
 
@@ -2480,11 +2484,21 @@ async function onLoad() {
     backgroundButton.setAttribute('onclick', 'toggleBackground()');
 
     deepDiveData = await getDeepDiveData();
+    
     if (deepDiveData) {
         arrayDeepDives(deepDiveData);
         document.querySelectorAll('.dd-missions').forEach((element)=> {
             element.style.opacity = "1";
         });
+
+
+        ddContainers = document.querySelectorAll(".dd-container");
+        for (ddContainer of ddContainers) {
+            ddContainer.style.opacity = "1";
+        }
+    
+        document.getElementById('footer').style.opacity = "1";
+
     } else {
         let deepDiveCountdownElement = document.getElementById("deepDiveCountdown");
         deepDiveCountdownElement.classList.add('glow-text-red-white');
@@ -2492,8 +2506,15 @@ async function onLoad() {
         document.querySelectorAll('.dd-missions').forEach((element)=> {
             element.style.opacity = "1";
         });
+        ddContainers = document.querySelectorAll(".dd-container");
+        for (ddContainer of ddContainers) {
+            ddContainer.style.opacity = "1";
+        }
+    
+        document.getElementById('footer').style.opacity = "1";
         await handleUnavailableDeepDiveData();
-    };
+    }
+
     deepDiveCountDown();
 }
 

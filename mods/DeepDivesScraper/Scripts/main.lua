@@ -103,6 +103,7 @@ function UnpackDeepDiveMission(mission, master, t)
         {pattern = 'BulletHell', result = "Duck and Cover"},
         {pattern = 'RockInfestation', result = 'Ebonite Outbreak'},
         {pattern = 'PitJawColony', result = 'Pit Jaw Colony'},
+        {pattern = 'ScrabNestingGrounds', result = 'Scrab Nesting Grounds'},
         {pattern = 'TougherEnemies', result = 'Tougher Enemies'}
     }
     local MissionWarnings = mission:GetPropertyValue("MissionWarnings")
