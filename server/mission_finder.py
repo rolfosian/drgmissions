@@ -26,7 +26,7 @@ valid_mutators = with_specials(sorted(['Gold Rush', 'Blood Sugar', 'Critical Wea
 
 valid_warnings = with_specials(sorted(['Cave Leech Cluster', 'Parasites', 'Mactera Plague', 'Low Oxygen', 'Exploder Infestation', 'Rival Presence', 
                                        'Shield Disruption', 'Lithophage Outbreak', 'Haunted Cave', 'Regenerative Bugs', 'Lethal Enemies', 'Swarmageddon', 
-                                       'Elite Threat', 'Ebonite Outbreak', 'Duck and Cover', 'Pit Jaw Colony'], key=lambda x: (str.isdigit(x), x.lower())))
+                                       'Elite Threat', 'Ebonite Outbreak', 'Duck and Cover', 'Pit Jaw Colony', 'Scrab Nesting Grounds'], key=lambda x: (str.isdigit(x), x.lower())))
 
 valid_lengths = ["1", "2", "3"]
 valid_complexities = ["1", "2", "3"]
