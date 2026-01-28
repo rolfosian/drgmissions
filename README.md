@@ -20,13 +20,6 @@
 - [This lua script will fetch the current Deep Dive data and exit the game in short order](https://github.com/rolfosian/drgmissions/blob/main/mods/DeepDivesScraper/Scripts/main.lua)
 - Using a Win10 Virtual Machine, running on startup via shortcut to [Run_DeepDives.bat (not the setup script but the script it generates)](https://github.com/rolfosian/drgmissions/blob/main/vm_fresh_setup.bat#L176) in startup folder, requires automatic logon of Windows user and Steam launching at startup also.
 
-## **Flask Service Setup**
-- [This setup script](https://github.com/rolfosian/drgmissions/blob/main/flask/setup.py) will take care of the setup of python venv.
-1. Clone the repo or copy the [flask directory](https://github.com/rolfosian/drgmissions/blob/main/flask/) to your debian or ubuntu machine
-2. `cd` into the `flask` directory and run `python3 setup.py`, then follow the prompts to set up the venv and systemd service + optional nginx reverse proxy.
-- It will install the service/venv to the /home/`service_user`/`service_name` folder specified by user input. **Make Sure to note down the cfg.json it generates to copy to the scraper_cfg.json for the windows vm** or simply input your own manually. It includes a prompt for setting up an nginx reverse proxy plus logic for if you pick a domain name and want to use certbot for it also.
-- Could do with some polishing but does the job well enough for now, cfg.json stuff is a bit wonky; probably better to handle those entirely manually.
-
 ## **Virtual Machine Setup**
 1. Pick a VM Software (Virtualbox, VMWare, Qemu, etc) and install a Windows 10 machine. Give it at least 4 cores or it will run very poorly, and 4-8GB of ram.
 2. Pick your poison of which version of Windows, I recommend LTSC 21H2, it's more forgiving on disabling updates and stuff and is just generally more lightweight than the other distros.
