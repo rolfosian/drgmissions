@@ -1335,10 +1335,10 @@ function renderDeepDiveStage(m_d, stageCount) {
         'Salvage Operation,default': '3',
         'Deep Scan,2,1' : '3',
         'Deep Scan,3,2' : '5',
-        'Heavy Excavation,2,1' : '2',
-        'Heavy Excavation,3,1' : '2',
+        'Heavy Excavation,3,2' : '3',
         'Heavy Excavation,2,2' : '3',
-        "Heavy Excavation,2,3" : "3"
+        'Heavy Excavation,2,3' : '4',
+        'Heavy Excavation,3,3' : '4'
     };
 
     const hexagon = primaryObjResourcesImages['hexagon'];
