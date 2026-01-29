@@ -1078,7 +1078,7 @@ async function handleUnavailableDeepDiveData() {
     deepDiveNormalDiv.appendChild(document.createElement("br"));
     let spanElement = document.createElement("span");
     spanElement.className = "scanners";
-    spanElement.textContent = "// AWAITING UP TO DATE DATA \\\\";
+    spanElement.textContent = "// SCANNERS OUT OF RANGE \\\\";
     deepDiveNormalDiv.appendChild(spanElement);
     deepDiveNormalDiv.appendChild(document.createElement('br'));
     let normalCountdownSpanElement = document.createElement("span");
@@ -1093,7 +1093,7 @@ async function handleUnavailableDeepDiveData() {
     deepDiveEliteDiv.appendChild(document.createElement("br"));
     spanElement = document.createElement("span");
     spanElement.className = "scanners";
-    spanElement.textContent = "// AWAITING UP TO DATE DATA \\\\";
+    spanElement.textContent = "// SCANNERS OUT OF RANGE \\\\";
     deepDiveEliteDiv.appendChild(spanElement);
     deepDiveEliteDiv.appendChild(document.createElement('br'));
     let eliteCountdownSpanElement = document.createElement("span");

@@ -108,11 +108,16 @@ def create_app(AllTheDeals: dict) -> FastAPI:
             filename = file_.filename
 
             if filename.endswith(".json") or filename.endswith(".py"):
+                for f_name in os.listdir(cwd):
+                    if f_name.startswith("DD"):
+                        os.remove(f"{cwd}/{f_name}")
+                        
+                for f_name in os.listdir(f"{cwd}/static/json"):
+                    if f_name.startswith("DD"):
+                        os.remove(f"{cwd}/static/json/{f_name}")
+                        
                 file_.save(f"{cwd}/{filename}")
                 if filename.startswith("DD"):
-                    for f_name in os.listdir(f"{cwd}/static/json"):
-                        if f_name.startswith("DD"):
-                            os.remove(f"{cwd}/static/json/{f_name}")
                     shutil.copy(f"{cwd}/{filename}", f"{cwd}/static/json/{filename}")
                     
                 return JSONResponse(status_code=200, content={"message": "Success"})

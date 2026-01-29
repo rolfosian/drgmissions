@@ -689,7 +689,7 @@ def wait_until_next_thursday_11am_utc():
     days_until_thursday = (3 - now.weekday()) % 7
     
     next_thursday = now + timedelta(days=days_until_thursday)
-    next_thursday_11am_utc = datetime(next_thursday.year, next_thursday.month, next_thursday.day, 11, 0, 0)
+    next_thursday_11am_utc = datetime(next_thursday.year, next_thursday.month, next_thursday.day, 11, 0, 0, tzinfo=timezone.utc)
     
     if days_until_thursday == 0 and now.hour >= 11:
         next_thursday_11am_utc += timedelta(days=7)
