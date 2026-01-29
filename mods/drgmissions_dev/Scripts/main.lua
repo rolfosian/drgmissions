@@ -1,6 +1,14 @@
 local json = require("./mods/shared/dkjson")
-local isLoaded
 function PressStartAndWaitForLoad()
+    local FSDGameInstance = nil
+    while true do
+        FSDGameInstance = FindFirstOf('FSDGameInstance')
+        if FSDGameInstance then
+            break
+        end
+    end
+    if not FSDGameInstance.IsOnPressStartScreen then goto isLoaded end
+
     local startmenus = nil
     while true do
         startmenus = FindAllOf('Bp_StartMenu_PlayerController_C')
@@ -31,6 +39,7 @@ function PressStartAndWaitForLoad()
             end
         end
     end
+    ::isLoaded::
 end
 function TestTwoWeeks()
     local currytime = nil
@@ -198,14 +207,8 @@ function TestCurrentTimeOnly()
 --     end
 end
 function Main()
-    if isLoaded then
-        goto isloaded
-    else
-        PressStartAndWaitForLoad()
-    end
-    ::isloaded::
-
-    -- TestCurrentTimeOnly()
+    PressStartAndWaitForLoad()
+    TestCurrentTimeOnly()
     -- TestTwoWeeks()
 end
 Main()

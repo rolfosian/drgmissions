@@ -110,7 +110,9 @@ async function buildBiomeBanners(biome) {
 
     const canvasOne = await addBiomeName(img, biome, title);
     const canvasTwo = canvasOne.cloneNode(false);
-    canvasTwo.src = canvasOne.src;
+    canvasTwo.width = canvasOne.width;
+    canvasTwo.height = canvasOne.height;
+    canvasTwo.getContext("2d").drawImage(canvasOne, 0, 0);
 
     const divs = document.querySelectorAll(`div[biome="${biome}"]`);
     divs[0]?.prepend(canvasOne);
@@ -402,11 +404,6 @@ async function preloadImagesAll() {
         localStorage.setItem('img', JSON.stringify(base64LocalStoragesImg));
     }
     base64LocalStoragesImg = undefined;
-}
-
-async function preloadHomepageScript() {
-    let response = await fetch(`${domainURL}/static/homepage.js`);
-    return response.text();
 }
 
 async function loadFontsFromLocalStorageObj() {
@@ -803,10 +800,10 @@ function renderMission(m_d) {
         'Salvage Operation,default': '3',
         'Deep Scan,2,1' : '3',
         'Deep Scan,3,2' : '5',
-        'Heavy Excavation,2,1' : '2',
-        'Heavy Excavation,3,1' : '2',
         'Heavy Excavation,3,2' : '3',
         'Heavy Excavation,2,2' : '3',
+        'Heavy Excavation,2,3' : '4',
+        'Heavy Excavation,3,3' : '4',
     };
 
     const hexagon = primaryObjResourcesImages['hexagon']
@@ -2120,12 +2117,6 @@ async function verifyStorages(date) {
             //     continue
             // }
 
-            // if (key == 'homepageScript') {
-            //     setStorages(key, null)
-            //     continue
-            // }
-
-
             if (isLocalStorageAvailable_) {
                 v = localStorage.getItem(key);
             }
@@ -2140,7 +2131,7 @@ async function verifyStorages(date) {
 
                 } else if (key === 'currentDaysJson') {
                     let data = JSON.parse(v);
-                    let ver = 5;
+                    let ver = 6;
                     if (data[0] != date.toISOString().slice(0, 10) || !data[1].hasOwnProperty('ver') || data[1]['ver'] != ver) {
                         setStorages(key, null);
                     } else {
@@ -2160,11 +2151,7 @@ async function verifyStorages(date) {
 
         // console.log(key, localStorages[key]);
     }
-    // if (!localStorages['homepageScript'] || localStorages['homepageScript'] == 'null') {
-    //     let s = await preloadHomepageScript()
-    //     console.log('New homepageScript hash:', simpleHash(JSON.stringify(s)))
-    //     setStorages('homepageScript', s);
-    // }
+
     // console.log(localStorages['homepageScript'])
     // console.log('currentDaysJson', localStorages['currentDaysJson'])
 }
@@ -2496,7 +2483,7 @@ async function onLoad() {
         for (ddContainer of ddContainers) {
             ddContainer.style.opacity = "1";
         }
-    
+        
         document.getElementById('footer').style.opacity = "1";
 
     } else {

@@ -229,10 +229,10 @@ function UnpackDeepDiveMission(mission, master, t)
         {pattern = 'DNA_Web_Small_C', result = {complexity = '2', length = '1'}},
         {pattern = 'DNA_Web_Medium_C', result = {complexity = '3', length = '2'}},
         -- Heavy Excavation
-        {pattern = "DNA_Wheel_ShortAverage_C", result = {complexity = '2', length = '1'}},
-        {pattern = "DNA_Wheel_ShortComplex_C", result = {complexity = "3", length = "1"}},
         {pattern = "DNA_Wheel_Medium_C", result = {complexity = "2", length = "2"}},
-        {pattern = "DNA_Wheel_MediumComplex_C", result = {complexity = "3", length = "2"}}
+        {pattern = "DNA_Wheel_MediumComplex_C", result = {complexity = "3", length = "2"}},
+        {pattern = "DNA_Wheel_Long_C", result = {complexity = '2', length = '3'}},
+        {pattern = "DNA_Wheel_LongComplex_C", result = {complexity = "3", length = "3"}},
     }
     if complexity == 'Indefinite' and length == 'Indefinite' then
         for _, dna in pairs(MissionDNAs) do
@@ -257,6 +257,33 @@ function UnpackDeepDiveMission(mission, master, t)
             if string.find(MissionDNA, dna.pattern) then
                 mission1['Complexity'] = dna.result.complexity
                 -- mission1['Length'] = dna.result.length
+            end
+        end
+    end
+
+    if PrimaryObjective == 'Heavy Excavation' then
+        local dnas = {
+            {pattern = "DNA_Wheel_Medium_C", result = {complexity = "2", length = "2"}},
+            {pattern = "DNA_Wheel_MediumComplex_C", result = {complexity = "3", length = "2"}},
+            {pattern = "DNA_Wheel_Long_C", result = {complexity = '2', length = '3'}},
+            {pattern = "DNA_Wheel_LongComplex_C", result = {complexity = "3", length = "3"}},
+        }
+
+        if mission1['Complexity'] == 'Indefinite' or mission1['Complexity'] == 'nil' then
+            for _, dna in pairs(dnas) do
+                if string.find(MissionDNA, dna.pattern) then
+                    mission1['Complexity'] = dna.result.complexity
+                    break
+                end
+            end
+        end
+
+        if mission1['Length'] == 'Indefinite' or mission1['Length'] == 'nil' then
+            for _, dna in pairs(dnas) do
+                if string.find(MissionDNA, dna.pattern) then
+                    mission1['Length'] = dna.result.length
+                    break
+                end
             end
         end
     end
@@ -396,6 +423,7 @@ function UnpackDeepDiveMission(mission, master, t)
         }
     end
 
+    ::ret::
     table.insert(master['Deep Dives'][t]['Stages'], mission1)
 end
 function HasKey(table, key)

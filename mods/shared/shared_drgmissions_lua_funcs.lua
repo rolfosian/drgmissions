@@ -272,10 +272,10 @@ MissionDNAs = {
     ['BlueprintGeneratedClass /Game/GameElements/Missions/DNA_Web_Small.DNA_Web_Small_C'] = {complexity = '2', length='1'},
 
     --Heavy Excavation
-    ['BlueprintGeneratedClass /Game/GameElements/Missions/DNA_Wheel_ShortAverage.DNA_Wheel_ShortAverage_C'] = {complexity = '2', length = '1'},
-    ['BlueprintGeneratedClass /Game/GameElements/Missions/DNA_Wheel_ShortComplex.DNA_Wheel_ShortComplex_C'] = {complexity = '3', length = '1'},
     ['BlueprintGeneratedClass /Game/GameElements/Missions/DNA_Wheel_Medium.DNA_Wheel_Medium_C'] = {complexity = '2', length = '2'},
-    ['BlueprintGeneratedClass /Game/GameElements/Missions/DNA_Wheel_MediumComplex.DNA_Wheel_MediumComplex_C'] = {complexity = '3', length = '2'}
+    ['BlueprintGeneratedClass /Game/GameElements/Missions/DNA_Wheel_MediumComplex.DNA_Wheel_MediumComplex_C'] = {complexity = '3', length = '2'},
+    ['BlueprintGeneratedClass /Game/GameElements/Missions/DNA_Wheel_Long.DNA_Wheel_Long_C'] = {complexity = '2', length = '3'},
+    ['BlueprintGeneratedClass /Game/GameElements/Missions/DNA_Wheel_LongComplex.DNA_Wheel_LongComplex_C'] = {complexity = '3', length = '3'},
 }
 MissionDNAs_obscure = {
     ['Egg Hunt'] = {
@@ -289,7 +289,6 @@ MissionDNAs_obscure = {
     },
 }
 Pe_length_condition = {pattern = 'Motherlode_Short_C', result = {complexity = '3', length = '2'}, conditions = {length = '2', complexity = 'Indefinite'}}
-
 function FinalizeComplexityAndLength(mission1, MissionDNA, length, complexity)
     if mission1['PrimaryObjective'] == 'Point Extraction' and string.find(MissionDNA, Pe_length_condition.pattern) and complexity == Pe_length_condition.conditions.complexity and length == Pe_length_condition.conditions.length then
         mission1['Complexity'] = Pe_length_condition.result.complexity
@@ -331,6 +330,19 @@ function FinalizeComplexityAndLength(mission1, MissionDNA, length, complexity)
             if string.find(MissionDNA, dna.pattern) then
                 mission1['Length'] = dna.result.length
                 mission1['Complexity'] = dna.result.complexity
+                break
+            end
+        end
+    end
+
+    if length == 'Indefinite' then
+        local MissionDNAs_generic = {
+            {pattern = 'LongAverage', result = '3'},
+            {pattern = 'LongComplex', result =  '3'}
+        }
+        for _, dna in pairs(MissionDNAs_generic) do
+            if string.find(MissionDNA, dna.pattern) then
+                mission1['Length'] = dna.result
                 break
             end
         end
