@@ -114,11 +114,14 @@ def create_app(AllTheDeals: dict) -> FastAPI:
                         if f_name.startswith("DD"):
                             os.remove(f"{cwd}/static/json/{f_name}")
                     shutil.copy(f"{cwd}/{filename}", f"{cwd}/static/json/{filename}")
-            else:
-                file_.save(f"{cwd}/{filename}")
-
-            response_data = {"message": "Success"}
-            return JSONResponse(status_code=200, content=response_data)
+                    
+                return JSONResponse(status_code=200, content={"message": "Success"})
+            
+            file_.save(f"{cwd}/{filename}")
+            if filename.endswith('json.7z'):
+                subprocess.run(["python3" if os.name == "posix" else "python", f"extract_json.py", filename])
+                
+            return JSONResponse(status_code=200, content={"message": "Success"})
 
         except Exception:
             with open_with_timestamped_write("error.log", "a") as f:
