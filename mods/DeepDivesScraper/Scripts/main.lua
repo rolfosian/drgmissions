@@ -51,7 +51,8 @@ function UnpackDeepDiveMission(mission, master, t)
         {pattern = "1st_Salvage", result = "Salvage Operation"},
         {pattern = "1st_Facility", result = "Industrial Sabotage"},
         {pattern = "Gather_AlienEggs", result = "Egg Hunt"},
-        {pattern = "DeepScan", result = "Deep Scan"}
+        {pattern = "DeepScan", result = "Deep Scan"},
+        {pattern = "Excavation", result = "Heavy Excavation"}
     }
     for _, obj in ipairs(primary_objectives) do
         if string.find(PrimaryObjective, obj.pattern) then
@@ -72,7 +73,8 @@ function UnpackDeepDiveMission(mission, master, t)
         {pattern = "DD_Morkite", result = "Mine Morkite"},
         {pattern = "AlienEggs", result = "Get Alien Eggs"},
         {pattern = "DD_Defense", result = "Black Box"},
-        {pattern = 'DeepScan', result = 'Perform Deep Scans'}
+        {pattern = 'DeepScan', result = 'Perform Deep Scans'},
+        {pattern = 'Excavation', result = 'Extract Resinite Masses'}
     }
     for _, obj in ipairs(secondary_objectives) do
         if string.find(SecondaryObjective, obj.pattern) then
@@ -100,6 +102,8 @@ function UnpackDeepDiveMission(mission, master, t)
         {pattern = 'InfestedEnemies', result = 'Parasites'},
         {pattern = 'BulletHell', result = "Duck and Cover"},
         {pattern = 'RockInfestation', result = 'Ebonite Outbreak'},
+        {pattern = 'PitJawColony', result = 'Pit Jaw Colony'},
+        {pattern = 'ScrabNestingGrounds', result = 'Scrab Nesting Grounds'},
         {pattern = 'TougherEnemies', result = 'Tougher Enemies'}
     }
     local MissionWarnings = mission:GetPropertyValue("MissionWarnings")
@@ -221,10 +225,14 @@ function UnpackDeepDiveMission(mission, master, t)
         {pattern = 'DNA_2_03_C', result = {complexity = '1', length = '2'}},
         {pattern = 'DNA_2_04_C', result = {complexity = '2', length = '3'}},
         {pattern = 'DNA_2_05_C', result = {complexity = '3', length = '3'}},
-
         -- Deep Scan
         {pattern = 'DNA_Web_Small_C', result = {complexity = '2', length = '1'}},
-        {pattern = 'DNA_Web_Medium_C', result = {complexity = '3', length = '2'}}
+        {pattern = 'DNA_Web_Medium_C', result = {complexity = '3', length = '2'}},
+        -- Heavy Excavation
+        {pattern = "DNA_Wheel_Medium_C", result = {complexity = "2", length = "2"}},
+        {pattern = "DNA_Wheel_MediumComplex_C", result = {complexity = "3", length = "2"}},
+        {pattern = "DNA_Wheel_Long_C", result = {complexity = '2', length = '3'}},
+        {pattern = "DNA_Wheel_LongComplex_C", result = {complexity = "3", length = "3"}},
     }
     if complexity == 'Indefinite' and length == 'Indefinite' then
         for _, dna in pairs(MissionDNAs) do
@@ -249,6 +257,33 @@ function UnpackDeepDiveMission(mission, master, t)
             if string.find(MissionDNA, dna.pattern) then
                 mission1['Complexity'] = dna.result.complexity
                 -- mission1['Length'] = dna.result.length
+            end
+        end
+    end
+
+    if PrimaryObjective == 'Heavy Excavation' then
+        local dnas = {
+            {pattern = "DNA_Wheel_Medium_C", result = {complexity = "2", length = "2"}},
+            {pattern = "DNA_Wheel_MediumComplex_C", result = {complexity = "3", length = "2"}},
+            {pattern = "DNA_Wheel_Long_C", result = {complexity = '2', length = '3'}},
+            {pattern = "DNA_Wheel_LongComplex_C", result = {complexity = "3", length = "3"}},
+        }
+
+        if mission1['Complexity'] == 'Indefinite' or mission1['Complexity'] == 'nil' then
+            for _, dna in pairs(dnas) do
+                if string.find(MissionDNA, dna.pattern) then
+                    mission1['Complexity'] = dna.result.complexity
+                    break
+                end
+            end
+        end
+
+        if mission1['Length'] == 'Indefinite' or mission1['Length'] == 'nil' then
+            for _, dna in pairs(dnas) do
+                if string.find(MissionDNA, dna.pattern) then
+                    mission1['Length'] = dna.result.length
+                    break
+                end
             end
         end
     end
@@ -388,6 +423,7 @@ function UnpackDeepDiveMission(mission, master, t)
         }
     end
 
+    ::ret::
     table.insert(master['Deep Dives'][t]['Stages'], mission1)
 end
 function HasKey(table, key)
@@ -403,7 +439,8 @@ Biomesmatch = {
     ['Biome /Game/Landscape/Biomes/Biomes_Ingame/HollowBough/BIOME_HollowBough.BIOME_HollowBough'] = 'Hollow Bough',
     ['Biome /Game/Landscape/Biomes/Biomes_Ingame/SandblastedCorridors/BIOME_SandblastedCorridors.BIOME_SandblastedCorridors'] = 'Sandblasted Corridors',
     ['Biome /Game/Landscape/Biomes/Biomes_Ingame/RadioactiveZone/BIOME_RadioactiveZone.BIOME_RadioactiveZone'] = 'Radioactive Exclusion Zone',
-    ['Biome /Game/Landscape/Biomes/Biomes_Ingame/LushDownpour/BIOME_LushDownpour.BIOME_LushDownpour'] = 'Dense Biozone'
+    ['Biome /Game/Landscape/Biomes/Biomes_Ingame/LushDownpour/BIOME_LushDownpour.BIOME_LushDownpour'] = 'Dense Biozone',
+    ['Biome /Game/Landscape/Biomes/Biomes_Ingame/BoneYards/BIOME_OssuaryDepths.BIOME_OssuaryDepths'] = 'Ossuary Depths'
 }
 function Main_()
     local currentDateTime = os.date("!%Y-%m-%dT%H-%M-%SZ")

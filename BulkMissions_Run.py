@@ -21,7 +21,8 @@ from drgmissions_scraper_utils import (
     user_input_set_target_date,
     wait_for_json,
     validate_drgmissions,
-    flatten_seasons_v5,
+    flatten_seasons_v6,
+    serialize_and_compress,
     is_port_in_use,
     launch_game,
     delete_file,
@@ -111,15 +112,15 @@ def main():
             DRG = validate_drgmissions(DRG)
         
         print(wrap_with_color('Flattening seasons...', '40;92'))
-        DRG = flatten_seasons_v5(DRG)
+        DRG = flatten_seasons_v6(DRG)
         
         if not year_range:
             print(wrap_with_color("Writing to disk...", "40;92"))
-            
+            serialize_and_compress(DRG)
             with open('drgmissionsgod.json', 'w') as f:
                 json.dump(DRG, f)
             if yes_or_no('Upload JSON? Y/N: '):
-                upload_file(cfg, 'drgmissionsgod.json')
+                upload_file(cfg, 'drgmissionsgod_serialized_json.7z')
                 
             print(wrap_with_color('Enabling automatic system time...', '0;33'))
             enable_system_time()
@@ -149,11 +150,18 @@ def main():
     #Reset mods.txt
     with open('./mods/mods.txt', 'w') as f:
         f.close()
+    
 
 if __name__ == '__main__':
     try:
         if os.path.isfile('drgmissionsgod.json'):
             delete_file('drgmissionsgod.json')
+        if os.path.isfile("drgmissionsgod_serialized_json.7z"):
+            delete_file("drgmissionsgod_serialized_json.7z")
+        if not os.path.isfile("drgdailydeals.json"):
+            print("Run the Daily Deal scraper first.")
+            input("Press enter to exit...")
+            quit()
         main()
     except Exception as e:
         handle_exc(e)

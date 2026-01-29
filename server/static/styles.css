@@ -1,0 +1,424 @@
+input[type="checkbox"] {
+appearance: none;
+-webkit-appearance: none;
+-moz-appearance: none;
+width: 20px;
+height: 20px;
+position: relative;
+cursor: pointer;
+}
+input[type="checkbox"]::before {
+content: "";
+display: block;
+position: absolute;
+top: 0;
+left: 0;
+width: 20px;
+height: 20px;
+background-color: #0000;
+}
+input[type="checkbox"]:checked::after {
+content:  "\2611"; 
+display: block;
+position: absolute;
+top: 50%;
+left: 50%;
+transform: translate(-50%, -50%);
+color: #fff;
+font-size: 16px;
+}
+body::-webkit-scrollbar {
+display: none;
+}
+.loading {
+position: fixed;
+top: 35%;
+left: 50%;
+transform: translate(-50%, -50%);
+color: red;
+font-family: "CarbonThin-W00-Regular";
+font-size: 50px;
+display: inline-block;
+width: 9ch;
+text-align: center;
+}
+#background-video {
+position: fixed;
+min-width: 100%;
+min-height: 100%;
+width: auto;
+height: auto;
+object-fit: contain;
+z-index: -1;
+pointer-events: none;
+}
+.before {
+content: "";
+position: fixed;
+min-width: 100%;
+min-height: 100%;
+top: 0;
+left: 0;
+width: auto;
+height: auto;
+background-image: url('/static/space_rig_thumb.jpg');
+background-size: cover;
+object-fit: contain;
+z-index: -2;
+}
+#background-video + .overlay {
+position: fixed;
+right: 0;
+bottom: 0;
+min-width: 100%;
+min-height: 100%;
+width: auto;
+height: auto;
+z-index: -1;
+background-color: rgba(0, 0, 0, 0.6);
+}
+.background-video:focus {
+pointer-events: auto;
+}
+.collapsed {
+display: none;
+height: 0;
+}
+.grid-container {
+display: grid;
+grid-template-columns: auto auto;
+text-align:  center;
+}
+@media (max-width: 1440px) {
+.grid-container {
+    display: grid;
+    text-align:  center;
+    grid-template-columns: auto;
+}
+}
+.grid-item {
+padding: 0px;
+text-align: center;
+}
+#mainContent {
+opacity: 0;
+transition: opacity 0.5s ease-in-out;
+}
+#footer {
+opacity: 0;
+transition: opacity 0.5s ease-in-out;
+}
+.banner {
+width: 80%;
+height: auto;
+}
+.copy-icon {
+position: relative;
+margin-left: -100%;
+margin-top: -100%;
+top: 35px;
+left: 145px;
+opacity: 0;
+transition: opacity 0.5s ease;
+z-index: 9998;
+}
+.mission-hover-zoom {
+display: inline-block
+}
+.mission-hover-zoom:hover .copy-icon {
+    opacity: 1;
+}
+.mission-hover-zoom canvas {
+transition: transform .6s ease;
+}
+.mission-hover-zoom:hover canvas {
+transform: scale(1.7);
+}
+.mission {
+display: inline-block;
+margin-left: 15px;
+margin-right: 15px;
+height: 70%;
+width: 70%;
+}
+.missions {
+display:inline-block;
+}
+.fade-in {
+opacity: 1;
+}
+.dd-container {
+opacity: 0;
+transition: opacity 0.5s ease-in-out;
+width: auto;
+height: 60%;
+}
+.dd-biome {
+width: 60%;
+height: auto;
+}
+.dd-missions{
+display: inline-block;
+opacity: 0;
+transition: opacity 0.5s ease-in-out;
+}
+a:link:hover {
+    color: #5AC8FF;
+}
+.jsonc {
+display: flex;
+justify-content: space-between;
+}
+.credits {
+display: inline-block;
+margin-bottom: 0;
+text-align: right;
+font-size: 10px;
+color: white;
+font-family: "BebasNeue";
+}
+.jsonlinks {
+display: flex;
+}
+.jsonlink {
+color: #1E90FF;
+font-size: 30px;
+font-family: "BebasNeue";
+}
+.nextlink {
+color: #1E90FF;
+font-size: 40px;
+font-family: "BebasNeue";
+}
+.scanners {
+color: red;
+font-family: "CarbonThin-W00-Regular";
+font-size: 20px;
+}
+.gsgdisclaimer {
+margin-bottom: 0;
+font-size: 20px;
+color: white;
+font-family: "BebasNeue";
+}
+.deepDiveCountdownHead {
+text-align: center;
+color: white;
+font-size: 35px;
+font-family: "BebasNeue";
+}
+@keyframes glowing-red-white {
+0% {
+color: #ffffff;
+}
+50% {
+color: #ff0000;
+}
+100% {
+color: #ffffff;
+}
+}
+.glow-text-red-white {
+animation: glowing-red-white 2s infinite;
+}
+span#missionsCountdown {
+white-space: nowrap;
+left: 50%;
+color: white;
+font-size: 65px;
+transform: translate(-50%, -50%);
+font-family: "CarbonBold-W00-Regular";
+}
+span#deepDiveCountdown {
+margin-bottom: 0;
+display: flex;
+align-items: center;
+color: white;
+font-size: 72px;
+justify-content: center;
+font-family: "CarbonBold-W00-Regular";
+}
+#topCountdownContainer {
+position: fixed;
+max-width: 195px;
+top: 0;
+left: 50%;
+transform: translateX(-50%);
+justify-content: center;
+z-index: 0;
+}
+#missionRotationSlideButton {
+position: relative;
+text-align: center;
+left: 50%;
+transform: translateX(-50%);
+bottom: 0;
+background-color: #303030;
+width: auto;
+height: auto;
+color: white;
+font-size: 15px;
+font-family: "BebasNeue";
+}
+#currentButton {
+position: relative;
+left: 50%;
+text-align: center;
+transform: translateX(-50%);
+background-color: #303030;
+color: white;
+font-size: 15px;
+font-family: "BebasNeue";
+width: 195px;
+}
+#dailyDealMaster{
+overflow: hidden;
+transition: height 1.0s;
+}
+#dailyDealButton {
+position: relative;
+left: 50%;
+text-align: center;
+transform: translateX(-50%);
+background-color: #303030;
+color: white;
+font-size: 15px;
+font-family: "BebasNeue";
+}
+span#dailyDealCountdown {
+white-space: nowrap;
+left: 50%;
+color: white;
+font-size: 45px;
+transform: translate(-50%, -50%);
+font-family: "CarbonBold-W00-Regular";
+}
+#dailyDealCountdown {
+text-align: center;
+color: white;
+font-size: 15px;
+font-family: "BebasNeue";
+}
+#missionsCountdownMaster {
+text-align: center;
+color: white;
+font-size: 30px;
+font-family: "BebasNeue";
+overflow: hidden;
+transition: height 0.5s;
+}
+#dailyDealHead {
+text-align: center;
+color: white;
+font-size: 35px;
+font-family: "BebasNeue";
+}
+#backgroundButton {
+position: relative;
+text-align: center;
+left: 0;
+top: 0;
+left: 50%;
+transform: translateX(-50%);
+background-color: #303030;
+color: white;
+font-size: 15px;
+font-family: "BebasNeue";
+}
+#buttonsButton {
+position: relative;
+float: right;
+top: 0;
+background-color: #303030;
+color: white;
+font-size: 15px;
+font-family: sans-serif;
+}
+.seasonCheckBoxButtonWrapper {
+    display: flex;
+}
+.seasonBox {
+position: relative;
+left: 50%;
+text-align: center;
+min-width: 190px;
+transform: translateX(-50%);
+background-color: #303030;
+color: white;
+font-size: 15px;
+font-family: "BebasNeue";
+}
+.daily_trade {
+border-bottom-left-radius: 3%;
+border-bottom-right-radius: 3%;
+}
+.DDC {
+position: relative;
+text-align: center;
+}
+.DD-codename-text {
+position: absolute;
+width: 100%;
+height: 100%;
+color: white;
+font-family: "BebasNeue";
+font-size: 30px;
+}
+
+
+.class-icon {
+height: 50%;
+width: 50%;
+}
+.class-iconx {
+height: 25%;
+width: 25%;
+}
+.calc-grid-container {
+display: flex;
+grid-template-columns: auto auto;
+gap: 50px;
+}
+@media screen and (max-width: 1440px) {
+.calc-grid-container {
+    display: grid;
+    grid-template-columns: auto;
+}
+}
+.calctitle {
+top: 0%;
+text-align: top;
+color: white;
+font-family: "CarbonThin-W00-Regular";
+font-size: 20px;
+}
+@media screen and (max-width: 1440px) {
+.calctitle {
+display: none;
+color: white;
+font-family: "CarbonThin-W00-Regular";
+font-size: 10px;
+}
+}
+.calcbox {
+color : auto;
+font-family: "CarbonThin-W00-Regular";
+font-size: 30px;
+width: 150px;
+}    
+.calcoutput {
+color: white;
+font-family: "CarbonThin-W00-Regular";
+font-size: 50px;
+min-height: 1010px;
+}
+.classcalc {
+color: white;
+font-size: 35px;
+font-family: "BebasNeue";
+}
+.classcalcsub {
+color: white;
+font-size: 30px;
+font-family: "BebasNeue";
+}

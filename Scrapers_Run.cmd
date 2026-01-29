@@ -19,9 +19,7 @@ IF %ERRORLEVEL% EQU 0 (
 :startScript
 
 for /f "delims=" %%a in ('tzutil /g') do set timezone=%%a
-if /i "%timezone%"=="UTC" (
-
-) else (
+if /i NOT "%timezone%"=="UTC" (
     echo System Timezone is not UTC, it is %timezone%
     echo Please set system Timezone to UTC
     pause

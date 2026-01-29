@@ -3,7 +3,6 @@ package.cpath = package.cpath..';./mods/shared/set_clock/set_clock.dll'
 local clock = require('set_clock')
 package.cpath = cpath_orig..';'..'./mods/shared/socket/socket/core.dll'
 local socket = require('./mods/shared/socket/socket')
-
 function ConnectPollClient(port, handshake)
     handshake = handshake or 'polling'
     local client = assert(socket.tcp())
@@ -145,15 +144,15 @@ MapKeys = {
     [2] = 1,
     [3] = 3,
     [4] = 3,
-    [5] = 5
+    [5] = 5,
+    [6] = 6
 }
 function GetSeedTable(Season, RandomSeed)
-    local NewSeed = {
+    return {
         RandomSeed = RandomSeed,
         Season = Season,
         MapKey = MapKeys[Season]
     }
-    return NewSeed
 end
 function GetMissions_(Season, RandomSeed)
     local Missions = {}
@@ -164,15 +163,16 @@ function GetMissions_(Season, RandomSeed)
     return Missions
 end
 PrimaryObjectives = {
- ['BlueprintGeneratedClass /Game/GameElements/Objectives/OBJ_1st_PointExtraction.OBJ_1st_PointExtraction_C'] = 'Point Extraction',
- ['BlueprintGeneratedClass /Game/GameElements/Objectives/Elimination/OBJ_Eliminate_Eggs.OBJ_Eliminate_Eggs_C'] = 'Elimination',
- ['BlueprintGeneratedClass /Game/GameElements/Objectives/Escort/OBJ_1st_Escort.OBJ_1st_Escort_C'] = 'Escort Duty',
- ['BlueprintGeneratedClass /Game/GameElements/Objectives/OBJ_1st_Extraction.OBJ_1st_Extraction_C'] = 'Mining Expedition',
- ['BlueprintGeneratedClass /Game/GameElements/Objectives/Refinery/OBJ_1st_Refinery.OBJ_1st_Refinery_C'] = 'On-Site Refining',
- ['BlueprintGeneratedClass /Game/GameElements/Objectives/Salvage/OBJ_1st_Salvage.OBJ_1st_Salvage_C'] = 'Salvage Operation',
- ['BlueprintGeneratedClass /Game/GameElements/Objectives/Facility/OBJ_1st_Facility.OBJ_1st_Facility_C'] = 'Industrial Sabotage',
- ['BlueprintGeneratedClass /Game/GameElements/Objectives/OBJ_1st_Gather_AlienEggs.OBJ_1st_Gather_AlienEggs_C'] = 'Egg Hunt',
- ['BlueprintGeneratedClass /Game/GameElements/Objectives/DeepScan/OBJ_1st_DeepScan.OBJ_1st_DeepScan_C'] = 'Deep Scan'
+    ['BlueprintGeneratedClass /Game/GameElements/Objectives/OBJ_1st_PointExtraction.OBJ_1st_PointExtraction_C'] = 'Point Extraction',
+    ['BlueprintGeneratedClass /Game/GameElements/Objectives/Elimination/OBJ_Eliminate_Eggs.OBJ_Eliminate_Eggs_C'] = 'Elimination',
+    ['BlueprintGeneratedClass /Game/GameElements/Objectives/Escort/OBJ_1st_Escort.OBJ_1st_Escort_C'] = 'Escort Duty',
+    ['BlueprintGeneratedClass /Game/GameElements/Objectives/OBJ_1st_Extraction.OBJ_1st_Extraction_C'] = 'Mining Expedition',
+    ['BlueprintGeneratedClass /Game/GameElements/Objectives/Refinery/OBJ_1st_Refinery.OBJ_1st_Refinery_C'] = 'On-Site Refining',
+    ['BlueprintGeneratedClass /Game/GameElements/Objectives/Salvage/OBJ_1st_Salvage.OBJ_1st_Salvage_C'] = 'Salvage Operation',
+    ['BlueprintGeneratedClass /Game/GameElements/Objectives/Facility/OBJ_1st_Facility.OBJ_1st_Facility_C'] = 'Industrial Sabotage',
+    ['BlueprintGeneratedClass /Game/GameElements/Objectives/OBJ_1st_Gather_AlienEggs.OBJ_1st_Gather_AlienEggs_C'] = 'Egg Hunt',
+    ['BlueprintGeneratedClass /Game/GameElements/Objectives/DeepScan/OBJ_1st_DeepScan.OBJ_1st_DeepScan_C'] = 'Deep Scan',
+    ['BlueprintGeneratedClass /Game/GameElements/Objectives/Excavation/OBJ_Excavation.OBJ_Excavation_C'] = 'Heavy Excavation'
 }
 function GetPrimaryObj(fullname)
     return PrimaryObjectives[fullname]
@@ -223,7 +223,8 @@ Warnings = {
     ['MissionWarning /Game/GameElements/Missions/Warnings/CaveLeechDen/WRN_CaveLeechDen.WRN_CaveLeechDen'] = 'Cave Leech Cluster',
     ['MissionWarning /Game/GameElements/Missions/Warnings/BulletHell/WRN_BulletHell.WRN_BulletHell'] = 'Duck and Cover',
     ['MissionWarning /Game/GameElements/Missions/Warnings/RockInfestation/WRN_RockInfestation.WRN_RockInfestation'] = 'Ebonite Outbreak',
-    ['MissionWarning /Game/GameElements/Missions/Warnings/TougherEnemies/WRN_TougherEnemies.WRN_TougherEnemies'] = 'Tougher Enemies'
+    ['MissionWarning /Game/GameElements/Missions/Warnings/PitJawColony/WRN_PitJawColony.WRN_PitJawColony'] = 'Pit Jaw Colony',
+    ['MissionWarning /Game/GameElements/Missions/Warnings/ScrabNestingGrounds/WRN_ScrabNestingGrounds.WRN_ScrabNestingGrounds'] = 'Scrab Nesting Grounds'
 }
 function GetMissionWarning(fullname)
     return Warnings[fullname]
@@ -268,7 +269,13 @@ MissionDNAs = {
 
     --Deep Scan
     ['BlueprintGeneratedClass /Game/GameElements/Missions/DNA_Web_Medium.DNA_Web_Medium_C'] = {complexity = '3', length='2'},
-    ['BlueprintGeneratedClass /Game/GameElements/Missions/DNA_Web_Small.DNA_Web_Small_C'] = {complexity = '2', length='1'}
+    ['BlueprintGeneratedClass /Game/GameElements/Missions/DNA_Web_Small.DNA_Web_Small_C'] = {complexity = '2', length='1'},
+
+    --Heavy Excavation
+    ['BlueprintGeneratedClass /Game/GameElements/Missions/DNA_Wheel_Medium.DNA_Wheel_Medium_C'] = {complexity = '2', length = '2'},
+    ['BlueprintGeneratedClass /Game/GameElements/Missions/DNA_Wheel_MediumComplex.DNA_Wheel_MediumComplex_C'] = {complexity = '3', length = '2'},
+    ['BlueprintGeneratedClass /Game/GameElements/Missions/DNA_Wheel_Long.DNA_Wheel_Long_C'] = {complexity = '2', length = '3'},
+    ['BlueprintGeneratedClass /Game/GameElements/Missions/DNA_Wheel_LongComplex.DNA_Wheel_LongComplex_C'] = {complexity = '3', length = '3'},
 }
 MissionDNAs_obscure = {
     ['Egg Hunt'] = {
@@ -282,7 +289,6 @@ MissionDNAs_obscure = {
     },
 }
 Pe_length_condition = {pattern = 'Motherlode_Short_C', result = {complexity = '3', length = '2'}, conditions = {length = '2', complexity = 'Indefinite'}}
-
 function FinalizeComplexityAndLength(mission1, MissionDNA, length, complexity)
     if mission1['PrimaryObjective'] == 'Point Extraction' and string.find(MissionDNA, Pe_length_condition.pattern) and complexity == Pe_length_condition.conditions.complexity and length == Pe_length_condition.conditions.length then
         mission1['Complexity'] = Pe_length_condition.result.complexity
@@ -324,6 +330,19 @@ function FinalizeComplexityAndLength(mission1, MissionDNA, length, complexity)
             if string.find(MissionDNA, dna.pattern) then
                 mission1['Length'] = dna.result.length
                 mission1['Complexity'] = dna.result.complexity
+                break
+            end
+        end
+    end
+
+    if length == 'Indefinite' then
+        local MissionDNAs_generic = {
+            {pattern = 'LongAverage', result = '3'},
+            {pattern = 'LongComplex', result =  '3'}
+        }
+        for _, dna in pairs(MissionDNAs_generic) do
+            if string.find(MissionDNA, dna.pattern) then
+                mission1['Length'] = dna.result
                 break
             end
         end
@@ -440,7 +459,8 @@ function BiomesTable()
         ['Sandblasted Corridors'] = {},
         ['Magma Core'] = {},
         ['Azure Weald'] = {},
-        ['Hollow Bough'] = {}
+        ['Hollow Bough'] = {},
+        ["Ossuary Depths"] = {}
     }
 end
 Biomesmatch = {
@@ -453,7 +473,8 @@ Biomesmatch = {
     ['Biome /Game/Landscape/Biomes/Biomes_Ingame/HollowBough/BIOME_HollowBough.BIOME_HollowBough'] = 'Hollow Bough',
     ['Biome /Game/Landscape/Biomes/Biomes_Ingame/SandblastedCorridors/BIOME_SandblastedCorridors.BIOME_SandblastedCorridors'] = 'Sandblasted Corridors',
     ['Biome /Game/Landscape/Biomes/Biomes_Ingame/RadioactiveZone/BIOME_RadioactiveZone.BIOME_RadioactiveZone'] = 'Radioactive Exclusion Zone',
-    ['Biome /Game/Landscape/Biomes/Biomes_Ingame/LushDownpour/BIOME_LushDownpour.BIOME_LushDownpour'] = 'Dense Biozone'
+    ['Biome /Game/Landscape/Biomes/Biomes_Ingame/LushDownpour/BIOME_LushDownpour.BIOME_LushDownpour'] = 'Dense Biozone',
+    ['Biome /Game/Landscape/Biomes/Biomes_Ingame/BoneYards/BIOME_OssuaryDepths.BIOME_OssuaryDepths'] = 'Ossuary Depths'
 }
 function GetBiome(mission)
     local b = mission:GetPropertyValue('Biome')

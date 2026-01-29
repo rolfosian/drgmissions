@@ -1,18 +1,14 @@
 local json = require("./mods/shared/dkjson")
-package.cpath = package.cpath .. ';'..'./mods/shared/socket/socket/core.dll'
-function IsLoaded()
-    local GeneratedMissions = FindAllOf('GeneratedMission')
-    if GeneratedMissions then
-        if #GeneratedMissions > 6 then
-            return true
-        else
-            return false
-        end
-    else
-        return false
-    end
-end
 function PressStartAndWaitForLoad()
+    local FSDGameInstance = nil
+    while true do
+        FSDGameInstance = FindFirstOf('FSDGameInstance')
+        if FSDGameInstance then
+            break
+        end
+    end
+    if not FSDGameInstance.IsOnPressStartScreen then goto isLoaded end
+
     local startmenus = nil
     while true do
         startmenus = FindAllOf('Bp_StartMenu_PlayerController_C')
@@ -37,11 +33,13 @@ function PressStartAndWaitForLoad()
                     count = count + 1
                     if count > 11 then
                         waiting_for_load = false
+                        isLoaded = true
                     end
                 end
             end
         end
     end
+    ::isLoaded::
 end
 function TestTwoWeeks()
     local currytime = nil
@@ -61,10 +59,11 @@ function TestTwoWeeks()
     local SeasonsValues = {
         ['s0'] = 0,
         ['s1'] = 1,
-        ['s2'] = 2,
+        -- ['s2'] = 2,
         ['s3'] = 3,
-        ['s4'] = 4,
-        ['s5'] = 5
+        -- ['s4'] = 4,
+        -- ['s5'] = 5,
+        ['s6'] = 6
     }
     -- local PollingClient = utils.ConnectPollClient(12345)
     -- Initialize Table
@@ -137,19 +136,24 @@ function TestTwoWeeks()
         utils.IncrementDatetime(currytime)
     end
 
-    -- god = json.encode(god)
     -- utils.Send_data(PollingClient, god)
     -- PollingClient:close()
+    local file = io.open('drgmissionsdev.json', 'w')
+    if file then
+        file:write(json.encode(god))
+        file:close()
+    end
 end
 function TestCurrentTimeOnly()
-    local utils = require('./mods/shared/bulkmissions_funcs')
+    local utils = require('./mods/shared/shared_drgmissions_lua_funcs')
     local SeasonsValues = {
         ['s0'] = 0,
         ['s1'] = 1,
-        ['s2'] = 2,
+        -- ['s2'] = 2,
         ['s3'] = 3,
-        ['s4'] = 4,
-        ['s5'] = 5
+        -- ['s4'] = 4,
+        -- ['s5'] = 5,
+        ['s6'] = 6
     }
 
     -- Initialize Table
@@ -159,8 +163,10 @@ function TestCurrentTimeOnly()
     local FSDGameInstance = FindFirstOf('FSDGameInstance')
     local timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
     FSDGameInstance:UpdateGlobelMissionSeed()
+
     local RandomSeed = FSDGameInstance:GetGlobalMissionSeedNew().RandomSeed
     print(tostring(RandomSeed))
+
     for SeasonKey, SeasonValue in pairs(SeasonsValues) do
         missionscount = 0
         master[SeasonKey] = {}
@@ -200,12 +206,9 @@ function TestCurrentTimeOnly()
 --         file:close()
 --     end
 end
--- if IsLoaded() then
---     goto isloaded
--- else
---     PressStartAndWaitForLoad()
--- end
--- ::isloaded::
-
--- TestCurrentTimeOnly()
--- TestTwoWeeks()
+function Main()
+    PressStartAndWaitForLoad()
+    TestCurrentTimeOnly()
+    -- TestTwoWeeks()
+end
+Main()

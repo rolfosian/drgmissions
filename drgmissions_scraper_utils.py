@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from functools import wraps
+import shutil
 from typing import Union, Callable
 from ctypes import wintypes, byref, WinDLL, WINFUNCTYPE, sizeof, create_unicode_buffer, Structure
 from copy import deepcopy
@@ -370,9 +371,9 @@ def order_dictionary_by_date_FIRST_KEY_ROUNDING(dictionary:dict):
 def reconstruct_dictionary(dictionary:dict):
     god = {}
     mission_key_order = ['Seed', 'PrimaryObjective', 'SecondaryObjective', 'MissionWarnings', 'MissionMutator', 'Complexity', 'Length', 'CodeName', 'id']
-    biome_order = ['Glacial Strata', 'Crystalline Caverns', 'Salt Pits', 'Magma Core', 'Azure Weald', 'Sandblasted Corridors', 'Fungus Bogs', 'Radioactive Exclusion Zone', 'Dense Biozone', 'Hollow Bough']
+    biome_order = ['Glacial Strata', 'Crystalline Caverns', 'Salt Pits', 'Magma Core', 'Azure Weald', 'Sandblasted Corridors', 'Fungus Bogs', 'Radioactive Exclusion Zone', 'Dense Biozone', 'Hollow Bough', 'Ossuary Depths']
     for timestamp, seasons_dict in dictionary.items():
-        seasons_dict = sort_dictionary(seasons_dict, ['s0', 's1', 's2', 's3', 's4', 's5'])
+        seasons_dict = sort_dictionary(seasons_dict, ['s0', 's1', 's2', 's3', 's4', 's5', 's6'])
         god[timestamp] = {}
         for season, master in seasons_dict.items():
             god[timestamp][season] = {}
@@ -661,6 +662,7 @@ def upload_file(cfg:dict, file_path:str):
         with open(part, 'rb') as file:
             files = {'file': file}
             response = requests.post(url, headers=headers, files=files)
+            response.raise_for_status()
             
     return response
 
@@ -832,7 +834,7 @@ def yes_or_no(prompt:str):
         else:
             print("Please enter 'Y' or 'N'.")
 
-def wait_for_json(IPC:IPCServer, total_increments:int):
+def wait_for_json(IPC:IPCServer, total_increments:int) -> dict:
     pfuncs = {
         'pol' : lambda total_increments_, total_increments: f"[40;92m{round((total_increments_ - total_increments) / total_increments_ * 100, 2):.2f}%[0m",
         'enc' : lambda total_increments_, total_increments: '[40;92mEncoding JSON...[0m',
@@ -910,7 +912,7 @@ def wait_for_json(IPC:IPCServer, total_increments:int):
     
     return dictionary
 
-def validate_drgmissions(DRG:dict):
+def validate_drgmissions(DRG:dict) -> dict:
     DRG = order_dictionary_by_date(DRG)
     DRG = reconstruct_dictionary(DRG)
     
@@ -990,15 +992,12 @@ def compare_dicts(dict1:dict, dict2:dict, ignore_keys:list):
     dict2_filtered = {k: v for k, v in dict2.items() if k not in ignore_keys}
     return dict1_filtered == dict2_filtered
 
-def flatten_seasons_v5(DRG:dict):
+def flatten_seasons_v6(DRG:dict) -> dict:
     combined = {}
     timestamps = list(DRG.keys())
-    seasons = ['s0', 's1', 's3']
+    seasons = ['s0', 's1', 's3', 's6']
     
     for timestamp in timestamps:
-        del DRG[timestamp]['s2']
-        del DRG[timestamp]['s4']
-        del DRG[timestamp]['s5']
         for season in seasons:
             for biome, missions in DRG[timestamp][season]['Biomes'].items():
                 for mission in missions:
@@ -1063,3 +1062,66 @@ def flatten_seasons_v5(DRG:dict):
                 mission['id'] = id
                 
     return combined
+
+def split_all_mission_timestamps(DRG: dict) -> None:
+    if os.path.isdir(f'./bulkmissions_granules'):
+        while True:
+            try:
+                shutil.rmtree(f'./bulkmissions_granules')
+                break
+            except:
+                pass
+    os.mkdir(f'./bulkmissions_granules')
+    
+    for ts, v in DRG.items():
+        with open(f'./bulkmissions_granules/{ts.replace(":", "-")}.json', 'w') as f:
+            json.dump(v, f)
+
+def group_by_day_and_split_all(DRG: dict) -> None:
+    def group_json_by_days(DRG):
+        timestamps_dt = [datetime.fromisoformat(ts[:-1]) for ts in DRG.keys()]
+
+        grouped_by_days = {}
+        for timestamp in timestamps_dt:
+            date = timestamp.date().strftime('%Y-%m-%d')
+            if date not in grouped_by_days:
+                grouped_by_days[date] = {}
+            timestamp = timestamp.strftime("%Y-%m-%dT%H:%M:%SZ")
+            grouped_by_days[date][timestamp] = DRG[timestamp]
+
+        return grouped_by_days
+    def add_daily_deals_to_grouped_json(DRG):
+        with open('drgdailydeals.json', 'r') as f:
+            AllTheDeals = json.load(f)
+
+            for timestamp, deal in AllTheDeals.items():
+                deal['timestamp'] = timestamp
+                try:
+                    DRG[timestamp.split('T')[0]]['dailyDeal'] = deal
+                except:
+                    continue
+        return DRG
+    def split_json_bulkmissions_raw(DRG):
+        if os.path.isdir(f'./bulkmissions'):
+            while True:
+                try:
+                    shutil.rmtree(f'./bulkmissions')
+                    break
+                except:
+                    continue
+        os.mkdir(f'./bulkmissions')
+
+        for timestamp, dictionary in DRG.items():
+            dictionary['ver'] = 6
+            fname = timestamp.replace(':','-')
+            with open(f'./bulkmissions/{fname}.json', 'w') as f:
+                json.dump(dictionary, f)
+                
+    to_split = group_json_by_days(DRG)
+    to_split = add_daily_deals_to_grouped_json(to_split)
+    split_json_bulkmissions_raw(to_split)
+        
+def serialize_and_compress(DRG: dict) -> None:
+    split_all_mission_timestamps(DRG)
+    group_by_day_and_split_all(DRG)
+    subprocess.run(['7z', 'a', 'drgmissionsgod_serialized_json.7z', 'bulkmissions', 'bulkmissions_granules', '-y'])
