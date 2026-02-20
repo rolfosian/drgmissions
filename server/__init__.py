@@ -62,11 +62,10 @@ def create_app(AllTheDeals: dict) -> FastAPI:
 
     four_0_four_response = PlainTextResponse(status_code=404, content='<!doctype html><html lang="en"><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>')
     four_0_0_response = PlainTextResponse(status_code=400, content='<!doctype html><html lang="en"><title>400 Bad Request</title><h1>Bad Request</h1><p>The server could not understand your request. Please make sure you have entered the correct information and try again.</p>')
-    
-    home_response = FileResponse(path=f"{cwd}/index.html", media_type="text/html")
+
     @app.get('/')
     def home():
-        return home_response
+        return FileResponse(path=f"{cwd}/index.html", media_type="text/html")
 
     #json endpoint
     #eg http://127.0.0.1:5000/json?data=current for current mission metadata
