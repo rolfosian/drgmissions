@@ -69,7 +69,7 @@ def match_list_field(values, field):
         else:
             return any(v in values for v in field)
 
-def find_mission(sought_config:dict, results:list, timestamp:str, dict:dict) -> None:
+def find_mission(sought_config:dict, seen:set, results:list, timestamp:str, dict:dict) -> None:
     for biome, missions in dict["Biomes"].items():
         if match_field(biome, sought_config["Wanted Biomes"]):
             for mission in missions:
@@ -81,18 +81,26 @@ def find_mission(sought_config:dict, results:list, timestamp:str, dict:dict) -> 
                 warnings = mission.get("MissionWarnings", [])
 
                 if not all([
-                match_field(primary, sought_config["Wanted Primaries"]),
-                match_field(secondary, sought_config["Wanted Secondaries"]),
-                match_field(complexity, sought_config["Wanted Complexities"]),
-                match_field(length, sought_config["Wanted Lengths"]),
-                match_field(mutator, sought_config["Wanted Mutators"]),
-                match_list_field(warnings, sought_config["Wanted Warnings"])
+                    match_field(primary, sought_config["Wanted Primaries"]),
+                    match_field(secondary, sought_config["Wanted Secondaries"]),
+                    match_field(complexity, sought_config["Wanted Complexities"]),
+                    match_field(length, sought_config["Wanted Lengths"]),
+                    match_field(mutator, sought_config["Wanted Mutators"]),
+                    match_list_field(warnings, sought_config["Wanted Warnings"])
                 ]):
                     # print("FAIL", mission)
                     # print(sought_config["Wanted Warnings"])
                     continue
+                
                 # else:
                     # print("PASS", timestamp, len(missions), mission)
+
+                # this stinks but idc
+                hash = timestamp+biome+str(mission)
+                if hash in seen:
+                    continue
+                
+                seen.add(hash)
                 results.append([timestamp, biome, mission])
                 # if len(results) > 200:
                 #     quit()
@@ -307,11 +315,12 @@ def main():
         def _run_search(self):
             self.config(state="disabled")
             results = []
+            seen = set()
             results_ = {}
 
             for timestamp, dict in self.DRG.items():
                 for cfg in self.sought_configs[:]:
-                    find_mission(cfg, results, timestamp, dict)
+                    find_mission(cfg, seen, results, timestamp, dict)
 
             if results:
                 for timestamp, biome, mission in results:
