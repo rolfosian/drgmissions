@@ -1,6 +1,6 @@
-from __init__ import create_app, serialize_json
+from __init__ import create_app
 
-app = create_app(serialize_json())
+app = create_app()
 
 if __name__ == '__main__':
     import uvicorn

@@ -3,11 +3,11 @@ from time import time
 from fastapi.params import File
 start = time()
 
-from fastapi import FastAPI, Request, UploadFile
+from fastapi import FastAPI, Request, Response, UploadFile
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import JSONResponse, PlainTextResponse, FileResponse, StreamingResponse
+from fastapi.responses import JSONResponse, PlainTextResponse, FileResponse
+from pathlib import Path
 
-from io import BytesIO
 from datetime import datetime, timezone
 from shutil import copy as shutil_copy
 from drgmissionslib import (
@@ -27,45 +27,45 @@ import traceback
 cwd = os.getcwd()
 name = os.name
 
-def get_DD() -> str:
+def get_DD() -> dict:
     with open(f"./static/json/DD_{get_previous_thursday_date()}T11-00-00Z.json", "r") as f:
         return json.load(f)
     
-def get_current() -> str:
+def get_current() -> dict:
     with open(f"./static/json/bulkmissions_granules/{round_time(datetime.now(tz=timezone.utc), False)}.json".replace(":", "-"), "r") as f:
         return json.load(f)
 
-def get_next() -> str:
+def get_next() -> dict:
     with open(f"./static/json/bulkmissions_granules/{round_time(datetime.now(tz=timezone.utc), True)}.json".replace(":", "-"), "r") as f:
         return json.load(f)
 
-def get_daily_deal() -> str:
+def get_daily_deal() -> dict:
     with open("drgdailydeals.json", "r") as f:
         return json.load(f)[datetime.now(tz=timezone.utc).strftime("%Y-%m-%dT00:00:00Z")]
 
-def serialize_json() -> dict:
-    # from subprocess import run
-    # run(["7z", "x", "drgmissionsgod_serialized_json.7z", "-o./static/json"])
+# def unzip_json() -> None:
+#     if os.path.exists("./static/json/drgmissionsgod_serialized_json.7z"):
+#         from subprocess import run
+#         run(["7z", "x", "./static/json/drgmissionsgod_serialized_json.7z", "-o./static/json"])
 
-    with open('drgdailydeals.json', 'r') as f:
-        AllTheDeals = f.read()
-        f.close()
-    AllTheDeals = AllTheDeals.replace(':01Z', ':00Z')
-    AllTheDeals = json.loads(AllTheDeals)
-    AllTheDeals = order_dictionary_by_date(AllTheDeals)
+#         if __name__ == "__main__":
+#             return
+        
+#         os.remove("./static/json/drgmissionsgod_serialized_json.7z")
 
-    return AllTheDeals
-
-def create_app(AllTheDeals: dict) -> FastAPI:
+def create_app() -> FastAPI:
+    # unzip_json()
     app = FastAPI()
     app.mount("/static", StaticFiles(directory="static"), name="static")
 
     four_0_four_response = PlainTextResponse(status_code=404, content='<!doctype html><html lang="en"><title>404 Not Found</title><h1>Not Found</h1><p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>')
     four_0_0_response = PlainTextResponse(status_code=400, content='<!doctype html><html lang="en"><title>400 Bad Request</title><h1>Bad Request</h1><p>The server could not understand your request. Please make sure you have entered the correct information and try again.</p>')
 
-    @app.get('/')
+    index_html = Path(f"{cwd}/index.html").read_text(encoding="utf-8")
+
+    @app.get("/")
     def home():
-        return FileResponse(path=f"{cwd}/index.html", media_type="text/html")
+        return Response(content=index_html, media_type="text/html")
 
     #json endpoint
     #eg http://127.0.0.1:5000/json?data=current for current mission metadata
