@@ -224,7 +224,8 @@ Warnings = {
     ['MissionWarning /Game/GameElements/Missions/Warnings/BulletHell/WRN_BulletHell.WRN_BulletHell'] = 'Duck and Cover',
     ['MissionWarning /Game/GameElements/Missions/Warnings/RockInfestation/WRN_RockInfestation.WRN_RockInfestation'] = 'Ebonite Outbreak',
     ['MissionWarning /Game/GameElements/Missions/Warnings/PitJawColony/WRN_PitJawColony.WRN_PitJawColony'] = 'Pit Jaw Colony',
-    ['MissionWarning /Game/GameElements/Missions/Warnings/ScrabNestingGrounds/WRN_ScrabNestingGrounds.WRN_ScrabNestingGrounds'] = 'Scrab Nesting Grounds'
+    ['MissionWarning /Game/GameElements/Missions/Warnings/ScrabNestingGrounds/WRN_ScrabNestingGrounds.WRN_ScrabNestingGrounds'] = 'Scrab Nesting Grounds',
+    ['MissionWarning /Game/GameElements/Missions/Warnings/CoreCorruption/WRN_CoreCorruption.WRN_CoreCorruption'] = 'Core Corruption'
 }
 function GetMissionWarning(fullname)
     return Warnings[fullname]

@@ -228,7 +228,8 @@ var warnings = {
     'Duck and Cover': `${domainURL}/static/img/Warning_duck_and_cover_icon.webp`,
     'Ebonite Outbreak' : `${domainURL}/static/img/Warning_ebonite_outbreak_icon.webp`,
     'Pit Jaw Colony' : `${domainURL}/static/img/Warning_pit_jaw_colony_icon.webp`,
-    'Scrab Nesting Grounds' : `${domainURL}/static/img/Warning_scrab_nesting_grounds_icon.webp`
+    'Scrab Nesting Grounds' : `${domainURL}/static/img/Warning_scrab_nesting_grounds_icon.webp`,
+    'Core Corruption' : `${domainURL}/static/img/Warning_core_corruption_icon.webp`
 };
 var warningsImages = {};
 warningsImages.name = 'warningsImages';
@@ -2176,7 +2177,7 @@ var localStorages = {
 };
 
 var localStoragesHashes = {
-    'img' : 611688081,
+    'img' : 1306107688,
     'fonts' : 906557479,
 };
 
