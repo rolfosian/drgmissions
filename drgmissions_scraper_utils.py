@@ -3,7 +3,7 @@ from functools import wraps
 import shutil
 from typing import Union, Callable
 from ctypes import wintypes, byref, WinDLL, WINFUNCTYPE, sizeof, create_unicode_buffer, Structure
-from copy import deepcopy
+from copy import deepcopy, copy
 from time import sleep
 from random import randint
 import sys
@@ -843,7 +843,7 @@ def wait_for_json(IPC:IPCServer, total_increments:int) -> dict:
     fin = "fin"
     
     total_increments_ = int(str(total_increments))
-    estimated_time_completion = (total_increments * 0.2) + 30
+    estimated_time_completion = (total_increments * 0.02) + 30
     timeout_seconds = estimated_time_completion + 300
 
     print(wrap_with_color(f'Total rotations: {str(total_increments)}', '1;37'))
@@ -987,80 +987,59 @@ def validate_drgmissions(DRG:dict) -> dict:
     print(wrap_with_color('No invalid timestamps found.', '32'))
     return DRG
 
-def compare_dicts(dict1:dict, dict2:dict, ignore_keys:list):
-    dict1_filtered = {k: v for k, v in dict1.items() if k not in ignore_keys}
-    dict2_filtered = {k: v for k, v in dict2.items() if k not in ignore_keys}
-    return dict1_filtered == dict2_filtered
-
-def flatten_seasons_v6(DRG:dict) -> dict:
+def flatten_seasons(DRG: dict) -> dict:
     combined = {}
-    timestamps = list(DRG.keys())
     seasons = ['s0', 's1', 's3', 's6']
-    
-    for timestamp in timestamps:
+    mission_id_counter = 0
+    ignore_keys = {'included_in', 'season', 'index'}
+
+    for timestamp, ts_data in DRG.items():
+        combined[timestamp] = {
+            'timestamp': timestamp,
+            'Biomes': {},
+            'RandomSeed' : DRG[timestamp]['s0']['RandomSeed']
+        }
+            
+        unique_missions_map = {}
+
         for season in seasons:
-            for biome, missions in DRG[timestamp][season]['Biomes'].items():
-                for mission in missions:
-                    del mission['id']
-    
-    
-    for timestamp in timestamps:
-        combined[timestamp] = {}
-        combined[timestamp]['timestamp'] = timestamp
-        combined[timestamp]['Biomes'] = {}
-        for i, season in enumerate(seasons):
-            for biome, missions in DRG[timestamp][season]['Biomes'].items():
-                if i == 0:
-                    combined[timestamp]['Biomes'][biome] = []
-                    combined[timestamp]['RandomSeed'] = DRG[timestamp][season]['RandomSeed']
+            if season not in ts_data:
+                continue
+                
+            for biome, missions in ts_data[season].get('Biomes', {}).items():
+                if biome not in unique_missions_map:
+                    unique_missions_map[biome] = {}
 
-                for j, mission in enumerate(missions):
-                    mission['index'] = j
-                    mission['season'] = season
-                    
-                    seen = False
-                    for season_ in seasons:
-                        if season != season_:
-                            for m in DRG[timestamp][season_]['Biomes'][biome]:
-                                if compare_dicts(mission, m, ignore_keys=['index', 'season', 'included_in']):
-                                    seen = True
-                                    if 'included_in' not in mission:
-                                        mission['included_in'] = []
-                                    mission['included_in'].append(season_)
-                                    mission['included_in'].append(season)
-                    
-                    if not seen:
+                for index, original_mission in enumerate(missions):
+
+                    mission = copy(original_mission)
+                    mission.pop('id', None)
+
+                    mission_sig = json.dumps({k: v for k, v in mission.items() if k not in ignore_keys}, sort_keys=True)
+
+                    if mission_sig in unique_missions_map[biome]:
+                        included_in = unique_missions_map[biome][mission_sig]['included_in']
+                        if season not in included_in:
+                            included_in.append(season)
+                    else:
                         mission['included_in'] = [season]
+                        mission['_temp_index'] = index
+                        unique_missions_map[biome][mission_sig] = mission
 
-                    mission['included_in'] = sorted(list(set(mission['included_in'])), key=lambda x: (str.isdigit(x), x.lower()))
-
-                combined[timestamp]['Biomes'][biome] += [mission for mission in missions]
-    
-    id = 0
-    for timestamp in timestamps:
-        for biome, missions in combined[timestamp]['Biomes'].items():
-
-            filtered_missions = []
-            for i, mission in enumerate(missions):
-                keep = True
-                
-                for j, m in enumerate(missions):
-                    if i < j+1:
-                        continue
-                    if compare_dicts(m, mission, ignore_keys=['id', 'season', 'index']):
-                        keep = False
-                        break
-                if keep:
-                    filtered_missions.append(mission)
+        for biome, signature_map in unique_missions_map.items():
+            filtered_missions = list(signature_map.values())
+            filtered_missions.sort(key=lambda x: x['_temp_index'])
             
-            combined[timestamp]['Biomes'][biome] = sorted(filtered_missions, key=lambda x: x['index'])
-            
-            for mission in combined[timestamp]['Biomes'][biome]:
-                del mission['index']
-                del mission['season']
-                id += 1
-                mission['id'] = id
+            for mission in filtered_missions:
+                del mission['_temp_index']
+
+                mission['included_in'].sort(key=lambda x: (str.isdigit(x), x.lower()))
+
+                mission_id_counter += 1
+                mission['id'] = mission_id_counter
                 
+            combined[timestamp]['Biomes'][biome] = filtered_missions
+
     return combined
 
 def split_all_mission_timestamps(DRG: dict) -> None:

@@ -21,7 +21,7 @@ from drgmissions_scraper_utils import (
     user_input_set_target_date,
     wait_for_json,
     validate_drgmissions,
-    flatten_seasons_v6,
+    flatten_seasons,
     serialize_and_compress,
     is_port_in_use,
     launch_game,
@@ -112,7 +112,7 @@ def main():
             DRG = validate_drgmissions(DRG)
         
         print(wrap_with_color('Flattening seasons...', '40;92'))
-        DRG = flatten_seasons_v6(DRG)
+        DRG = flatten_seasons(DRG)
         
         if not year_range:
             print(wrap_with_color("Writing to disk...", "40;92"))
