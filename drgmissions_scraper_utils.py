@@ -989,7 +989,7 @@ def validate_drgmissions(DRG:dict) -> dict:
 
 def flatten_seasons(DRG: dict) -> dict:
     combined = {}
-    seasons = ['s0', 's1', 's3', 's6']
+    seasons = ['s0', 's1', 's3', 's5', 's6']
     mission_id_counter = 0
     ignore_keys = {'included_in', 'season', 'index'}
 

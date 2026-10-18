@@ -2132,7 +2132,7 @@ async function verifyStorages(date) {
 
                 } else if (key === 'currentDaysJson') {
                     let data = JSON.parse(v);
-                    let ver = 6;
+                    let ver = 10;
                     if (data[0] != date.toISOString().slice(0, 10) || !data[1].hasOwnProperty('ver') || data[1]['ver'] != ver) {
                         setStorages(key, null);
                     } else {
@@ -2525,7 +2525,8 @@ document.addEventListener('DOMContentLoaded', async function() {
 
             let seasonBoxValues = {
                 's6' : '<span style="color:#f5c560;">Relics of Hoxxes</span>',
-                's0' : '<span style="color:#69d6fe;">Unseasoned</span> | <span style="color:#2bc796;">Drilling Deeper</span>',
+                's5' : '<span style="color:#2bc796;">Drilling Deeper</span>',
+                's0' : '<span style="color:#69d6fe;">Unseasoned</span>',
                 's1' : '<span style="color:#dc6a2a;">Rival</span> <span style="color:#efc8c9;">Incursion</span> | <span style="color:#dc6a2a;">Rival</span> <span style="color:#8ad6fc;">Escalation</span>',
                 's3' : '<span style="color:#fdb925;">Plaguefall</span> | <span style="color:#eb402b;">Critical Corruption</span>'
             };
